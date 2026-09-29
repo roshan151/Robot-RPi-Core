@@ -156,6 +156,23 @@ processes mean separate GILs, so a stall in the conversation cannot delay a stop
 As a service: `start_robot.sh` sources both overlays and launches the graph;
 `robot-voice.service` calls it.
 
+### Boot service: stop, run manually, re-enable
+
+The Pi starts the robot at boot via `robot-voice.service`. To work on it:
+
+| Want | Command |
+|------|---------|
+| Stop it now (starts again next boot) | `sudo systemctl stop robot-voice` |
+| Stop it and keep it off across reboots | `sudo systemctl disable --now robot-voice` |
+| Run it manually in the foreground (Ctrl+C to stop) | `./start_robot.sh` |
+| Start the service manually | `sudo systemctl start robot-voice` |
+| Restart after code changes | `sudo systemctl restart robot-voice` |
+| Re-enable start at boot (and start now) | `sudo systemctl enable --now robot-voice` |
+| Is it running / enabled? | `systemctl status robot-voice` · `systemctl is-enabled robot-voice` |
+| Follow its logs | `journalctl -u robot-voice -f` |
+
+Stop the service before running `./start_robot.sh` by hand — two copies will fight over the serial port and microphone. After editing `robot-voice.service` itself, re-copy it to `/etc/systemd/system/` and run `sudo systemctl daemon-reload`. If it crash-looped (5 failures in 2 min), clear it with `sudo systemctl reset-failed robot-voice` before starting again.
+
 ## Robot images
 
 **Top view:**  
