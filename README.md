@@ -30,9 +30,11 @@ test for it (`tests/test_layering.py`).
 | `robot_drivetrain/` | Action servers, the e-stop service, encoder telemetry |
 | `robot_voice/` | The Live session as a node, plus `RosMotion` (MotionBackend over actions) |
 | `robot_bringup/` | Launch files, `robot.yaml`, and the one-process node host |
+| **`vision_service/`** | **The off-Pi perception service — runs on the Mac mini, not the robot** |
 | `tests/` | Unit tests — no hardware, no ROS needed |
 | `tests/hardware/` | `check_*.py` diagnostics that need a real robot |
 | `docs/PLAN.md` | The migration and expansion plan. Start here |
+| `docs/VISION-DESIGN.md` | The vision/perception layer: what runs where, and why |
 
 ## Hardware (summary)
 
@@ -87,15 +89,31 @@ All can be set in a `.env` file, in `/etc/robot.env` for the systemd service, or
 | `ROBOT_SERIAL_PORT` | Default `/dev/ttyUSB0` — set to `/dev/ttyACM0` if needed |
 | `ROBOT_SERIAL_BAUD` | Must match Arduino `Serial.begin(...)` (default `115200`) |
 | `ROBOT_METERS_PER_SECOND` | Scales spoken “meters” into drive duration |
-| `VISION_SERVICE_URL` | Full URL to `POST .../detect_objects:frame` (see below) |
-| `VISION_HALT_OBJECTS` | Comma list of YOLO class names; guardian stops the robot if seen while moving |
-| `VISION_GUARD_HZ` | Guardian polling rate |
+| `VISION_SERVICE_BASE_URL` | Base URL of the vision service, e.g. `http://mini.local:8080` |
+| `VISION_DETECT_HZ` | Detect call rate (default 2.0) |
+| `VISION_DETECT_TIMEOUT_S` | Hard abandon, no retry (default 0.6) |
 | `OPENAI_API_KEY` / `OPENAI_API_KEY_ROBIN` | Voice + planning |
 
-### Vision API URL
+### Vision service
 
-Default in `robot_core/settings.py` is `http://127.0.0.1:8080/detect_objects:frame`.  
-If the vision service runs on another machine, set `VISION_SERVICE_URL` to that host.
+The perception models run **off the Pi** — normally on a Mac mini on the LAN,
+because the Pi has no GPU. Source, endpoint contract and deployment live in
+[`vision_service/`](vision_service/README.md); the design rationale is in
+[`docs/VISION-DESIGN.md`](docs/VISION-DESIGN.md).
+
+```bash
+cd vision_service && pip install -e '.[models,dev]' && ./run.sh
+```
+
+`VISION_SERVICE_BASE_URL` is a **base URL** (default `http://127.0.0.1:8080`),
+not a single endpoint — the gateway client appends the versioned paths
+(`/v1/detect`, `/v1/faces/embed`, `/v1/faces/match`, `/v1/faces/enroll`,
+`/v1/depth`) and is the only thing that knows them. Point it at the mini if the
+service runs elsewhere, and check `GET /healthz` when the robot seems blind.
+
+The camera-based obstacle guardian is **retired**: the lidar stops the robot and
+the camera tells the agent what is there. `VISION_HALT_OBJECTS` and
+`VISION_GUARD_HZ` no longer do anything.
 
 ---
 

@@ -37,7 +37,6 @@ from std_srvs.srv import Trigger
 
 from robot_interfaces.action import Drive, Turn
 
-
 class RosMotion:
     """MotionBackend over /drive, /turn and /estop."""
 

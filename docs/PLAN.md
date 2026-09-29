@@ -3,9 +3,14 @@
 The single source of truth for this rebuild. Supersedes `ROS2-MIGRATION.md` and
 `COMPUTE-BUDGET.md`, both of which contained decisions that have since changed.
 
-Companion document: **`HARDWARE-BASICS.md`** — from-first-principles explanations
-of the GIL, latency percentiles, I²C/SPI/UART/PWM, servos, and camera streams.
-That one is a tutorial, not a plan; it stays separate.
+Companion documents:
+
+- **`HARDWARE-BASICS.md`** — from-first-principles explanations of the GIL,
+  latency percentiles, I²C/SPI/UART/PWM, servos, and camera streams. A tutorial,
+  not a plan; it stays separate.
+- **`VISION-DESIGN.md`** — the vision/perception layer. It **amends decisions #5
+  and #8 below** and revises standing rule #3; those changes are folded in here,
+  with the reasoning kept there next to the design that forced it.
 
 **Contents**
 
@@ -35,13 +40,13 @@ were retired.
 | 2 | **Stay on Raspberry Pi OS Trixie**, add the `rospian` apt repo for Jazzy | *Reverses an earlier recommendation to move to Ubuntu 24.04.* Ubuntu idles ~150 MB heavier than Pi OS Lite — more than the entire ROS multi-process overhead this plan spends pages justifying — and picamera2, `dtoverlay`, and the hardware JPEG encoder are first-class only on the Pi Foundation kernel. Your peripheral plan is deeply Pi-specific. Ubuntu's one advantage was Tier-1 ROS packaging; that's worth less than a working camera stack. |
 | 3 | `ros-jazzy-ros-base`, never `-desktop` | ~2 GB and the whole GL stack saved. RViz runs on your laptop. |
 | 4 | **ROS is transport, not rewrite** — hardware logic stays in plain Python | Keeps tests runnable without ROS; makes the migration reversible. |
-| 5 | **Camera, servo, e-ink, lidar → Pi** | *Reverses an earlier recommendation to put the servo on the Arduino.* Keeps the firmware completely unchanged, which removes a whole risk class and lets you iterate in Python instead of re-flashing. |
+| 5 | **Camera, servos, e-ink, lidar → Pi** | *Reverses an earlier recommendation to put the servo on the Arduino.* Keeps the firmware completely unchanged, which removes a whole risk class and lets you iterate in Python instead of re-flashing. *Amended by `VISION-DESIGN.md`: **two** servos, pan (GPIO13) and tilt (GPIO12). Turning the whole base to look around is slow and, mid-voice-session, intrusive; `dtoverlay=pwm-2chan` already provides both channels.* |
 | 6 | **TF-Luna → Arduino, tilted forward-down, cliff detection only** | *Reverses an earlier plan to use it for forward obstacle stopping.* A fall is instantaneous and unrecoverable; it deserves a firmware reflex that survives Python stalling, wifi dropping and ROS restarting. |
 | 7 | **Horizontal obstacle sensing → LD14P lidar, on the Pi** | One sensor, 360°, and it feeds mapping too. |
-| 8 | **No local camera CV** | *Resolves the open question from the retired budget doc.* The lidar handles obstacles, so the camera is purely a REST client for scene understanding and face recognition. This removes the only meaningful CPU cost on the roadmap. |
+| 8 | **Local camera CV: tracking only** | *Resolves the open question from the retired budget doc, then is **partially reversed** by `VISION-DESIGN.md`.* The lidar still handles all obstacle work, and no detector, segmenter or ML model ever runs on the Pi. But REST answers at 1-2 Hz with a 100-500 ms lag, and between answers there is no new visual information at all — so a gimbal or follow behavior driven by detections alone is extrapolating from a measurement that is already 0.5-1.5 s stale. One bounded exception: **sparse optical-flow tracking on the 320×240 `lores` stream, ~2-5 ms/frame at 15 Hz**, inside `perception_node`. See `VISION-DESIGN.md` Part 4.2. |
 | 9 | **Face recognition and scene understanding → remote REST** | Keeps the Pi free. Latency makes it advisory-only, never a stop path. |
 | 10 | **Two modes: scan and command, never simultaneous** | SLAM's loop-closure bursts are unpredictable and CPU-spiky. Putting them in the mode with no real-time deadline means they never have to coexist with the audio session. |
-| 11 | **Command mode runs no SLAM at first** | Obstacle avoidance needs `/scan`, not a map. Localization is only needed for "go to the kitchen," which isn't on the roadmap yet. |
+| 11 | **Command mode runs no SLAM, ever** | Obstacle avoidance needs `/scan`, not a map. Localization is only needed for "go to the kitchen," which isn't on the roadmap yet. *Reinforced by `VISION-DESIGN.md`: approach planning runs in the **odom frame only**, bounded at 3 m — beyond that it drives partway and re-plans. Odometry drift over 3 m is small next to a 1.5 m standoff radius, so the bound is what keeps SLAM out of command mode.* |
 | 12 | **Arduino firmware changes only once**, for the cliff reflex | Everything else stays as-is. The framed protocol with checksums is a better interface than micro-ROS would give you, and micro-ROS needs a 32-bit MCU anyway. |
 
 ### The principle behind #5 and #6
@@ -233,9 +238,17 @@ Shared between modes: `drivetrain_node`, `lidar_node`, `eink_node`,
 
 | Process | Contains | Why separate |
 |---|---|---|
-| `robot` | drivetrain, lidar relay, obstacle, e-ink, servo, battery, speech | All light. Nothing here can stall the stop |
-| `perception` | camera capture, REST calls | Network calls hang for seconds |
+| `robot` | drivetrain, lidar relay, obstacle, e-ink, servo, battery, speech, **gimbal, follow, approach planner, vision behavior** | All light. Nothing here can stall the stop |
+| `perception` | camera capture, REST calls, **the local tracker** | Network calls hang for seconds |
 | `voice` | the Gemini Live session | Needs steady timing; biggest CPU user |
+
+This split is what decides the vision layer's node graph, not the other way
+round. Anything that touches pixels must live in `perception` (rule #1 below);
+anything that needs a target at camera rate must **not**, because a REST call
+there will hang for seconds. `perception_node` therefore owns the tracker and
+publishes a tiny `/target_bearing`, and `gimbal_node` consumes it from `robot`.
+Inside `perception`, the REST call runs on its own thread so it cannot stall the
+tracker loop — the Part 9 #3 hazard, re-entered through a different door.
 
 ### 4.4 Target layout
 
@@ -304,6 +317,7 @@ Calibration becomes `ros2 param set`, live, no restart.
 | LD14P lidar | Pi | USB-TTL adapter, 230400 baud | 360° horizontal obstacles + mapping |
 | Camera | Pi | CSI ribbon | Frames → REST |
 | Servo (camera tilt) | Pi | hardware PWM, GPIO12 | Aim camera + TF-Luna |
+| Servo (camera pan) | Pi | hardware PWM, GPIO13 | Track a target without turning the base |
 | E-ink | Pi | SPI0 | Emotion + mode indication |
 | PiSugar | Pi | I²C (GPIO 2/3) | Battery |
 | Arduino | Pi | USB | Serial link |
@@ -316,7 +330,8 @@ Function          Pins
 E-ink (SPI0)      GPIO 8 (CE0), 9 (MISO), 10 (MOSI), 11 (SCLK)
                   + GPIO 25 (DC), 17 (RST), 24 (BUSY)
 PiSugar (I2C1)    GPIO 2 (SDA), 3 (SCL)
-Servo (PWM0)      GPIO 12          — needs dtoverlay=pwm-2chan
+Servo tilt (PWM0) GPIO 12          — needs dtoverlay=pwm-2chan
+Servo pan  (PWM1) GPIO 13          — same overlay, second channel
 Camera            CSI ribbon
 Lidar             USB (via USB-TTL adapter)
 Arduino           USB
@@ -332,10 +347,15 @@ and you do audio.
 twitches visibly while competing with the PortAudio callback. Use `gpiozero` with
 the `lgpio` backend for ordinary GPIO; `RPi.GPIO` is not the current path.
 
-**Power servo and lidar from the buck converter, not the Pi.** A servo under load
-and the lidar's 1 A spin-up surge will brown out a PiSugar-powered Pi mid-write
-and corrupt the SD card. Separate 5 V rail, ground shared with the Pi — the same
-star-ground discipline already in your README.
+**Power servos and lidar from the buck converter, not the Pi.** Two servos under
+load and the lidar's 1 A spin-up surge will brown out a PiSugar-powered Pi
+mid-write and corrupt the SD card. Separate 5 V rail, ground shared with the Pi —
+the same star-ground discipline already in your README.
+
+**Limit pan travel and give the CSI ribbon a service loop.** The camera ribbon
+does not tolerate repeated twisting. Clamp pan to ±90° in `servo_node` (rule #4:
+in the node, not the caller) and route the ribbon with slack before the head ever
+moves under software control.
 
 **udev rules before the second USB serial device.** Arduino and lidar will both
 be `/dev/ttyUSB*` and the numbering can swap on reboot. Name them by USB serial
@@ -370,16 +390,26 @@ continuous) — build in an off switch, which the mode split gives you for free.
 | Load | Cost (1 core = 100%) |
 |---|---|
 | Gemini Live audio | 5–10 % |
-| Camera → REST @ 1–2 Hz | 8–15 % |
+| Camera → REST @ 2 Hz | 5–8 % (down from 8–15 %: smaller payloads, binary not base64) |
+| Local LK tracker @ 15 Hz on 320×240 | 5–10 % (OpenCV, releases the GIL) |
 | Lidar driver + `/scan` | 3–5 % |
 | Obstacle policy from `/scan` | < 2 % |
 | Drivetrain serial | 2–3 % |
-| E-ink, servo, battery | < 1 % |
+| E-ink, servos, battery | < 1 % |
+| Gimbal control loop @ 20 Hz | < 1 % |
 | DDS transport at these rates | 1–3 % |
 | **slam_toolbox (mapping)** | **30–60 %, spiky** |
 
-Command mode sits around 25–35% of one core out of four. Scan mode is heavier but
-has no real-time deadline — which is exactly why the modes are split.
+Command mode sits around 30–45% of one core out of four, with the vision layer
+fully built. Scan mode is heavier but has no real-time deadline — which is
+exactly why the modes are split.
+
+The tracker is the only new CPU cost on the roadmap and it is the price of
+decision #8's amendment. It is bounded deliberately: 320×240, 15 Hz not 30, and
+sparse optical flow rather than a dense method or a correlation tracker. If it
+ever shows up in a profile, the knobs in order are rate, then resolution, then
+feature count — **not** a rewrite in another language. See the note at the end of
+Part 9.
 
 ### Memory
 
@@ -674,9 +704,9 @@ Retire `run_robot.py`; point `robot-voice.service` at the launch file.
 
 | Node | Does | Notes |
 |---|---|---|
-| `servo_node` | service `/tilt` (degrees) | Hardware PWM GPIO12. Clamp the range in the node, not the caller |
+| `servo_node` | services `/tilt` and `/pan` (degrees) | Hardware PWM GPIO12 (tilt) and GPIO13 (pan). Clamp both ranges in the node, not the caller. Publishes the `base_link → gimbal_pan → gimbal_tilt` transforms at 20 Hz |
 | `eink_node` | subscribes `/emotion`, `/mode` | **QoS `KEEP_LAST, depth=1`** — drop stale emotions rather than queueing |
-| `perception_node` | camera → REST → `/detections` | Wraps the `robot_core.camera` you already fixed in Phase 0 |
+| `perception_node` | camera → REST → `/detections` | Wraps the `robot_core.camera` you already fixed in Phase 0. **This is only the detect-and-publish skeleton** — the backpressure policy, the local tracker and the gimbal loop are `VISION-DESIGN.md` phases V1–V3 |
 
 The e-ink is slow: 2–15 s full refresh, 0.3–1 s partial. Depth-1 QoS is the
 declarative way to say "only the newest matters" — a face thirty seconds behind
@@ -747,10 +777,11 @@ is signed, which is the part people get wrong.
 
 **Two things to check first:**
 1. Measure the wheelbase (distance between wheel contact points).
-2. **Does the firmware stream encoder counts continuously, or only at move
-   completion?** SLAM needs a steady 10–20 Hz. If it only reports at the end of a
-   move, that's a second small firmware change — batch it with Phase F if you
-   can.
+2. ~~Does the firmware stream encoder counts continuously?~~ **Resolved —
+   it does.** `drivetrain_node` already declares `encoder_publish_hz` (default
+   10.0) and publishes `/encoders` on a timer, and the parameter is in
+   `robot.yaml`. No second firmware change needed; Phase F stays a single
+   change.
 
 Publish both `nav_msgs/Odometry` and the tf transform.
 
@@ -818,9 +849,15 @@ pixels. Obey this and DDS costs nothing.
 encoder. The old code wrote a JPEG to the SD card four times a second and never
 deleted them.
 
-**3. Send 720p, not 1080p.** Your wifi already carries a continuous microphone
-stream that must not stutter. 720p ≈ 120 KB; 1080p at 2 Hz ≈ 800 KB/s and the
-audio loses. "HD camera" describes the sensor, not the payload.
+**3. Match the payload to the model's input size, and send it binary.**
+*Revised — the original rule said "send 720p, not 1080p," which was right about
+1080p and too generous about 720p.* A YOLO-class detector runs at 640×640
+letterboxed, so a 720p payload buys pixels the model discards in its first
+operation. Send ~640 px on the long edge (~30 KB) as `multipart/form-data`, never
+base64 — base64 costs 33% for nothing. That is ~60 KB/s against ~320 KB/s for the
+original design, on a radio that already carries a continuous microphone stream
+that must not stutter. Capture high, send low, crop faces from the high one.
+"HD camera" describes the sensor, not the payload.
 
 **4. Enforcement belongs with the actuator.** Limits the model can talk itself
 out of aren't limits. Clamp in goal-rejection callbacks, not in tool handlers.
@@ -828,8 +865,20 @@ out of aren't limits. Clamp in goal-rejection callbacks, not in tool handlers.
 **5. Reflexes in firmware, policies on the Pi.** One number and one threshold →
 Arduino. Anything needing judgment or iteration → Python.
 
-**6. Log what you drop.** Skipped gestures, dropped emotions, throttled events —
-silent discarding reads as "it's working" when it isn't.
+**6. Log what you drop.** Skipped gestures, dropped emotions, throttled events,
+dropped frames, stale and out-of-order REST results — silent discarding reads as
+"it's working" when it isn't.
+
+**7. A measurement is worthless without its timestamp and its frame.** Any sensor
+reading that crosses a latency boundary carries when it was taken and where the
+sensor was pointing. A bbox is not a bearing until you know the capture time, the
+gimbal angles and the base pose at that instant. See `VISION-DESIGN.md` Part 2.
+
+**8. One request in flight; drop, don't queue.** Every network call from the
+robot to an external service gets exactly one outstanding request, a hard
+timeout, and a policy of dropping new work rather than queueing it. A queue in
+front of a slow link turns a wifi hiccup into the robot acting on
+three-second-old data.
 
 ---
 
@@ -861,6 +910,52 @@ cheap insurance during the transition.
 
 **7. Wifi is a shared resource.** The mode split doesn't fix this — command mode
 still has audio and camera POSTs on the same radio. Rule 3 is the mitigation.
+
+**8. Every REST detection is stale on arrival, and the head has moved since.**
+100–500 ms of round trip plus a 1–2 Hz call rate means a detection describes the
+world 0.5–1.5 s ago, in the frame of a camera that has since panned. Acting on it
+as if it were current is the single easiest way to build a vision layer that is
+smoothly, confidently wrong. Rule 7 is the mitigation; `VISION-DESIGN.md` Part 2
+is the implementation.
+
+**9. Re-anchoring a track by overwriting it.** When a detection finally arrives,
+the tempting move is to snap the tracked box to it. That box is 0.5–1.5 s old, so
+snapping to it reintroduces exactly the REST-rate jumping the tracker was added
+to remove. Correct by the *difference* against the track's own historical box at
+that `seq`. `VISION-DESIGN.md` Part 4.2.
+
+---
+
+### A note on rewriting this in C++
+
+It will be tempting, somewhere around Phase 5, to decide the Pi code is too slow
+and should be C++. It almost certainly shouldn't, and it's worth writing down why
+while the reasoning is fresh.
+
+**Everything actually latency-critical here is already C++.** The PID and the
+cliff reflex are Arduino firmware. `ldlidar_ros2` is C++. `slam_toolbox` is C++.
+OpenCV is C++ with a thin binding that releases the GIL. What's left in Python is
+policy at 1–10 Hz, serial framing at ~100 Hz, and state machines — nowhere near
+where the language is the bound.
+
+**The p99 problem is latency *variance*, not throughput** — scheduler, GIL
+contention, GC pauses, network. C++ removes two of those four and leaves the two
+that dominate. The budget is already 167 ms of lidar scan period plus 100–500 ms
+of REST round trip; a rewrite buys maybe 10–30 ms off the tail. Part 2 of
+`HARDWARE-BASICS.md` names the correct knobs and they are all cheaper: process
+isolation (done), `nice`, rate, resolution. Language is last.
+
+**What it would cost:** `colcon` C++ builds on a Pi, the end of laptop-testable
+Layer A, the end of "delete Layer B and you still have a robot," and a rewrite of
+the most debugged code in the repo — the framed serial protocol, the out-of-band
+e-stop, the motion executor.
+
+So: **measure p99 first**, with the voice session live, and only consider
+rewriting a specific loop that a profile actually names. And if CPU genuinely
+binds, a Pi 5 buys more than a Python→C++ rewrite of anything in this plan, for a
+weekend of zero engineering — with the caveats that GPIO and PWM go through the
+RP1 southbridge so the overlay config differs, power draw is higher, and PiSugar
+compatibility needs checking first.
 
 ---
 
@@ -919,3 +1014,9 @@ colcon build --packages-select robot_interfaces
 Phases F and 0 are independent of everything and of each other. Phase 3 is the
 end of the migration — a natural stopping point if enthusiasm runs out, with
 nothing left half-done.
+
+**The vision layer interleaves rather than follows.** `VISION-DESIGN.md` Part 9
+has its own V0–V6 table; the dependencies onto this plan are: V0 needs Phase 0
+item 5 (still undone), V1 needs Phase 3, V3 needs Phase 4, V5 needs Phase 5, V6
+needs Phase 6. V1 is the one to reach early — it measures the bandwidth and
+latency the rest of that document's constants are guesses about.

@@ -74,7 +74,9 @@ def main(args=None) -> None:
             robot_log.event("audio.error", logging.WARNING, stage="tts-prime",
                             primed=primed,
                             err="some static phrases are not cached")
-
+            
+        # strating session, stop all motion if queued via previous start
+        motion.stop()
         run_live_agent(motion)
         robot_log.event("session.stop", reason="clean exit")
     except KeyboardInterrupt:

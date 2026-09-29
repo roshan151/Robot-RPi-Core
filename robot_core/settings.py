@@ -343,21 +343,52 @@ ESTOP_SEQ_MIN = 240
 ESTOP_SEQ_MAX = 255
 NORMAL_SEQ_MAX = ESTOP_SEQ_MIN - 1     # normal commands use 0..239
 
-# Vision HTTP API (run Vision service: uvicorn Vision.app:app --host 0.0.0.0 --port 8080)
-VISION_SERVICE_URL = os.environ.get(
-    "VISION_SERVICE_URL",
-    "http://127.0.0.1:8080/detect_objects:frame",
-)
+# ---------------------------------------------------------------------------
+# Vision service
+# ---------------------------------------------------------------------------
+# The off-Pi perception service, normally the Mac mini on the LAN. Source and
+# the full endpoint contract live in vision_service/; the design rationale is in
+# docs/VISION-DESIGN.md Part 3.
+#
+# This is a BASE URL, not a single endpoint. The gateway client appends the
+# versioned paths and is the only thing that knows them:
+#
+#   POST {base}/v1/detect          object detection, ~2 Hz, the hot path
+#   POST {base}/v1/faces/embed     once per person track, not per frame
+#   POST {base}/v1/faces/match     identity lookup (no GPU, sub-millisecond)
+#   POST {base}/v1/faces/enroll    admin/offline
+#   POST {base}/v1/depth           FALLBACK ONLY — prefer lidar range at bearing
+#   GET  {base}/healthz            liveness, backend kind, queue depth
+#
+# Start it with: cd vision_service && ./run.sh
+VISION_SERVICE_BASE_URL = os.environ.get(
+    "VISION_SERVICE_BASE_URL",
+    os.environ.get("VISION_SERVICE_URL", "http://127.0.0.1:8080"),
+).rstrip("/")
 
-# Comma-separated class names; if any appear, guardian may stop the robot while moving
-VISION_HALT_OBJECTS = [
-    s.strip()
-    for s in os.environ.get("VISION_HALT_OBJECTS", "").split(",")
-    if s.strip()
-]
+# Send binary multipart, never base64 (33% inflation for nothing), and size the
+# payload to the detector's input rather than to the camera's sensor. See
+# PLAN.md standing rule #3.
+VISION_DETECT_LONG_EDGE_PX = int(os.environ.get("VISION_DETECT_LONG_EDGE_PX", "640"))
 
-# Guardian poll rate (Hz) while robot reports motion
-VISION_GUARD_HZ = float(os.environ.get("VISION_GUARD_HZ", "4.0"))
+# Backpressure, the Pi half of PLAN.md standing rule #8: one request in flight,
+# hard timeout, drop frames rather than queue them, discard stale results.
+VISION_DETECT_HZ = float(os.environ.get("VISION_DETECT_HZ", "2.0"))
+VISION_DETECT_TIMEOUT_S = float(os.environ.get("VISION_DETECT_TIMEOUT_S", "0.6"))
+VISION_MAX_RESULT_AGE_S = float(os.environ.get("VISION_MAX_RESULT_AGE_S", "1.0"))
+
+# --- RETIRED ---------------------------------------------------------------
+# VISION_HALT_OBJECTS and VISION_GUARD_HZ configured a camera-based obstacle
+# guardian that could stop the robot. That is now a contradiction rather than a
+# feature: decision #7 gives horizontal obstacles to the lidar, and REST
+# inference is advisory by construction — 100-500 ms of round trip, and nothing
+# at all when the wifi drops. HARDWARE-BASICS.md Part 7 puts it plainly: the
+# lidar stops the robot, the camera tells the agent what is there.
+#
+# Nothing reads these. They are kept named here only so an old .env does not
+# look like it is still doing something.
+VISION_HALT_OBJECTS: list[str] = []   # retired — the camera never stops the robot
+VISION_GUARD_HZ = 0.0                 # retired — see above
 
 # ---------------------------------------------------------------------------
 # Secrets
