@@ -1,0 +1,10 @@
+# Monocular free-space check via /v1/depth on the latest frame.
+string  mode              # "full" (which way is open?) | "corridor" (floor straight ahead)
+float32 corridor_top_v    # corridor only: normalised row where the floor check stops (target's feet)
+---
+bool    ok
+bool    known             # false = couldn't tell (tilted up, no floor visible, service down)
+bool    ahead_clear
+bool    has_best
+float32 best_bearing_deg  # robot-body frame, + = right
+string  summary

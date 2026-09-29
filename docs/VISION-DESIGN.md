@@ -662,6 +662,38 @@ bookkeeping.
 
 ---
 
+## Part 12 — As built (V0–V5), and where it differs
+
+Code: `robot_core/camera.py`, `robot_core/servo.py`, `robot_core/perception/`
+(all the logic, no ROS, 60 tests), `ros2_ws/src/robot_vision/` (three thin
+nodes), `robot_voice/ros_bridge.py::RosVision` (voice tools). The vision
+service itself now lives in the separate Vision-Microservice repo.
+
+Built as designed: frame stamps with sensor timestamps (2.1); the one-in-flight
+detect gateway with every counter (4.3); the LK tracker with forward-backward
+check and difference-based re-anchoring (4.2); sticky per-track identity with
+two agreeing matches (6); pan/tilt with slew limit, clamps, `settled` and the
+±30°/±60° reacquire sweep (4.4, 7.2); `perception` in its own process.
+
+Different, and why:
+
+| Design | As built | Why |
+|---|---|---|
+| `lores` 320×240 | **320×180** | `main` is 16:9; a 4:3 lores would squash the tracker's pixels |
+| Range from `/scan` at the bearing (3) | **Bbox-size pinhole estimate** (person 1.7 m tall; shoulder width when cut by the frame edge) | No lidar yet. ±20–30%, so `FOLLOW_STOP_M` is 0.9 not 0.8 |
+| `obstacle_node` veto outranks follow (7.2) | **Every forward step needs a fresh `/v1/depth` floor check**, far-row/near-row nearness ratio, scale-free so it works with relative depth | No lidar veto exists to outrank anything. Not a safety system; a steering hint that refuses to step without evidence |
+| Follow publishes a bearing for a motion node | **Short chained Drive/Turn goals**, one at a time, only after perception re-anchors the target since the last step | The drivetrain has no velocity mode; this reuses its limits and e-stop |
+| Approach: ring of viewpoints in odom (7.1) | **Face → floor check → step (≤0.5 m) → re-detect**, one detour toward the clearest heading, 3 m bound | No odometry (Phase 6) or scan to score candidates with |
+| Gimbal aims at the target | **Tilt capped at +3° while the base moves** (except while a named person's identity is still resolving) | A head tilted up at a face sees no floor, so the floor check could never pass |
+| `servo_node` + `gimbal_node` | **One `gimbal_node`** | Nothing else uses the servos; no tf yet (no Phase 6) |
+| tf chain (2.2) | **Body bearing = image bearing + commanded pan at capture** | Equivalent without tf; switch to `lookup_transform` at `t_capture` when Phase 6 lands |
+
+When the lidar arrives: replace `CameraModel.distance_m` with range-at-bearing
+from `/scan` in `scene.target_views`, add `obstacle_node`, and the floor check
+becomes a secondary hint rather than the only gate.
+
+---
+
 ## Appendix — Constants introduced here
 
 | Constant | Start at | Set in | Notes |

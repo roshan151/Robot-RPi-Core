@@ -31,11 +31,15 @@ import asyncio
 import threading
 from typing import Any, Dict, Optional
 
+import time
+
 from rclpy.action import ActionClient
 from rclpy.node import Node
+from std_msgs.msg import String
 from std_srvs.srv import Trigger
 
 from robot_interfaces.action import Drive, Turn
+from robot_interfaces.srv import ClearPath, Enroll, Look, StartBehavior
 
 class RosMotion:
     """MotionBackend over /drive, /turn and /estop."""
@@ -153,3 +157,102 @@ class RosMotion:
             self._loop.call_soon_threadsafe(self.results.put_nowait, event)
         except RuntimeError:
             pass            # loop already closed; the session is going down
+
+
+class RosVision:
+    """VisionBackend over the perception and behavior services.
+
+    Same rules as RosMotion: every call is `call_async` with a callback, the
+    tool returns at once, and the answer is pushed onto the SAME results queue
+    the agent already drains — as {"text": ...}, one line of context. Behavior
+    events (/vision/events: recognised, lost, reacquired, arrived, gave up)
+    arrive the same way, unasked, which is what lets the model follow along
+    without polling.
+    """
+
+    EVENT_REPEAT_S = 30.0      # "recognised roshan" once per 30 s, not per new track
+
+    def __init__(self, node: Node, loop: asyncio.AbstractEventLoop,
+                 results: asyncio.Queue) -> None:
+        self._loop = loop
+        self.results = results
+        self._look = node.create_client(Look, "vision/look")
+        self._clear = node.create_client(ClearPath, "vision/clear_path")
+        self._enroll = node.create_client(Enroll, "vision/enroll")
+        self._start = node.create_client(StartBehavior, "vision/start")
+        self._stop = node.create_client(Trigger, "vision/stop_behavior")
+        self._recent: Dict[str, float] = {}
+        node.create_subscription(String, "vision/events", self._on_event, 10)
+
+    # ---------------------------------------------------------- VisionBackend
+
+    def look(self) -> Dict[str, Any]:
+        return self._call(self._look, Look.Request(filter=""), "look",
+                          lambda r: r.summary)
+
+    def who(self) -> Dict[str, Any]:
+        return self._call(self._look, Look.Request(filter="person"), "who",
+                          lambda r: r.summary)
+
+    def follow(self, name: Optional[str] = None) -> Dict[str, Any]:
+        req = StartBehavior.Request(behavior="follow", target=name or "")
+        return self._call(self._start, req, "follow", lambda r: r.message)
+
+    def approach(self, what: str) -> Dict[str, Any]:
+        req = StartBehavior.Request(behavior="approach", target=what)
+        return self._call(self._start, req, "approach", lambda r: r.message)
+
+    def look_at(self, what: str) -> Dict[str, Any]:
+        req = StartBehavior.Request(behavior="look", target=what)
+        return self._call(self._start, req, "look at", lambda r: r.message)
+
+    def stop_following(self) -> Dict[str, Any]:
+        if self._stop.service_is_ready():
+            self._stop.call_async(Trigger.Request())
+        return {"ok": True, "stopped": True}
+
+    def clear_path(self) -> Dict[str, Any]:
+        def fmt(r) -> str:
+            if not r.ok or not r.known:
+                return f"can't tell which way is clear: {r.summary}"
+            text = r.summary
+            if r.has_best and abs(r.best_bearing_deg) >= 5:
+                text += f" (turn({r.best_bearing_deg:.0f}) would face it)"
+            return text
+        return self._call(self._clear, ClearPath.Request(mode="full"), "path", fmt)
+
+    def remember_face(self, name: str) -> Dict[str, Any]:
+        req = Enroll.Request(label=name, images=0)
+        return self._call(self._enroll, req, "remember", lambda r: r.message)
+
+    def close(self) -> None:
+        pass
+
+    # ------------------------------------------------------------- internals
+
+    def _call(self, client, req, label: str, fmt) -> Dict[str, Any]:
+        if not client.service_is_ready():
+            return {"ok": False, "error": f"{label}: vision is not running"}
+        fut = client.call_async(req)
+        fut.add_done_callback(lambda f: self._on_done(f, label, fmt))
+        return {"ok": True, "pending": True, "note": "the answer follows as a [robot] line"}
+
+    def _on_done(self, fut, label: str, fmt) -> None:
+        try:
+            text = fmt(fut.result())
+        except Exception as e:                                # noqa: BLE001
+            text = f"failed: {type(e).__name__}: {e}"
+        self._push(f"{label}: {text}")
+
+    def _on_event(self, msg: String) -> None:
+        now = time.monotonic()
+        if now - self._recent.get(msg.data, -1e9) < self.EVENT_REPEAT_S:
+            return
+        self._recent[msg.data] = now
+        self._push(msg.data)
+
+    def _push(self, text: str) -> None:
+        try:
+            self._loop.call_soon_threadsafe(self.results.put_nowait, {"text": text})
+        except RuntimeError:
+            pass

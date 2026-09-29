@@ -4,10 +4,11 @@
   <name>robot_interfaces</name>
   <version>0.1.0</version>
   <description>
-    Actions and messages for the robot. Deliberately three definitions: every
-    custom type is a build step and a version-skew risk, so anything the
-    standard messages already cover (std_srvs/Trigger for the e-stop,
-    sensor_msgs/BatteryState for the battery) is reused rather than redefined.
+    Actions, messages and services for the robot. Every custom type is a build
+    step and a version-skew risk, so anything the standard messages already
+    cover (std_srvs/Trigger for the e-stop and for stopping a behavior,
+    std_msgs/String for vision events) is reused rather than redefined. The
+    vision types exist because their fields are the contract.
   </description>
   <maintainer email="roshan.151tiwari@gmail.com">Roshan Tiwari</maintainer>
   <license>MIT</license>
@@ -15,6 +16,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
+  <depend>std_msgs</depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>
 

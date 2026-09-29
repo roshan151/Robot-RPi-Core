@@ -316,6 +316,17 @@ Rules that matter:
   - Defaults when no number is given: 1 metre, 90 degrees.
   - turn() takes positive degrees for RIGHT, negative for LEFT.
     drive() takes positive metres for FORWARD, negative for BACKWARD.
+
+Camera (when those tools are offered):
+  - look / who_is_there / find_clear_path answer a moment later as a line
+    starting with [robot]. Wait for it before acting on what you "saw".
+  - "follow me" -> follow_person(); "follow Sam" -> follow_person("sam").
+    "stop following", "stay", "wait there" -> stop_following().
+  - "go to the chair" -> approach("chair"). Only objects you could name in a
+    photo work; if you are unsure it is in view, look first.
+  - [robot] lines also report on their own: who was recognised, a person lost
+    or found again, arriving, or giving up. Use them; don't ask again.
+  - Before driving somewhere you weren't told is clear, find_clear_path first.
 """)
 
 # ---------------------------------------------------------------------------
@@ -376,6 +387,51 @@ VISION_DETECT_LONG_EDGE_PX = int(os.environ.get("VISION_DETECT_LONG_EDGE_PX", "6
 VISION_DETECT_HZ = float(os.environ.get("VISION_DETECT_HZ", "2.0"))
 VISION_DETECT_TIMEOUT_S = float(os.environ.get("VISION_DETECT_TIMEOUT_S", "0.6"))
 VISION_MAX_RESULT_AGE_S = float(os.environ.get("VISION_MAX_RESULT_AGE_S", "1.0"))
+
+VISION_MIN_CONFIDENCE = float(os.environ.get("VISION_MIN_CONFIDENCE", "0.4"))
+
+# Local tracker rate on the lores stream (VISION-DESIGN Part 4.2).
+VISION_TRACK_HZ = float(os.environ.get("VISION_TRACK_HZ", "15.0"))
+VISION_MIN_INLIERS = int(os.environ.get("VISION_MIN_INLIERS", "8"))
+VISION_REACQUIRE_S = float(os.environ.get("VISION_REACQUIRE_S", "5.0"))
+# Consecutive detect failures before perception reports DEGRADED.
+VISION_DEGRADED_AFTER = int(os.environ.get("VISION_DEGRADED_AFTER", "5"))
+
+# Camera. HFOV decides every bearing: Camera Module 3 standard is ~66 deg,
+# the Wide variant ~102 deg. Measure yours (VISION-DESIGN Part 2.3).
+CAMERA_KIND = os.environ.get("CAMERA_KIND", "auto")          # auto | pi | opencv
+CAMERA_HFOV_DEG = float(os.environ.get("CAMERA_HFOV_DEG", "66.0"))
+CAMERA_HFLIP = os.environ.get("CAMERA_HFLIP", "0") == "1"
+CAMERA_VFLIP = os.environ.get("CAMERA_VFLIP", "0") == "1"
+
+# Face identity (Part 6). The match threshold itself lives on the server.
+FACE_MIN_QUALITY = float(os.environ.get("FACE_MIN_QUALITY", "0.6"))
+FACE_ENROLL_IMAGES = int(os.environ.get("FACE_ENROLL_IMAGES", "6"))
+
+# Gimbal (pan GPIO13 / tilt GPIO12, hardware PWM). Degrees; pan + = right,
+# tilt + = up. Trim absorbs how the servo horn went on; invert flips direction.
+GIMBAL_PAN_MIN = float(os.environ.get("GIMBAL_PAN_MIN", "-90"))
+GIMBAL_PAN_MAX = float(os.environ.get("GIMBAL_PAN_MAX", "90"))
+GIMBAL_TILT_MIN = float(os.environ.get("GIMBAL_TILT_MIN", "-30"))
+GIMBAL_TILT_MAX = float(os.environ.get("GIMBAL_TILT_MAX", "45"))
+GIMBAL_PAN_TRIM = float(os.environ.get("GIMBAL_PAN_TRIM", "0"))
+GIMBAL_TILT_TRIM = float(os.environ.get("GIMBAL_TILT_TRIM", "0"))
+GIMBAL_PAN_INVERT = os.environ.get("GIMBAL_PAN_INVERT", "0") == "1"
+GIMBAL_TILT_INVERT = os.environ.get("GIMBAL_TILT_INVERT", "0") == "1"
+GIMBAL_PWM_CHIP = int(os.environ.get("GIMBAL_PWM_CHIP", "0"))   # 2 on a Pi 5
+GIMBAL_MAX_RATE_DPS = float(os.environ.get("GIMBAL_MAX_RATE_DPS", "120"))
+GIMBAL_SETTLE_MS = float(os.environ.get("GIMBAL_SETTLE_MS", "120"))
+
+# Following (Part 7.2). With no lidar yet, these are enforced by follow_node
+# alone from a bbox-size distance estimate — hence wider than the doc's.
+FOLLOW_STOP_M = float(os.environ.get("FOLLOW_STOP_M", "0.9"))
+FOLLOW_STANDOFF_M = float(os.environ.get("FOLLOW_STANDOFF_M", "1.3"))
+FOLLOW_MAX_STEP_M = float(os.environ.get("FOLLOW_MAX_STEP_M", "0.3"))
+FOLLOW_SPEED_PCT = float(os.environ.get("FOLLOW_SPEED_PCT", "0"))   # 0 = drivetrain default
+
+# Approach (Part 7.1, odom-free version).
+APPROACH_STANDOFF_M = float(os.environ.get("APPROACH_STANDOFF_M", "0.6"))
+MAX_APPROACH_M = float(os.environ.get("MAX_APPROACH_M", "3.0"))
 
 # --- RETIRED ---------------------------------------------------------------
 # VISION_HALT_OBJECTS and VISION_GUARD_HZ configured a camera-based obstacle

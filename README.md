@@ -24,13 +24,17 @@ test for it (`tests/test_layering.py`).
 | `robot_core/live/agent.py` | The Gemini Live session: mic uplink, event pump, result feedback |
 | `robot_core/live/tools.py` | `drive` / `turn` / `stop` / `answer`, as Live function declarations |
 | `robot_core/speech.py` | Gemini TTS over REST, cached to disk |
+| `robot_core/camera.py` | picamera2 capture: 1280×720 + 320×180 of the same moment, sensor-stamped, JPEG in memory |
+| `robot_core/servo.py` | Pan/tilt servos on hardware PWM (GPIO13 pan, GPIO12 tilt) |
+| `robot_core/perception/` | The vision layer without ROS: service client, detect backpressure, LK tracker, face identity, free-space, follow / approach / gimbal logic |
 | `robot_core/run.py` | Run everything **without** ROS — the bench path and the fallback |
 | **`ros2_ws/src/`** | **Layer B — thin nodes** |
 | `robot_interfaces/` | `Drive.action`, `Turn.action`, `Encoders.msg` |
 | `robot_drivetrain/` | Action servers, the e-stop service, encoder telemetry |
-| `robot_voice/` | The Live session as a node, plus `RosMotion` (MotionBackend over actions) |
+| `robot_voice/` | The Live session as a node, plus `RosMotion` and `RosVision` (the backends the tools call) |
+| `robot_vision/` | `perception_node` (own process), `gimbal_node` and `behavior_node` (in the robot process) |
 | `robot_bringup/` | Launch files, `robot.yaml`, and the one-process node host |
-| **`vision_service/`** | **The off-Pi perception service — runs on the Mac mini, not the robot** |
+| *Vision-Microservice* (separate repo) | **The off-Pi perception service — runs on the Mac mini, not the robot** |
 | `tests/` | Unit tests — no hardware, no ROS needed |
 | `tests/hardware/` | `check_*.py` diagnostics that need a real robot |
 | `docs/PLAN.md` | The migration and expansion plan. Start here |
@@ -63,8 +67,8 @@ Longer power/wiring notes from your build are still valid; keep motor supply sep
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[voice]"
-pytest                      # 49 tests, no hardware required
+pip install -e ".[voice,dev]"
+pytest                      # 109 tests, no hardware, camera or ROS required
 ```
 
 **Layer B** (on the Pi) needs ROS 2 Jazzy. See `docs/PLAN.md` Part 3 for the
@@ -92,18 +96,17 @@ All can be set in a `.env` file, in `/etc/robot.env` for the systemd service, or
 | `VISION_SERVICE_BASE_URL` | Base URL of the vision service, e.g. `http://mini.local:8080` |
 | `VISION_DETECT_HZ` | Detect call rate (default 2.0) |
 | `VISION_DETECT_TIMEOUT_S` | Hard abandon, no retry (default 0.6) |
+| `CAMERA_HFOV_DEG` | Horizontal field of view. **Every bearing depends on it**: Camera Module 3 ≈ 66, Wide ≈ 102 |
+| `GIMBAL_PAN_TRIM` / `GIMBAL_TILT_TRIM` / `*_INVERT` | Servo centring and direction; set with `check_vision_stack.py --servos` |
+| `FOLLOW_STANDOFF_M` / `FOLLOW_STOP_M` | Following distance (1.3 m) and the distance below which it never steps forward (0.9 m) |
 | `OPENAI_API_KEY` / `OPENAI_API_KEY_ROBIN` | Voice + planning |
 
 ### Vision service
 
 The perception models run **off the Pi** — normally on a Mac mini on the LAN,
-because the Pi has no GPU. Source, endpoint contract and deployment live in
-[`vision_service/`](vision_service/README.md); the design rationale is in
-[`docs/VISION-DESIGN.md`](docs/VISION-DESIGN.md).
-
-```bash
-cd vision_service && pip install -e '.[models,dev]' && ./run.sh
-```
+because the Pi has no GPU. Source, endpoint contract and deployment live in the
+**Vision-Microservice** repo (on the mini: `make deploy`, `make status`); the
+design rationale is in [`docs/VISION-DESIGN.md`](docs/VISION-DESIGN.md).
 
 `VISION_SERVICE_BASE_URL` is a **base URL** (default `http://127.0.0.1:8080`),
 not a single endpoint — the gateway client appends the versioned paths
@@ -155,6 +158,94 @@ processes mean separate GILs, so a stall in the conversation cannot delay a stop
 
 As a service: `start_robot.sh` sources both overlays and launches the graph;
 `robot-voice.service` calls it.
+
+---
+
+## Vision: detection, faces, clear path, following
+
+The camera, the pan/tilt head and the Mac mini's vision service together give
+the robot four abilities, all usable by voice:
+
+| Say | Tool | What happens |
+|---|---|---|
+| "What do you see?" | `look` | Objects in view, with direction and rough distance |
+| "Who's there?" | `who_is_there` | People in view, by name if their face is enrolled |
+| "Remember me, I'm Roshan" | `remember_face` | ~6 face crops of the person in front → enrolled on the mini |
+| "Which way is clear?" | `find_clear_path` | Monocular depth across the floor → clearest heading |
+| "Go to the chair" | `approach` | Face it, check the floor, step up to 0.5 m at a time, stop ~0.6 m short (max 3 m total) |
+| "Follow me" / "Follow Roshan" | `follow_person` | Head tracks the person; base steps 0.3 m at a time to hold ~1.3 m |
+| "Stop" / "Stop following" | `stop` / `stop_following` | Ends the behavior (stop also brakes) |
+
+Answers come back to the model as `[robot] ...` lines, as do unprompted events
+(recognised someone, lost / reacquired the person, arrived, gave up).
+
+### How it runs
+
+```
+perception process   perception_node   camera 15 Hz → LK tracker → /tracks
+                                       every 0.5 s → /v1/detect (one in flight, never queued)
+                                       new person track → /v1/faces/embed + match, sticky
+robot process        gimbal_node       /gimbal/command → servos, 20 Hz, publishes /gimbal/state
+                     behavior_node     /tracks → look | follow | approach → /drive, /turn goals
+voice process        voice_node        tools → /vision/* services; /vision/events → the model
+```
+
+No pixels cross a topic. The design and every constant are explained in
+`docs/VISION-DESIGN.md`; Part 12 lists where this build differs from it.
+
+### Safety without the lidar
+
+The design leans on the LD14P lidar for range and for a hard obstacle veto.
+Until it's fitted:
+
+- **Distance is estimated from the box size** (a person is ~1.7 m tall). Good
+  to ±20–30%, which is why the follow stop distance is 0.9 m, not 0.8.
+- **Every forward step needs a fresh floor check** from `/v1/depth`: "is
+  anything between us and the target?" No fresh check, no step. It sees
+  furniture and walls, not low clutter, glass or mirrors.
+- **Steps are short** (0.3 m following, 0.5 m approaching) and go through the
+  drivetrain's action servers, so its limits and `/estop` still apply.
+- **Too close → hold, never reverse.** There is no rear sensor.
+- **Vision service down → the behavior stops** and the agent is told.
+
+Treat following as supervised until the lidar is in. Keep a hand near "stop".
+
+### Setting it up on the Pi
+
+```bash
+# 1. Servos: hardware PWM on GPIO12 (tilt) + GPIO13 (pan), powered from the buck 5 V rail
+echo "dtoverlay=pwm-2chan" | sudo tee -a /boot/firmware/config.txt && sudo reboot
+
+# 2. Camera + Python deps (picamera2 comes from apt; let the venv see it)
+sudo apt install -y python3-picamera2
+python3 -m venv --system-site-packages .venv && source .venv/bin/activate
+pip install -e ".[voice,vision,gimbal,dev]"
+
+# 3. Point it at the mini, and tell it your lens
+echo "VISION_SERVICE_BASE_URL=http://<mini-ip>:8080" >> robot_core/.env
+echo "CAMERA_HFOV_DEG=66" >> robot_core/.env          # 102 for the Wide module
+
+# 4. Bench checks, no ROS
+python tests/hardware/check_vision_stack.py --servos   # directions + trim
+python tests/hardware/check_vision_stack.py --seconds 30 --save look.jpg
+
+# 5. Rebuild interfaces (new .msg/.srv) and launch
+cd ros2_ws && colcon build --symlink-install && source install/setup.bash && cd ..
+ros2 launch robot_bringup command.launch.py
+```
+
+| Want | Command |
+|------|---------|
+| Without camera / vision service | `ros2 launch robot_bringup command.launch.py vision:=false` |
+| What does it see | `ros2 service call /vision/look robot_interfaces/srv/Look "{filter: ''}"` |
+| Follow whoever's there | `ros2 service call /vision/start robot_interfaces/srv/StartBehavior "{behavior: follow, target: ''}"` |
+| Go to a chair | `ros2 service call /vision/start robot_interfaces/srv/StartBehavior "{behavior: approach, target: chair}"` |
+| Stop the behavior | `ros2 service call /vision/stop_behavior std_srvs/srv/Trigger` |
+| Enroll a face | `ros2 service call /vision/enroll robot_interfaces/srv/Enroll "{label: roshan, images: 6}"` |
+| Which way is clear | `ros2 service call /vision/clear_path robot_interfaces/srv/ClearPath "{mode: full}"` |
+| Aim the head | `ros2 service call /aim robot_interfaces/srv/Aim "{pan_deg: 30, tilt_deg: 10}"` |
+| Health | `ros2 topic echo /perception_status` (`DEGRADED` = mini unreachable) |
+| What the behavior is doing | `ros2 topic echo /vision/behavior_status` |
 
 ## Robot images
 

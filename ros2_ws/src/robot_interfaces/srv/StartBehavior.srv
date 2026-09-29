@@ -1,0 +1,5 @@
+string behavior           # look | follow | approach
+string target             # look/approach: class name ("person", "chair"); follow: a name, or "" for whoever is there
+---
+bool   ok
+string message

@@ -1,0 +1,6 @@
+# Capture face crops of the person in front of the camera and enroll them.
+string label
+int32  images             # 0 = default (FACE_ENROLL_IMAGES)
+---
+bool   ok
+string message

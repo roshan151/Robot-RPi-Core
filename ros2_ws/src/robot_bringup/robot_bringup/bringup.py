@@ -21,17 +21,22 @@ import rclpy
 from rclpy.executors import MultiThreadedExecutor
 
 from robot_drivetrain.drivetrain_node import DrivetrainNode
+from robot_vision.behavior_node import BehaviorNode
+from robot_vision.gimbal_node import GimbalNode
 
-NUM_THREADS = 6
+# One for a move in progress, one for the e-stop, the gimbal's 20 Hz tick, the
+# behavior tick, and headroom for action/service callbacks.
+NUM_THREADS = 8
 
 
 def main(args=None) -> None:
     rclpy.init(args=args)
 
-    nodes = [DrivetrainNode()]
-    # Phase 3 has one node here. battery_node, speech_node, eink_node and
-    # obstacle_node join this list as they land — the executor and the launch
-    # file do not change.
+    nodes = [DrivetrainNode(), GimbalNode(), BehaviorNode()]
+    # battery_node, speech_node, eink_node and obstacle_node join this list as
+    # they land — the executor and the launch file do not change.
+    # perception_node is deliberately NOT here: it makes network calls, which
+    # hang for seconds, so it gets its own process (command.launch.py).
 
     executor = MultiThreadedExecutor(num_threads=NUM_THREADS)
     for node in nodes:

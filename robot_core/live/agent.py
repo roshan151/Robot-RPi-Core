@@ -104,7 +104,7 @@ class LiveAgent:
         cfg: Dict[str, Any] = {
             "response_modalities": [settings.LIVE_RESPONSE_MODALITY],
             "system_instruction": settings.LIVE_SYSTEM_PROMPT,
-            "tools": [{"function_declarations": declarations()}],
+            "tools": [{"function_declarations": self._tools.declarations()}],
 
             # Let Gemini perform server-side voice activity detection (VAD).
             #
@@ -306,8 +306,12 @@ class LiveAgent:
         """
         while True:
             event = await results.get()
-            text = (f"[robot] {event['op']} {event['value']:g}: "
-                    f"{event['status']}")
+            if "text" in event:
+                # Vision results and behavior events arrive already worded.
+                text = f"[robot] {event['text']}"
+            else:
+                text = (f"[robot] {event['op']} {event['value']:g}: "
+                        f"{event['status']}")
             robot_log.event("voice.feedback", text=text)
             await session.send_client_content(
                 turns={"role": "user", "parts": [{"text": text}]},
@@ -552,14 +556,16 @@ def _on_failure(tools: RobotTools, agent: LiveAgent, exc: BaseException) -> None
     speech.error(_spoken_cause(exc))
 
 
-def run_live_agent(motion) -> None:
-    """Blocking entrypoint. `motion` is a MotionBackend (robot_core/motion.py).
+def run_live_agent(motion, vision=None) -> None:
+    """Blocking entrypoint. `motion` is a MotionBackend (robot_core/motion.py);
+    `vision`, if given, is a VisionBackend (robot_core/perception/backend.py)
+    and adds the camera tools.
 
     Does not close the backend — whoever built it owns it. In the ROS build
     that is the voice node, which needs its action clients to outlive one
     session so the supervisor can reconnect without rebuilding them.
     """
-    tools = RobotTools(motion)
+    tools = RobotTools(motion, vision)
     try:
         asyncio.run(_run_supervised(tools))
     except KeyboardInterrupt:

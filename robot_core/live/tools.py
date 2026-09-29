@@ -34,6 +34,7 @@ from typing import Any, Callable, Dict, Optional
 from robot_core import robot_log, settings
 from robot_core.gestures import VOCABULARY, Gesturer
 from robot_core.motion import MotionBackend
+from robot_core.perception.backend import VisionBackend
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +115,93 @@ def declarations() -> list:
     ]
 
 
+def vision_declarations() -> list:
+    """The camera tools. Offered only when a VisionBackend is connected.
+
+    Every one returns at once; what the robot saw or did arrives a moment later
+    as a "[robot] ..." line of context.
+    """
+    from google.genai import types  # type: ignore
+
+    def schema(**props):
+        required = [k for k, v in props.items() if v.pop("_required", False)]
+        return types.Schema(
+            type="OBJECT",
+            properties={k: types.Schema(**v) for k, v in props.items()},
+            required=required,
+        )
+
+    return [
+        types.FunctionDeclaration(
+            name="look",
+            description=(
+                "Report what the camera currently sees: objects, people you "
+                "recognise, roughly how far and which direction. The answer "
+                "arrives shortly as a [robot] line."
+            ),
+            parameters=schema(),
+        ),
+        types.FunctionDeclaration(
+            name="who_is_there",
+            description="Report which people are in view and who they are, if known.",
+            parameters=schema(),
+        ),
+        types.FunctionDeclaration(
+            name="follow_person",
+            description=(
+                "Start following a person, keeping about a metre and a half "
+                "away. Give their name to follow someone specific, or leave it "
+                "empty to follow whoever is in front. Keeps going until "
+                "stop_following or stop."
+            ),
+            parameters=schema(name={
+                "type": "STRING",
+                "description": "Name of the person to follow, or empty for whoever is there.",
+            }),
+        ),
+        types.FunctionDeclaration(
+            name="stop_following",
+            description="Stop following / approaching / tracking. The robot stays where it is.",
+            parameters=schema(),
+        ),
+        types.FunctionDeclaration(
+            name="approach",
+            description=(
+                "Drive up to an object you can see, stopping a little short of "
+                "it, at most 3 m in total. Use everyday object names "
+                "(chair, couch, bottle, cup, potted plant, tv, laptop, dog, person...)."
+            ),
+            parameters=schema(object={
+                "type": "STRING",
+                "description": "The kind of object, e.g. 'chair'.",
+                "_required": True,
+            }),
+        ),
+        types.FunctionDeclaration(
+            name="find_clear_path",
+            description=(
+                "Check which direction in front of the robot looks open, from the "
+                "camera. A rough hint, not a guarantee: call it before driving "
+                "somewhere you were not told is clear."
+            ),
+            parameters=schema(),
+        ),
+        types.FunctionDeclaration(
+            name="remember_face",
+            description=(
+                "Learn the face of the person standing in front of the camera "
+                "under the given name, so you recognise them later. Ask them to "
+                "face the robot for a few seconds first."
+            ),
+            parameters=schema(name={
+                "type": "STRING",
+                "description": "Their name.",
+                "_required": True,
+            }),
+        ),
+    ]
+
+
 class RobotTools:
     """Executes the model's tool calls. Nothing here ever blocks the loop.
 
@@ -122,13 +210,21 @@ class RobotTools:
     action clients and this object is just a user of them.
     """
 
-    def __init__(self, motion: MotionBackend) -> None:
+    def __init__(self, motion: MotionBackend, vision: Optional[VisionBackend] = None) -> None:
         self._motion = motion
+        self._vision = vision
         self._gestures = Gesturer(motion)
 
     @property
     def motion(self) -> MotionBackend:
         return self._motion
+
+    @property
+    def vision(self) -> Optional[VisionBackend]:
+        return self._vision
+
+    def declarations(self) -> list:
+        return declarations() + (vision_declarations() if self._vision is not None else [])
 
     # ------------------------------------------------------------------ #
 
@@ -138,12 +234,23 @@ class RobotTools:
         Not actually async work: every handler is synchronous and fast. The
         coroutine signature is kept so the caller can await it uniformly.
         """
-        handler: Optional[Callable[..., Dict[str, Any]]] = {
+        handlers: Dict[str, Callable[..., Dict[str, Any]]] = {
             "drive": self._drive,
             "turn": self._turn,
             "stop": self._stop,
             "answer": self._answer,
-        }.get(name)
+        }
+        if self._vision is not None:
+            handlers.update({
+                "look": self._look,
+                "who_is_there": self._who,
+                "follow_person": self._follow,
+                "stop_following": self._stop_following,
+                "approach": self._approach,
+                "find_clear_path": self._clear_path,
+                "remember_face": self._remember,
+            })
+        handler: Optional[Callable[..., Dict[str, Any]]] = handlers.get(name)
 
         if handler is None:
             robot_log.event("voice.tool", logging.WARNING, name=name,
@@ -193,7 +300,46 @@ class RobotTools:
         turn here would arrive after the move it was meant to cancel had
         already finished.
         """
+        # A stop must also end following/approaching — otherwise the behavior
+        # would send its next step a moment later.
+        if self._vision is not None:
+            try:
+                self._vision.stop_following()
+            except Exception:                   # noqa: BLE001 — the brake matters more
+                logger.exception("stop_following failed during stop")
         return self._motion.stop()
+
+    # -------------------------------------------------------------- vision
+
+    def _look(self) -> Dict[str, Any]:
+        return self._vision.look()
+
+    def _who(self) -> Dict[str, Any]:
+        return self._vision.who()
+
+    def _follow(self, name: str = "") -> Dict[str, Any]:
+        n = str(name or "").strip().lower()
+        if n in ("me", "him", "her", "them", "anyone", "someone", "whoever"):
+            n = ""
+        return self._vision.follow(n or None)
+
+    def _stop_following(self) -> Dict[str, Any]:
+        return self._vision.stop_following()
+
+    def _approach(self, object: str) -> Dict[str, Any]:           # noqa: A002 — tool arg name
+        what = str(object).strip().lower()
+        if not what:
+            return {"ok": False, "error": "say what to approach, e.g. 'chair'"}
+        return self._vision.approach(what)
+
+    def _clear_path(self) -> Dict[str, Any]:
+        return self._vision.clear_path()
+
+    def _remember(self, name: str) -> Dict[str, Any]:
+        n = str(name).strip().lower()
+        if not n or len(n) > 64:
+            return {"ok": False, "error": "need a name of 1-64 characters"}
+        return self._vision.remember_face(n)
 
     def _answer(self, value: str) -> Dict[str, Any]:
         v = str(value).lower().strip()

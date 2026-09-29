@@ -1,0 +1,6 @@
+# "What do you see?" Answered from the current tracks — no network call.
+string filter             # "" = everything, or a class name such as "person"
+---
+bool   ok
+string summary            # one sentence for the agent
+string json               # the same, structured

@@ -1,0 +1,6 @@
+float32 pan_deg
+float32 tilt_deg
+---
+bool    ok
+float32 pan_deg           # after clamping
+float32 tilt_deg

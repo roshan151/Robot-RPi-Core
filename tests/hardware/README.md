@@ -10,6 +10,7 @@ precisely so `pytest` does not try to collect them.
 | `check_encoders.py` | **Run this after any harness change.** Hand-roll each wheel forward: both counters must go *up*, and rolling the left wheel must move `enc_left`. It is the only way to tell a swapped A/B pair from a mirror-mounted motor |
 | `check_movements.py` | Closed-loop moves end to end |
 | `check_timed.py` | Timing and sync-error behaviour across a run |
+| `check_vision_stack.py` | **Run on the Pi.** Camera + vision service + local tracker without ROS: capture rate, detect p50/p95/p99, gateway counters. `--servos` sweeps the pan/tilt head so you can set trim/invert |
 | `check_vision_service.ipynb` | **Run from the Pi.** Pings every vision-service endpoint on the Mac mini, verifies the response contract, and measures p50/p95/p99 detect latency. Needs the service up, not the robot |
 
 ```bash
@@ -30,8 +31,8 @@ jupyter notebook tests/hardware/check_vision_service.ipynb
 ```
 
 Set `BASE_URL` in the first cell to the mini's address, then Run All. It prints a
-pass/fail summary and diagnoses the common failures (mini asleep, fake backend
-serving invented objects, payload too large for the radio).
+pass/fail summary and diagnoses the common failures (mini asleep, wrong address,
+payload too large for the radio).
 
 This is the Phase V1 diagnostic from `docs/VISION-DESIGN.md` — the phase whose
 job is to measure real bandwidth and p99 latency before anything is built on

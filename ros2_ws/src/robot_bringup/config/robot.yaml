@@ -35,3 +35,31 @@
     # from robot_core/settings.py and the environment. Moving those here is a
     # later tidy-up, not a Phase 3 requirement.
     {}
+
+# --- vision (VISION-DESIGN.md) ------------------------------------------------
+# Defaults come from robot_core/settings.py (and so from the environment);
+# anything set here wins under ROS.
+
+/perception:
+  ros__parameters:
+    # The Mac mini. Left to VISION_SERVICE_BASE_URL in .env by default;
+    # uncomment to pin it here. Find the address on the mini: ipconfig getifaddr en0
+    # base_url: "http://192.168.1.50:8080"
+    detect_hz: 2.0
+    track_hz: 15.0
+    detect_timeout_s: 0.6
+    max_result_age_s: 1.0
+    min_confidence: 0.4
+    # Camera Module 3 standard ~66, Wide ~102. Every bearing depends on this.
+    hfov_deg: 66.0
+    camera_kind: "pi"          # pi | opencv | auto
+    hflip: false
+    vflip: false
+
+/gimbal:
+  ros__parameters:
+    enabled: true              # false = no servos (bench), bearings assume straight ahead
+
+/vision_behavior:
+  ros__parameters:
+    speed_pct: 0.0             # 0 = drivetrain default; lower it for gentler following

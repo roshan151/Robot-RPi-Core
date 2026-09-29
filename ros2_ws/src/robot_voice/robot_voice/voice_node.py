@@ -31,7 +31,7 @@ from rclpy.node import Node
 
 from robot_core import robot_log, settings, speech
 from robot_core.live.agent import run_live_agent
-from robot_voice.ros_bridge import RosMotion
+from robot_voice.ros_bridge import RosMotion, RosVision
 
 
 def main(args=None) -> None:
@@ -52,6 +52,8 @@ def main(args=None) -> None:
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     motion = RosMotion(node, loop)
+    # Camera tools share the motion results queue: one feedback channel.
+    vision = RosVision(node, loop, motion.results)
 
     try:
         # Blocking, and correctly so: this runs before the session opens, on
@@ -77,7 +79,7 @@ def main(args=None) -> None:
             
         # strating session, stop all motion if queued via previous start
         motion.stop()
-        run_live_agent(motion)
+        run_live_agent(motion, vision)
         robot_log.event("session.stop", reason="clean exit")
     except KeyboardInterrupt:
         pass

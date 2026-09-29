@@ -1,19 +1,21 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>robot_voice</name>
+  <name>robot_vision</name>
   <version>0.1.0</version>
   <description>
-    The always-listening Gemini Live session, driving the robot through Drive
-    and Turn actions. Runs as its own process: it owns an asyncio loop and an
-    open microphone, so a stall here must not be able to delay a stop.
+    The vision layer's nodes (VISION-DESIGN.md Part 4): perception_node owns the
+    camera, the local tracker and the REST calls; gimbal_node drives the
+    pan/tilt servos; behavior_node runs look / follow / approach. Thin wrappers
+    over robot_core.perception, which holds all of the logic and is tested
+    without ROS.
   </description>
   <maintainer email="roshan.151tiwari@gmail.com">Roshan Tiwari</maintainer>
   <license>MIT</license>
 
   <exec_depend>rclpy</exec_depend>
-  <exec_depend>std_srvs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
   <exec_depend>robot_interfaces</exec_depend>
 
   <export>
