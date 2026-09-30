@@ -128,7 +128,9 @@ def declarations() -> list:
                 task={"type": "STRING", "description": "One of: " + ", ".join(TASKS),
                       "_required": True},
                 name={"type": "STRING",
-                      "description": "The person's first name. Only for enroll_face."},
+                      "description": "The name the operator said to enrol, e.g. 'register Roshan' "
+                                     "-> 'Roshan'. Required for enroll_face. Never guess or make "
+                                     "one up: if none was said, leave it empty."},
             ),
         ),
     ]
@@ -234,7 +236,10 @@ class RobotTools:
         # The name becomes a folder and a gallery label on the Mac: first word, letters only.
         name = re.sub(r"[^A-Za-z0-9_-]", "", (str(name).split() or [""])[0])[:32]
         if task == "enroll_face" and not name:
-            return {"ok": False, "error": "enroll_face needs the person's first name"}
+            # No name was said: nothing to enrol under. Shake the head, start nothing.
+            jobs = self._gestures.play("no")
+            return {"ok": False, "gestured": jobs is not None,
+                    "error": "enroll_face needs the person's name and none was given; task not started"}
         self.pending = (task, name)
         return {"ok": True, "starting": task, "note": "session closing; it reopens when the task ends"}
 

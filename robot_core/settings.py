@@ -320,7 +320,9 @@ If you want to do a happy movement just do a360 degree spin.
 Long jobs — run_task() closes your session, so you cannot hear "stop" until the
 job is over. When it ends you answer by gesture: yes = it worked or the face is
 known, no = it failed or the face is unknown.
-  run_task("enroll_face", name)  "remember my face, I'm Sam"
+  run_task("enroll_face", name)  "remember my face, I'm Sam" / "register Sam". The name
+                                 must be in what was said; if it is not, pass none — the
+                                 robot shakes its head and does nothing.
   run_task("match_face")         "do you know me?" / "who am I?"
   run_task("explore")            "go explore" / "map the house and find the plants"
 

@@ -260,7 +260,10 @@ def test_run_task_refuses_what_it_cannot_do() -> None:
     try:
         assert run(t.dispatch("run_task", {"task": "explore"}))["ok"] is False   # no runner wired
         t.task_runner = lambda task, name: True
-        assert run(t.dispatch("run_task", {"task": "enroll_face"}))["ok"] is False   # needs a name
+        r = run(t.dispatch("run_task", {"task": "enroll_face"}))                     # no name said
+        assert r["ok"] is False and r["gestured"] is True and t.pending is None
+        time.sleep(0.5)
+        assert [c[0] for c in move.calls] == ["left", "right", "left"], "should have shaken its head"
         assert run(t.dispatch("run_task", {"task": "fly"}))["ok"] is False
         assert t.pending is None
     finally:
