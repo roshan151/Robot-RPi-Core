@@ -26,10 +26,18 @@ PIP_EXTRAS="voice,explore"     # pyserial, requests, google-genai, sounddevice, 
 }
 
 echo "== ROS 2 Jazzy apt repository (community 'rospian', the official one has no Trixie packages)"
+REPO=https://rospian.github.io/rospian-repo
 if [ ! -f /etc/apt/sources.list.d/rospian.list ]; then
-  curl -fsSL https://rospian.github.io/rospian-repo/rospian-archive-keyring.asc | gpg --dearmor \
-    | sudo tee /usr/share/keyrings/rospian-archive-keyring.gpg >/dev/null
-  echo "deb [arch=arm64 signed-by=/usr/share/keyrings/rospian-archive-keyring.gpg] https://rospian.github.io/rospian-repo trixie-jazzy main" \
+  KEY=$(mktemp)
+  if ! curl -fsSL "$REPO/rospian-archive-keyring.asc" -o "$KEY"; then
+    echo "ERROR: cannot download $REPO/rospian-archive-keyring.asc (HTTP error)." >&2
+    echo "The rospian repo site is unreachable or moved; see https://github.com/rospian/rospian-repo" >&2
+    echo "Open that URL in a browser; re-run this script once it loads." >&2
+    exit 1
+  fi
+  gpg --dearmor < "$KEY" | sudo tee /usr/share/keyrings/rospian-archive-keyring.gpg >/dev/null
+  rm -f "$KEY"
+  echo "deb [arch=arm64 signed-by=/usr/share/keyrings/rospian-archive-keyring.gpg] $REPO trixie-jazzy main" \
     | sudo tee /etc/apt/sources.list.d/rospian.list >/dev/null
 fi
 
