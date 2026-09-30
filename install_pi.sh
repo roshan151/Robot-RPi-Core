@@ -9,8 +9,13 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 APT_PACKAGES=(
-  # ROS 2 Jazzy (base only: no desktop, no GUI)
-  ros-jazzy-ros-base ros-jazzy-rmw-cyclonedds-cpp python3-colcon-common-extensions
+  # ROS 2 Jazzy: the rospian repo has no ros-base bundle, so list what the robot uses (no GUI)
+  ros-jazzy-rclpy ros-jazzy-std-msgs ros-jazzy-std-srvs ros-jazzy-sensor-msgs ros-jazzy-geometry-msgs
+  ros-jazzy-nav-msgs ros-jazzy-action-msgs ros-jazzy-tf2-ros
+  ros-jazzy-ament-cmake ros-jazzy-ament-cmake-python ros-jazzy-rosidl-default-generators ros-jazzy-rosidl-default-runtime
+  ros-jazzy-launch ros-jazzy-launch-ros ros-jazzy-launch-xml
+  ros-jazzy-ros2cli ros-jazzy-ros2run ros-jazzy-ros2launch ros-jazzy-ros2action ros-jazzy-ros2param
+  ros-jazzy-ros2topic ros-jazzy-ros2service ros-jazzy-ros2pkg ros-jazzy-rmw-cyclonedds-cpp
   # camera, vision and config (apt-only: they can't be pip-installed)
   python3-picamera2 python3-libcamera python3-opencv python3-numpy python3-yaml
   # audio and Bluetooth buds
@@ -47,6 +52,7 @@ sudo apt install -y "${APT_PACKAGES[@]}"
 
 echo "== Python venv (.venv, sees the apt packages) + pip packages"
 python3 -m venv --system-site-packages .venv
+.venv/bin/pip install colcon-common-extensions   # not packaged for Trixie
 .venv/bin/pip install -e ".[$PIP_EXTRAS]"
 .venv/bin/python -c "import picamera2, libcamera, cv2, yaml, serial, sounddevice, google.genai, rpi_hardware_pwm" \
   || { echo "A Python import failed (see above)." >&2; exit 1; }

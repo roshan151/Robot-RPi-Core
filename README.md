@@ -88,6 +88,23 @@ grep -c "^Package:" $P
 for n in ros-core ros-base rclpy std-msgs std-srvs sensor-msgs geometry-msgs nav-msgs action-msgs rosidl-default-generators rosidl-default-runtime ament-cmake ament-cmake-python launch launch-ros launch-xml ros2cli ros2run ros2launch ros2action ros2param ros2topic ros2service ros2pkg rmw-cyclonedds-cpp tf2-ros; do printf "%-28s" $n; grep -c "^Package: ros-jazzy-$n\$" $P; done
 apt-cache policy python3-colcon-common-extensions | head -3
 
+cd ~/Robot-RPi-Core
+python3 - <<'E'
+import re,pathlib
+p=pathlib.Path("install_pi.sh"); s=p.read_text()
+s=s.replace("  ros-jazzy-ros-base ros-jazzy-rmw-cyclonedds-cpp python3-colcon-common-extensions\n","""  ros-jazzy-rclpy ros-jazzy-std-msgs ros-jazzy-std-srvs ros-jazzy-sensor-msgs ros-jazzy-geometry-msgs
+  ros-jazzy-nav-msgs ros-jazzy-action-msgs ros-jazzy-tf2-ros
+  ros-jazzy-ament-cmake ros-jazzy-ament-cmake-python ros-jazzy-rosidl-default-generators ros-jazzy-rosidl-default-runtime
+  ros-jazzy-launch ros-jazzy-launch-ros ros-jazzy-launch-xml
+  ros-jazzy-ros2cli ros-jazzy-ros2run ros-jazzy-ros2launch ros-jazzy-ros2action ros-jazzy-ros2param
+  ros-jazzy-ros2topic ros-jazzy-ros2service ros-jazzy-ros2pkg ros-jazzy-rmw-cyclonedds-cpp
+""")
+s=s.replace('.venv/bin/pip install -e','.venv/bin/pip install colcon-common-extensions\n.venv/bin/pip install -e',1)
+p.write_text(s)
+E
+bash -n install_pi.sh && ./install_pi.sh
+
+
 1. **Secrets:** create `/etc/robot.env`, see [Configuration](#configuration).
 2. **Head and TF-Luna:** add `dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4` to `/boot/firmware/config.txt`; run `sudo raspi-config` → Interface → Serial Port: login shell **No**, hardware **Yes**; reboot.
 3. **Groups:** `sudo usermod -aG dialout,audio,bluetooth roshan151 && sudo loginctl enable-linger roshan151` (log out and in, or reboot).
