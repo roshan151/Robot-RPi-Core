@@ -288,6 +288,12 @@ class LiveAgent:
                     "live session closed by the server (receive stream ended)")
             last = time.monotonic()
 
+    async def _pump_task(self) -> None:
+        """Returns the moment run_task queues a job, which ends the session cleanly
+        (microphone closed, socket closed) so `_run_supervised` can run it."""
+        while self._tools.pending is None:
+            await asyncio.sleep(0.1)
+
     async def _pump_results(self, session, results) -> None:
         """Tell the model what actually happened to the moves it queued.
 
@@ -463,6 +469,7 @@ class LiveAgent:
                 # Only when the backend has a feedback channel. LocalMotion
                 # does not yet; RosMotion does, and gets the model told what
                 # became of every move it asked for.
+                tasks.append(asyncio.create_task(self._pump_task(), name="task"))
                 results = getattr(self._tools.motion, "results", None)
                 if results is not None:
                     tasks.append(asyncio.create_task(
@@ -486,6 +493,10 @@ async def _run_supervised(tools: RobotTools) -> None:
         agent = LiveAgent(tools)
         try:
             await agent.run()
+            if tools.pending is not None:
+                await _run_task(tools)       # the session is closed; reconnect after it
+                backoff = settings.LIVE_RECONNECT_BACKOFF_S
+                continue
             robot_log.event("session.stop", reason="live session closed")
             return
         except asyncio.CancelledError:
@@ -511,6 +522,36 @@ async def _run_supervised(tools: RobotTools) -> None:
 
         await asyncio.sleep(backoff)
         backoff = min(backoff * 2, settings.LIVE_RECONNECT_MAX_S)
+
+
+async def _run_task(tools: RobotTools) -> None:
+    """Run the job run_task queued, then answer by gesture: yes / no.
+
+    Called with the Live session already closed. The job blocks (a minute of
+    camera frames, or a whole exploration), so it goes to a worker thread.
+    """
+    task, name = tools.pending
+    tools.pending = None
+    tools.motion.stop()                      # anything the model had queued yields to the job
+    robot_log.event("task.start", task=task, name=name)
+    try:
+        ok = bool(await asyncio.get_running_loop().run_in_executor(
+            None, tools.task_runner, task, name))
+    except Exception as e:                   # noqa: BLE001
+        ok = False
+        robot_log.event("task.error", logging.ERROR, task=task, err=f"{type(e).__name__}: {e}")
+    robot_log.event("task.end", task=task, ok=ok)
+
+    await tools.dispatch("answer", {"value": "yes" if ok else "no"})
+    # Let the gesture finish before the microphone reopens, and drop its move
+    # results so the next session is not told about them.
+    for _ in range(100):
+        if not tools.motion.busy():
+            break
+        await asyncio.sleep(0.2)
+    results = getattr(tools.motion, "results", None)
+    while results is not None and not results.empty():
+        results.get_nowait()
 
 
 def _spoken_cause(exc: BaseException) -> str:
@@ -552,14 +593,17 @@ def _on_failure(tools: RobotTools, agent: LiveAgent, exc: BaseException) -> None
     speech.error(_spoken_cause(exc))
 
 
-def run_live_agent(motion) -> None:
+def run_live_agent(motion, task_runner=None) -> None:
     """Blocking entrypoint. `motion` is a MotionBackend (robot_core/motion.py).
 
     Does not close the backend — whoever built it owns it. In the ROS build
     that is the voice node, which needs its action clients to outlive one
     session so the supervisor can reconnect without rebuilding them.
+
+    `task_runner(task, name) -> bool` runs the jobs `run_task` asks for
+    (enroll_face, match_face, explore); without one the tool refuses.
     """
-    tools = RobotTools(motion)
+    tools = RobotTools(motion, task_runner)
     try:
         asyncio.run(_run_supervised(tools))
     except KeyboardInterrupt:

@@ -44,7 +44,7 @@ from tf2_ros import TransformBroadcaster
 from robot_core.explore import ExploreConfig, Explorer
 from robot_core.odometry import Pose2D
 from robot_core.sensors.camera import Camera
-from robot_core.sensors.gimbal import AxisConfig, Gimbal
+from robot_core.sensors.gimbal import from_params
 from robot_core.sensors.head import Head, HeadGeometry
 from robot_core.sensors.tfluna import TFLuna
 from robot_core.sensors.visual_motion import VisualMotionEstimator
@@ -140,6 +140,8 @@ class ExplorerNode(Node):
         p("continue_map", False)
         p("start_pose", [0.0, 0.0, 0.0])
         p("max_minutes", 60.0)
+        p("explore_radius_m", 10.0)
+        p("no_behind", False)
         p("orbit_radius_m", 0.7)
         p("orbit_views", 4)
         p("revisit_known", True)
@@ -161,15 +163,9 @@ class ExplorerNode(Node):
         p("servo_speed_dps", 60.0)
         v = lambda name: self.get_parameter(name).value
 
-        speed = float(v("servo_speed_dps"))
-        self.gimbal = Gimbal(
-            pan=AxisConfig(channel=int(v("pan_channel")), min_deg=-45.0, max_deg=45.0,
-                           center_us=float(v("pan_center_us")), invert=bool(v("pan_invert")),
-                           max_speed_dps=speed),
-            tilt=AxisConfig(channel=int(v("tilt_channel")), min_deg=-90.0, max_deg=90.0,
-                            center_us=float(v("tilt_center_us")), invert=bool(v("tilt_invert")),
-                            max_speed_dps=speed),
-            chip=int(v("pwm_chip")))
+        self.gimbal = from_params({n: v(n) for n in (
+            "pwm_chip", "pan_channel", "tilt_channel", "pan_center_us", "tilt_center_us",
+            "pan_invert", "tilt_invert", "servo_speed_dps")})
         self.lidar = TFLuna(v("tfluna_port"))
         self.camera = Camera(main_size=tuple(v("camera_main_size")), inverted=bool(v("camera_inverted")))
         self.head = Head(self.gimbal, self.lidar, self.camera, HeadGeometry(
@@ -188,12 +184,14 @@ class ExplorerNode(Node):
         self.explorer = Explorer(self.base, self.head, self.vision, ExploreConfig(
             map_name=v("map_name"), continue_map=bool(v("continue_map")),
             start_pose=tuple(float(x) for x in v("start_pose")),
-            max_minutes=float(v("max_minutes")), orbit_radius_m=float(v("orbit_radius_m")),
+            max_minutes=float(v("max_minutes")), explore_radius_m=float(v("explore_radius_m")),
+            no_behind=bool(v("no_behind")), orbit_radius_m=float(v("orbit_radius_m")),
             orbit_views=int(v("orbit_views")), revisit_known=bool(v("revisit_known")),
             ask_before_drive=bool(v("ask_before_drive"))), on_status=self._say)
 
         self._stop = threading.Event()
         self.done = threading.Event()
+        self.failed = False                  # exit code 1: the voice agent gestures "no" on it
         self._watcher = threading.Thread(target=self._watch_motion, name="visual-motion", daemon=True)
         self._watcher.start()
         self._mission = threading.Thread(target=self._run_mission, name="mission", daemon=True)
@@ -211,15 +209,18 @@ class ExplorerNode(Node):
             if not self.base.wait_ready():
                 self._say("drivetrain not ready (no /odom or actions) — is firmware v5 flashed "
                           "and the robot process running?")
+                self.failed = True
                 return
             try:
                 self._say(f"vision service: {self.vision.health().get('backend')} at {self.vision.base}")
             except Exception as exc:                        # noqa: BLE001
                 self._say(f"vision service unreachable at {self.vision.base}: {exc}")
+                self.failed = True
                 return
             self.explorer.run()
         except Exception as exc:                            # noqa: BLE001
             self.get_logger().error(f"mission crashed: {type(exc).__name__}: {exc}")
+            self.failed = True
         finally:
             self.done.set()
 
@@ -296,6 +297,7 @@ def main(args=None) -> None:
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
+    raise SystemExit(1 if node.failed else 0)
 
 
 if __name__ == "__main__":

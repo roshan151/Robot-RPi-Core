@@ -117,8 +117,10 @@ class Head:
         """Is the floor where it should be, `distance_m` ahead?"""
         h = self.geom.height_m
         d = max(0.3, distance_m)
-        tilt = -math.degrees(math.atan2(h, d))
-        expected = math.hypot(h, d)
+        # Close in, the floor is steeper than the head can look down: look as
+        # far down as it goes and judge that spot (a farther one) instead.
+        tilt = max(-math.degrees(math.atan2(h, d)), self.gimbal.tilt_limits()[0])
+        expected = h / math.sin(math.radians(-tilt))
         worst, first, pts = "clear", None, []
         for pan in pans:
             r = self.range_at(pan, tilt)

@@ -51,6 +51,8 @@ class ExploreConfig:
     continue_map: bool = False            # keep building the saved map `map_name`
     start_pose: Tuple[float, float, float] = (0.0, 0.0, 0.0)   # where we start ON that map
     max_minutes: float = 60.0
+    explore_radius_m: float = 10.0        # only explore within this radius of the start (<= 0: no limit)
+    no_behind: bool = False               # only explore ahead of the start heading
     sector_pans: Tuple[float, ...] = (-30.0, 30.0)    # camera looks per 90° sector
     plant_classes: Tuple[str, ...] = ("potted plant",)
     plant_min_conf: float = 0.45
@@ -110,9 +112,10 @@ class Explorer:
     def run(self) -> Stats:
         cfg = self.cfg
         deadline = time.monotonic() + cfg.max_minutes * 60
-        if self.vision.slam_reset(cfg.map_name, cfg.start_pose, load=cfg.continue_map) is None:
+        scope = dict(explore_radius_m=cfg.explore_radius_m, no_behind=cfg.no_behind)
+        if self.vision.slam_reset(cfg.map_name, cfg.start_pose, load=cfg.continue_map, **scope) is None:
             self._say(f"no saved map '{cfg.map_name}' — starting a new one")
-            self.vision.slam_reset(cfg.map_name, cfg.start_pose, load=False)
+            self.vision.slam_reset(cfg.map_name, cfg.start_pose, load=False, **scope)
         try:
             while not self._stop.is_set() and time.monotonic() < deadline:
                 self._say("scanning")
@@ -199,6 +202,15 @@ class Explorer:
                     found.append(s)
         return found
 
+    def _in_scope(self, xy) -> bool:
+        """Same rule the Mac applies to frontiers (slam.in_scope), for plants."""
+        cfg = self.cfg
+        x, y, th = cfg.start_pose
+        dx, dy = xy[0] - x, xy[1] - y
+        if cfg.explore_radius_m > 0 and math.hypot(dx, dy) > cfg.explore_radius_m:
+            return False
+        return not (cfg.no_behind and dx * math.cos(th) + dy * math.sin(th) < 0.0)
+
     def _plants_in(self, frame) -> list:
         res = self.vision.detect(jpeg(frame.main), frame.seq, self.cfg.plant_min_conf)
         h, w = frame.main.shape[:2]
@@ -249,6 +261,8 @@ class Explorer:
         """Identify, orbit and save one plant. True if the robot moved."""
         if any(_dist(s.map_xy, h) <= self.cfg.same_place_m for h in self._handled):
             return False                             # already dealt with this run
+        if not self._in_scope(s.map_xy):
+            return False                             # outside the radius / behind the start
         self._handled.append(s.map_xy)
         match = self.vision.plant_match(self.vision.plant_embed(s.crop), s.map_xy)
         label = self.identify(s, match)

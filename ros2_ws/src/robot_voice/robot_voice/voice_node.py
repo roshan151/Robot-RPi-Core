@@ -23,15 +23,68 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import subprocess
 import threading
 
 import rclpy
+from ament_index_python.packages import get_package_share_directory
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
 from robot_core import robot_log, settings, speech
 from robot_core.live.agent import run_live_agent
 from robot_voice.ros_bridge import RosMotion
+
+
+def _explore() -> bool:
+    """Run explore mode as a child process and wait for it. The drivetrain is
+    already up (command mode), so this is just the explorer node; it exits by
+    itself when the mission ends, and non-zero if it could not run."""
+    params = os.path.join(get_package_share_directory("robot_bringup"), "config", "robot.yaml")
+    proc = subprocess.Popen(["ros2", "run", "robot_explore", "explorer_node",
+                             "--ros-args", "--params-file", params])
+    try:
+        return proc.wait() == 0
+    finally:
+        if proc.poll() is None:              # we are being torn down mid-mission
+            proc.terminate()
+            proc.wait(timeout=20)
+
+
+def run_task(task: str, name: str) -> bool:
+    """What `run_task` asks for, run by the agent while the Live session is closed.
+
+    The camera is opened for the job and released afterwards, so the explorer
+    (which owns it during a mission) never finds it taken."""
+    if task == "explore":
+        return _explore()
+    import yaml
+    from robot_core import face_tasks
+    from robot_core.sensors.camera import Camera
+    from robot_core.sensors.gimbal import from_params
+    from robot_core.sensors.head import Head, HeadGeometry
+    from robot_core.vision_client import VisionClient
+    camera = Camera(main_size=(640, 480))
+    gimbal = head = None
+    try:
+        # The head is the explorer's hardware: same channels and trims, read from
+        # robot.yaml. Tilt is limited to 0..+45 here, so it only ever looks up from
+        # its base position. No PWM (overlay missing)? Carry on with a fixed camera.
+        try:
+            with open(os.path.join(get_package_share_directory("robot_bringup"), "config", "robot.yaml")) as f:
+                p = yaml.safe_load(f)["/explorer"]["ros__parameters"]
+            gimbal = from_params(p, tilt_min=0.0)
+            head = Head(gimbal, None, camera, HeadGeometry(hfov_deg=float(p.get("hfov_deg", 66.0))))
+        except Exception as e:                                  # noqa: BLE001
+            robot_log.event("task.error", logging.WARNING, err=f"head unavailable: {type(e).__name__}: {e}")
+        vision = VisionClient()
+        if task == "enroll_face":
+            return face_tasks.enroll(camera, vision, name, head=head)
+        return face_tasks.match(camera, vision, head=head) is not None
+    finally:
+        if gimbal:
+            gimbal.close()                   # parks the head at its start position
+        camera.close()
 
 
 def main(args=None) -> None:
@@ -77,7 +130,7 @@ def main(args=None) -> None:
             
         # strating session, stop all motion if queued via previous start
         motion.stop()
-        run_live_agent(motion)
+        run_live_agent(motion, run_task)
         robot_log.event("session.stop", reason="clean exit")
     except KeyboardInterrupt:
         pass

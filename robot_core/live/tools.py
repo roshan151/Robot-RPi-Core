@@ -29,13 +29,16 @@ action clients. That is the entire point of the seam.
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Dict, Optional
+import re
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from robot_core import robot_log, settings
 from robot_core.gestures import VOCABULARY, Gesturer
 from robot_core.motion import MotionBackend
 
 logger = logging.getLogger(__name__)
+
+TASKS = ("enroll_face", "match_face", "explore")
 
 
 def declarations() -> list:
@@ -111,6 +114,23 @@ def declarations() -> list:
                 "_required": True,
             }),
         ),
+        types.FunctionDeclaration(
+            name="run_task",
+            description=(
+                "Start a long job. Your session closes now, so you cannot hear "
+                "'stop' until it ends; it reopens afterwards and you answer by "
+                "gesture (yes = worked / face known, no = failed / face unknown). "
+                "'enroll_face' learns the face in front of the camera under "
+                "`name` (required). 'match_face' checks whether that face is "
+                "known. 'explore' maps the house and photographs every plant."
+            ),
+            parameters=schema(
+                task={"type": "STRING", "description": "One of: " + ", ".join(TASKS),
+                      "_required": True},
+                name={"type": "STRING",
+                      "description": "The person's first name. Only for enroll_face."},
+            ),
+        ),
     ]
 
 
@@ -122,9 +142,14 @@ class RobotTools:
     action clients and this object is just a user of them.
     """
 
-    def __init__(self, motion: MotionBackend) -> None:
+    def __init__(self, motion: MotionBackend,
+                 task_runner: Optional[Callable[[str, str], bool]] = None) -> None:
         self._motion = motion
         self._gestures = Gesturer(motion)
+        # (task, name) -> success; blocking, run by the agent with the session
+        # closed. `pending` is how run_task hands a job to the agent.
+        self.task_runner = task_runner
+        self.pending: Optional[Tuple[str, str]] = None
 
     @property
     def motion(self) -> MotionBackend:
@@ -143,6 +168,7 @@ class RobotTools:
             "turn": self._turn,
             "stop": self._stop,
             "answer": self._answer,
+            "run_task": self._run_task,
         }.get(name)
 
         if handler is None:
@@ -194,6 +220,23 @@ class RobotTools:
         already finished.
         """
         return self._motion.stop()
+
+    def _run_task(self, task: str, name: str = "") -> Dict[str, Any]:
+        """Queue a job for the agent. Does not run it: the agent closes the Live
+        session first, so the job never holds the receive loop or the microphone."""
+        task = str(task).lower().strip()
+        if task not in TASKS:
+            return {"ok": False, "error": f"unknown task {task!r}; expected one of {', '.join(TASKS)}"}
+        if self.task_runner is None:
+            return {"ok": False, "error": "tasks are not available in this build"}
+        if self.pending is not None:
+            return {"ok": False, "error": "a task is already starting"}
+        # The name becomes a folder and a gallery label on the Mac: first word, letters only.
+        name = re.sub(r"[^A-Za-z0-9_-]", "", (str(name).split() or [""])[0])[:32]
+        if task == "enroll_face" and not name:
+            return {"ok": False, "error": "enroll_face needs the person's first name"}
+        self.pending = (task, name)
+        return {"ok": True, "starting": task, "note": "session closing; it reopens when the task ends"}
 
     def _answer(self, value: str) -> Dict[str, Any]:
         v = str(value).lower().strip()

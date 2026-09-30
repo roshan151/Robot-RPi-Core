@@ -60,12 +60,18 @@
     start_pose: [0.0, 0.0, 0.0]
     max_minutes: 60.0
 
+    # Guard rails. Both are measured from start_pose: explore only within this
+    # radius (metres; 0 = no limit), and with no_behind only ahead of the
+    # start heading (the half-plane in front of where the robot begins).
+    explore_radius_m: 10.0
+    no_behind: false
+
     orbit_radius_m: 0.7        # photo distance from the plant
     orbit_views: 4             # full 360: 4 views, 90 degrees apart
     revisit_known: true        # photograph known plants again (a new visit)
     ask_before_drive: false    # image+text model checks each step (slow, thorough)
 
-    # Head. Pan is limited to +-45 and tilt to +-90 in the driver, and both
+    # Head. Pan is limited to +-45 and tilt to -30/+45 in the driver, and both
     # park at their start position (the *_center_us pulse) on shutdown.
     tfluna_port: "/dev/serial0"
     camera_main_size: [1920, 1080]

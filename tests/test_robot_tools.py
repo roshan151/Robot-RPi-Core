@@ -234,9 +234,42 @@ def test_gesture_yields_to_real_motion() -> None:
 # Wiring
 # --------------------------------------------------------------------------- #
 
-def test_four_tools_and_stop_takes_no_arguments() -> None:
+def test_run_task_hands_the_job_to_the_agent_and_answers_by_gesture() -> None:
+    """run_task only queues; the agent runs it with the session closed, then nods
+    (yes) or shakes (no) according to whether the job worked."""
+    from robot_core.live import agent as agent_mod
+    for ok, expected in ((True, [("straight", 0.1), ("reverse", 0.1)]),
+                         (False, [("left", 30.0), ("right", 60.0), ("left", 30.0)])):
+        move = FakeMove(0.01)
+        motion = LocalMotion(move)
+        ran = []
+        t = RobotTools(motion, lambda task, name: ran.append((task, name)) or ok)
+        try:
+            assert run(t.dispatch("run_task", {"task": "enroll_face", "name": "Sam Smith!"}))["ok"]
+            assert t.pending == ("enroll_face", "Sam"), "name must be one clean word"
+            assert run(t.dispatch("run_task", {"task": "explore"}))["ok"] is False   # one at a time
+            run(agent_mod._run_task(t))
+            assert ran == [("enroll_face", "Sam")] and t.pending is None
+            assert move.calls == expected, move.calls
+        finally:
+            motion.close()
+
+
+def test_run_task_refuses_what_it_cannot_do() -> None:
+    move, motion, t = tools()
+    try:
+        assert run(t.dispatch("run_task", {"task": "explore"}))["ok"] is False   # no runner wired
+        t.task_runner = lambda task, name: True
+        assert run(t.dispatch("run_task", {"task": "enroll_face"}))["ok"] is False   # needs a name
+        assert run(t.dispatch("run_task", {"task": "fly"}))["ok"] is False
+        assert t.pending is None
+    finally:
+        motion.close()
+
+
+def test_five_tools_and_stop_takes_no_arguments() -> None:
     decls = {d.name: d for d in declarations()}
-    assert set(decls) == {"drive", "turn", "stop", "answer"}
+    assert set(decls) == {"drive", "turn", "stop", "answer", "run_task"}
     assert not getattr(decls["stop"].parameters, "required", []), \
         "a stop that can be malformed is a stop that can fail"
 

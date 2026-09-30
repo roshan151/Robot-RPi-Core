@@ -85,12 +85,15 @@ class FakeGimbal:
         if pan is not None:
             self.pan = max(-45, min(45, pan))
         if tilt is not None:
-            self.tilt = max(-90, min(90, tilt))
+            self.tilt = max(-30, min(45, tilt))
         self.log.append((self.pan, self.tilt))
         return self.pan, self.tilt
 
     def angles(self):
         return self.pan, self.tilt
+
+    def tilt_limits(self):
+        return -30.0, 45.0
 
     def settled(self, s=0.15):
         return True
@@ -192,7 +195,7 @@ class FakeVision:
                              "bbox": [u - half, v_pot - 3 * half, u + half, v_pot + half]})
         return {"detections": dets, "image_size": [W, H]}
 
-    def slam_reset(self, name, pose, load=False):
+    def slam_reset(self, name, pose, load=False, **scope):
         return {}
 
     def slam_keyframe(self, odom, rays, sensor_xy, obstacles, plan=True):
@@ -292,3 +295,13 @@ def test_plants_outside_pan_range_are_left_for_the_next_sector():
     ex, _, vision, _ = make(world)
     sightings = ex.look_for_plants(world.pose)
     assert sightings == []
+
+
+def test_plants_outside_the_radius_or_behind_the_start_are_skipped():
+    from robot_core.explore import ExploreConfig, Explorer
+    ex = Explorer(None, None, None, ExploreConfig(start_pose=(1.0, 0.0, 0.0), explore_radius_m=10, no_behind=True))
+    assert ex._in_scope((4.0, 1.0)) and not ex._in_scope((0.0, 0.0)) and not ex._in_scope((12.0, 0.0))
+    ex.cfg.no_behind = False
+    assert ex._in_scope((0.0, 0.0))
+    ex.cfg.explore_radius_m = 0                                   # 0 = unlimited
+    assert ex._in_scope((50.0, 0.0))

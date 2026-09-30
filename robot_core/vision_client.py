@@ -74,6 +74,20 @@ class VisionClient:
         return self._call("POST", "/v1/detect", data={"seq": seq, "min_confidence": min_confidence},
                           files={"image": ("f.jpg", jpeg, "image/jpeg")})
 
+    # --------------------------------------------------------------- faces
+
+    def face_embed(self, jpeg: bytes, seq: int = 0) -> Optional[dict]:
+        """None when there is no face in the frame (the service answers 404)."""
+        return self._call("POST", "/v1/faces/embed", ok_404=True, data={"seq": seq},
+                          files={"image": ("f.jpg", jpeg, "image/jpeg")})
+
+    def face_match(self, embedding: list) -> dict:
+        return self._call("POST", "/v1/faces/match", json={"embedding": embedding})
+
+    def face_enroll(self, jpegs: Sequence[bytes], label: str) -> dict:
+        return self._call("POST", "/v1/faces/enroll", timeout=60.0, data={"label": label},
+                          files=self._files(jpegs))
+
     # -------------------------------------------------------------- plants
 
     def plant_embed(self, jpeg: bytes, seq: int = 0) -> list:
@@ -140,9 +154,11 @@ class VisionClient:
 
     # ---------------------------------------------------------------- SLAM
 
-    def slam_reset(self, name: str = "default", initial_pose=(0.0, 0.0, 0.0), load: bool = False) -> dict:
+    def slam_reset(self, name: str = "default", initial_pose=(0.0, 0.0, 0.0), load: bool = False,
+                   explore_radius_m: Optional[float] = None, no_behind: bool = False) -> dict:
         return self._call("POST", "/v1/slam/reset", ok_404=load,
-                          json={"name": name, "initial_pose": list(initial_pose), "load": load})
+                          json={"name": name, "initial_pose": list(initial_pose), "load": load,
+                                "explore_radius_m": explore_radius_m, "no_behind": no_behind})
 
     def slam_keyframe(self, odom, rays, sensor_xy=(0.0, 0.0), obstacles=(), plan: bool = True) -> dict:
         return self._call("POST", "/v1/slam/keyframe", timeout=30.0, json={

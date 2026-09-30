@@ -291,6 +291,16 @@ LIVE_SEND_WARN_S = float(os.environ.get("ROBOT_LIVE_SEND_WARN_S", "0.25"))
 LIVE_RECONNECT_BACKOFF_S = float(os.environ.get("ROBOT_LIVE_BACKOFF_S", "2.0"))
 LIVE_RECONNECT_MAX_S = float(os.environ.get("ROBOT_LIVE_BACKOFF_MAX_S", "60.0"))
 
+# Voice-triggered face tasks (robot_core/face_tasks.py).
+FACE_ENROLL_SECONDS = float(os.environ.get("ROBOT_FACE_ENROLL_S", "30"))   # capture time once a face is found
+FACE_SEARCH_SECONDS = float(os.environ.get("ROBOT_FACE_SEARCH_S", "30"))   # enroll: time allowed to find one
+FACE_MATCH_SECONDS = float(os.environ.get("ROBOT_FACE_MATCH_S", "30"))     # search + match
+# The head looks for a face by sweeping these (degrees); never below level.
+FACE_SEARCH_PANS = (-45.0, -15.0, 15.0, 45.0)
+FACE_SEARCH_TILTS = (0.0, 20.0, 40.0)
+FACE_MIN_QUALITY = 0.6           # the vision service's own "worth matching" line
+FACE_MIN_SHOTS = 5               # fewer good frames than this and the enroll fails
+
 # Hard ceiling on a single drive call, enforced in the tool layer rather than
 # the prompt: a limit the model can talk itself out of is not a limit.
 MAX_DRIVE_METERS = float(os.environ.get("ROBOT_MAX_DRIVE_M", "5.0"))
@@ -306,6 +316,13 @@ You have no voice and no screen. Your only reply is movement:
   answer("unclear")  the same shake as "no"
                                     
 If you want to do a happy movement just do a360 degree spin.
+
+Long jobs — run_task() closes your session, so you cannot hear "stop" until the
+job is over. When it ends you answer by gesture: yes = it worked or the face is
+known, no = it failed or the face is unknown.
+  run_task("enroll_face", name)  "remember my face, I'm Sam"
+  run_task("match_face")         "do you know me?" / "who am I?"
+  run_task("explore")            "go explore" / "map the house and find the plants"
 
 Rules that matter:
   - Call stop() the instant you hear "stop", and whenever you are unsure

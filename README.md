@@ -184,7 +184,8 @@ ros2 topic echo /explore/status     # what it is doing, in plain English
 
 The robot stops, sweeps the TF-Luna ±45° on the head in each of four directions (a 360° scan), and sends that keyframe to the Mac. The Mac matches it into the map, corrects the drifting wheel odometry, and returns a path to the nearest unexplored area. Whenever the camera sees a plant, the robot ranges it, checks the plant register on the Mac, then drives to 3–4 viewpoints around it and saves a photo from each. New plants are enrolled as `plant_NNN`; known plants get a new visit, which is what growth tracking reads. Before every drive step the head tilts down to check the floor, which catches low obstacles and drops that the level sweep misses.
 
-- **Map:** `http://<mac>:8080/v1/slam/map.png` (plants marked in red). **Photos:** `~/.robot-vision/plants/<plant>/` on the Mac.
+- **Map:** `http://<mac>:8080/v1/slam/map.png` (plants marked in red). **Photos:** `Vision-Microservice/plants/map_{index}/plant_{NNN}/photo_{i}.png` + `bbox_{i}.txt` on the Mac (a new map gets a new `map_{index}`).
+- **Guard rails** (`/explorer` in `robot.yaml`, or `--ros-args -p no_behind:=true -p explore_radius_m:=5.0`): `explore_radius_m` (default `10`, `0` = unlimited) only explores within that radius of `start_pose`; `no_behind: true` only explores ahead of the start heading. Both apply to where it drives and which plants it photographs; the 360° scans still map everything around it. When nothing inside the limits is left, the run ends as complete.
 - **Re-scan later on the same map:** set `continue_map: true` and `start_pose` (where the robot stands, read off the map) under `/explorer` in `robot.yaml`.
 - **Motion health:** `ros2 topic echo /motion_health` compares the command, the encoders and the camera. It reports `stalled` (wheels blocked), `slipping` (wheels turning, image static), `pushed`, or `wrong_direction`; the drivetrain brakes on stalled or slipping.
 - **Park the head by hand** after a crash or power cut: `python -m robot_core.sensors.gimbal home`.
@@ -197,6 +198,14 @@ One-time setup:
 4. Rebuild the workspace (new messages and the `robot_explore` package): `cd ros2_ws && colcon build --symlink-install`.
 5. Measure and set `head_height_m`, `pan_axis_x_m`, `hfov_deg` and the servo `*_center_us` trims under `/explorer` in `robot.yaml`. `+pan` must turn the head left and `+tilt` must look up; flip `pan_invert`/`tilt_invert` if not.
 6. On the Mac, restart the vision service (DINOv2 downloads on first start). For `/v1/ask`, set `GEMINI_API_KEY` and/or run `ollama pull qwen3-vl:8b`.
+
+### Voice commands: enroll face, match face, explore
+
+In command mode, say it to the robot: *"remember my face, I'm Sam"* (`enroll_face`, about 30 s of frames — stand in front of the camera alone), *"do you know me?"* (`match_face`), *"go explore"* (`explore`, runs the explorer node against the running drivetrain until it finishes).
+
+For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° and 40° up (never below level), stops on the first face, centres it, and holds while it captures, then parks. Tilt is limited to -30°/+45° everywhere; face tasks narrow it to 0°/+45°. `ROBOT_FACE_SEARCH_S` (enroll, default 30 s) and `ROBOT_FACE_MATCH_S` (search + match, default 30 s) set the search time.
+
+The voice session **closes for the whole task** (so you can't say "stop" until it ends), then reopens. The robot answers by gesture: **nod = it worked / the face is known, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`. Durations: `ROBOT_FACE_ENROLL_S`, `ROBOT_FACE_MATCH_S`.
 
 ## Robot images
 

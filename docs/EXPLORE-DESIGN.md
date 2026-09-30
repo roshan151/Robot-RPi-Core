@@ -13,7 +13,7 @@ see Part 0.
 | LD14P 2-D lidar on the Pi for mapping and obstacles (PLAN #7, Phase 5) | **No 2-D lidar.** The TF-Luna, mounted on the head at camera level, *is* the scanner: pan sweeps ±45° × four 90° base turns = one 360° keyframe | Final sensor set is camera + TF-Luna + pan/tilt |
 | TF-Luna on the Arduino, tilted down, cliff reflex only (PLAN Phase F) | TF-Luna on the **Pi UART** (`/dev/serial0`), on the head. Cliffs and low obstacles are checked by **tilting the head down before every drive step** (`Head.floor_probe`) | One sensor, three jobs; the reflex moves from firmware to a pre-drive check, acceptable because every move is a short, stopped, probed step |
 | `slam_toolbox` on the Pi (Phase 7) | **Keyframe SLAM on the Mac** (`Vision-Microservice/vision_service/slam.py`) | A single-beam scan takes ~20 s; that is batch SLAM, not a streaming problem. The Mac has the CPU, keeps the map next to the plant register, and renders it |
-| Pan limited to ±90° (VISION-DESIGN 4.5) | **Pan ±45°, tilt ±90°**, clamped in the driver, parked at the start position on every shutdown | Final mechanical limits |
+| Pan limited to ±90° (VISION-DESIGN 4.5) | **Pan ±45°, tilt -30°/+45°**, clamped in the driver, parked at the start position on every shutdown | Final mechanical limits |
 | Frontier explorer on the Pi from `/map` | Frontiers and paths come back from the Mac with every keyframe; the Pi follows them with the existing `/drive` and `/turn` actions | Keeps the Pi thin; paths are computed on the same map the scan was matched into |
 | Camera upright | Mounted **inverted**; rotated 180° in the ISP (`Transform(hflip, vflip)`) so every consumer sees an upright image for free | — |
 

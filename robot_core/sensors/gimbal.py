@@ -11,8 +11,8 @@ jitter-free; software PWM would twitch.
 
 Limits live here, with the actuator (PLAN standing rule #4)
 -----------------------------------------------------------
-Pan is clamped to ±45° from the start position, tilt to ±90°, whatever a
-caller asks for.
+Pan is clamped to ±45° from the start position, tilt to -30°/+45° (+ is up),
+whatever a caller asks for.
 
 Parking
 -------
@@ -29,7 +29,7 @@ import logging
 import threading
 import time
 from dataclasses import dataclass
-from typing import Optional, Protocol
+from typing import Optional, Protocol, Tuple
 
 log = logging.getLogger(__name__)
 
@@ -96,7 +96,7 @@ class AxisConfig:
 
 
 PAN_DEFAULT = AxisConfig(channel=1, min_deg=-45.0, max_deg=45.0)     # GPIO13
-TILT_DEFAULT = AxisConfig(channel=0, min_deg=-90.0, max_deg=90.0)    # GPIO12
+TILT_DEFAULT = AxisConfig(channel=0, min_deg=-30.0, max_deg=45.0)    # GPIO12
 
 
 class _Axis:
@@ -196,6 +196,9 @@ class Gimbal:
         with self._lock:
             return not self._moving and time.monotonic() - self._last_motion >= settle_s
 
+    def tilt_limits(self) -> Tuple[float, float]:
+        return self.tilt.cfg.min_deg, self.tilt.cfg.max_deg
+
     def wait_settled(self, settle_s: float = 0.15, timeout: float = 10.0) -> bool:
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
@@ -239,6 +242,22 @@ class Gimbal:
                     self._arrived.notify_all()
             nxt += dt
             time.sleep(max(0.0, nxt - time.monotonic()))
+
+
+def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float = TILT_DEFAULT.max_deg,
+                backend: str = "hardware") -> Gimbal:
+    """A Gimbal from the `/explorer` parameters in robot.yaml (channels, centre
+    trims, inversion, speed). Pan is always ±45°; callers may narrow the tilt
+    range — the face tasks pass tilt_min=0 so the head never looks below level."""
+    speed = float(p.get("servo_speed_dps", 60.0))
+    return Gimbal(
+        pan=AxisConfig(channel=int(p.get("pan_channel", 1)), min_deg=-45.0, max_deg=45.0,
+                       center_us=float(p.get("pan_center_us", 1500.0)),
+                       invert=bool(p.get("pan_invert", False)), max_speed_dps=speed),
+        tilt=AxisConfig(channel=int(p.get("tilt_channel", 0)), min_deg=tilt_min, max_deg=tilt_max,
+                        center_us=float(p.get("tilt_center_us", 1500.0)),
+                        invert=bool(p.get("tilt_invert", False)), max_speed_dps=speed),
+        backend=backend, chip=int(p.get("pwm_chip", 0)))
 
 
 def main() -> None:
