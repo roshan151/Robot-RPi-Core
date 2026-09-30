@@ -1,16 +1,30 @@
-"""All configuration. Every value reads an environment variable (or .env) and falls back to the default here.
+"""All configuration. Every value reads an environment variable and falls back to the default here.
 
-Secrets come from the environment only, never from this file (see .env.example).
+Variables come from the environment, else from .env / /etc/robot.env (see _load_env_files).
+Secrets live there, never in this file.
 """
 
 import os
 from pathlib import Path
 
-try:
-    from dotenv import load_dotenv
-    load_dotenv(Path(__file__).resolve().parent / ".env")
-except Exception:          # no python-dotenv: on the Pi systemd supplies the environment
-    pass
+
+def _load_env_files():
+    """Fill in variables from env files. Already-set variables always win, then the
+    first file listed that sets a name: ./.env, robot_core/.env, /etc/robot.env."""
+    here = Path(__file__).resolve().parent
+    for path in (os.environ.get("ROBOT_ENV_FILE"), here.parent / ".env", here / ".env", "/etc/robot.env"):
+        try:
+            lines = Path(path).read_text().splitlines() if path else []
+        except OSError:               # missing, or /etc/robot.env not readable by this user
+            continue
+        for line in lines:
+            line = line.strip().removeprefix("export ").strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
+
+
+_load_env_files()
 
 
 def _env(name, default, cast=str):
@@ -156,8 +170,8 @@ def require(name):
     value = globals().get(name, "")
     if not value:
         raise MissingSecret(
-            f"{name} is not set. Put it in {Path(__file__).resolve().parent / '.env'} (development), "
-            f"/etc/robot.env (systemd service) or the environment. See .env.example.")
+            f"{name} is not set. Put it in /etc/robot.env, "
+            f"{Path(__file__).resolve().parent.parent / '.env'} or the environment.")
     return str(value)
 
 

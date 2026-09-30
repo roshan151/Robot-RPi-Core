@@ -16,11 +16,11 @@ set -euo pipefail
 
 PORT="${PORT:-/dev/cu.usbserial-A5069RR4}"
 FQBN="${FQBN:-arduino:avr:uno}"
-SKETCH="$(dirname "$0")/sketches/drivetrain"
+SKETCH="$(dirname "$0")/firmware/drivetrain"
 
 echo "Compiling + uploading $SKETCH  (board=$FQBN, port=$PORT)"
 arduino-cli compile --fqbn "$FQBN" --upload --port "$PORT" "$SKETCH"
 
 echo
 echo "Done. Verify the build stamp: the next test run should print"
-echo "  Arduino firmware: drv8871-v3 built $(date '+%b %e %Y') <time>"
+echo "  Arduino firmware: drv8871-v5-odo built $(date '+%b %e %Y') <time>"

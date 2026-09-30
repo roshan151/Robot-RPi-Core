@@ -1,198 +1,144 @@
 # Robot Computer Vision
 
-Raspberry Pi–based robot with **computer vision**, **voice + LLM planning**, and an **Arduino** handling real-time **drivetrain** control (PID, encoders) over **USB serial**. The Pi sends high-level intent only (`F` / `B` / `L` / `R` / `S`, speed, heartbeat); the Arduino runs the low-level control loop.
+A Raspberry Pi robot that listens (Gemini Live voice), looks (camera + TF-Luna on a pan/tilt head), and explores. An **Arduino** runs the real-time drivetrain (PID, encoders) over **USB serial**; a **Mac mini** runs the heavy vision work (detection, faces, plants, SLAM, image+text reasoning). The Pi keeps no data: maps and photos are stored on the Mac.
 
 ---
 
 ## Repository layout
 
-Two layers, and the boundary is the point. `robot_core/` is the robot as plain
-Python and imports **no ROS**; `ros2_ws/` is thin nodes that call into it. That
-keeps the tests runnable on a laptop, stops a node quietly growing hardware
-logic, and means deleting `ros2_ws/` still leaves a working robot. There is a
-test for it (`tests/test_layering.py`).
+Two layers, and the boundary is the point. `robot_core/` is the robot as plain Python and imports **no ROS**; `ros2_ws/` is thin nodes that call into it. That keeps the tests runnable on a laptop and means deleting `ros2_ws/` still leaves a working robot. `tests/test_layering.py` enforces it.
 
 | Path | Purpose |
 |------|--------|
-| `firmware/drivetrain/drivetrain.ino` | Arduino sketch — motors, encoders, PID, serial protocol. Its header comment is the authoritative pinout |
-| **`robot_core/`** | **Layer A — no ROS imports, ever** |
-| `robot_core/settings.py` | Serial port, baud, calibration, timeouts, environment-variable defaults |
-| `robot_core/drivetrain/` | Framed serial protocol, the Arduino bridge, and `SerialDrivetrain` |
-| `robot_core/motion_executor.py` | FIFO worker that owns the link; cancellation that interrupts a move in flight |
-| `robot_core/motion.py` | `MotionBackend` — the seam the tools call, and `LocalMotion`, its no-ROS implementation |
-| `robot_core/gestures.py` | The gesture vocabulary. Single source of truth for what the model may ask for |
-| `robot_core/live/agent.py` | The Gemini Live session: mic uplink, event pump, result feedback |
-| `robot_core/live/tools.py` | `drive` / `turn` / `stop` / `answer`, as Live function declarations |
-| `robot_core/speech.py` | Gemini TTS over REST, cached to disk |
-| `robot_core/run.py` | Run everything **without** ROS — the bench path and the fallback |
-| **`ros2_ws/src/`** | **Layer B — thin nodes** |
-| `robot_interfaces/` | `Drive.action`, `Turn.action`, `Encoders.msg` |
-| `robot_drivetrain/` | Action servers, the e-stop service, encoder telemetry |
-| `robot_voice/` | The Live session as a node, plus `RosMotion` (MotionBackend over actions) |
-| `robot_bringup/` | Launch files, `robot.yaml`, and the one-process node host |
-| **`vision_service/`** | **The off-Pi perception service — runs on the Mac mini, not the robot** |
-| `tests/` | Unit tests — no hardware, no ROS needed |
-| `tests/hardware/` | `check_*.py` diagnostics that need a real robot |
-| `docs/PLAN.md` | The migration and expansion plan. Start here |
-| `docs/VISION-DESIGN.md` | The vision/perception layer: what runs where, and why |
+| `firmware/drivetrain/drivetrain.ino` | Arduino sketch: motors, encoders, PID, serial protocol. Its header comment is the authoritative pinout |
+| `robot_core/settings.py` | Every setting, with its environment variable and default |
+| `robot_core/drivetrain/` | Framed serial protocol, the Arduino bridge, `SerialDrivetrain` |
+| `robot_core/motion_executor.py`, `motion.py` | The move queue that owns the serial link, and the `MotionBackend` seam the tools call |
+| `robot_core/odometry.py` | Wheel odometry, drift estimate, and motion health (stalled / slipping / pushed) |
+| `robot_core/sensors/` | Pan/tilt gimbal, TF-Luna, camera, visual motion, and the `Head` that combines them |
+| `robot_core/explore/` | The explore mission: scan, plan, find plants, photograph them |
+| `robot_core/face_tasks.py`, `vision_client.py` | Voice-triggered face enroll/match, and the client for the Mac service |
+| `robot_core/live/` | The Gemini Live session (`agent.py`) and its tools (`tools.py`: drive, turn, stop, answer, run_task) |
+| `robot_core/gestures.py`, `speech.py` | Yes/no/dance gestures; Gemini text-to-speech cached to disk |
+| `robot_core/run.py` | Run everything without ROS (bench use) |
+| `ros2_ws/src/` | ROS 2 nodes: `robot_interfaces` (actions, messages), `robot_drivetrain`, `robot_voice`, `robot_explore`, `robot_vision` (Mac-service client node), `robot_bringup` (launch files, `robot.yaml`) |
+| `install_pi.sh`, `start_robot.sh`, `robot-voice.service` | Pi setup, the launcher, the boot service |
+| `flash.sh`, `check_bt_audio.sh`, `vision_test.py`, `read_log.py` | Flash the Arduino (from the Mac), check the buds' audio, test the vision service, read `logs.json` |
+| `tests/` | Unit tests (no hardware or ROS needed); `tests/hardware/` needs the real robot |
+| `docs/` | `PLAN.md`, `VISION-DESIGN.md`, `EXPLORE-DESIGN.md`, `HARDWARE-BASICS.md` |
+
+The Mac service lives in its own repo, **Vision-Microservice**.
 
 ## Hardware (summary)
 
-- **Raspberry Pi 4B** — vision, planning, serial to Arduino  
-- **Camera** — high-resolution module (Picamera2) or USB / OpenCV  
-- **Drivetrain** — 2× DC motors, **L298** (or similar), **separate motor battery**; **common ground** with logic  
-- **Arduino** — motor PWM/direction, quadrature encoders, watchdog on serial  
-- Optional: TF-Luna distance sensor (your older design mentioned obstacle override — wire through planning/firmware as you prefer)
+- **Raspberry Pi 4B** (64-bit OS): voice, camera, head, serial to the Arduino
+- **Arduino** (Uno-class): 2× DRV8871 motor drivers, quadrature encoders, serial watchdog; separate motor battery, common ground
+- **Head:** Pi camera (mounted inverted), TF-Luna range sensor (UART) and two hobby servos: pan on GPIO13 (±45°), tilt on GPIO12 (-30°/+45°)
+- **Bluetooth buds** for microphone and speaker
+- **Mac mini** on the LAN running Vision-Microservice
 
-Longer power/wiring notes from your build are still valid; keep motor supply separate from logic where applicable.
-
----
-
-## Prerequisites
-
-- **Raspberry Pi**: Python 3.10+ recommended  
-- **Arduino**: Uno-class or compatible (interrupt-capable encoder pins per sketch)  
-- USB cable **Arduino ↔ Pi** (serial; often `/dev/ttyACM0` or `/dev/ttyUSB0`)  
-- **API keys**: `OPENAI_API_KEY` or `OPENAI_API_KEY_ROBIN` in `.env` for voice mode  
+Wiring, power and encoder notes are in the Electrical Schematics section below.
 
 ---
 
 ## Installation
 
-**Layer A** (works anywhere — laptop included):
+### On a laptop (tests only)
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[voice]"
-pytest                      # 49 tests, no hardware required
+pip install -e ".[dev]"
+pytest
 ```
 
-**Layer B** (on the Pi) needs ROS 2 Jazzy. See `docs/PLAN.md` Part 3 for the
-apt setup, then:
+### On the Pi
+
+Needs **64-bit Raspberry Pi OS Trixie** (`dpkg --print-architecture` must say `arm64`; ROS 2 Jazzy has no 32-bit build). Then one script does everything it can: the ROS 2 Jazzy repo and packages, all apt packages (listed at the top of the script), the `.venv` (created with `--system-site-packages` so it sees libcamera/picamera2/OpenCV), the pip packages, and the ROS build.
 
 ```bash
-cd ros2_ws && colcon build --symlink-install && source install/setup.bash
+cd ~/Robot-Computer-Vision          # the checkout
+./install_pi.sh                     # safe to re-run, e.g. after a git pull
 ```
 
-Only `robot_interfaces` actually compiles; `--symlink-install` means Python
-edits take effect without rebuilding. Rebuild when you change a `.action` or
-`.msg`.
+Then the parts a script shouldn't do for you:
 
-**Python environment on the Pi** — a venv that can also see apt packages (libcamera, picamera2 and OpenCV can't be pip-installed):
+1. **Secrets:** create `/etc/robot.env`, see [Configuration](#configuration).
+2. **Head and TF-Luna:** add `dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4` to `/boot/firmware/config.txt`; run `sudo raspi-config` → Interface → Serial Port: login shell **No**, hardware **Yes**; reboot.
+3. **Groups:** `sudo usermod -aG dialout,audio,bluetooth roshan151 && sudo loginctl enable-linger roshan151` (log out and in, or reboot).
+4. **Buds:** pair them, see [Bluetooth buds](#bluetooth-buds-microphone--speaker).
+5. **Boot service:** check `User=` and the paths inside `robot-voice.service`, then
 
-```bash
-sudo apt install -y python3-picamera2 python3-opencv python3-libcamera python3-yaml
-cd ~/Robot-Computer-Vision
-python3 -m venv --system-site-packages .venv && source .venv/bin/activate
-pip install -e ".[voice,explore]"
-python -c "import picamera2, libcamera"     # no error = the venv sees them
-```
+   ```bash
+   sudo cp robot-voice.service /etc/systemd/system/
+   sudo systemctl daemon-reload && sudo systemctl enable --now robot-voice
+   ```
 
-Activate it before `colcon build` so the ROS nodes use it; `start_robot.sh` activates `.venv` by itself when it exists.
+After a `git pull`, rebuild with `./install_pi.sh` (or just `cd ros2_ws && colcon build --symlink-install` in a shell that sourced `/opt/ros/jazzy/setup.bash` and `.venv/bin/activate`), then `sudo systemctl restart robot-voice`. `--symlink-install` means edits to existing Python files need only the restart; new packages, `.msg` and `.action` files need the build.
 
-**Boot service** — `robot-voice.service` (repo root) is the systemd unit; it runs `start_robot.sh`, which stays in the checkout. Check `User=` and the paths inside it, then:
+### The Mac vision service
 
-```bash
-sudo cp robot-voice.service /etc/systemd/system/
-sudo cp .env /etc/robot.env && sudo chmod 600 /etc/robot.env     # API keys; the service can't read ~/.env
-sudo systemctl daemon-reload && sudo systemctl enable --now robot-voice
-```
+In the Vision-Microservice folder on the Mac: `make deploy` (creates the venv, installs, runs the tests, starts it), `make status` to check. Point the Pi at it with `VISION_SERVICE_BASE_URL` (default `http://127.0.0.1:8080`, which is wrong on the Pi: set it to e.g. `http://mini.local:8080`). If the robot seems blind, check `GET /healthz`. For `/v1/ask` set `GEMINI_API_KEY` on the Mac and/or `ollama pull qwen3-vl:8b`. Endpoints and storage are in that repo's README.
 
-**Ros on Pi**
-cat /etc/os-release      # VERSION_CODENAME should be trixie
-dpkg --print-architecture   # should print arm64
+### Arduino firmware
 
-curl -fsSL https://rospian.github.io/rospian-repo/rospian-archive-keyring.asc | gpg --dearmor | sudo tee /usr/share/keyrings/rospian-archive-keyring.gpg >/dev/null
-echo "deb [arch=arm64 signed-by=/usr/share/keyrings/rospian-archive-keyring.gpg] https://rospian.github.io/rospian-repo trixie-jazzy main" | sudo tee /etc/apt/sources.list.d/rospian.list
-
-sudo apt update
-sudo apt install -y ros-jazzy-ros-base ros-jazzy-rmw-cyclonedds-cpp python3-colcon-common-extensions python3-rosdep
-
-ls /opt/ros/jazzy/setup.bash
-source /opt/ros/jazzy/setup.bash
-ros2 --help
-
-cd ~/Robot-Computer-Vision/ros2_ws
-colcon build --symlink-install
-
-sudo systemctl restart robot-voice
-
-## Configuration
-
-### Environment variables
-
-All can be set in a `.env` file, in `/etc/robot.env` for the systemd service, or exported in the shell. Anything in `robot.yaml` overrides the corresponding default when running under ROS.
-
-| Variable | Purpose |
-|----------|--------|
-| `ROBOT_SERIAL_PORT` | Default `/dev/ttyUSB0` — set to `/dev/ttyACM0` if needed |
-| `ROBOT_SERIAL_BAUD` | Must match Arduino `Serial.begin(...)` (default `115200`) |
-| `ROBOT_METERS_PER_SECOND` | Scales spoken “meters” into drive duration |
-| `VISION_SERVICE_BASE_URL` | Base URL of the vision service, e.g. `http://mini.local:8080` |
-| `VISION_DETECT_HZ` | Detect call rate (default 2.0) |
-| `VISION_DETECT_TIMEOUT_S` | Hard abandon, no retry (default 0.6) |
-| `OPENAI_API_KEY` / `OPENAI_API_KEY_ROBIN` | Voice + planning |
-
-### Vision service
-
-The perception models run **off the Pi** — normally on a Mac mini on the LAN,
-because the Pi has no GPU. Source, endpoint contract and deployment live in
-[`vision_service/`](vision_service/README.md); the design rationale is in
-[`docs/VISION-DESIGN.md`](docs/VISION-DESIGN.md).
-
-```bash
-cd vision_service && pip install -e '.[models,dev]' && ./run.sh
-```
-
-`VISION_SERVICE_BASE_URL` is a **base URL** (default `http://127.0.0.1:8080`),
-not a single endpoint — the gateway client appends the versioned paths
-(`/v1/detect`, `/v1/faces/embed`, `/v1/faces/match`, `/v1/faces/enroll`,
-`/v1/depth`) and is the only thing that knows them. Point it at the mini if the
-service runs elsewhere, and check `GET /healthz` when the robot seems blind.
-
-The camera-based obstacle guardian is **retired**: the lidar stops the robot and
-the camera tells the agent what is there.
+Flash from the Mac with the Arduino plugged in: `brew install arduino-cli && arduino-cli core install arduino:avr` once, then `./flash.sh` (override with `PORT=` and `FQBN=`). The boot line must say `drv8871-v5-odo`; `/odom` needs its never-reset encoder totals. Or use the Arduino IDE on `firmware/drivetrain/drivetrain.ino`. You can test upload and serial without motors connected.
 
 ---
 
-## Arduino firmware
+## Configuration
 
-1. Open `firmware/drivetrain/drivetrain.ino` in the Arduino IDE.  
-2. Adjust **pin defines** at the top for your motor driver and encoders. The
-   header comment of that file is the authoritative pinout — see
-   [Motor driver wiring](#motor-driver-wiring-2-drv8871) and
-   [Motor ↔ encoder pairing](#motor--encoder-pairing-invariant) for the
-   as-built harness and the invariant it has to satisfy.  
-3. Select board/port, **Upload**.  
-4. Optional: Serial Monitor at the same baud as `ROBOT_SERIAL_BAUD` to see `ACK` / `ENC:` lines.
+Settings are environment variables (every name, default and meaning is in `robot_core/settings.py`). Under ROS, `robot.yaml` overrides the matching defaults, so calibrate in **both** places or keep the value only in the yaml.
 
-You can test upload and serial **without motors connected**; encoder lines use internal pull-ups (counts may be noisy when floating).
+### Secrets file (`/etc/robot.env`)
+
+One file holds the keys for the boot service (systemd reads it as root) and for manual runs (`settings.py` reads it too). Plain `KEY=value` lines:
+
+```bash
+sudo nano /etc/robot.env
+#   GEMINI_API_KEY=your-key-here
+#   VISION_SERVICE_BASE_URL=http://mini.local:8080
+#   BT_MAC=AA:BB:CC:DD:EE:FF          # optional: Bluetooth buds
+sudo chown root:roshan151 /etc/robot.env && sudo chmod 640 /etc/robot.env
+sudo systemctl restart robot-voice    # after any change
+```
+
+Lookup order, first hit wins: the real environment, `ROBOT_ENV_FILE` (a path), `./.env`, `robot_core/.env`, `/etc/robot.env`. `chmod 640` with your user's group (rather than 600) lets `./start_robot.sh` run by hand read the same file. Never commit a real key.
+
+### Common variables
+
+| Variable | Purpose |
+|----------|--------|
+| `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) | Live voice, speech, and the Mac's `/v1/ask`. Either name works |
+| `VISION_SERVICE_BASE_URL` | Base URL of the Mac service, e.g. `http://mini.local:8080` |
+| `ROBOT_SERIAL_PORT` | Arduino port, default `/dev/ttyUSB0` (often `/dev/ttyACM0`) |
+| `ROBOT_SERIAL_BAUD` | Must match the firmware, default `115200` |
+| `ROBOT_TICKS_PER_CM`, `ROBOT_TICKS_PER_DEGREE` | Drive calibration, see [Calibration](#calibration) |
+| `ROBOT_MAX_DRIVE_M` | Longest single drive, default `5` |
+| `ROBOT_TTS` | Robot speech, on by default; `0` mutes it |
+| `BT_MAC`, `ROBOT_AUDIO_INPUT_DEVICE`, `ROBOT_TTS_DEVICE` | Bluetooth buds and audio devices |
+| `ROBOT_FACE_SEARCH_S`, `ROBOT_FACE_ENROLL_S`, `ROBOT_FACE_MATCH_S` | Face tasks: time to find a face when enrolling, capture time once found, and total time for a match (all default 30 s) |
+| `VISION_DETECT_HZ`, `VISION_DETECT_TIMEOUT_S` | Detect rate (2.0) and hard timeout, no retry (0.6 s) |
+| `ROBOT_LOG_PATH` | Robot event log, default `logs.json` |
 
 ---
 
 ## Running the robot stack
 
 ```bash
-source /opt/ros/jazzy/setup.bash
-source ros2_ws/install/setup.bash
-ros2 launch robot_bringup command.launch.py
+./start_robot.sh                # command mode: voice + drivetrain (what the boot service runs)
+./start_robot.sh explore        # explore mode: map, find plants, photograph them
 ```
 
-Two processes on purpose: the voice node holds an always-open microphone and an
-asyncio loop, the robot process holds the serial link and the e-stop. Separate
-processes mean separate GILs, so a stall in the conversation cannot delay a stop.
+`start_robot.sh` sources ROS and the workspace, activates `.venv`, and launches the graph. Command mode is two processes on purpose: the voice node holds an always-open microphone and an asyncio loop, the robot process holds the serial link and the e-stop. Separate processes mean separate GILs, so a stall in the conversation cannot delay a stop.
 
 | Want | Command |
 |------|---------|
-| Drivetrain only, no mic or API key | `ros2 launch robot_bringup command.launch.py voice:=false` |
+| Drivetrain only, no mic or API key | `./start_robot.sh command voice:=false` |
 | Drive it by hand | `ros2 action send_goal /drive robot_interfaces/action/Drive "{meters: 0.5}" --feedback` |
 | Stop it | `ros2 service call /estop std_srvs/srv/Trigger` |
 | Watch the encoders | `ros2 topic echo /encoders` |
-| Calibrate live | `ros2 param set /drivetrain ticks_per_cm 103.4` |
+| Calibrate live | `ros2 param set /drivetrain ticks_per_cm 38.5` |
 | No ROS at all | `python -m robot_core.run` |
-
-As a service: `start_robot.sh` sources both overlays and launches the graph;
-`robot-voice.service` calls it.
 
 ### Boot service: stop, run manually, re-enable
 
@@ -222,46 +168,55 @@ ros2 topic echo /explore/status     # what it is doing, in plain English
 
 The robot stops, sweeps the TF-Luna ±45° on the head in each of four directions (a 360° scan), and sends that keyframe to the Mac. The Mac matches it into the map, corrects the drifting wheel odometry, and returns a path to the nearest unexplored area. Whenever the camera sees a plant, the robot ranges it, checks the plant register on the Mac, then drives to 3–4 viewpoints around it and saves a photo from each. New plants are enrolled as `plant_NNN`; known plants get a new visit, which is what growth tracking reads. Before every drive step the head tilts down to check the floor, which catches low obstacles and drops that the level sweep misses.
 
-- **Map:** `http://<mac>:8080/v1/slam/map.png` (plants marked in red). **Photos:** `Vision-Microservice/plants/map_{index}/plant_{NNN}/photo_{i}.png` + `bbox_{i}.txt` on the Mac (a new map gets a new `map_{index}`).
+- **Map:** `http://<mac>:8080/v1/slam/map.png` (plants marked in red). **Stored on the Mac only** (the Pi keeps nothing), in the Vision-Microservice folder: photos in `plants/map_{index}/plant_{NNN}/photo_{i}.png` + `bbox_{i}.txt` (a new map gets a new `map_{index}`), maps in `maps/<name>.npz` + `.png`, rewritten after every scan.
 - **Guard rails** (`/explorer` in `robot.yaml`, or `--ros-args -p no_behind:=true -p explore_radius_m:=5.0`): `explore_radius_m` (default `10`, `0` = unlimited) only explores within that radius of `start_pose`; `no_behind: true` only explores ahead of the start heading. Both apply to where it drives and which plants it photographs; the 360° scans still map everything around it. When nothing inside the limits is left, the run ends as complete.
 - **Re-scan later on the same map:** set `continue_map: true` and `start_pose` (where the robot stands, read off the map) under `/explorer` in `robot.yaml`.
 - **Motion health:** `ros2 topic echo /motion_health` compares the command, the encoders and the camera. It reports `stalled` (wheels blocked), `slipping` (wheels turning, image static), `pushed`, or `wrong_direction`; the drivetrain brakes on stalled or slipping.
 - **Park the head by hand** after a crash or power cut: `python -m robot_core.sensors.gimbal home`.
 
-One-time setup:
+One-time setup, besides the Installation steps:
 
-1. Flash firmware v5 (`./flash.sh`); the boot line must say `drv8871-v5-odo`. `/odom` needs its never-reset encoder totals.
-2. In `/boot/firmware/config.txt`, add `dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4` (tilt on GPIO12, pan on GPIO13). Then run `sudo raspi-config` → Interface → Serial Port: login shell **No**, hardware **Yes** (TF-Luna on `/dev/serial0`). Reboot.
-3. `sudo apt install python3-picamera2 python3-opencv` and `pip install rpi-hardware-pwm`.
-4. Rebuild the workspace (new messages and the `robot_explore` package): `cd ros2_ws && colcon build --symlink-install`.
-5. Measure and set `head_height_m`, `pan_axis_x_m`, `hfov_deg` and the servo `*_center_us` trims under `/explorer` in `robot.yaml`. `+pan` must turn the head left and `+tilt` must look up; flip `pan_invert`/`tilt_invert` if not.
-6. On the Mac, restart the vision service (DINOv2 downloads on first start). For `/v1/ask`, set `GEMINI_API_KEY` and/or run `ollama pull qwen3-vl:8b`.
+1. Flash firmware v5 (see Arduino firmware above).
+2. Measure and set `head_height_m`, `pan_axis_x_m`, `hfov_deg` and the servo `*_center_us` trims under `/explorer` in `robot.yaml`. `+pan` must turn the head left and `+tilt` must look up; flip `pan_invert`/`tilt_invert` if not.
+3. Restart the vision service on the Mac after updating it (DINOv2 downloads on first start).
 
 ### Voice commands: enroll face, match face, explore
 
 In command mode, say it to the robot: *"remember my face, I'm Sam"* (`enroll_face`, about 30 s of frames — stand in front of the camera alone), *"do you know me?"* (`match_face`), *"go explore"* (`explore`, runs the explorer node against the running drivetrain until it finishes).
 
-For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° and 40° up (never below level), stops on the first face, centres it, and holds while it captures, then parks. Tilt is limited to -30°/+45° everywhere; face tasks narrow it to 0°/+45°. `ROBOT_FACE_SEARCH_S` (enroll, default 30 s) and `ROBOT_FACE_MATCH_S` (search + match, default 30 s) set the search time.
+For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° and 40° up (never below level), stops on the first face, centres it, and holds while it captures, then parks. Tilt is limited to -30°/+45° everywhere; face tasks narrow it to 0°/+45°. The durations are set in [Common variables](#common-variables).
 
-The voice session **closes for the whole task** (so you can't say "stop" until it ends), then reopens. The robot answers by gesture: **nod = it worked / the face is known, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`. Durations: `ROBOT_FACE_ENROLL_S`, `ROBOT_FACE_MATCH_S`.
-
-## Robot images
-
-**Top view:**  
-![Top](https://github.com/user-attachments/assets/65aa1004-ad71-4d3f-be6d-fdf788f3cd46)
-
-**Side view:**  
-![Side](https://github.com/user-attachments/assets/65aa1004-c084-4d42-8a80-22c9ce910a82)
-
-**Front view:**  
-![Front](https://github.com/user-attachments/assets/65aa1004-b8d2-4fd7-ae23-dbf517e464cc)
+The voice session **closes for the whole task** (so you can't say "stop" until it ends), then reopens. The robot answers by gesture: **nod = it worked / the face is known, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
 
 ---
 
-## Resources
+## Audio
 
-- Speech recognition overview: [Real-time speech-to-text on Raspberry Pi](https://atsss.medium.com/real-time-speech-to-text-on-raspberry-pi-and-python-4be8c347a8fc)  
-- Text-to-speech: [Gemini TTS](https://ai.google.dev/gemini-api/docs/speech-generation) — the robot's voice, called over REST from `robot_core/speech.py` and cached to disk. The old tone cues (`audio_cues.py`) and the espeak-ng / Nix TTS path (`speech.py`) are gone.
+### Bluetooth buds (microphone + speaker)
+
+Pair once, by hand, on the Pi:
+
+```bash
+bluetoothctl
+  power on
+  agent on
+  default-agent
+  scan on                 # buds in pairing mode; note their MAC (AA:BB:CC:DD:EE:FF)
+  pair AA:BB:CC:DD:EE:FF
+  trust AA:BB:CC:DD:EE:FF   # so they reconnect by themselves at boot
+  connect AA:BB:CC:DD:EE:FF
+  exit
+```
+
+Then:
+
+1. Put the MAC in `/etc/robot.env` as `BT_MAC=AA:BB:CC:DD:EE:FF` (used by `check_bt_audio.sh`).
+2. `sudo usermod -aG bluetooth,audio roshan151`, and **`sudo loginctl enable-linger roshan151`** — without lingering, the user's audio server doesn't exist at boot and the service hears nothing. `robot-voice.service` already points at it (`XDG_RUNTIME_DIR`, `PULSE_SERVER`; `id -u` must be 1000, else edit both).
+3. Reboot with the buds on and nearby. The service waits 5 s for them to connect.
+4. Check: `pactl list short sources | grep bluez` (the mic) and `python -m robot_core.speech "hello there"` (the speaker). If several devices exist, set `ROBOT_AUDIO_INPUT_DEVICE` / `ROBOT_TTS_DEVICE`.
+5. Use 16 kHz wideband for the mic: run `./check_bt_audio.sh`. If it says mSBC isn't offered, add `monitor.bluez.properties = { bluez5.enable-msbc = true }` in `~/.config/wireplumber/wireplumber.conf.d/51-bluez.conf`, restart `wireplumber`, reconnect the buds, and run it again.
+
+The buds must be in headset mode (HFP) for their microphone to work, which is why step 5 matters.
 
 ### Voice setup
 
@@ -297,6 +252,20 @@ Delivery is directed in natural language rather than with rate/pitch dials —
 director's notes are the documented cause of the model reading the instructions
 aloud instead of following them.
 
+---
+
+## Robot images
+
+**Top view:**  
+![Top](https://github.com/user-attachments/assets/65aa1004-ad71-4d3f-be6d-fdf788f3cd46)
+
+**Side view:**  
+![Side](https://github.com/user-attachments/assets/65aa1004-c084-4d42-8a80-22c9ce910a82)
+
+**Front view:**  
+![Front](https://github.com/user-attachments/assets/65aa1004-b8d2-4fd7-ae23-dbf517e464cc)
+
+---
 
 ## Debugging Arduino
 Check if anything is occupying the port: lsof /dev/cu.usbserial-A5069RR4

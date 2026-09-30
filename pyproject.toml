@@ -13,7 +13,6 @@ dependencies = [
     # `requests` is the entire TTS dependency — no client library, no
     # espeak-ng apt package, no Nix TTS model directory.
     "requests>=2.28.0",
-    "python-dotenv>=1.0.0",
 ]
 
 [project.optional-dependencies]
