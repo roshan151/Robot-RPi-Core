@@ -7,6 +7,8 @@
 """
 import argparse, os, time
 import cv2, requests
+from picamera2 import Picamera2
+
 
 p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 p.add_argument("mode", choices=["detect", "enroll", "match"])
@@ -36,13 +38,14 @@ def label(frame, text, xy=(10, 30), color=YELLOW, bbox=None):
     cv2.putText(frame, text, xy, cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
 
-def frames():  # yields (seq, frame) until q is pressed
-    cap, seq = cv2.VideoCapture(a.camera), 0
+
+def frames():
+    cam = Picamera2()
+    cam.configure(cam.create_preview_configuration(main={"size": (640, 480), "format": "RGB888"}))
+    cam.start()
+    seq = 0
     while cv2.waitKey(1) & 0xFF != ord("q"):
-        ok, f = cap.read()
-        if not ok:
-            raise SystemExit(f"cannot read camera {a.camera}")
-        yield (seq := seq + 1), f
+        yield (seq := seq + 1), cam.capture_array()
 
 
 if a.mode == "detect":
