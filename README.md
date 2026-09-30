@@ -82,6 +82,12 @@ echo "deb [arch=arm64 signed-by=/usr/share/keyrings/rospian-archive-keyring.gpg]
 sudo apt update
 apt policy ros-jazzy-ros-base
 grep -c "Package: ros-jazzy-ros-base$" /opt/rospian-repo/dists/trixie-jazzy/main/binary-arm64/Packages
+
+P=/opt/rospian-repo/dists/trixie-jazzy/main/binary-arm64/Packages
+grep -c "^Package:" $P
+for n in ros-core ros-base rclpy std-msgs std-srvs sensor-msgs geometry-msgs nav-msgs action-msgs rosidl-default-generators rosidl-default-runtime ament-cmake ament-cmake-python launch launch-ros launch-xml ros2cli ros2run ros2launch ros2action ros2param ros2topic ros2service ros2pkg rmw-cyclonedds-cpp tf2-ros; do printf "%-28s" $n; grep -c "^Package: ros-jazzy-$n\$" $P; done
+apt-cache policy python3-colcon-common-extensions | head -3
+
 1. **Secrets:** create `/etc/robot.env`, see [Configuration](#configuration).
 2. **Head and TF-Luna:** add `dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4` to `/boot/firmware/config.txt`; run `sudo raspi-config` → Interface → Serial Port: login shell **No**, hardware **Yes**; reboot.
 3. **Groups:** `sudo usermod -aG dialout,audio,bluetooth roshan151 && sudo loginctl enable-linger roshan151` (log out and in, or reboot).
