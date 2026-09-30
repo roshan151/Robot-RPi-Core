@@ -22,7 +22,7 @@ Two layers, and the boundary is the point. `robot_core/` is the robot as plain P
 | `robot_core/gestures.py`, `speech.py` | Yes/no/dance gestures; Gemini text-to-speech cached to disk |
 | `robot_core/run.py` | Run everything without ROS (bench use) |
 | `ros2_ws/src/` | ROS 2 nodes: `robot_interfaces` (actions, messages), `robot_drivetrain`, `robot_voice`, `robot_explore`, `robot_vision` (Mac-service client node), `robot_bringup` (launch files, `robot.yaml`) |
-| `install_pi.sh`, `start_robot.sh`, `robot-voice.service` | Pi setup, the launcher, the boot service |
+| `install_pi.sh`, `cleanup_pi.sh`, `README-SETUP.md`, `start_robot.sh`, `robot-voice.service` | Pi installer and its guide, the launcher, the boot service |
 | `flash.sh`, `check_bt_audio.sh`, `vision_test.py`, `read_log.py` | Flash the Arduino (from the Mac), check the buds' audio, test the vision service, read `logs.json` |
 | `tests/` | Unit tests (no hardware or ROS needed); `tests/hardware/` needs the real robot |
 | `docs/` | `PLAN.md`, `VISION-DESIGN.md`, `EXPLORE-DESIGN.md`, `HARDWARE-BASICS.md` |
@@ -43,88 +43,12 @@ Wiring, power and encoder notes are in the Electrical Schematics section below.
 
 ## Installation
 
-### On a laptop (tests only)
+Setting up a Pi (or the Mac vision service, the Arduino firmware, or a laptop for tests) is in **[README-SETUP.md](README-SETUP.md)**. The short version, on a fresh 64-bit Raspberry Pi OS Trixie:
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-pytest
+git clone <your-repo-url> ~/Robot-RPi-Core && cd ~/Robot-RPi-Core
+./install_pi.sh
 ```
-
-### On the Pi
-
-Needs **64-bit Raspberry Pi OS Trixie** (`dpkg --print-architecture` must say `arm64`; ROS 2 Jazzy has no 32-bit build). Then one script does everything it can: the ROS 2 Jazzy repo and packages, all apt packages (listed at the top of the script), the `.venv` (created with `--system-site-packages` so it sees libcamera/picamera2/OpenCV), the pip packages, and the ROS build.
-
-```bash
-cd ~/Robot-Computer-Vision          # the checkout
-./install_pi.sh                     # safe to re-run, e.g. after a git pull
-```
-curl -sS -o /dev/null -w "%{http_code}\n" https://rospian.github.io/rospian-repo/rospian-archive-keyring.asc
-curl -sSI https://rospian.github.io/rospian-repo/rospian-archive-keyring.asc | head -5
-git clone --depth 1 https://github.com/rospian/rospian-repo /tmp/rospian-repo
-ls -la /tmp/rospian-repo /tmp/rospian-repo/dists 2>&1 | head -30
-git -C /tmp/rospian-repo branch -a
-
-# use local rospian
-mv /tmp/rospian-repo ~/rospian-repo
-ls ~/rospian-repo/public ~/rospian-repo/dists/trixie-jazzy
-du -sh ~/rospian-repo/pool
-
-Then the parts a script shouldn't do for you:
-gpg --dearmor < ~/rospian-repo/public/KEYFILE | sudo tee /usr/share/keyrings/rospian-archive-keyring.gpg >/dev/null
-echo "deb [arch=arm64 signed-by=/usr/share/keyrings/rospian-archive-keyring.gpg] file:$HOME/rospian-repo trixie-jazzy main" | sudo tee /etc/apt/sources.list.d/rospian.list
-sudo apt update
-apt policy ros-jazzy-ros-base
-
-sudo mv ~/rospian-repo /opt/rospian-repo
-sudo chmod -R a+rX /opt/rospian-repo
-echo "deb [arch=arm64 signed-by=/usr/share/keyrings/rospian-archive-keyring.gpg] file:/opt/rospian-repo trixie-jazzy main" | sudo tee /etc/apt/sources.list.d/rospian.list
-sudo apt update
-apt policy ros-jazzy-ros-base
-grep -c "Package: ros-jazzy-ros-base$" /opt/rospian-repo/dists/trixie-jazzy/main/binary-arm64/Packages
-
-P=/opt/rospian-repo/dists/trixie-jazzy/main/binary-arm64/Packages
-grep -c "^Package:" $P
-for n in ros-core ros-base rclpy std-msgs std-srvs sensor-msgs geometry-msgs nav-msgs action-msgs rosidl-default-generators rosidl-default-runtime ament-cmake ament-cmake-python launch launch-ros launch-xml ros2cli ros2run ros2launch ros2action ros2param ros2topic ros2service ros2pkg rmw-cyclonedds-cpp tf2-ros; do printf "%-28s" $n; grep -c "^Package: ros-jazzy-$n\$" $P; done
-apt-cache policy python3-colcon-common-extensions | head -3
-
-cd ~/Robot-RPi-Core
-python3 - <<'E'
-import re,pathlib
-p=pathlib.Path("install_pi.sh"); s=p.read_text()
-s=s.replace("  ros-jazzy-ros-base ros-jazzy-rmw-cyclonedds-cpp python3-colcon-common-extensions\n","""  ros-jazzy-rclpy ros-jazzy-std-msgs ros-jazzy-std-srvs ros-jazzy-sensor-msgs ros-jazzy-geometry-msgs
-  ros-jazzy-nav-msgs ros-jazzy-action-msgs ros-jazzy-tf2-ros
-  ros-jazzy-ament-cmake ros-jazzy-ament-cmake-python ros-jazzy-rosidl-default-generators ros-jazzy-rosidl-default-runtime
-  ros-jazzy-launch ros-jazzy-launch-ros ros-jazzy-launch-xml
-  ros-jazzy-ros2cli ros-jazzy-ros2run ros-jazzy-ros2launch ros-jazzy-ros2action ros-jazzy-ros2param
-  ros-jazzy-ros2topic ros-jazzy-ros2service ros-jazzy-ros2pkg ros-jazzy-rmw-cyclonedds-cpp
-""")
-s=s.replace('.venv/bin/pip install -e','.venv/bin/pip install colcon-common-extensions\n.venv/bin/pip install -e',1)
-p.write_text(s)
-E
-bash -n install_pi.sh && ./install_pi.sh
-
-
-1. **Secrets:** create `/etc/robot.env`, see [Configuration](#configuration).
-2. **Head and TF-Luna:** add `dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4` to `/boot/firmware/config.txt`; run `sudo raspi-config` → Interface → Serial Port: login shell **No**, hardware **Yes**; reboot.
-3. **Groups:** `sudo usermod -aG dialout,audio,bluetooth roshan151 && sudo loginctl enable-linger roshan151` (log out and in, or reboot).
-4. **Buds:** pair them, see [Bluetooth buds](#bluetooth-buds-microphone--speaker).
-5. **Boot service:** check `User=` and the paths inside `robot-voice.service`, then
-
-   ```bash
-   sudo cp robot-voice.service /etc/systemd/system/
-   sudo systemctl daemon-reload && sudo systemctl enable --now robot-voice
-   ```
-
-After a `git pull`, rebuild with `./install_pi.sh` (or just `cd ros2_ws && colcon build --symlink-install` in a shell that sourced `/opt/ros/jazzy/setup.bash` and `.venv/bin/activate`), then `sudo systemctl restart robot-voice`. `--symlink-install` means edits to existing Python files need only the restart; new packages, `.msg` and `.action` files need the build.
-
-### The Mac vision service
-
-In the Vision-Microservice folder on the Mac: `make deploy` (creates the venv, installs, runs the tests, starts it), `make status` to check. Point the Pi at it with `VISION_SERVICE_BASE_URL` (default `http://127.0.0.1:8080`, which is wrong on the Pi: set it to e.g. `http://mini.local:8080`). If the robot seems blind, check `GET /healthz`. For `/v1/ask` set `GEMINI_API_KEY` on the Mac and/or `ollama pull qwen3-vl:8b`. Endpoints and storage are in that repo's README.
-
-### Arduino firmware
-
-Flash from the Mac with the Arduino plugged in: `brew install arduino-cli && arduino-cli core install arduino:avr` once, then `./flash.sh` (override with `PORT=` and `FQBN=`). The boot line must say `drv8871-v5-odo`; `/odom` needs its never-reset encoder totals. Or use the Arduino IDE on `firmware/drivetrain/drivetrain.ino`. You can test upload and serial without motors connected.
 
 ---
 
@@ -217,9 +141,9 @@ The robot stops, sweeps the TF-Luna ±45° on the head in each of four direction
 - **Motion health:** `ros2 topic echo /motion_health` compares the command, the encoders and the camera. It reports `stalled` (wheels blocked), `slipping` (wheels turning, image static), `pushed`, or `wrong_direction`; the drivetrain brakes on stalled or slipping.
 - **Park the head by hand** after a crash or power cut: `python -m robot_core.sensors.gimbal home`.
 
-One-time setup, besides the Installation steps:
+One-time setup, besides [README-SETUP.md](README-SETUP.md):
 
-1. Flash firmware v5 (see Arduino firmware above).
+1. Flash firmware v5 (see [README-SETUP.md](README-SETUP.md#6-the-other-two-machines)).
 2. Measure and set `head_height_m`, `pan_axis_x_m`, `hfov_deg` and the servo `*_center_us` trims under `/explorer` in `robot.yaml`. `+pan` must turn the head left and `+tilt` must look up; flip `pan_invert`/`tilt_invert` if not.
 3. Restart the vision service on the Mac after updating it (DINOv2 downloads on first start).
 
