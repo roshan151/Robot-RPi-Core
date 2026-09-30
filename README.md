@@ -65,7 +65,16 @@ git clone --depth 1 https://github.com/rospian/rospian-repo /tmp/rospian-repo
 ls -la /tmp/rospian-repo /tmp/rospian-repo/dists 2>&1 | head -30
 git -C /tmp/rospian-repo branch -a
 
+# use local rospian
+mv /tmp/rospian-repo ~/rospian-repo
+ls ~/rospian-repo/public ~/rospian-repo/dists/trixie-jazzy
+du -sh ~/rospian-repo/pool
+
 Then the parts a script shouldn't do for you:
+gpg --dearmor < ~/rospian-repo/public/KEYFILE | sudo tee /usr/share/keyrings/rospian-archive-keyring.gpg >/dev/null
+echo "deb [arch=arm64 signed-by=/usr/share/keyrings/rospian-archive-keyring.gpg] file:$HOME/rospian-repo trixie-jazzy main" | sudo tee /etc/apt/sources.list.d/rospian.list
+sudo apt update
+apt policy ros-jazzy-ros-base
 
 1. **Secrets:** create `/etc/robot.env`, see [Configuration](#configuration).
 2. **Head and TF-Luna:** add `dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4` to `/boot/firmware/config.txt`; run `sudo raspi-config` → Interface → Serial Port: login shell **No**, hardware **Yes**; reboot.
