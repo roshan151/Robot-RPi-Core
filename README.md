@@ -61,6 +61,9 @@ cd ~/Robot-Computer-Vision          # the checkout
 ```
 curl -sS -o /dev/null -w "%{http_code}\n" https://rospian.github.io/rospian-repo/rospian-archive-keyring.asc
 curl -sSI https://rospian.github.io/rospian-repo/rospian-archive-keyring.asc | head -5
+git clone --depth 1 https://github.com/rospian/rospian-repo /tmp/rospian-repo
+ls -la /tmp/rospian-repo /tmp/rospian-repo/dists 2>&1 | head -30
+git -C /tmp/rospian-repo branch -a
 
 Then the parts a script shouldn't do for you:
 
