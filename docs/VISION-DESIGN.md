@@ -1,5 +1,7 @@
 # Vision & Perception — Design Doc
 
+> **Amended by `EXPLORE-DESIGN.md`**: pan is ±45° (not ±90°), there is no 2-D lidar — range at a bearing comes from the TF-Luna on the head, aimed with the camera — and SLAM runs on the Mac.
+
 Companion to `PLAN.md` (ROS 2 migration) and `HARDWARE-BASICS.md`. This doc covers
 only the vision/perception layer: object detection, object tracking, gimbal aim,
 distance estimation, approach planning, person identification, and person

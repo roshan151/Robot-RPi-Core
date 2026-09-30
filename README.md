@@ -173,6 +173,31 @@ The Pi starts the robot at boot via `robot-voice.service`. To work on it:
 
 Stop the service before running `./start_robot.sh` by hand — two copies will fight over the serial port and microphone. After editing `robot-voice.service` itself, re-copy it to `/etc/systemd/system/` and run `sudo systemctl daemon-reload`. If it crash-looped (5 failures in 2 min), clear it with `sudo systemctl reset-failed robot-voice` before starting again.
 
+### Explore mode (map the house, photograph every plant)
+
+```bash
+sudo systemctl stop robot-voice     # explore and command mode can't share the serial port or camera
+./start_robot.sh explore            # ends by itself when nothing reachable is left unexplored
+ros2 service call /explore/stop std_srvs/srv/Trigger   # stop early; the map is still saved
+ros2 topic echo /explore/status     # what it is doing, in plain English
+```
+
+The robot stops, sweeps the TF-Luna ±45° on the head in each of four directions (a 360° scan), and sends that keyframe to the Mac. The Mac matches it into the map, corrects the drifting wheel odometry, and returns a path to the nearest unexplored area. Whenever the camera sees a plant, the robot ranges it, checks the plant register on the Mac, then drives to 3–4 viewpoints around it and saves a photo from each. New plants are enrolled as `plant_NNN`; known plants get a new visit, which is what growth tracking reads. Before every drive step the head tilts down to check the floor, which catches low obstacles and drops that the level sweep misses.
+
+- **Map:** `http://<mac>:8080/v1/slam/map.png` (plants marked in red). **Photos:** `~/.robot-vision/plants/<plant>/` on the Mac.
+- **Re-scan later on the same map:** set `continue_map: true` and `start_pose` (where the robot stands, read off the map) under `/explorer` in `robot.yaml`.
+- **Motion health:** `ros2 topic echo /motion_health` compares the command, the encoders and the camera. It reports `stalled` (wheels blocked), `slipping` (wheels turning, image static), `pushed`, or `wrong_direction`; the drivetrain brakes on stalled or slipping.
+- **Park the head by hand** after a crash or power cut: `python -m robot_core.sensors.gimbal home`.
+
+One-time setup:
+
+1. Flash firmware v5 (`./flash.sh`); the boot line must say `drv8871-v5-odo`. `/odom` needs its never-reset encoder totals.
+2. In `/boot/firmware/config.txt`, add `dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4` (tilt on GPIO12, pan on GPIO13). Then run `sudo raspi-config` → Interface → Serial Port: login shell **No**, hardware **Yes** (TF-Luna on `/dev/serial0`). Reboot.
+3. `sudo apt install python3-picamera2 python3-opencv` and `pip install rpi-hardware-pwm`.
+4. Rebuild the workspace (new messages and the `robot_explore` package): `cd ros2_ws && colcon build --symlink-install`.
+5. Measure and set `head_height_m`, `pan_axis_x_m`, `hfov_deg` and the servo `*_center_us` trims under `/explorer` in `robot.yaml`. `+pan` must turn the head left and `+tilt` must look up; flip `pan_invert`/`tilt_invert` if not.
+6. On the Mac, restart the vision service (DINOv2 downloads on first start). For `/v1/ask`, set `GEMINI_API_KEY` and/or run `ollama pull qwen3-vl:8b`.
+
 ## Robot images
 
 **Top view:**  

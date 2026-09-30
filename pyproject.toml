@@ -23,7 +23,14 @@ voice = [
     "google-genai>=1.0.0",
     "sounddevice>=0.4.6",
 ]
-dev = ["pytest>=7.0"]
+# Explore mode's head hardware. On the Pi, prefer the apt builds of the two
+# camera/vision libraries: `sudo apt install python3-picamera2 python3-opencv`
+# (and create any venv with --system-site-packages so it can see them).
+explore = [
+    "numpy>=1.24",
+    "rpi-hardware-pwm>=0.2",
+]
+dev = ["pytest>=7.0", "numpy>=1.24", "opencv-python-headless>=4.8"]
 
 [project.scripts]
 robot-run = "robot_core.run:main"

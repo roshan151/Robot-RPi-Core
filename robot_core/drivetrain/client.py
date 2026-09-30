@@ -18,7 +18,7 @@ import logging
 import threading
 import time
 from collections import deque
-from typing import Any, Deque, Dict, Optional
+from typing import Any, Callable, Deque, Dict, List, Optional
 
 from .arduino_bridge import ArduinoBridge
 from robot_core import settings
@@ -124,12 +124,30 @@ class SerialDrivetrain:
         def on_err() -> None:
             logger.error("Arduino reported ERR (unsolicited)")
 
+        # Odometry subscribers get the never-reset totals from v5 firmware.
+        # Registered before the bridge opens so the first frame is not lost.
+        self._odo_listeners: List[Callable[[int, int, int], None]] = []
+
+        def on_odo(total_left: int, total_right: int, fw_ms: int) -> None:
+            for cb in list(self._odo_listeners):
+                try:
+                    cb(total_left, total_right, fw_ms)
+                except Exception:                           # noqa: BLE001
+                    logger.exception("odometry listener failed")
+
         self._bridge = ArduinoBridge(
             port=port,
             baud=baud,
             on_encoder=on_enc,
             on_error=on_err,
+            on_odometry=on_odo,
         )
+
+    def add_odometry_listener(self, cb: Callable[[int, int, int], None]) -> None:
+        """Call `cb(total_left, total_right, firmware_ms)` on every telemetry
+        frame (10 Hz). Needs firmware v5 (`drv8871-v5-odo`); older firmware
+        never calls it, and robot_core.odometry reports that as stale."""
+        self._odo_listeners.append(cb)
 
     # ------------------------------------------------------------------ #
     # Lifecycle

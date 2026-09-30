@@ -29,9 +29,55 @@
 
     encoder_publish_hz: 10.0
 
+    # Odometry (/odom, odom -> base_link, /motion_health). Needs firmware v5.
+    # 0 derives the effective track width from ticks_per_cm and
+    # ticks_per_degree — usually better than a tape measure, as it includes
+    # wheel scrub. The firmware's LEFT channel drives the physical RIGHT wheel,
+    # hence swap_sides; /motion_health says "wrong_direction" if that's wrong.
+    wheelbase_m: 0.0
+    odom_swap_sides: true
+    # Brake as soon as motion health says stalled/slipping.
+    stop_on_stuck: true
+
 /voice:
   ros__parameters:
     # Placeholder: the Live session still reads model, prompt and audio device
     # from robot_core/settings.py and the environment. Moving those here is a
     # later tidy-up, not a Phase 3 requirement.
     {}
+
+/explorer:
+  ros__parameters:
+    # Mac vision service. Empty = VISION_SERVICE_BASE_URL from /etc/robot.env.
+    vision_url: ""
+
+    # Maps are saved on the Mac under this name. To re-scan later on the same
+    # map (growth tracking), set continue_map: true and start_pose to where the
+    # robot is standing ON that map: [x, y, theta_rad] — read it off
+    # http://<mac>:8080/v1/slam/map.png.
+    map_name: "home"
+    continue_map: false
+    start_pose: [0.0, 0.0, 0.0]
+    max_minutes: 60.0
+
+    orbit_radius_m: 0.7        # photo distance from the plant
+    orbit_views: 4             # full 360: 4 views, 90 degrees apart
+    revisit_known: true        # photograph known plants again (a new visit)
+    ask_before_drive: false    # image+text model checks each step (slow, thorough)
+
+    # Head. Pan is limited to +-45 and tilt to +-90 in the driver, and both
+    # park at their start position (the *_center_us pulse) on shutdown.
+    tfluna_port: "/dev/serial0"
+    camera_main_size: [1920, 1080]
+    camera_inverted: true      # mounted upside down: rotated 180 deg in the ISP
+    head_height_m: 0.25        # MEASURE: TF-Luna height above the floor
+    pan_axis_x_m: 0.05         # MEASURE: pan axis ahead of the wheel-axle centre
+    hfov_deg: 66.0             # Camera Module 3: 66; Module 3 Wide: 102
+    pwm_chip: 0                # Pi 4: 0. Pi 5: 2
+    pan_channel: 1             # GPIO13
+    tilt_channel: 0            # GPIO12
+    pan_center_us: 1500.0      # trim so the head points straight ahead
+    tilt_center_us: 1500.0     # trim so the head is level
+    pan_invert: false          # +pan must turn the head LEFT
+    tilt_invert: false         # +tilt must look UP
+    servo_speed_dps: 60.0      # smooth and slow; sweeps run at 30

@@ -1,0 +1,257 @@
+"""Pan/tilt head: smooth, limited, and always parked at centre on shutdown.
+
+Smooth and slow
+---------------
+Hobby servos have no speed input — command a new angle and they get there as
+fast as the motor allows. So the smoothing is done here: a 50 Hz loop (the
+servo's own frame rate) walks the pulse width along a trapezoidal profile —
+accelerate, cruise at `max_speed_dps`, decelerate — so the servo only ever sees
+tiny steps. Hardware PWM (GPIO12/13 via `dtoverlay=pwm-2chan`) keeps each step
+jitter-free; software PWM would twitch.
+
+Limits live here, with the actuator (PLAN standing rule #4)
+-----------------------------------------------------------
+Pan is clamped to ±45° from the start position, tilt to ±90°, whatever a
+caller asks for.
+
+Parking
+-------
+`close()` slews both axes back to 0 at normal speed, waits for them to arrive,
+then stops the PWM. Nodes call it from `destroy_node()`, which runs on Ctrl+C
+and on systemd's SIGTERM. A hard power cut cannot park anything — the start
+position is assumed on the next boot, so after a crash run
+`python -m robot_core.sensors.gimbal home` before trusting the angles.
+"""
+
+from __future__ import annotations
+
+import logging
+import threading
+import time
+from dataclasses import dataclass
+from typing import Optional, Protocol
+
+log = logging.getLogger(__name__)
+
+FRAME_HZ = 50.0
+PERIOD_US = 1e6 / FRAME_HZ
+
+
+class PwmOutput(Protocol):
+    def set_pulse_us(self, us: float) -> None: ...
+    def disable(self) -> None: ...
+
+
+class HardwarePwm:
+    """One Pi hardware-PWM channel (`pip install rpi-hardware-pwm`).
+
+    Pi 4: chip 0, channel 0 = GPIO12, channel 1 = GPIO13, with
+    `dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4` in config.txt.
+    """
+
+    def __init__(self, channel: int, chip: int = 0) -> None:
+        from rpi_hardware_pwm import HardwarePWM
+        self._pwm = HardwarePWM(pwm_channel=channel, hz=FRAME_HZ, chip=chip)
+        self._started = False
+
+    def set_pulse_us(self, us: float) -> None:
+        duty = 100.0 * us / PERIOD_US
+        if self._started:
+            self._pwm.change_duty_cycle(duty)
+        else:
+            self._pwm.start(duty)
+            self._started = True
+
+    def disable(self) -> None:
+        if self._started:
+            self._pwm.stop()
+            self._started = False
+
+
+class FakePwm:
+    """Records pulses. Used by the tests and by `backend="fake"` on a laptop."""
+
+    def __init__(self) -> None:
+        self.pulses: list = []
+        self.enabled = False
+
+    def set_pulse_us(self, us: float) -> None:
+        self.pulses.append(us)
+        self.enabled = True
+
+    def disable(self) -> None:
+        self.enabled = False
+
+
+@dataclass
+class AxisConfig:
+    channel: int
+    min_deg: float
+    max_deg: float
+    center_us: float = 1500.0       # the start position — trim per servo
+    us_per_deg: float = 2000.0 / 180.0
+    invert: bool = False            # flip if +angle moves the wrong way
+    max_speed_dps: float = 60.0     # cruise speed: slow enough to look deliberate
+    accel_dps2: float = 180.0
+
+
+PAN_DEFAULT = AxisConfig(channel=1, min_deg=-45.0, max_deg=45.0)     # GPIO13
+TILT_DEFAULT = AxisConfig(channel=0, min_deg=-90.0, max_deg=90.0)    # GPIO12
+
+
+class _Axis:
+    def __init__(self, cfg: AxisConfig, out: PwmOutput) -> None:
+        self.cfg, self.out = cfg, out
+        self.pos = 0.0          # commanded angle right now (deg)
+        self.vel = 0.0
+        self.target = 0.0
+        self.speed = cfg.max_speed_dps
+
+    def clamp(self, deg: float) -> float:
+        return max(self.cfg.min_deg, min(self.cfg.max_deg, deg))
+
+    def pulse(self) -> float:
+        sign = -1.0 if self.cfg.invert else 1.0
+        return self.cfg.center_us + sign * self.pos * self.cfg.us_per_deg
+
+    def step(self, dt: float) -> bool:
+        """Advance one tick of the trapezoidal profile. True while moving."""
+        err = self.target - self.pos
+        if abs(err) < 1e-3 and abs(self.vel) < 1e-3:
+            self.pos, self.vel = self.target, 0.0
+            return False
+        a = self.cfg.accel_dps2
+        # Fastest speed from which we can still stop at the target.
+        v_stop = (2.0 * a * abs(err)) ** 0.5
+        v_want = min(self.speed, v_stop) * (1 if err > 0 else -1)
+        dv = max(-a * dt, min(a * dt, v_want - self.vel))
+        self.vel += dv
+        move = self.vel * dt
+        if abs(move) >= abs(err):
+            self.pos, self.vel = self.target, 0.0
+        else:
+            self.pos += move
+        return True
+
+
+class Gimbal:
+    """Two smooth, clamped servo axes driven from one 50 Hz thread."""
+
+    def __init__(
+        self,
+        pan: AxisConfig = PAN_DEFAULT,
+        tilt: AxisConfig = TILT_DEFAULT,
+        backend: str = "hardware",        # "hardware" | "fake"
+        chip: int = 0,
+    ) -> None:
+        make = (lambda c: HardwarePwm(c.channel, chip)) if backend == "hardware" else (lambda c: FakePwm())
+        self.pan = _Axis(pan, make(pan))
+        self.tilt = _Axis(tilt, make(tilt))
+        self._lock = threading.Lock()
+        self._moving = False
+        self._last_motion = time.monotonic()
+        self._arrived = threading.Condition(self._lock)
+        self._stop = threading.Event()
+        # Start at the start position. The servo's real angle is unknown until
+        # the first pulse; because close() always parks at centre, this pulse
+        # normally asks it to stay exactly where it already is.
+        for ax in (self.pan, self.tilt):
+            ax.out.set_pulse_us(ax.pulse())
+        self._thread = threading.Thread(target=self._loop, name="gimbal", daemon=True)
+        self._thread.start()
+
+    # ----------------------------------------------------------------- API
+
+    def move_to(self, pan: Optional[float] = None, tilt: Optional[float] = None,
+                speed_dps: Optional[float] = None, wait: bool = True,
+                timeout: float = 10.0) -> tuple:
+        """Slew to (pan, tilt) degrees, clamped to the limits. None = keep.
+        Returns the clamped target actually used."""
+        with self._lock:
+            for ax, want in ((self.pan, pan), (self.tilt, tilt)):
+                if want is not None:
+                    ax.target = ax.clamp(want)
+                    ax.speed = min(speed_dps or ax.cfg.max_speed_dps, ax.cfg.max_speed_dps * 2)
+            self._moving = True
+            target = (self.pan.target, self.tilt.target)
+        if wait:
+            self.wait(timeout)
+        return target
+
+    def wait(self, timeout: float = 10.0) -> bool:
+        with self._arrived:
+            return self._arrived.wait_for(lambda: not self._moving, timeout)
+
+    def home(self, wait: bool = True) -> None:
+        self.move_to(0.0, 0.0, wait=wait)
+
+    def angles(self) -> tuple:
+        """(pan_deg, tilt_deg) as commanded right now."""
+        with self._lock:
+            return self.pan.pos, self.tilt.pos
+
+    def settled(self, settle_s: float = 0.15) -> bool:
+        """Stationary for at least `settle_s` — the servo has caught up with
+        the command and a frame or a range reading means what it says."""
+        with self._lock:
+            return not self._moving and time.monotonic() - self._last_motion >= settle_s
+
+    def wait_settled(self, settle_s: float = 0.15, timeout: float = 10.0) -> bool:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if self.settled(settle_s):
+                return True
+            time.sleep(0.02)
+        return False
+
+    def close(self) -> None:
+        """Park at the start position, then release the PWM."""
+        if self._stop.is_set():
+            return
+        try:
+            self.home(wait=True)
+            time.sleep(0.3)               # let the horn physically arrive
+        finally:
+            self._stop.set()
+            self._thread.join(timeout=1.0)
+            for ax in (self.pan, self.tilt):
+                try:
+                    ax.out.disable()
+                except Exception:                          # noqa: BLE001
+                    log.exception("gimbal: disabling PWM failed")
+
+    # -------------------------------------------------------------- engine
+
+    def _loop(self) -> None:
+        dt = 1.0 / FRAME_HZ
+        nxt = time.monotonic()
+        while not self._stop.is_set():
+            with self._lock:
+                moving = False
+                for ax in (self.pan, self.tilt):
+                    if ax.step(dt):
+                        moving = True
+                        ax.out.set_pulse_us(ax.pulse())
+                if moving:
+                    self._last_motion = time.monotonic()
+                elif self._moving:
+                    self._moving = False
+                    self._arrived.notify_all()
+            nxt += dt
+            time.sleep(max(0.0, nxt - time.monotonic()))
+
+
+def main() -> None:
+    """`python -m robot_core.sensors.gimbal home` — park the head after a crash
+    or power cut, before anything trusts the angles."""
+    import sys
+    logging.basicConfig(level=logging.INFO)
+    g = Gimbal()
+    if len(sys.argv) > 2 and sys.argv[1] == "move":
+        g.move_to(float(sys.argv[2]), float(sys.argv[3]) if len(sys.argv) > 3 else None)
+        time.sleep(1.0)
+    g.close()
+
+
+if __name__ == "__main__":
+    main()

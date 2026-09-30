@@ -1,5 +1,7 @@
 # Robot-Computer-Vision → ROS 2 — the plan
 
+> **Amended by `EXPLORE-DESIGN.md`** for the final hardware: no LD14P lidar (the TF-Luna on the head is the scanner), TF-Luna on the Pi UART instead of the Arduino, SLAM on the Mac instead of `slam_toolbox` on the Pi, pan limited to ±45°.
+
 The single source of truth for this rebuild. Supersedes `ROS2-MIGRATION.md` and
 `COMPUTE-BUDGET.md`, both of which contained decisions that have since changed.
 

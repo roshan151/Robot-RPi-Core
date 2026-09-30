@@ -55,7 +55,12 @@ def _stub_ros() -> None:
     module("std_srvs.srv", Trigger=object)
     module("robot_interfaces")
     module("robot_interfaces.action", Drive=object, Turn=object)
-    module("robot_interfaces.msg", Encoders=object)
+    module("robot_interfaces.msg", Encoders=object, MotionHealth=object, VisualMotion=object)
+    module("geometry_msgs")
+    module("geometry_msgs.msg", TransformStamped=object)
+    module("nav_msgs")
+    module("nav_msgs.msg", Odometry=object)
+    module("tf2_ros", TransformBroadcaster=object)
 
 
 _stub_ros()

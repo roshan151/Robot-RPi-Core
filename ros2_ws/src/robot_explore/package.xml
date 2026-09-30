@@ -1,22 +1,23 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>robot_drivetrain</name>
+  <name>robot_explore</name>
   <version>0.1.0</version>
   <description>
-    Drive and Turn action servers plus the e-stop service, over the existing
-    framed serial protocol. Holds no hardware logic of its own — that lives in
-    robot_core, which has no ROS dependency and is tested without one.
+    Explore mode. Owns the head (camera, TF-Luna, pan/tilt), runs the mission
+    from robot_core.explore, and drives through the drivetrain's /drive and
+    /turn actions. SLAM and plant identity run on the Mac vision service.
   </description>
   <maintainer email="roshan.151tiwari@gmail.com">Roshan Tiwari</maintainer>
   <license>MIT</license>
 
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
   <exec_depend>std_srvs</exec_depend>
-  <exec_depend>robot_interfaces</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>robot_interfaces</exec_depend>
 
   <export>
     <build_type>ament_python</build_type>

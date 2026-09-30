@@ -48,7 +48,8 @@
  *   N,<seq>,<reason>         command rejected (BADARG | BUSY)
  *   D,<seq>,<status>,<el>,<er>  counted move finished:
  *                            OK | TIMEOUT | NOISE | STOP | LINK
- *   E,<el>,<er>              encoder telemetry every 100 ms
+ *   E,<el>,<er>,<ol>,<or>,<ms>  telemetry every 100 ms: per-move counts,
+ *                            then never-reset odometry totals and millis()
  *   W,<code>[,...]           warning: NOISE | MEMCORRUPT | RXBAD | LINK
  *   B,<hex>,<build>          boot: MCUSR reset-cause bits + build stamp
  *
@@ -158,6 +159,12 @@ void resetFlagsInit(void) {
 // in the control loop.
 volatile long enc_left  = 0;
 volatile long enc_right = 0;
+// Odometry totals: counted by the same ISRs but NEVER reset by a move
+// and never touched by the noise repair, so the host can integrate
+// position across move boundaries without losing the coast-down ticks
+// that land between one move's D frame and the next move's reset.
+volatile long odo_left  = 0;
+volatile long odo_right = 0;
 volatile int8_t enc_dir_l = 1;
 volatile int8_t enc_dir_r = 1;
 volatile unsigned long last_left_us  = 0;
@@ -174,6 +181,7 @@ void isr_left() {
   step = -step;
 #endif
   enc_left += step;
+  odo_left += step;
 }
 void isr_right() {
   unsigned long now = micros();
@@ -184,6 +192,7 @@ void isr_right() {
   step = -step;
 #endif
   enc_right += step;
+  odo_right += step;
 }
 
 // ------------------------- Motion state ------------------------- //
@@ -591,7 +600,7 @@ void setup() {
   // Reset cause + build stamp.  __DATE__/__TIME__ come from the compiler,
   // so every fresh build announces itself — a stale flash can never
   // masquerade as current source.
-  sendf("B,%X,drv8871-v4-quad built " __DATE__ " " __TIME__, cause);
+  sendf("B,%X,drv8871-v5-odo built " __DATE__ " " __TIME__, cause);
   last_rx_ms = millis();
 }
 
@@ -762,12 +771,14 @@ void loop() {
   static unsigned long last_telem = 0;
   if (now - last_telem >= TELEMETRY_MS) {
     last_telem = now;
-    long el, er;
+    long el, er, ol, orr;
     noInterrupts();
     el = enc_left;
     er = enc_right;
+    ol = odo_left;
+    orr = odo_right;
     interrupts();
-    sendf("E,%ld,%ld", el, er);
+    sendf("E,%ld,%ld,%ld,%ld,%lu", el, er, ol, orr, now);
   }
 
   // ---- Corrupt-frame counter (rate-limited) ------------------------ //

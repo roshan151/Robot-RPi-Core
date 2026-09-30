@@ -27,21 +27,27 @@ has to be the one that says no.
 
 from __future__ import annotations
 
+import math
 import threading
+import time
 from typing import Optional
 
 import rclpy
+from geometry_msgs.msg import TransformStamped
+from nav_msgs.msg import Odometry
 from rcl_interfaces.msg import SetParametersResult
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 from rclpy.node import Node
 from std_srvs.srv import Trigger
+from tf2_ros import TransformBroadcaster
 
 from robot_core import settings
 from robot_core.drivetrain import SerialDrivetrain
 from robot_core.motion_executor import CANCELLED, DONE, MotionExecutor
+from robot_core.odometry import DiffDriveOdometry, MotionHealth, effective_wheelbase_m
 from robot_interfaces.action import Drive, Turn
-from robot_interfaces.msg import Encoders
+from robot_interfaces.msg import Encoders, MotionHealth as MotionHealthMsg, VisualMotion
 
 # How often a blocked move callback wakes to check whether it has been
 # cancelled. Small enough to be responsive, large enough not to spin.
@@ -59,6 +65,16 @@ class DrivetrainNode(Node):
         self.declare_parameter("ticks_per_cm", settings.TICKS_PER_CM)
         self.declare_parameter("ticks_per_degree", settings.TICKS_PER_DEGREE)
         self.declare_parameter("encoder_publish_hz", 10.0)
+        # Odometry. wheelbase_m <= 0 derives the *effective* track width from
+        # the two calibrations (see robot_core.odometry.effective_wheelbase_m).
+        self.declare_parameter("wheelbase_m", 0.0)
+        self.declare_parameter("odom_swap_sides", True)
+        self.declare_parameter("odom_frame", "odom")
+        self.declare_parameter("base_frame", "base_link")
+        self.declare_parameter("publish_tf", True)
+        # Brake as soon as motion health says stalled/slipping, instead of
+        # letting the firmware push a blocked wheel for its full 15 s timeout.
+        self.declare_parameter("stop_on_stuck", True)
 
         self._apply_calibration()
         self.add_on_set_parameters_callback(self._on_set_parameters)
@@ -68,6 +84,15 @@ class DrivetrainNode(Node):
             baud=self.get_parameter("baud").value,
         )
         self._exec = MotionExecutor(self._drivetrain).start()
+
+        self._odo = DiffDriveOdometry(
+            ticks_per_m=settings.TICKS_PER_CM * 100.0,
+            wheelbase_m=self._wheelbase(),
+            swap_sides=bool(self.get_parameter("odom_swap_sides").value),
+        )
+        self._health = MotionHealth()
+        self._drivetrain.add_odometry_listener(
+            lambda l, r, ms: self._odo.update(l, r, ms, time.monotonic()))
 
         moves = MutuallyExclusiveCallbackGroup()
         safety = ReentrantCallbackGroup()
@@ -90,6 +115,15 @@ class DrivetrainNode(Node):
                             callback_group=safety)
 
         self._encoders = self.create_publisher(Encoders, "encoders", 10)
+        self._odom_pub = self.create_publisher(Odometry, "odom", 10)
+        self._health_pub = self.create_publisher(MotionHealthMsg, "motion_health", 10)
+        self._tf = TransformBroadcaster(self)
+        self.create_subscription(
+            VisualMotion, "visual_motion",
+            lambda m: self._health.on_visual(m.moving, m.t_monotonic), 10,
+            callback_group=safety)
+        self.create_service(Trigger, "odom/relocalized", self._on_relocalized,
+                            callback_group=safety)
         hz = max(0.1, float(self.get_parameter("encoder_publish_hz").value))
         self.create_timer(1.0 / hz, self._publish_encoders,
                           callback_group=safety)
@@ -112,6 +146,14 @@ class DrivetrainNode(Node):
         """
         settings.TICKS_PER_CM = float(self.get_parameter("ticks_per_cm").value)
         settings.TICKS_PER_DEGREE = float(self.get_parameter("ticks_per_degree").value)
+        if hasattr(self, "_odo"):
+            self._odo.ticks_per_m = settings.TICKS_PER_CM * 100.0
+            self._odo.wheelbase_m = self._wheelbase()
+
+    def _wheelbase(self) -> float:
+        wb = float(self.get_parameter("wheelbase_m").value)
+        return wb if wb > 0 else effective_wheelbase_m(
+            settings.TICKS_PER_CM, settings.TICKS_PER_DEGREE)
 
     def _on_set_parameters(self, params) -> SetParametersResult:
         # Refused mid-move: rescaling the tick target of a move already in
@@ -126,6 +168,13 @@ class DrivetrainNode(Node):
                 settings.TICKS_PER_CM = float(p.value)
             elif p.name == "ticks_per_degree":
                 settings.TICKS_PER_DEGREE = float(p.value)
+        # Odometry scales follow the calibration. (Reading wheelbase_m here
+        # would still see the old value mid-set, so it is applied from p.)
+        self._odo.ticks_per_m = settings.TICKS_PER_CM * 100.0
+        wb = next((float(p.value) for p in params if p.name == "wheelbase_m"),
+                  float(self.get_parameter("wheelbase_m").value))
+        self._odo.wheelbase_m = wb if wb > 0 else effective_wheelbase_m(
+            settings.TICKS_PER_CM, settings.TICKS_PER_DEGREE)
         return SetParametersResult(successful=True)
 
     # ------------------------------------------------------------------ #
@@ -273,6 +322,73 @@ class DrivetrainNode(Node):
             right=int(counts["motor2_count"]),
             sync_error=int(counts["sync_error"]),
         ))
+        self._publish_odometry()
+
+    def _publish_odometry(self) -> None:
+        st = self._odo.state()
+        now = time.monotonic()
+        if st.samples == 0 or now - st.t > 1.0:
+            if not getattr(self, "_warned_no_odo", False):
+                self._warned_no_odo = True
+                self.get_logger().warn(
+                    "no odometry telemetry — flash firmware v5 (drv8871-v5-odo); "
+                    "/odom and /motion_health are not published until it arrives")
+            return
+        self._warned_no_odo = False
+        stamp = self.get_clock().now().to_msg()
+        odom_frame = self.get_parameter("odom_frame").value
+        base_frame = self.get_parameter("base_frame").value
+        qz, qw = math.sin(st.pose.theta / 2), math.cos(st.pose.theta / 2)
+
+        msg = Odometry()
+        msg.header.stamp = stamp
+        msg.header.frame_id = odom_frame
+        msg.child_frame_id = base_frame
+        msg.pose.pose.position.x = st.pose.x
+        msg.pose.pose.position.y = st.pose.y
+        msg.pose.pose.orientation.z = qz
+        msg.pose.pose.orientation.w = qw
+        cov = [0.0] * 36
+        cov[0] = cov[7] = st.sigma_xy ** 2
+        cov[35] = st.sigma_theta ** 2
+        msg.pose.covariance = cov
+        msg.twist.twist.linear.x = st.v
+        msg.twist.twist.angular.z = st.w
+        self._odom_pub.publish(msg)
+
+        if self.get_parameter("publish_tf").value:
+            tf = TransformStamped()
+            tf.header.stamp = stamp
+            tf.header.frame_id = odom_frame
+            tf.child_frame_id = base_frame
+            tf.transform.translation.x = st.pose.x
+            tf.transform.translation.y = st.pose.y
+            tf.transform.rotation.z = qz
+            tf.transform.rotation.w = qw
+            self._tf.sendTransform(tf)
+
+        status = self._exec.status()
+        op = status["current"]["op"] if status["current"] else None
+        rep = self._health.update(st, op, now)
+        self._health_pub.publish(MotionHealthMsg(
+            state=rep.state, reason=rep.reason, v=rep.v, w=rep.w,
+            sigma_xy=rep.sigma_xy, sigma_theta=rep.sigma_theta,
+            drift_deg_per_m=rep.drift_deg_per_m,
+            visual_known=rep.visual_moving is not None,
+            visual_moving=bool(rep.visual_moving), since_s=rep.since_s))
+        if rep.state != getattr(self, "_last_health", None):
+            self._last_health = rep.state
+            if rep.stuck:
+                self.get_logger().warn(f"motion health: {rep.state} — {rep.reason}")
+                if self.get_parameter("stop_on_stuck").value:
+                    self._exec.cancel_all(f"motion health: {rep.state}")
+
+    def _on_relocalized(self, _request, response):
+        """SLAM fixed our pose: restart the drift budget."""
+        self._odo.correct()
+        response.success = True
+        response.message = "odometry drift budget reset"
+        return response
 
     def destroy_node(self) -> bool:
         try:

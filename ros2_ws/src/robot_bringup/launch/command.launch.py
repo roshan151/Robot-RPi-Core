@@ -10,7 +10,7 @@ GILs, so a stall in the conversation cannot delay a stop.
 `respawn=True` on the voice node gives supervision for free — a dropped session
 restarts without taking the drivetrain with it.
 
-Scan mode (SLAM, no audio) gets its own launch file at Phase 7. Neither mode
+Explore mode (SLAM + plants, no audio) is explore.launch.py. Neither mode
 should know the other exists.
 """
 

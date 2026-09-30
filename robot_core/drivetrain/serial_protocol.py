@@ -17,7 +17,8 @@ Robot -> host bodies:
     A,<seq>                        accepted
     N,<seq>,<reason>               rejected (BADARG | BUSY)
     D,<seq>,<status>,<el>,<er>     move done (OK|TIMEOUT|NOISE|STOP|LINK)
-    E,<el>,<er>                    encoder telemetry (100 ms)
+    E,<el>,<er>[,<ol>,<or>,<ms>]   encoder telemetry (100 ms); v5 firmware
+                                   appends never-reset odometry totals + millis
     W,<code>[,...]                 warning (NOISE|MEMCORRUPT|RXBAD|LINK)
     B,<hex>,<build>                boot: reset cause + firmware build stamp
 """

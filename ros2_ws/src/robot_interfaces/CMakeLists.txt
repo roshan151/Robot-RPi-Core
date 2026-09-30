@@ -13,6 +13,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/Drive.action"
   "action/Turn.action"
   "msg/Encoders.msg"
+  "msg/MotionHealth.msg"
+  "msg/VisualMotion.msg"
 )
 
 ament_export_dependencies(rosidl_default_runtime)

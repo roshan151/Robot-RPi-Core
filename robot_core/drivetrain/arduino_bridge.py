@@ -90,8 +90,12 @@ class ArduinoBridge:
         timeout: float = settings.SERIAL_TIMEOUT,
         on_encoder: Optional[Callable[[int, int], None]] = None,
         on_error: Optional[Callable[[], None]] = None,
+        on_odometry: Optional[Callable[[int, int, int], None]] = None,
     ) -> None:
         self._on_encoder = on_encoder
+        # (total_left, total_right, firmware_ms) from v5+ E frames. Older
+        # firmware sends only the per-move pair and this is never called.
+        self._on_odometry = on_odometry
         self._on_error = on_error
 
         self._parser = FrameParser()
@@ -465,11 +469,14 @@ class ArduinoBridge:
             return
 
         if msg.kind == "E":
-            if self._on_encoder and len(msg.args) >= 2:
-                try:
+            try:
+                if self._on_encoder and len(msg.args) >= 2:
                     self._on_encoder(int(msg.args[0]), int(msg.args[1]))
-                except ValueError:
-                    pass                    # corrupt-but-valid-checksum: drop
+                if self._on_odometry and len(msg.args) >= 5:
+                    self._on_odometry(int(msg.args[2]), int(msg.args[3]),
+                                      int(msg.args[4]))
+            except ValueError:
+                pass                        # corrupt-but-valid-checksum: drop
             return
 
         if msg.kind == "B":
