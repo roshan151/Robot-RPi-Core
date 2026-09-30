@@ -78,6 +78,25 @@ Only `robot_interfaces` actually compiles; `--symlink-install` means Python
 edits take effect without rebuilding. Rebuild when you change a `.action` or
 `.msg`.
 
+**Ros on Pi**
+cat /etc/os-release      # VERSION_CODENAME should be trixie
+dpkg --print-architecture   # should print arm64
+
+curl -fsSL https://rospian.github.io/rospian-repo/rospian-archive-keyring.asc | gpg --dearmor | sudo tee /usr/share/keyrings/rospian-archive-keyring.gpg >/dev/null
+echo "deb [arch=arm64 signed-by=/usr/share/keyrings/rospian-archive-keyring.gpg] https://rospian.github.io/rospian-repo trixie-jazzy main" | sudo tee /etc/apt/sources.list.d/rospian.list
+
+sudo apt update
+sudo apt install -y ros-jazzy-ros-base ros-jazzy-rmw-cyclonedds-cpp python3-colcon-common-extensions python3-rosdep
+
+ls /opt/ros/jazzy/setup.bash
+source /opt/ros/jazzy/setup.bash
+ros2 --help
+
+cd ~/Robot-Computer-Vision/ros2_ws
+colcon build --symlink-install
+
+sudo systemctl restart robot-voice
+
 ## Configuration
 
 ### Environment variables
@@ -112,8 +131,7 @@ not a single endpoint — the gateway client appends the versioned paths
 service runs elsewhere, and check `GET /healthz` when the robot seems blind.
 
 The camera-based obstacle guardian is **retired**: the lidar stops the robot and
-the camera tells the agent what is there. `VISION_HALT_OBJECTS` and
-`VISION_GUARD_HZ` no longer do anything.
+the camera tells the agent what is there.
 
 ---
 
