@@ -81,7 +81,7 @@ sudo chmod -R a+rX /opt/rospian-repo
 echo "deb [arch=arm64 signed-by=/usr/share/keyrings/rospian-archive-keyring.gpg] file:/opt/rospian-repo trixie-jazzy main" | sudo tee /etc/apt/sources.list.d/rospian.list
 sudo apt update
 apt policy ros-jazzy-ros-base
-
+grep -c "Package: ros-jazzy-ros-base$" /opt/rospian-repo/dists/trixie-jazzy/main/binary-arm64/Packages
 1. **Secrets:** create `/etc/robot.env`, see [Configuration](#configuration).
 2. **Head and TF-Luna:** add `dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4` to `/boot/firmware/config.txt`; run `sudo raspi-config` → Interface → Serial Port: login shell **No**, hardware **Yes**; reboot.
 3. **Groups:** `sudo usermod -aG dialout,audio,bluetooth roshan151 && sudo loginctl enable-linger roshan151` (log out and in, or reboot).
