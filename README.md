@@ -59,6 +59,8 @@ Needs **64-bit Raspberry Pi OS Trixie** (`dpkg --print-architecture` must say `a
 cd ~/Robot-Computer-Vision          # the checkout
 ./install_pi.sh                     # safe to re-run, e.g. after a git pull
 ```
+curl -sS -o /dev/null -w "%{http_code}\n" https://rospian.github.io/rospian-repo/rospian-archive-keyring.asc
+curl -sSI https://rospian.github.io/rospian-repo/rospian-archive-keyring.asc | head -5
 
 Then the parts a script shouldn't do for you:
 
