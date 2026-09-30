@@ -22,6 +22,9 @@ esac
 source /opt/ros/jazzy/setup.bash
 source "$REPO/ros2_ws/install/setup.bash"
 
+# The Pi's Python environment (created with --system-site-packages), if there is one.
+[ -f "$REPO/.venv/bin/activate" ] && source "$REPO/.venv/bin/activate"
+
 # Keep DDS off the wifi. Without this every ROS process multicasts to the whole
 # subnet looking for peers, which costs real CPU on a Pi and finds your laptop.
 export RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}"

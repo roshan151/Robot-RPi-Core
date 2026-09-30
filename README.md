@@ -78,6 +78,26 @@ Only `robot_interfaces` actually compiles; `--symlink-install` means Python
 edits take effect without rebuilding. Rebuild when you change a `.action` or
 `.msg`.
 
+**Python environment on the Pi** — a venv that can also see apt packages (libcamera, picamera2 and OpenCV can't be pip-installed):
+
+```bash
+sudo apt install -y python3-picamera2 python3-opencv python3-libcamera python3-yaml
+cd ~/Robot-Computer-Vision
+python3 -m venv --system-site-packages .venv && source .venv/bin/activate
+pip install -e ".[voice,explore]"
+python -c "import picamera2, libcamera"     # no error = the venv sees them
+```
+
+Activate it before `colcon build` so the ROS nodes use it; `start_robot.sh` activates `.venv` by itself when it exists.
+
+**Boot service** — `robot-voice.service` (repo root) is the systemd unit; it runs `start_robot.sh`, which stays in the checkout. Check `User=` and the paths inside it, then:
+
+```bash
+sudo cp robot-voice.service /etc/systemd/system/
+sudo cp .env /etc/robot.env && sudo chmod 600 /etc/robot.env     # API keys; the service can't read ~/.env
+sudo systemctl daemon-reload && sudo systemctl enable --now robot-voice
+```
+
 **Ros on Pi**
 cat /etc/os-release      # VERSION_CODENAME should be trixie
 dpkg --print-architecture   # should print arm64
