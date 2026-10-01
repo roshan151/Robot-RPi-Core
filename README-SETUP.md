@@ -184,3 +184,17 @@ pactl list short sources    # find the line starting bluez_input...
 pactl set-default-sink   <the bluez_output name>
 pactl set-default-source <the bluez_input name>
 sudo systemctl restart robot-voice
+
+## Flashing from pi
+
+1. Install arduino cli
+curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=~/.local/bin sh
+export PATH=$HOME/.local/bin:$PATH
+arduino-cli core install arduino:avr
+
+2. Flash
+cd ~/Robot-RPi-Core
+git pull origin ros2
+sudo systemctl stop robot-voice      # it holds the serial port
+./flash.sh
+sudo systemctl start robot-voice
