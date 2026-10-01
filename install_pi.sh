@@ -15,7 +15,7 @@ ROS=/opt/ros/jazzy
 
 ROS_PACKAGES=(   # the rospian repo has no ros-base bundle, so list what the robot uses (no GUI)
   ros-jazzy-rclpy ros-jazzy-std-msgs ros-jazzy-std-srvs ros-jazzy-sensor-msgs ros-jazzy-geometry-msgs
-  ros-jazzy-nav-msgs ros-jazzy-action-msgs ros-jazzy-tf2-ros
+  ros-jazzy-nav-msgs ros-jazzy-action-msgs ros-jazzy-tf2-ros ros-jazzy-tf2-ros-py
   ros-jazzy-ament-cmake ros-jazzy-ament-cmake-python ros-jazzy-rosidl-default-generators ros-jazzy-rosidl-default-runtime
   ros-jazzy-launch ros-jazzy-launch-ros ros-jazzy-launch-xml
   ros-jazzy-ros2cli ros-jazzy-ros2run ros-jazzy-ros2launch ros-jazzy-ros2action ros-jazzy-ros2param
@@ -24,7 +24,7 @@ ROS_PACKAGES=(   # the rospian repo has no ros-base bundle, so list what the rob
 OTHER_PACKAGES=(
   curl gnupg git ca-certificates python3-venv
   python3-picamera2 python3-libcamera python3-opencv python3-numpy python3-yaml   # camera + vision
-  libportaudio2 alsa-utils pulseaudio-utils bluez pipewire pipewire-pulse wireplumber libspa-0.2-bluetooth  # audio, buds
+  libportaudio2 alsa-utils pulseaudio-utils bluez pipewire pipewire-pulse pipewire-alsa wireplumber libspa-0.2-bluetooth  # audio, buds (pipewire-alsa routes PortAudio to the buds)
 )
 PIP_EXTRAS="voice,explore"
 
@@ -100,6 +100,10 @@ say "ROS workspace build"
 set +u
 source "$ROS/setup.bash"
 source .venv/bin/activate
+# Every ROS module the robot imports (the C++ package alone is not enough: tf2_ros needs tf2-ros-py).
+python - <<'PY2' || { echo "A ROS Python import failed (see above); install the matching ros-jazzy-* package." >&2; exit 1; }
+import rclpy, tf2_ros, std_msgs, std_srvs, geometry_msgs, nav_msgs, rcl_interfaces, ament_index_python, launch, launch_ros
+PY2
 (cd ros2_ws && colcon build --symlink-install)
 set -u
 

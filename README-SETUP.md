@@ -101,6 +101,26 @@ Stop the service before running `./start_robot.sh` by hand (`sudo systemctl stop
 
 **Arduino (drivetrain firmware).** Plug the Arduino into the **Mac** and run, once: `brew install arduino-cli && arduino-cli core install arduino:avr`. Then `./flash.sh` (override with `PORT=` and `FQBN=` if needed; the script header lists board types). The boot line must say `drv8871-v5-odo`. Or use the Arduino IDE on `firmware/drivetrain/drivetrain.ino`. You can test upload and serial without motors connected. Afterwards plug it into the Pi; the port is `/dev/ttyUSB0` or `/dev/ttyACM0` (set `ROBOT_SERIAL_PORT` in `/etc/robot.env` if it is the second).
 
+## Audio comes out of the HDMI screen, or "PortAudio error"
+
+The robot's audio library (PortAudio) talks to ALSA. Without `pipewire-alsa`, ALSA's default device is the Pi's HDMI output, so sound goes to the screen's speakers, and with no screen plugged in there is no device at all (the PortAudio error). The buds are only visible to PipeWire. Fix:
+
+```bash
+sudo apt install -y pipewire-alsa       # ./install_pi.sh now installs it
+systemctl --user restart pipewire pipewire-pulse wireplumber
+```
+
+Then make the buds the default output and microphone (run as your normal user, not sudo, with the buds connected):
+
+```bash
+pactl list short sinks                  # find the bluez_output.* line
+pactl list short sources                # find the bluez_input.* line (appears only in headset mode)
+pactl set-default-sink   bluez_output.AA_BB_CC_DD_EE_FF.1
+pactl set-default-source bluez_input.AA_BB_CC_DD_EE_FF.0
+```
+
+Use the exact names printed above. PipeWire remembers the choice. If there is no `bluez_input` line the buds are in music mode; run `./check_bt_audio.sh` and see the headset-mode notes in [README.md, Audio](README.md#bluetooth-buds-microphone--speaker). Finally `sudo systemctl restart robot-voice`.
+
 ## Day to day
 
 After a `git pull`:
@@ -155,3 +175,12 @@ It asks for confirmation first. It keeps your code, `/etc/robot.env`, Bluetooth 
 printf '%s\n' /opt/ros/jazzy/lib /opt/ros/jazzy/lib/aarch64-linux-gnu | sudo tee /etc/ld.so.conf.d/ros-jazzy.conf
 sudo ldconfig
 ./start_robot.sh
+
+# Port audio routing error - session is routed via screen's built in speaker
+sudo apt install -y pipewire-alsa
+systemctl --user restart pipewire pipewire-pulse wireplumber
+pactl list short sinks      # find the line starting bluez_output...
+pactl list short sources    # find the line starting bluez_input...
+pactl set-default-sink   <the bluez_output name>
+pactl set-default-source <the bluez_input name>
+sudo systemctl restart robot-voice
