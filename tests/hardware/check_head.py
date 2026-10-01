@@ -36,9 +36,13 @@ def go(g, pan=None, tilt=None):
 
 def main():
     UP, DOWN, LEFT, RIGHT = 20, 20, 20, 20       # degrees: change these
+    FIT_HORNS = False    # True: just hold 0/0 so you can fit each horn at the middle of its travel
 
     g = from_params(yaml.safe_load(YAML.read_text())["/explorer"]["ros__parameters"])
     try:
+        if FIT_HORNS:
+            input("Holding 0/0 (servo centre). Fit/adjust the horns now, then press Enter... ")
+            return
         look_up(g, UP)
         look_down(g, DOWN)
         look_left(g, LEFT)
