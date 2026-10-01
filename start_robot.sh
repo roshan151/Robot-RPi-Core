@@ -19,11 +19,14 @@ case "${1:-}" in
   -h|--help) sed -n '2,6p' "$0"; exit 0 ;;
 esac
 
+# ROS setup files read variables that may be unset, so they can't run under `set -u`.
+set +u
 source /opt/ros/jazzy/setup.bash
 source "$REPO/ros2_ws/install/setup.bash"
 
 # The Pi's Python environment (created with --system-site-packages), if there is one.
 [ -f "$REPO/.venv/bin/activate" ] && source "$REPO/.venv/bin/activate"
+set -u
 
 # Keep DDS off the wifi. Without this every ROS process multicasts to the whole
 # subnet looking for peers, which costs real CPU on a Pi and finds your laptop.
