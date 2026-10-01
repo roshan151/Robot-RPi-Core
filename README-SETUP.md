@@ -198,3 +198,20 @@ git pull origin ros2
 sudo systemctl stop robot-voice      # it holds the serial port
 ./flash.sh
 sudo systemctl start robot-voice
+
+# Debugging - Servos
+
+cat /proc/device-tree/model
+grep -n pwm /boot/firmware/config.txt
+ls /sys/class/pwm/
+pinctrl get 12,13
+
+# run servo directly
+
+cd /sys/class/pwm/pwmchip0
+echo 0 | sudo tee export
+echo 20000000 | sudo tee pwm0/period
+echo 1500000 | sudo tee pwm0/duty_cycle
+echo 1 | sudo tee pwm0/enable
+echo 1900000 | sudo tee pwm0/duty_cycle     # should swing the tilt servo
+echo 1 | sudo tee export                    # then repeat with pwm1 for pan
