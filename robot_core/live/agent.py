@@ -593,7 +593,7 @@ def _on_failure(tools: RobotTools, agent: LiveAgent, exc: BaseException) -> None
     speech.error(_spoken_cause(exc))
 
 
-def run_live_agent(motion, task_runner=None) -> None:
+def run_live_agent(motion, task_runner=None, head=None) -> None:
     """Blocking entrypoint. `motion` is a MotionBackend (robot_core/motion.py).
 
     Does not close the backend — whoever built it owns it. In the ROS build
@@ -603,7 +603,7 @@ def run_live_agent(motion, task_runner=None) -> None:
     `task_runner(task, name) -> bool` runs the jobs `run_task` asks for
     (enroll_face, match_face, explore); without one the tool refuses.
     """
-    tools = RobotTools(motion, task_runner)
+    tools = RobotTools(motion, task_runner, head)
     try:
         asyncio.run(_run_supervised(tools))
     except KeyboardInterrupt:

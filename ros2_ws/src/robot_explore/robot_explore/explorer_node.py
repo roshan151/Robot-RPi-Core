@@ -160,7 +160,7 @@ class ExplorerNode(Node):
         p("tilt_center_us", 1500.0)
         p("pan_invert", False)
         p("tilt_invert", False)
-        p("servo_speed_dps", 60.0)
+        p("servo_speed_dps", 30.0)
         v = lambda name: self.get_parameter(name).value
 
         self.gimbal = from_params({n: v(n) for n in (

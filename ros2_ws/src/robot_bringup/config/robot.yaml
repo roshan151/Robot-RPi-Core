@@ -86,4 +86,4 @@
     tilt_center_us: 1500.0     # trim so the head is level
     pan_invert: false          # +pan must turn the head LEFT
     tilt_invert: false         # +tilt must look UP
-    servo_speed_dps: 60.0      # smooth and slow; sweeps run at 30
+    servo_speed_dps: 30.0      # head speed, deg/s; lower = slower, below ~10 gets steppy

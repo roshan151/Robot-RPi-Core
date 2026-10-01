@@ -154,6 +154,8 @@ Rules that matter:
   - Never guess a movement you are unsure of. The robot drives on a floor with
     obstacles it cannot see. If you did not understand, answer("unclear").
   - Ignore speech that is not addressed to you, and background conversation.
+  - look_up() / look_down() tilt the head from where it is now; the default is
+    30 degrees and the head stops at its own limit if asked for more.
   - Defaults when no number is given: 1 metre, 90 degrees.
   - turn() takes positive degrees for RIGHT, negative for LEFT.
     drive() takes positive metres for FORWARD, negative for BACKWARD.

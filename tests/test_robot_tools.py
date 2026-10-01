@@ -270,9 +270,29 @@ def test_run_task_refuses_what_it_cannot_do() -> None:
         motion.close()
 
 
-def test_five_tools_and_stop_takes_no_arguments() -> None:
+def test_head_look_tilts_from_where_it_is_and_clamps() -> None:
+    from robot_core.head_look import HeadLook
+    from robot_core.sensors.gimbal import Gimbal
+    g = Gimbal(backend="fake")
+    head = HeadLook(lambda: g)
+    try:
+        t = RobotTools(LocalMotion(FakeMove()), head=head)
+        r = lambda n, **a: run(t.dispatch(n, a))
+        assert r("look_up")["tilt"] == 30.0                      # default 30
+        res = r("look_up", degrees=30)
+        assert res["tilt"] == 45.0 and res["clamped"]            # +45 limit
+        assert r("look_down", degrees=40)["tilt"] == 5.0         # relative to where it is
+        assert r("look_down", degrees=100)["tilt"] == -30.0      # -30 limit
+        head.release()
+        assert r("look_up", degrees=10)["tilt"] == 10.0          # parked: starts from level
+        assert not RobotTools(LocalMotion(FakeMove()))._look(5)["ok"]
+    finally:
+        head.release()
+
+
+def test_seven_tools_and_stop_takes_no_arguments() -> None:
     decls = {d.name: d for d in declarations()}
-    assert set(decls) == {"drive", "turn", "stop", "answer", "run_task"}
+    assert set(decls) == {"drive", "turn", "look_up", "look_down", "stop", "answer", "run_task"}
     assert not getattr(decls["stop"].parameters, "required", []), \
         "a stop that can be malformed is a stop that can fail"
 

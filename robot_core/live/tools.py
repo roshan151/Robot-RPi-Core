@@ -34,6 +34,7 @@ from typing import Any, Callable, Dict, Optional, Tuple
 
 from robot_core import robot_log, settings
 from robot_core.gestures import VOCABULARY, Gesturer
+from robot_core.head_look import DEFAULT_DEGREES, HeadLook
 from robot_core.motion import MotionBackend
 
 logger = logging.getLogger(__name__)
@@ -83,6 +84,22 @@ def declarations() -> list:
                 "description": "Degrees to turn. Negative for left.",
                 "_required": True,
             }),
+        ),
+        types.FunctionDeclaration(
+            name="look_up",
+            description=(
+                "Tilt the head up from where it is now. Default 30 degrees; the "
+                "head stops at its limit if asked for more. Returns at once."
+            ),
+            parameters=schema(degrees={"type": "NUMBER", "description": "Degrees up, default 30."}),
+        ),
+        types.FunctionDeclaration(
+            name="look_down",
+            description=(
+                "Tilt the head down from where it is now. Default 30 degrees; the "
+                "head stops at its limit if asked for more. Returns at once."
+            ),
+            parameters=schema(degrees={"type": "NUMBER", "description": "Degrees down, default 30."}),
         ),
         types.FunctionDeclaration(
             name="stop",
@@ -145,8 +162,10 @@ class RobotTools:
     """
 
     def __init__(self, motion: MotionBackend,
-                 task_runner: Optional[Callable[[str, str], bool]] = None) -> None:
+                 task_runner: Optional[Callable[[str, str], bool]] = None,
+                 head: Optional[HeadLook] = None) -> None:
         self._motion = motion
+        self._head = head                    # look_up / look_down; None = no head
         self._gestures = Gesturer(motion)
         # (task, name) -> success; blocking, run by the agent with the session
         # closed. `pending` is how run_task hands a job to the agent.
@@ -168,6 +187,8 @@ class RobotTools:
         handler: Optional[Callable[..., Dict[str, Any]]] = {
             "drive": self._drive,
             "turn": self._turn,
+            "look_up": lambda degrees=DEFAULT_DEGREES: self._look(degrees),
+            "look_down": lambda degrees=DEFAULT_DEGREES: self._look(-float(degrees)),
             "stop": self._stop,
             "answer": self._answer,
             "run_task": self._run_task,
@@ -211,6 +232,13 @@ class RobotTools:
         if abs(d) < 0.5:
             return {"ok": True, "note": "zero angle, nothing to do"}
         return self._motion.turn(d)
+
+    def _look(self, degrees: float) -> Dict[str, Any]:
+        if self._head is None:
+            return {"ok": False, "error": "no head fitted"}
+        d = float(degrees)
+        sign = 1.0 if d >= 0 else -1.0
+        return self._head.look(sign * min(abs(d), 90.0))    # limits are enforced by the gimbal
 
     def _stop(self) -> Dict[str, Any]:
         """Empty the queue and interrupt the move already running.

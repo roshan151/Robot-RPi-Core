@@ -147,7 +147,9 @@ One-time setup, besides [README-SETUP.md](README-SETUP.md):
 2. Measure and set `head_height_m`, `pan_axis_x_m`, `hfov_deg` and the servo `*_center_us` trims under `/explorer` in `robot.yaml`. `+pan` must turn the head left and `+tilt` must look up; flip `pan_invert`/`tilt_invert` if not.
 3. Restart the vision service on the Mac after updating it (DINOv2 downloads on first start).
 
-### Voice commands: enroll face, match face, explore
+### Voice commands: look up/down, enroll face, match face, explore
+
+*"Look up"* / *"look down"* tilt the head 30° from where it is now (or the number you say), stopping at the limits (-30°/+45°). The tilt is remembered for the session; a task parks the head, so the next look starts from level.
 
 In command mode, say it to the robot: *"remember my face, I'm Sam"* (`enroll_face`, about 30 s of frames — stand in front of the camera alone), *"do you know me?"* (`match_face`), *"go explore"* (`explore`, runs the explorer node against the running drivetrain until it finishes).
 

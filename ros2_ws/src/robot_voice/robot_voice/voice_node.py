@@ -33,6 +33,7 @@ from rclpy.node import Node
 
 from robot_core import robot_log, settings, speech
 from robot_core.live.agent import run_live_agent
+from robot_core.head_look import HeadLook
 from robot_voice.ros_bridge import RosMotion
 
 
@@ -51,11 +52,23 @@ def _explore() -> bool:
             proc.wait(timeout=20)
 
 
+def _open_head():
+    """The head for look_up / look_down: same channels and trims as the explorer's."""
+    import yaml
+    from robot_core.sensors.gimbal import from_params
+    with open(os.path.join(get_package_share_directory("robot_bringup"), "config", "robot.yaml")) as f:
+        return from_params(yaml.safe_load(f)["/explorer"]["ros__parameters"])
+
+
+head_look = HeadLook(_open_head)
+
+
 def run_task(task: str, name: str) -> bool:
     """What `run_task` asks for, run by the agent while the Live session is closed.
 
     The camera is opened for the job and released afterwards, so the explorer
     (which owns it during a mission) never finds it taken."""
+    head_look.release()                      # the task opens the head itself
     if task == "explore":
         return _explore()
     import yaml
@@ -130,7 +143,7 @@ def main(args=None) -> None:
             
         # strating session, stop all motion if queued via previous start
         motion.stop()
-        run_live_agent(motion, run_task)
+        run_live_agent(motion, run_task, head_look)
         robot_log.event("session.stop", reason="clean exit")
     except KeyboardInterrupt:
         pass
@@ -139,6 +152,7 @@ def main(args=None) -> None:
             motion.stop()          # brake before anything else goes away
         except Exception:          # noqa: BLE001
             pass
+        head_look.release()        # parks the head
         motion.close()
         executor.shutdown()
         node.destroy_node()

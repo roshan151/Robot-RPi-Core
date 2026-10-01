@@ -91,7 +91,7 @@ class AxisConfig:
     center_us: float = 1500.0       # the start position — trim per servo
     us_per_deg: float = 2000.0 / 180.0
     invert: bool = False            # flip if +angle moves the wrong way
-    max_speed_dps: float = 60.0     # cruise speed: slow enough to look deliberate
+    max_speed_dps: float = 30.0     # cruise speed (deg/s): slow and deliberate
     accel_dps2: float = 180.0
 
 
@@ -249,7 +249,7 @@ def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float
     """A Gimbal from the `/explorer` parameters in robot.yaml (channels, centre
     trims, inversion, speed). Pan is always ±45°; callers may narrow the tilt
     range — the face tasks pass tilt_min=0 so the head never looks below level."""
-    speed = float(p.get("servo_speed_dps", 60.0))
+    speed = float(p.get("servo_speed_dps", 30.0))
     return Gimbal(
         pan=AxisConfig(channel=int(p.get("pan_channel", 1)), min_deg=-45.0, max_deg=45.0,
                        center_us=float(p.get("pan_center_us", 1500.0)),
