@@ -90,7 +90,7 @@ void resetFlagsInit(void) {
 // (tests/test_encoders.py or the notebook's hand-spin cell).  Forward
 // roll must count UP on both sides; if a side counts down, flip its
 // invert to 1 and re-flash.
-#define ENC_L_INVERT  1   // left encoder counted down going forward after the wiring fix
+#define ENC_L_INVERT  0   // left encoder
 #define ENC_R_INVERT  1   // right motor is mirror-mounted: forward travel
                           // spins it the opposite way, so its correctly-paired
                           // A/B decodes negative. Verified by hand-spin —

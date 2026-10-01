@@ -8,6 +8,7 @@ precisely so `pytest` does not try to collect them.
 |---|---|
 | `check_protocol.py` | Frame encode/decode and checksums, no robot needed |
 | `check_encoders.py` | **Run this after any harness change.** Hand-roll each wheel forward: both counters must go *up*, and rolling the left wheel must move `enc_left`. It is the only way to tell a swapped A/B pair from a mirror-mounted motor |
+| `check_head.py` | Pan/tilt head: sweeps each axis so you can check direction (+pan left, +tilt up), centre trims and that limits are respected. Stop `robot-voice` first (it holds the PWM). `--pan/--tilt` goes to one pose; `--fake` runs without hardware |
 | `check_movements.py` | Closed-loop moves end to end |
 | `check_timed.py` | Timing and sync-error behaviour across a run |
 | `check_vision_service.ipynb` | **Run from the Pi.** Pings every vision-service endpoint on the Mac mini, verifies the response contract, and measures p50/p95/p99 detect latency. Needs the service up, not the robot |
