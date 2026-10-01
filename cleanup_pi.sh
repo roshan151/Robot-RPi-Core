@@ -40,6 +40,7 @@ sudo apt-get update -qq || true
 
 echo "== /opt/ros (includes the generated setup.bash)"
 sudo rm -rf /opt/ros
+sudo rm -f /etc/ld.so.conf.d/ros-jazzy.conf && sudo ldconfig
 
 echo "== Python venv and ROS build"
 rm -rf .venv ros2_ws/build ros2_ws/install ros2_ws/log

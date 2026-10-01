@@ -124,7 +124,7 @@ pytest
 
 - The official ROS apt repository has no packages for Trixie, so the installer uses the community **rospian** repository (`https://rospian.github.io/rospian-repo`, suite `trixie-jazzy`).
 - If that website is unreachable, the installer automatically clones the same repository from GitHub into `/opt/rospian-repo` (about 450 MB) and uses it as a local apt source. You do not need to do anything by hand.
-- rospian has no `ros-jazzy-ros-base` bundle and no `ros-jazzy-ros-workspace` package, so the installer lists the individual ROS packages the robot uses, and generates `/opt/ros/jazzy/setup.bash` itself. Without that file, `source /opt/ros/jazzy/setup.bash` (used by `start_robot.sh`) fails.
+- rospian has no `ros-jazzy-ros-base` bundle and no `ros-jazzy-ros-workspace` package, so the installer lists the individual ROS packages the robot uses, and generates `/opt/ros/jazzy/setup.bash` and registers ROS's shared libraries (`/etc/ld.so.conf.d/ros-jazzy.conf`) itself. Without that file, `source /opt/ros/jazzy/setup.bash` (used by `start_robot.sh`) fails.
 - You never source ROS by hand: `start_robot.sh` does it. For your own shell, run `source /opt/ros/jazzy/setup.bash && source ~/Robot-RPi-Core/ros2_ws/install/setup.bash`.
 
 ## Starting over (clean up a failed install)
@@ -145,7 +145,13 @@ It asks for confirmation first. It keeps your code, `/etc/robot.env`, Bluetooth 
 | "This needs 64-bit Raspberry Pi OS Trixie" | Wrong OS image; re-flash (see top of this page) |
 | `Unable to locate package ros-jazzy-...` | The rospian source is missing or stale: `cat /etc/apt/sources.list.d/rospian.list`, then `sudo apt update`. To start over: `./cleanup_pi.sh`, then `./install_pi.sh` |
 | `/opt/ros/jazzy/setup.bash: No such file` | Re-run `./install_pi.sh`; it creates the file |
+| `libddsc.so.0: cannot open shared object file` | The ROS library path is not registered: re-run `./install_pi.sh`, or just `echo -e "/opt/ros/jazzy/lib\n/opt/ros/jazzy/lib/aarch64-linux-gnu" \| sudo tee /etc/ld.so.conf.d/ros-jazzy.conf && sudo ldconfig` |
 | `ros2: command not found` in your own shell | Source ROS first (see "About ROS on the Pi") |
 | `Permission denied` on the serial port or audio | You have not rebooted since the install, or `id` does not show `dialout`/`audio` |
 | Robot hears nothing at boot | Lingering is off: `sudo loginctl enable-linger $USER` and reboot; check the buds connect |
 | Service crash-loops | `journalctl -u robot-voice -f`; clear with `sudo systemctl reset-failed robot-voice` |
+
+# debug code
+printf '%s\n' /opt/ros/jazzy/lib /opt/ros/jazzy/lib/aarch64-linux-gnu | sudo tee /etc/ld.so.conf.d/ros-jazzy.conf
+sudo ldconfig
+./start_robot.sh

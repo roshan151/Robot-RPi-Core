@@ -82,6 +82,12 @@ if [ ! -f "$ROS/setup.bash" ]; then
   done
 fi
 
+# The same missing package normally puts ROS's shared libraries on the loader path, so without
+# it ros2 fails with "libddsc.so.0: cannot open shared object file". Register them system-wide.
+say "Registering ROS shared libraries with the dynamic linker"
+printf '%s\n' "$ROS/lib" "$ROS/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)" | sudo tee /etc/ld.so.conf.d/ros-jazzy.conf >/dev/null
+sudo ldconfig
+
 # ---------------------------------------------------------------- 3. Python venv + ROS build
 say "Python venv (.venv, sees the apt packages) + pip packages"
 python3 -m venv --system-site-packages .venv
