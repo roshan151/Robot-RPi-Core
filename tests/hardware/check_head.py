@@ -36,12 +36,15 @@ def go(g, pan=None, tilt=None):
 
 def main():
     UP, DOWN, LEFT, RIGHT = 20, 20, 20, 20       # degrees: change these
+    PAN_CENTER_US, TILT_CENTER_US = 1500, 1500   # pulse that points straight ahead / level (11 us = 1 deg)
     FIT_HORNS = False    # True: just hold 0/0 so you can fit each horn at the middle of its travel
 
-    g = from_params(yaml.safe_load(YAML.read_text())["/explorer"]["ros__parameters"])
+    p = yaml.safe_load(YAML.read_text())["/explorer"]["ros__parameters"]
+    p["pan_center_us"], p["tilt_center_us"] = PAN_CENTER_US, TILT_CENTER_US
+    g = from_params(p)
     try:
         if FIT_HORNS:
-            input("Holding 0/0 (servo centre). Fit/adjust the horns now, then press Enter... ")
+            input("Holding the centre pulses. Press Enter to release... ")
             return
         look_up(g, UP)
         look_down(g, DOWN)
