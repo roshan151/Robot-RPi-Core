@@ -215,3 +215,10 @@ echo 1500000 | sudo tee pwm0/duty_cycle
 echo 1 | sudo tee pwm0/enable
 echo 1900000 | sudo tee pwm0/duty_cycle     # should swing the tilt servo
 echo 1 | sudo tee export                    # then repeat with pwm1 for pan
+
+# reset servos
+sudo systemctl stop robot-voice
+cd /sys/class/pwm/pwmchip0
+echo 0 | sudo tee pwm0/enable pwm1/enable
+echo 0 | sudo tee unexport
+echo 1 | sudo tee unexport
