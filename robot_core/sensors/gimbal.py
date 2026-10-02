@@ -93,6 +93,8 @@ class AxisConfig:
     invert: bool = False            # flip if +angle moves the wrong way
     max_speed_dps: float = 30.0     # cruise speed (deg/s): slow and deliberate
     accel_dps2: float = 180.0
+    min_us: float = 500.0           # hard electrical limits: no trim or angle can push a pulse
+    max_us: float = 2400.0          # outside these (an SG90 just buzzes against its end stop)
 
 
 PAN_DEFAULT = AxisConfig(channel=1, min_deg=-45.0, max_deg=45.0)     # GPIO13
@@ -112,7 +114,8 @@ class _Axis:
 
     def pulse(self) -> float:
         sign = -1.0 if self.cfg.invert else 1.0
-        return self.cfg.center_us + sign * self.pos * self.cfg.us_per_deg
+        us = self.cfg.center_us + sign * self.pos * self.cfg.us_per_deg
+        return max(self.cfg.min_us, min(self.cfg.max_us, us))
 
     def step(self, dt: float) -> bool:
         """Advance one tick of the trapezoidal profile. True while moving."""
@@ -247,15 +250,17 @@ class Gimbal:
 def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float = TILT_DEFAULT.max_deg,
                 backend: str = "hardware") -> Gimbal:
     """A Gimbal from the `/explorer` parameters in robot.yaml (channels, centre
-    trims, inversion, speed). Pan is always ±45°; callers may narrow the tilt
+    trims, us-per-degree, inversion, speed). Pan is always ±45°; callers may narrow the tilt
     range — the face tasks pass tilt_min=0 so the head never looks below level."""
     speed = float(p.get("servo_speed_dps", 30.0))
     return Gimbal(
         pan=AxisConfig(channel=int(p.get("pan_channel", 1)), min_deg=-45.0, max_deg=45.0,
                        center_us=float(p.get("pan_center_us", 1500.0)),
+                       us_per_deg=float(p.get("pan_us_per_deg", PAN_DEFAULT.us_per_deg)),
                        invert=bool(p.get("pan_invert", False)), max_speed_dps=speed),
         tilt=AxisConfig(channel=int(p.get("tilt_channel", 0)), min_deg=tilt_min, max_deg=tilt_max,
                         center_us=float(p.get("tilt_center_us", 1500.0)),
+                        us_per_deg=float(p.get("tilt_us_per_deg", TILT_DEFAULT.us_per_deg)),
                         invert=bool(p.get("tilt_invert", False)), max_speed_dps=speed),
         backend=backend, chip=int(p.get("pwm_chip", 0)))
 

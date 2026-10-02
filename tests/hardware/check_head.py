@@ -3,6 +3,9 @@
   sudo systemctl stop robot-voice      # it holds the PWM channels
   python tests/hardware/check_head.py
 
+Nothing moves, or it spins far more than asked? Run check_servo_pulse.py first:
+it tells positional servos from continuous-rotation ones using tiny raw pulses.
+
 Each look goes from level/centre to the angle and back. Limits still apply
 (pan +-45, tilt -30/+45), so a bigger number just stops at the limit.
 """
@@ -28,7 +31,8 @@ def look_right(g, deg): go(g, pan=-deg)
 
 def go(g, pan=None, tilt=None):
     got = g.move_to(pan, tilt)
-    print(f"went to pan={got[0]:+.0f} tilt={got[1]:+.0f}")
+    print(f"went to pan={got[0]:+.0f} tilt={got[1]:+.0f}   "
+          f"pulses pan={g.pan.pulse():.0f}us tilt={g.tilt.pulse():.0f}us")
     time.sleep(1.0)
     g.home()                       # back to 0/0
     time.sleep(1.0)

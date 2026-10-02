@@ -50,6 +50,25 @@ def test_gimbal_clamps_and_moves_smoothly():
     assert g.pan.out.enabled is False
 
 
+def test_gimbal_pulse_clamped_and_us_per_deg_from_params():
+    from robot_core.sensors.gimbal import from_params
+    g = from_params({"pan_center_us": 1500, "pan_us_per_deg": 8.0,
+                     "tilt_center_us": 2300, "tilt_us_per_deg": 20.0}, backend="fake")
+    g.move_to(45, 45, wait=True, timeout=5)
+    assert g.pan.out.pulses[-1] == pytest.approx(1500 + 45 * 8.0)      # per-axis scale is honoured
+    assert g.tilt.out.pulses[-1] == 2400.0                             # 2300 + 900 us would be 3200: clamped
+    assert min(g.tilt.out.pulses) >= 500.0 and max(g.tilt.out.pulses) <= 2400.0
+    g.close()
+
+
+def test_gimbal_defaults_unchanged():
+    from robot_core.sensors.gimbal import from_params
+    g = from_params({}, backend="fake")
+    g.move_to(45, 45, wait=True, timeout=5)
+    assert g.pan.out.pulses[-1] == pytest.approx(1500 + 45 * 2000 / 180)   # still 1000..2000 us for +-45 deg
+    g.close()
+
+
 def test_visual_motion_static_vs_shift_vs_local():
     rng = np.random.default_rng(0)
     base = (rng.random((260, 360)) * 255).astype(np.uint8)

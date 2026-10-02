@@ -84,6 +84,8 @@
     tilt_channel: 0            # GPIO12
     pan_center_us: 1500.0      # trim so the head points straight ahead
     tilt_center_us: 1500.0     # trim so the head is level
+    pan_us_per_deg: 11.111     # pulse change per degree (2000/180); MEASURE with tests/hardware/check_servo_pulse.py
+    tilt_us_per_deg: 11.111
     pan_invert: false          # +pan must turn the head LEFT
     tilt_invert: true          # +tilt must look UP (flipped: this servo was mounted the other way up)
     servo_speed_dps: 30.0      # head speed, deg/s; lower = slower, below ~10 gets steppy
