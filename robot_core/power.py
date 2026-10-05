@@ -76,6 +76,7 @@ class PowerMonitor:
         self.board, self._read, self._battery, self.last_file = board, read, battery_read, Path(last_file)
         self.poll_s, self._clock = poll_s, clock
         self.dips, self._flags, self._started, self._dip_at = 0, 0, False, 0.0
+        self._warned = False
         self._last_write = float("-inf")
         self._stop = threading.Event()
         self._thread: Optional[threading.Thread] = None
@@ -153,6 +154,9 @@ class PowerMonitor:
             try:
                 s = self._battery()
                 status.battery(s.percent, s.volts, s.amps)
+                if not getattr(s, "ok", True) and not self._warned:
+                    self._warned = True
+                    log.warning("power: PiSugar server not reachable, showing -- for volts and amps")
             except Exception:                                  # noqa: BLE001
                 status.battery()
             self._stop.wait(2.0)

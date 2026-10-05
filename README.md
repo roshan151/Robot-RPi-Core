@@ -555,9 +555,24 @@ last -x reboot | head                  # were there real reboots, and when?
 journalctl -b -1 -e --no-pager | tail -40   # last lines of the previous boot, including the explorer's own output
 
 
+## Debug camera
+
+vcgencmd get_throttled
+rpicam-hello -t 5000 --nopreview                 # camera alone
+python tests/hardware/check_camera.py            # camera alone, through our code
+python tests/hardware/check_camera.py head       # opens the head, then moves it
+
+## Debug voltage display
+
+ls -l /tmp/*.sock
+systemctl status pisugar-server --no-pager
+python3 -c "import socket;s=socket.socket(socket.AF_UNIX);s.connect('/tmp/pisugar-server.sock');s.sendall(b'get battery\n');print(s.recv(100))"
+
 ## Refresh build
 
 git checkout oled && git pull
 source /opt/ros/jazzy/setup.bash && source .venv/bin/activate
 pip install -e ".[oled]"
 cd ros2_ws && colcon build --symlink-install && source install/setup.bash && cd ..
+
+
