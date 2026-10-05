@@ -82,10 +82,14 @@
     pwm_chip: 0                # Pi 4: 0. Pi 5: 2
     pan_channel: 1             # GPIO13
     tilt_channel: 0            # GPIO12
-    pan_center_us: 1500.0      # trim so the head points straight ahead
-    tilt_center_us: 1500.0     # trim so the head is level
+    pan_center_us: 2300.0      # measured (check_servo_pulse.py trim): head points straight ahead
+    tilt_center_us: 1750.0     # measured (check_servo_pulse.py trim): head is level
     pan_us_per_deg: 11.111     # pulse change per degree (2000/180); MEASURE with tests/hardware/check_servo_pulse.py
     tilt_us_per_deg: 11.111
     pan_invert: false          # +pan must turn the head LEFT
     tilt_invert: true          # +tilt must look UP (flipped: this servo was mounted the other way up)
     servo_speed_dps: 30.0      # head speed, deg/s; lower = slower, below ~10 gets steppy
+    servo_min_us: 500.0        # hard pulse window: no angle or trim can send a pulse outside it. The driver
+    servo_max_us: 2400.0       # shrinks the reachable angles to fit (pan at 2300 us has only ~9 deg to the left):
+                               # re-fit the horn nearer the middle, or widen this if the servo really goes further
+    hold_on_close: true        # on shutdown park at centre and KEEP holding it (false: release the PWM, servos go limp)

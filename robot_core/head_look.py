@@ -1,7 +1,7 @@
 """Look up / look down for the voice tools: moves the head's tilt, remembers where it is.
 
 The gimbal is opened on the first look and kept open, so the tilt persists for the
-session. `release()` parks it and frees the PWM (before a task that opens the head
+session. `release()` parks it and hands the head over (before a task that opens the head
 itself, and on shutdown); the next look starts again from level.
 """
 

@@ -17,10 +17,15 @@ whatever a caller asks for.
 Parking
 -------
 `close()` slews both axes back to 0 at normal speed, waits for them to arrive,
-then stops the PWM. Nodes call it from `destroy_node()`, which runs on Ctrl+C
-and on systemd's SIGTERM. A hard power cut cannot park anything — the start
-position is assumed on the next boot, so after a crash run
-`python -m robot_core.sensors.gimbal home` before trusting the angles.
+then keeps HOLDING the centre pulse (`hold_on_close`, the default). Cutting the
+PWM instead leaves the servos limp and the head flops away from centre the
+moment the program ends; with the pulse still running it stays put, and the
+next open starts from where it already is. `close(release=True)` (or
+`hold_on_close=False`) stops the PWM when you want the servos to relax.
+Nodes call close() from `destroy_node()`, which runs on Ctrl+C and on systemd's
+SIGTERM. A hard power cut cannot park anything — the start position is assumed
+on the next boot, so after a crash run `python -m robot_core.sensors.gimbal home`
+(it uses the centres in robot.yaml) before trusting the angles.
 """
 
 from __future__ import annotations
@@ -29,6 +34,7 @@ import logging
 import threading
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional, Protocol, Tuple
 
 log = logging.getLogger(__name__)
@@ -108,9 +114,18 @@ class _Axis:
         self.vel = 0.0
         self.target = 0.0
         self.speed = cfg.max_speed_dps
+        # The angles this servo can really reach: inside min_deg..max_deg AND
+        # inside the min_us..max_us pulse window around this centre. Clamping to
+        # this keeps the reported angle honest - a pulse silently cut short would
+        # leave the head at +9 deg while angles() claimed +45.
+        sign = -1.0 if cfg.invert else 1.0
+        a = (cfg.min_us - cfg.center_us) / (sign * cfg.us_per_deg)
+        b = (cfg.max_us - cfg.center_us) / (sign * cfg.us_per_deg)
+        self.lo = min(0.0, max(cfg.min_deg, min(a, b)))
+        self.hi = max(0.0, min(cfg.max_deg, max(a, b)))
 
     def clamp(self, deg: float) -> float:
-        return max(self.cfg.min_deg, min(self.cfg.max_deg, deg))
+        return max(self.lo, min(self.hi, deg))
 
     def pulse(self) -> float:
         sign = -1.0 if self.cfg.invert else 1.0
@@ -146,10 +161,21 @@ class Gimbal:
         tilt: AxisConfig = TILT_DEFAULT,
         backend: str = "hardware",        # "hardware" | "fake"
         chip: int = 0,
+        hold_on_close: bool = True,       # keep the centre pulse running after close()
     ) -> None:
         make = (lambda c: HardwarePwm(c.channel, chip)) if backend == "hardware" else (lambda c: FakePwm())
         self.pan = _Axis(pan, make(pan))
         self.tilt = _Axis(tilt, make(tilt))
+        self.hold_on_close = hold_on_close
+        self._released = False
+        for name, ax in (("pan", self.pan), ("tilt", self.tilt)):
+            if ax.lo > ax.cfg.min_deg + 0.5 or ax.hi < ax.cfg.max_deg - 0.5:
+                log.warning(
+                    "gimbal: %s limited to %+.0f..%+.0f deg (wanted %+.0f..%+.0f) by the %.0f-%.0f us pulse "
+                    "window around its %.0f us centre; re-fit the horn nearer the middle of its travel, "
+                    "or widen servo_min_us / servo_max_us if the servo really goes further",
+                    name, ax.lo, ax.hi, ax.cfg.min_deg, ax.cfg.max_deg,
+                    ax.cfg.min_us, ax.cfg.max_us, ax.cfg.center_us)
         self._lock = threading.Lock()
         self._moving = False
         self._last_motion = time.monotonic()
@@ -200,7 +226,7 @@ class Gimbal:
             return not self._moving and time.monotonic() - self._last_motion >= settle_s
 
     def tilt_limits(self) -> Tuple[float, float]:
-        return self.tilt.cfg.min_deg, self.tilt.cfg.max_deg
+        return self.tilt.lo, self.tilt.hi
 
     def wait_settled(self, settle_s: float = 0.15, timeout: float = 10.0) -> bool:
         deadline = time.monotonic() + timeout
@@ -210,16 +236,25 @@ class Gimbal:
             time.sleep(0.02)
         return False
 
-    def close(self) -> None:
-        """Park at the start position, then release the PWM."""
-        if self._stop.is_set():
-            return
-        try:
-            self.home(wait=True)
-            time.sleep(0.3)               # let the horn physically arrive
-        finally:
-            self._stop.set()
-            self._thread.join(timeout=1.0)
+    def close(self, release: Optional[bool] = None) -> None:
+        """Park at the start position, then stop driving it.
+
+        By default (`hold_on_close`) the centre pulse keeps running after this
+        returns - the kernel PWM carries on without us - so the servos keep
+        holding the head at centre instead of going limp and letting it flop.
+        `release=True` stops the PWM instead (servos relax, no hum). It can also
+        be called later on an already-closed gimbal, to let go.
+        """
+        release = (not self.hold_on_close) if release is None else release
+        if not self._stop.is_set():
+            try:
+                self.home(wait=True)
+                time.sleep(0.3)           # let the horn physically arrive
+            finally:
+                self._stop.set()
+                self._thread.join(timeout=1.0)
+        if release and not self._released:
+            self._released = True
             for ax in (self.pan, self.tilt):
                 try:
                     ax.out.disable()
@@ -253,28 +288,54 @@ def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float
     trims, us-per-degree, inversion, speed). Pan is always ±45°; callers may narrow the tilt
     range — the face tasks pass tilt_min=0 so the head never looks below level."""
     speed = float(p.get("servo_speed_dps", 30.0))
+    lo_us, hi_us = float(p.get("servo_min_us", 500.0)), float(p.get("servo_max_us", 2400.0))
     return Gimbal(
         pan=AxisConfig(channel=int(p.get("pan_channel", 1)), min_deg=-45.0, max_deg=45.0,
                        center_us=float(p.get("pan_center_us", 1500.0)),
                        us_per_deg=float(p.get("pan_us_per_deg", PAN_DEFAULT.us_per_deg)),
-                       invert=bool(p.get("pan_invert", False)), max_speed_dps=speed),
+                       invert=bool(p.get("pan_invert", False)), max_speed_dps=speed,
+                       min_us=lo_us, max_us=hi_us),
         tilt=AxisConfig(channel=int(p.get("tilt_channel", 0)), min_deg=tilt_min, max_deg=tilt_max,
                         center_us=float(p.get("tilt_center_us", 1500.0)),
                         us_per_deg=float(p.get("tilt_us_per_deg", TILT_DEFAULT.us_per_deg)),
-                        invert=bool(p.get("tilt_invert", False)), max_speed_dps=speed),
-        backend=backend, chip=int(p.get("pwm_chip", 0)))
+                        invert=bool(p.get("tilt_invert", False)), max_speed_dps=speed,
+                        min_us=lo_us, max_us=hi_us),
+        backend=backend, chip=int(p.get("pwm_chip", 0)),
+        hold_on_close=bool(p.get("hold_on_close", True)))
+
+
+ROBOT_YAML = Path(__file__).resolve().parents[2] / "ros2_ws/src/robot_bringup/config/robot.yaml"
+
+
+def params_from_robot_yaml() -> dict:
+    """The /explorer parameters from the repo's robot.yaml - the same channels,
+    centres and inversion every node uses ({} with a warning if unreadable)."""
+    try:
+        import yaml
+        return yaml.safe_load(ROBOT_YAML.read_text())["/explorer"]["ros__parameters"]
+    except Exception as exc:                                        # noqa: BLE001
+        log.warning("gimbal: cannot read %s (%s) - using default centres of 1500 us", ROBOT_YAML, exc)
+        return {}
 
 
 def main() -> None:
-    """`python -m robot_core.sensors.gimbal home` — park the head after a crash
-    or power cut, before anything trusts the angles."""
+    '''`python -m robot_core.sensors.gimbal home | release | move PAN [TILT]`
+
+    home     park at centre and keep holding it (default) - after a crash or power
+             cut, before anything trusts the angles
+    release  park, then stop the PWM so the servos relax
+    move     go to PAN [TILT] degrees first, then park
+    Channels and centres come from robot.yaml, like every node's.'''
     import sys
     logging.basicConfig(level=logging.INFO)
-    g = Gimbal()
-    if len(sys.argv) > 2 and sys.argv[1] == "move":
-        g.move_to(float(sys.argv[2]), float(sys.argv[3]) if len(sys.argv) > 3 else None)
-        time.sleep(1.0)
-    g.close()
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "home"
+    g = from_params(params_from_robot_yaml())
+    try:
+        if cmd == "move" and len(sys.argv) > 2:
+            g.move_to(float(sys.argv[2]), float(sys.argv[3]) if len(sys.argv) > 3 else None)
+            time.sleep(1.0)
+    finally:
+        g.close(release=True if cmd == "release" else None)
 
 
 if __name__ == "__main__":

@@ -37,7 +37,7 @@ def test_tfluna_reader_median():
 def test_gimbal_clamps_and_moves_smoothly():
     g = Gimbal(pan=AxisConfig(channel=1, min_deg=-45, max_deg=45, max_speed_dps=90, accel_dps2=360),
                tilt=AxisConfig(channel=0, min_deg=-90, max_deg=90, max_speed_dps=90, accel_dps2=360),
-               backend="fake")
+               backend="fake", hold_on_close=False)
     target = g.move_to(80, -30, wait=True, timeout=5)
     assert target == (45, -30)                                   # pan clamped
     pan, tilt = g.angles()
@@ -67,6 +67,30 @@ def test_gimbal_defaults_unchanged():
     g.move_to(45, 45, wait=True, timeout=5)
     assert g.pan.out.pulses[-1] == pytest.approx(1500 + 45 * 2000 / 180)   # still 1000..2000 us for +-45 deg
     g.close()
+
+
+def test_gimbal_close_holds_centre_by_default_and_can_release_later():
+    from robot_core.sensors.gimbal import from_params
+    g = from_params({"pan_center_us": 2300, "tilt_center_us": 1750, "tilt_invert": True}, backend="fake")
+    g.move_to(-20, 20, wait=True, timeout=10)
+    g.close()
+    assert g.angles() == (0.0, 0.0)
+    assert g.pan.out.enabled and g.tilt.out.enabled                      # still driving the pulse: no flop
+    assert g.pan.out.pulses[-1] == pytest.approx(2300) and g.tilt.out.pulses[-1] == pytest.approx(1750)
+    assert np.abs(np.diff(g.pan.out.pulses)).max() < 30 / 50 * (2000 / 180) + 1   # parked in small steps
+    g.close(release=True)                                                # a later release still works
+    assert not g.pan.out.enabled and not g.tilt.out.enabled
+
+
+def test_gimbal_angles_never_exceed_what_the_pulse_window_allows():
+    from robot_core.sensors.gimbal import from_params
+    g = from_params({"pan_center_us": 2300, "tilt_center_us": 1750, "tilt_invert": True}, backend="fake")
+    got = g.move_to(45, 45, speed_dps=60, wait=True, timeout=10)
+    assert got == pytest.approx((9.0, 45.0), abs=0.01)                   # 2400 us cap: only 9 deg to the left
+    assert g.pan.out.pulses[-1] <= 2400.0
+    assert g.move_to(-90, -90, speed_dps=60, wait=True, timeout=10) == pytest.approx((-45.0, -30.0))
+    assert g.tilt_limits() == (-30.0, 45.0)
+    g.close(release=True)
 
 
 def test_visual_motion_static_vs_shift_vs_local():

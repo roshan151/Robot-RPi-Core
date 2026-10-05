@@ -139,7 +139,7 @@ The robot stops, sweeps the TF-Luna ±45° on the head in each of four direction
 - **Guard rails** (`/explorer` in `robot.yaml`, or `--ros-args -p no_behind:=true -p explore_radius_m:=5.0`): `explore_radius_m` (default `10`, `0` = unlimited) only explores within that radius of `start_pose`; `no_behind: true` only explores ahead of the start heading. Both apply to where it drives and which plants it photographs; the 360° scans still map everything around it. When nothing inside the limits is left, the run ends as complete.
 - **Re-scan later on the same map:** set `continue_map: true` and `start_pose` (where the robot stands, read off the map) under `/explorer` in `robot.yaml`.
 - **Motion health:** `ros2 topic echo /motion_health` compares the command, the encoders and the camera. It reports `stalled` (wheels blocked), `slipping` (wheels turning, image static), `pushed`, or `wrong_direction`; the drivetrain brakes on stalled or slipping.
-- **Park the head by hand** after a crash or power cut: `python -m robot_core.sensors.gimbal home`.
+- **Park the head by hand** after a crash or power cut: `python -m robot_core.sensors.gimbal home` (goes to the centres in `robot.yaml` and keeps holding them; `... release` lets the servos go limp).
 
 One-time setup, besides [README-SETUP.md](README-SETUP.md):
 
