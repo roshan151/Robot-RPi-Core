@@ -11,8 +11,9 @@ jitter-free; software PWM would twitch.
 
 Limits live here, with the actuator (PLAN standing rule #4)
 -----------------------------------------------------------
-Pan is clamped to ±45° from the start position, tilt to -30°/+45° (+ is up),
-whatever a caller asks for.
+Pan is clamped to ±90° from the start position, tilt to ±45° (+ is up),
+whatever a caller asks for - and further, to what the servo's pulse window
+(servo_min_us..servo_max_us around its centre) can actually reach.
 
 Parking
 -------
@@ -103,8 +104,8 @@ class AxisConfig:
     max_us: float = 2400.0          # outside these (an SG90 just buzzes against its end stop)
 
 
-PAN_DEFAULT = AxisConfig(channel=1, min_deg=-45.0, max_deg=45.0)     # GPIO13
-TILT_DEFAULT = AxisConfig(channel=0, min_deg=-30.0, max_deg=45.0)    # GPIO12
+PAN_DEFAULT = AxisConfig(channel=1, min_deg=-90.0, max_deg=90.0)     # GPIO13
+TILT_DEFAULT = AxisConfig(channel=0, min_deg=-45.0, max_deg=45.0)    # GPIO12
 
 
 class _Axis:
@@ -285,12 +286,12 @@ class Gimbal:
 def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float = TILT_DEFAULT.max_deg,
                 backend: str = "hardware") -> Gimbal:
     """A Gimbal from the `/explorer` parameters in robot.yaml (channels, centre
-    trims, us-per-degree, inversion, speed). Pan is always ±45°; callers may narrow the tilt
+    trims, us-per-degree, inversion, speed). Pan is always ±90°; callers may narrow the tilt
     range — the face tasks pass tilt_min=0 so the head never looks below level."""
     speed = float(p.get("servo_speed_dps", 30.0))
     lo_us, hi_us = float(p.get("servo_min_us", 500.0)), float(p.get("servo_max_us", 2400.0))
     return Gimbal(
-        pan=AxisConfig(channel=int(p.get("pan_channel", 1)), min_deg=-45.0, max_deg=45.0,
+        pan=AxisConfig(channel=int(p.get("pan_channel", 1)), min_deg=PAN_DEFAULT.min_deg, max_deg=PAN_DEFAULT.max_deg,
                        center_us=float(p.get("pan_center_us", 1500.0)),
                        us_per_deg=float(p.get("pan_us_per_deg", PAN_DEFAULT.us_per_deg)),
                        invert=bool(p.get("pan_invert", False)), max_speed_dps=speed,

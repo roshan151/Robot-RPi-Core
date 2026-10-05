@@ -33,7 +33,7 @@ The Mac service lives in its own repo, **Vision-Microservice**.
 
 - **Raspberry Pi 4B** (64-bit OS): voice, camera, head, serial to the Arduino
 - **Arduino** (Uno-class): 2× DRV8871 motor drivers, quadrature encoders, serial watchdog; separate motor battery, common ground
-- **Head:** Pi camera (mounted inverted), TF-Luna range sensor (UART) and two hobby servos: pan on GPIO13 (±45°), tilt on GPIO12 (-30°/+45°)
+- **Head:** Pi camera (mounted inverted), TF-Luna range sensor (UART) and two hobby servos: pan on GPIO13 (±90°), tilt on GPIO12 (±45°)
 - **Bluetooth buds** for microphone and speaker
 - **Mac mini** on the LAN running Vision-Microservice
 
@@ -149,11 +149,11 @@ One-time setup, besides [README-SETUP.md](README-SETUP.md):
 
 ### Voice commands: look up/down, enroll face, match face, explore
 
-*"Look up"* / *"look down"* tilt the head 30° from where it is now (or the number you say), stopping at the limits (-30°/+45°). The tilt is remembered for the session; a task parks the head, so the next look starts from level.
+*"Look up"* / *"look down"* tilt the head 30° from where it is now (or the number you say), stopping at the limits (±45°). The tilt is remembered for the session; a task parks the head, so the next look starts from level.
 
 In command mode, say it to the robot: *"remember my face, I'm Sam"* (`enroll_face`, about 30 s of frames — stand in front of the camera alone), *"do you know me?"* (`match_face`), *"go explore"* (`explore`, runs the explorer node against the running drivetrain until it finishes).
 
-For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° and 40° up (never below level), stops on the first face, centres it, and holds while it captures, then parks. Tilt is limited to -30°/+45° everywhere; face tasks narrow it to 0°/+45°. The durations are set in [Common variables](#common-variables).
+For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° and 40° up (never below level), stops on the first face, centres it, and holds while it captures, then parks. Tilt is limited to ±45° everywhere; face tasks narrow it to 0°/+45°. The durations are set in [Common variables](#common-variables).
 
 The voice session **closes for the whole task** (so you can't say "stop" until it ends), then reopens. The robot answers by gesture: **nod = it worked / the face is known, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
 
@@ -490,3 +490,9 @@ Wire the white B wires: left → D4, right → D7 (blue → 5V, green → GND, y
 Flash (./flash.sh or IDE) — confirm the drv8871-v4-quad stamp.
 Calibrate polarity: run tests/hardware/check_encoders.py, roll each wheel in the robot's forward direction by hand. Both must count up. A side counting down → set its ENC_x_INVERT to 1, re-flash, re-check.
 Then tests/hardware/check_movements.py — with working, signed encoders this should be the first honest closed-loop run the bot has ever had.
+
+
+# debugging explore
+vcgencmd get_throttled                 # anything other than 0x0 means under-voltage or throttling happened
+last -x reboot | head                  # were there real reboots, and when?
+journalctl -b -1 -e --no-pager | tail -40   # last lines of the previous boot, including the explorer's own output

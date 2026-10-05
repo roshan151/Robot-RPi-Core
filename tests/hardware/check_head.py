@@ -7,7 +7,7 @@ Nothing moves, or it spins far more than asked? Run check_servo_pulse.py first:
 it tells positional servos from continuous-rotation ones using tiny raw pulses.
 
 Each look goes from level/centre to the angle and back. Limits still apply
-(pan +-45, tilt -30/+45, and the pulse window around your centres - the
+(pan +-90, tilt +-45, and the pulse window around your centres - the
 reachable range is printed at the start), so a bigger number just stops at the
 limit. At the end the head parks at centre and KEEPS HOLDING it; set
 RELEASE_AT_END to let go instead (the servos go limp and the head may flop).

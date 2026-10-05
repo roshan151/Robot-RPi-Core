@@ -282,7 +282,7 @@ def test_head_look_tilts_from_where_it_is_and_clamps() -> None:
         res = r("look_up", degrees=30)
         assert res["tilt"] == 45.0 and res["clamped"]            # +45 limit
         assert r("look_down", degrees=40)["tilt"] == 5.0         # relative to where it is
-        assert r("look_down", degrees=100)["tilt"] == -30.0      # -30 limit
+        assert r("look_down", degrees=100)["tilt"] == -45.0      # -45 limit
         head.release()
         assert r("look_up", degrees=10)["tilt"] == 10.0          # parked: starts from level
         assert not RobotTools(LocalMotion(FakeMove()))._look(5)["ok"]

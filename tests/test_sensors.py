@@ -88,8 +88,8 @@ def test_gimbal_angles_never_exceed_what_the_pulse_window_allows():
     got = g.move_to(45, 45, speed_dps=60, wait=True, timeout=10)
     assert got == pytest.approx((9.0, 45.0), abs=0.01)                   # 2400 us cap: only 9 deg to the left
     assert g.pan.out.pulses[-1] <= 2400.0
-    assert g.move_to(-90, -90, speed_dps=60, wait=True, timeout=10) == pytest.approx((-45.0, -30.0))
-    assert g.tilt_limits() == (-30.0, 45.0)
+    assert g.move_to(-90, -90, speed_dps=60, wait=True, timeout=10) == pytest.approx((-90.0, -45.0))
+    assert g.tilt_limits() == (-45.0, 45.0)
     g.close(release=True)
 
 

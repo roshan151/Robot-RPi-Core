@@ -71,7 +71,7 @@
     revisit_known: true        # photograph known plants again (a new visit)
     ask_before_drive: false    # image+text model checks each step (slow, thorough)
 
-    # Head. Pan is limited to +-45 and tilt to -30/+45 in the driver, and both
+    # Head. Pan is limited to +-90 and tilt to +-45 in the driver, and both
     # park at their start position (the *_center_us pulse) on shutdown.
     tfluna_port: "/dev/serial0"
     camera_main_size: [1920, 1080]
