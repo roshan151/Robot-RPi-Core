@@ -32,7 +32,7 @@ import logging
 import re
 from typing import Any, Callable, Dict, Optional, Tuple
 
-from robot_core import robot_log, settings
+from robot_core import robot_log, settings, status
 from robot_core.gestures import VOCABULARY, Gesturer
 from robot_core.head_look import DEFAULT_DEGREES, HeadLook
 from robot_core.motion import MotionBackend
@@ -199,6 +199,7 @@ class RobotTools:
                             ok=False, err="unknown tool")
             return {"ok": False, "error": f"unknown tool {name!r}"}
 
+        status.tool(f"{name} {' '.join(str(v) for v in args.values())}")
         try:
             result = handler(**args)
             robot_log.event("voice.tool", name=name, args=args, **result)

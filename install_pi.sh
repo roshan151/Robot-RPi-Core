@@ -26,7 +26,7 @@ OTHER_PACKAGES=(
   python3-picamera2 python3-libcamera python3-opencv python3-numpy python3-yaml   # camera + vision
   libportaudio2 alsa-utils pulseaudio-utils bluez pipewire pipewire-pulse pipewire-alsa wireplumber libspa-0.2-bluetooth  # audio, buds (pipewire-alsa routes PortAudio to the buds)
 )
-PIP_EXTRAS="voice,explore"
+PIP_EXTRAS="voice,explore,oled"
 
 say() { printf '\n== %s\n' "$*"; }
 
@@ -117,6 +117,7 @@ OVERLAY="dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4"
 grep -qxF "$OVERLAY" /boot/firmware/config.txt || echo "$OVERLAY" | sudo tee -a /boot/firmware/config.txt >/dev/null
 sudo raspi-config nonint do_serial_cons 1     # 1 = no login shell on the serial port
 sudo raspi-config nonint do_serial_hw 0       # 0 = serial hardware on
+sudo raspi-config nonint do_spi 0              # 0 = SPI on (status OLED)
 
 say "Boot service file (not started yet)"
 UID_NOW=$(id -u)

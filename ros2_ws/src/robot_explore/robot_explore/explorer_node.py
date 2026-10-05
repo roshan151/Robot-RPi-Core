@@ -41,6 +41,7 @@ from std_msgs.msg import String
 from std_srvs.srv import Trigger
 from tf2_ros import TransformBroadcaster
 
+from robot_core import status
 from robot_core.explore import ExploreConfig, Explorer
 from robot_core.odometry import Pose2D
 from robot_core.sensors.camera import Camera
@@ -49,6 +50,7 @@ from robot_core.sensors.head import Head, HeadGeometry
 from robot_core.sensors.tfluna import TFLuna
 from robot_core.sensors.visual_motion import VisualMotionEstimator
 from robot_core.vision_client import VisionClient
+from robot_display.link import connect
 from robot_interfaces.action import Drive, Turn
 from robot_interfaces.msg import MotionHealth, VisualMotion
 
@@ -290,6 +292,8 @@ def main(args=None) -> None:
 
     rclpy.init(args=args)
     node = ExplorerNode()
+    connect(node)                        # status + warnings go to the OLED
+    status.task("explore")
     executor = MultiThreadedExecutor(num_threads=4)
     executor.add_node(node)
     try:

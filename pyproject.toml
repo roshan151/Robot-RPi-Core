@@ -29,6 +29,12 @@ explore = [
     "numpy>=1.24",
     "rpi-hardware-pwm>=0.2",
 ]
+# The status OLED (2.42" SSD1309 over SPI). rpi-lgpio gives luma its GPIO on Pi 5 / Trixie.
+oled = [
+    "luma.oled>=3.12",
+    "spidev>=3.6",
+    "rpi-lgpio>=0.6",
+]
 dev = ["pytest>=7.0", "numpy>=1.24", "opencv-python-headless>=4.8"]
 
 [project.scripts]

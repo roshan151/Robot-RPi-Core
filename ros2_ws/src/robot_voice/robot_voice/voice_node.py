@@ -31,9 +31,10 @@ from ament_index_python.packages import get_package_share_directory
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
-from robot_core import robot_log, settings, speech
+from robot_core import robot_log, settings, speech, status
 from robot_core.live.agent import run_live_agent
 from robot_core.head_look import HeadLook
+from robot_display.link import connect
 from robot_voice.ros_bridge import RosMotion
 
 
@@ -64,6 +65,14 @@ head_look = HeadLook(_open_head)
 
 
 def run_task(task: str, name: str) -> bool:
+    status.task(task)
+    try:
+        return _run_task(task, name)
+    finally:
+        status.task("voice")
+
+
+def _run_task(task: str, name: str) -> bool:
     """What `run_task` asks for, run by the agent while the Live session is closed.
 
     The camera is opened for the job and released afterwards, so the explorer
@@ -107,6 +116,8 @@ def main(args=None) -> None:
     log_path = robot_log.setup(None)
     robot_log.event("session.start", mode="ros", pid=os.getpid(),
                     log=str(log_path))
+    connect(node)                        # after setup(): status + warnings go to the OLED
+    status.task("voice")
 
     # rclpy on its own thread so the asyncio loop below never waits on it.
     executor = MultiThreadedExecutor(num_threads=4)

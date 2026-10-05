@@ -20,6 +20,7 @@ from __future__ import annotations
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 
+from robot_display.link import connect
 from robot_drivetrain.drivetrain_node import DrivetrainNode
 
 NUM_THREADS = 6
@@ -29,6 +30,7 @@ def main(args=None) -> None:
     rclpy.init(args=args)
 
     nodes = [DrivetrainNode()]
+    connect(nodes[0])                 # status + warnings go to the OLED
     # Phase 3 has one node here. battery_node, speech_node, eink_node and
     # obstacle_node join this list as they land — the executor and the launch
     # file do not change.

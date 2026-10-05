@@ -21,7 +21,8 @@ Two layers, and the boundary is the point. `robot_core/` is the robot as plain P
 | `robot_core/live/` | The Gemini Live session (`agent.py`) and its tools (`tools.py`: drive, turn, stop, answer, run_task) |
 | `robot_core/gestures.py`, `speech.py` | Yes/no/dance gestures; Gemini text-to-speech cached to disk |
 | `robot_core/run.py` | Run everything without ROS (bench use) |
-| `ros2_ws/src/` | ROS 2 nodes: `robot_interfaces` (actions, messages), `robot_drivetrain`, `robot_voice`, `robot_explore`, `robot_vision` (Mac-service client node), `robot_bringup` (launch files, `robot.yaml`) |
+| `robot_core/status.py`, `oled.py`, `power.py` | Status OLED: short messages (10 words max), error codes, and the Pi under-voltage watcher |
+| `ros2_ws/src/` | ROS 2 nodes: `robot_interfaces` (actions, messages), `robot_drivetrain`, `robot_voice`, `robot_explore`, `robot_vision` (Mac-service client node), `robot_display` (OLED + power watcher), `robot_bringup` (launch files, `robot.yaml`) |
 | `install_pi.sh`, `cleanup_pi.sh`, `README-SETUP.md`, `start_robot.sh`, `robot-voice.service` | Pi installer and its guide, the launcher, the boot service |
 | `flash.sh`, `check_bt_audio.sh`, `vision_test.py`, `read_log.py` | Flash the Arduino (from the Mac), check the buds' audio, test the vision service, read `logs.json` |
 | `tests/` | Unit tests (no hardware or ROS needed); `tests/hardware/` needs the real robot |
@@ -158,6 +159,62 @@ For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° 
 The voice session **closes for the whole task** (so you can't say "stop" until it ends), then reopens. The robot answers by gesture: **nod = it worked / the face is known, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
 
 ---
+
+## Status OLED and power dips
+
+A 2.42" SSD1309 OLED (128x64, SPI) shows what the robot is doing. Every node publishes short messages on `/robot/status`; the `display_node` (started by both launch files) draws them and watches the Pi's supply.
+
+### Wiring the OLED
+
+The board's 7-pin header (labelled GND, VCC, SCK, SDA, RES, DC, CS on the back) goes to the Pi's 40-pin header like this. Power the Pi off before connecting.
+
+| OLED pin | Pi GPIO (BCM) | Pi physical pin | What it does |
+|----------|---------------|-----------------|--------------|
+| GND | GND | 25 | Ground |
+| VCC | 3.3 V | 1 | Power. Use 3.3 V, not 5 V, so it matches the Pi's 3.3 V signals |
+| SCK | GPIO11 (SPI0 SCLK) | 23 | SPI clock |
+| SDA | GPIO10 (SPI0 MOSI) | 19 | Data in. On this board "SDA" is the SPI data line, not I2C |
+| RES | GPIO17 | 11 | Reset |
+| DC | GPIO25 | 22 | Data / command select |
+| CS | GPIO8 (SPI0 CE0) | 24 | Chip select |
+
+```
+ OLED          Pi header
+ GND  ───────  pin 25  (GND)
+ VCC  ───────  pin 1   (3.3 V)
+ SCK  ───────  pin 23  (GPIO11)
+ SDA  ───────  pin 19  (GPIO10)
+ RES  ───────  pin 11  (GPIO17)
+ DC   ───────  pin 22  (GPIO25)
+ CS   ───────  pin 24  (GPIO8)
+```
+
+None of these pins clash with the servos (GPIO12 and 13), the TF-Luna, or the Arduino link. Keep the wires short (under about 20 cm) and, if you see noise or a blank screen, check them for loose connections first. The 2.42" boards have a mode resistor on the back: R8 fitted means SPI, R9 to R12 fitted means I2C. If the screen stays blank with correct wiring, check that yours is set to SPI.
+
+### Power the OLED uses
+
+Roughly 10 to 30 mA at 3.3 V (about 0.03 to 0.1 W) for a mostly dark screen of small text like this one, and up to about 60 mA if most pixels are lit. That is a rough figure for this kind of module, not measured on yours, and it is small next to the Pi itself (about 600 mA to 1 A with the camera running) and the servos. The Pi's 3.3 V pin supplies it comfortably.
+
+To measure it on your robot, compare the PiSugar amps in the top right of the screen with the OLED wired and then unwired (with the robot idle); the difference is the screen's draw.
+
+`install_pi.sh` turns SPI on and installs the libraries (`pip install -e ".[oled]"`). Check the wiring with `python tests/hardware/check_oled.py` (stop `robot-voice` first, only one program can own the screen). After pulling this change, rebuild once for the new package: `cd ros2_ws && colcon build --symlink-install`.
+
+Screen rows (21 characters each): power state and the PiSugar volts and amps, always top right (`4.12V -0.85A`, `--` if the PiSugar does not answer, polled every 2 s); task, battery % and uptime; `TOOL` (the voice agent's current call); two detail lines (for explore, `plant_03 capturing 4/8`); a countdown or result (`enroll Sam 0:17`, then `Sam enrolled` or `Sam matched`); the last error code `E-xxx text`; and its cause. Every message is cut to 10 words.
+
+Under-voltage: the firmware's live flag is polled about 5 times a second. Each dip shows `PWR DIP xN`, `E-P01`, and a guess at the cause (wheels, head servo, camera load, just booted, low battery). One small file (`~/.cache/robot-lastdip.json`, overwritten, at most every 10 s) lets the next boot show `last dip: ...` even if the dip reset the Pi; it is deleted once shown.
+
+| Code | Meaning | Code | Meaning |
+|------|---------|------|---------|
+| P01 / P02 | undervolt now / earlier | F01 | no face found |
+| P03 / P04 / P05 | throttled / cpu freq capped / too hot | F02 / F03 / F04 | several faces / too few frames / task failed |
+| S01 / S02 / S03 / S04 | arduino link / wheel stuck / e-stop / cmd timeout | N01 / N02 / N03 | drive stuck / viewpoint unreachable / explore aborted |
+| C01 / C02 | camera open / capture | G01 / G02 | head unavailable / servo range limited |
+| V01 / V02 | vision unreachable / timeout | L01 / L02 / L03 | voice lost / tool failed / unknown tool |
+| A01 / B01 | audio error / battery low | X01 / X02 | unexpected / fatal error |
+
+The screen is optional. With it unplugged or broken the robot runs the same, and the power watcher keeps going: every dip is written to `logs.json` as `power.dip` (cause, task, tool, battery, temp, flags, uptime) and `power.clear` (how long it lasted), plus `power.flag` (throttled, capped, hot), `power.earlier` and `power.lastdip`. Find them with `grep power logs.json`.
+
+The full list is `CODES` in `robot_core/status.py`; `RULES` there maps log warnings to codes.
 
 ## Audio
 
