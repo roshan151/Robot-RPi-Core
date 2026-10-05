@@ -18,12 +18,13 @@ whatever a caller asks for - and further, to what the servo's pulse window
 Soft start
 ----------
 A servo has no memory: whatever pulse arrives first, it dashes to at full speed.
-So the pulse each axis was last holding is saved to a tiny file (see
-`state_path`) whenever the head comes to rest. The next open starts its pulses
-from THAT value - where the head physically still is - and then walks to centre
-at the normal slow speed, instead of snapping there. If nobody moved the head
-meanwhile there is no jump at all. (First ever run, or a head moved by hand
-while off: the first pulse is the centre, as before.)
+So opening the gimbal sends NO pulse: the head stays exactly where it is. The
+pulse each axis last held is saved to a tiny file (see `state_path`) whenever
+the head comes to rest, and the next open assumes the head is still there. An
+axis gets its first pulse only when it is first asked to move, and moves from
+that assumed spot at the normal slow speed. (No saved file, or a head moved by
+hand while off: that first move can still jump, once, because the servo cannot
+report where it is.)
 
 Parking
 -------
@@ -125,6 +126,7 @@ class _Axis:
     def __init__(self, cfg: AxisConfig, out: PwmOutput) -> None:
         self.cfg, self.out = cfg, out
         self.pos = 0.0          # commanded angle right now (deg)
+        self.live = False       # has this servo been sent a pulse yet? (not until its first move)
         self.vel = 0.0
         self.target = 0.0
         self.speed = cfg.max_speed_dps
@@ -194,21 +196,19 @@ class Gimbal:
                     name, ax.lo, ax.hi, ax.cfg.min_deg, ax.cfg.max_deg,
                     ax.cfg.min_us, ax.cfg.max_us, ax.cfg.center_us)
         self._lock = threading.Lock()
-        self._moving = getattr(self, "_starting", False)
+        self._moving = False
         self._last_motion = time.monotonic()
         self._arrived = threading.Condition(self._lock)
         self._stop = threading.Event()
-        # The first pulse is where the head was last left (see "Soft start"), so
-        # the servo has nothing to dash to; the loop then walks it to centre.
-        for ax in (self.pan, self.tilt):
-            ax.out.set_pulse_us(ax.pulse())
+        # No pulse is sent here: opening the gimbal must not move the head. Each
+        # servo gets its first pulse (at its assumed position) when it is first moved.
         self._thread = threading.Thread(target=self._loop, name="gimbal", daemon=True)
         self._thread.start()
 
     # ---------------------------------------------------------- soft start
 
     def _start_from_saved(self) -> None:
-        """Begin each axis at the pulse it was last holding, with centre as the target."""
+        """Assume each axis is at the pulse it was last holding, and stay there."""
         try:
             saved = json.loads(self._state_path.read_text()) if self._state_path else {}
         except (OSError, ValueError):
@@ -219,8 +219,7 @@ class Gimbal:
                 continue
             sign = -1.0 if ax.cfg.invert else 1.0
             ax.pos = (float(us) - ax.cfg.center_us) / (sign * ax.cfg.us_per_deg)
-            ax.target = 0.0                       # then walk home, slowly
-        self._starting = abs(self.pan.pos) > 1e-3 or abs(self.tilt.pos) > 1e-3
+            ax.target = ax.pos
 
     def _save_state(self) -> None:
         if not self._state_path:
@@ -245,6 +244,9 @@ class Gimbal:
         with self._lock:
             for ax, want in ((self.pan, pan), (self.tilt, tilt)):
                 if want is not None:
+                    if not ax.live:                    # first move: start the pulse where we think it is
+                        ax.out.set_pulse_us(ax.pulse())
+                        ax.live = True
                     ax.target = ax.clamp(want)
                     ax.speed = min(speed_dps or ax.cfg.max_speed_dps, ax.cfg.max_speed_dps * 2)
             self._moving = True
@@ -294,8 +296,10 @@ class Gimbal:
         release = (not self.hold_on_close) if release is None else release
         if not self._stop.is_set():
             try:
-                self.home(wait=True)
-                time.sleep(0.3)           # let the horn physically arrive
+                live = [ax.live for ax in (self.pan, self.tilt)]
+                if any(live):             # never touched: nothing to park, and no pulse to start now
+                    self.move_to(0.0 if live[0] else None, 0.0 if live[1] else None, wait=True)
+                    time.sleep(0.3)       # let the horn physically arrive
             finally:
                 self._stop.set()
                 self._thread.join(timeout=1.0)

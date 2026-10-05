@@ -117,10 +117,12 @@ def test_gimbal_starts_from_saved_pulse_and_walks_home(tmp_path):
     g._stop.set()                                      # power cut / crash: no park at centre
     g = Gimbal(pan=cfg, backend="fake", state_path=f)
     try:
-        assert g.pan.pos == pytest.approx(40.0, abs=0.5)    # no jump: first pulse = where it was left
-        assert g.pan.target == 0.0
-        g.wait(10.0)
-        assert g.pan.pos == pytest.approx(0.0, abs=0.5)
+        assert g.pan.pos == pytest.approx(40.0, abs=0.5)    # assumes it is where it was left...
+        time.sleep(0.2)
+        assert g.pan.out.pulses == [] and g.tilt.out.pulses == []      # ...and sends nothing on open
+        g.move_to(pan=30.0, wait=True)
+        assert g.pan.out.pulses[0] == pytest.approx(1500 + 40 * 2000 / 180, abs=1)   # first pulse = where it was
+        assert g.tilt.out.pulses == []                                 # the other servo stays untouched
     finally:
         g.close()
 
@@ -151,3 +153,10 @@ def test_camera_restarts_once_when_frames_stop_and_gives_up_after():
             cam._request()
     finally:
         cam_mod.time = old
+
+
+def test_gimbal_opened_and_closed_without_moving_never_pulses():
+    g = Gimbal(backend="fake")
+    time.sleep(0.1)
+    g.close()
+    assert g.pan.out.pulses == [] and g.tilt.out.pulses == []
