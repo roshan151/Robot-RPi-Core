@@ -1,0 +1,13 @@
+# Tank-turn on the spot, encoder-counted.
+
+float64 degrees             # positive turns RIGHT, negative LEFT
+bool    gesture false       # gesture goals are REJECTED when busy, never queued
+float64 speed_pct 0.0       # 0 = use the node's configured default
+---
+string  status              # done | cancelled | failed | timeout
+int32   ticks_left
+int32   ticks_right
+float64 duration_s
+---
+int32   ticks_left
+int32   ticks_right

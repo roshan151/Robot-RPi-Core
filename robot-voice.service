@@ -25,7 +25,7 @@
 # Disable boot:  sudo systemctl disable robot-voice
 
 [Unit]
-Description=Robot voice control (silent gestures, no camera)
+Description=Robot command mode (drivetrain + voice, ROS 2)
 Documentation=file:///home/roshan151/Robot-Computer-Vision/documentation/implementation_plan.md
 
 # Ordering only — these say "not before", never "wait until ready".
@@ -46,7 +46,7 @@ Group=roshan151
 WorkingDirectory=/home/roshan151/Robot-Computer-Vision
 
 # Secrets. The leading '-' means "start anyway if the file is absent" —
-# config.require() will then give a clear named error instead of a 401.
+# settings.require() will then give a clear named error instead of a 401.
 EnvironmentFile=-/etc/robot.env
 
 # THE IMPORTANT ONE. A system service gets no user session, so PulseAudio /
@@ -62,7 +62,9 @@ Environment=PYTHONUNBUFFERED=1
 # microphone before that fails or silently picks the wrong device.
 ExecStartPre=/bin/sleep 5
 
-ExecStart=/home/roshan151/Robot-Computer-Vision/start_voice_only.sh
+# Sources the ROS overlay, then launches the graph. Kept as a script
+# because systemd cannot `source` anything itself.
+ExecStart=/home/roshan151/Robot-Computer-Vision/start_robot.sh
 
 # On stop, SIGTERM reaches the process, which brakes the motors and writes the
 # cause to logs.json before exiting (see robot_log.install_crash_handlers).

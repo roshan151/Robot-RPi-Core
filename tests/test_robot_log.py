@@ -23,7 +23,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-import robot_log  # noqa: E402
+from robot_core import robot_log  # noqa: E402
 
 
 def _fresh(tmp: Path) -> Path:
@@ -130,7 +130,7 @@ def test_exception_records_compact_traceback() -> None:
 _HARNESS = """
 import sys, time, threading, logging
 sys.path.insert(0, {repo!r})
-import robot_log
+from robot_core import robot_log
 robot_log.setup({log!r}, console_level=logging.CRITICAL)
 braked = []
 robot_log.install_crash_handlers(on_fatal=lambda cause: robot_log.event(

@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>robot_bringup</name>
+  <version>0.1.0</version>
+  <description>
+    Launch files, parameters, and the single process that hosts every light
+    node on one MultiThreadedExecutor.
+  </description>
+  <maintainer email="roshan.151tiwari@gmail.com">Roshan Tiwari</maintainer>
+  <license>MIT</license>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>robot_drivetrain</exec_depend>
+  <exec_depend>robot_voice</exec_depend>
+  <exec_depend>robot_explore</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

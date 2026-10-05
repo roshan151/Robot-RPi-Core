@@ -1,6 +1,0 @@
-pyserial>=3.5
-requests>=2.28.0
-python-dotenv>=1.0.0
-google-genai>=1.0.0
-SpeechRecognition>=3.10.0
-sounddevice>=0.4.6

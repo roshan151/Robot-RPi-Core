@@ -1,2 +1,17 @@
 *__pycache__
 .DS_Store
+.pytest_cache/
+*.egg-info/
+
+# colcon build output. Rebuilt by `colcon build --symlink-install`.
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+
+# Runtime artefacts
+logs.json
+logs.json.*
+.env
+
+# Maps are build artefacts of scan mode (Phase 7); keep the ones you mean to.
+# maps/

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>robot_voice</name>
+  <version>0.1.0</version>
+  <description>
+    The always-listening Gemini Live session, driving the robot through Drive
+    and Turn actions. Runs as its own process: it owns an asyncio loop and an
+    open microphone, so a stall here must not be able to delay a stop.
+  </description>
+  <maintainer email="roshan.151tiwari@gmail.com">Roshan Tiwari</maintainer>
+  <license>MIT</license>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>robot_interfaces</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

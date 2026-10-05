@@ -1,0 +1,95 @@
+# Everything you actually tune. robot_core/settings.py still holds the
+# constants and their environment-variable fallbacks, so Layer A runs
+# standalone; this file is what the ROS graph uses and what you edit.
+#
+# The calibration pair can also be changed live, which is the point:
+#   ros2 param set /drivetrain ticks_per_cm 103.4
+# It is refused while a move is running, because rescaling the tick target of a
+# move already in flight would silently change how far it goes.
+
+/drivetrain:
+  ros__parameters:
+    # Set this to whatever the Arduino enumerates as. Write a udev rule and use
+    # a stable name (/dev/arduino) before you plug in a second USB serial
+    # device — the numbering swaps on reboot and the robot will happily send
+    # drive commands to the wrong one.
+    serial_port: "/dev/ttyUSB0"
+    baud: 115200
+
+    # Calibration. Both scale the TARGET, not the measurement, so neither can
+    # make a move stop early — short travel is traction or a lost encoder
+    # channel, never calibration. See the calibration section of the README.
+    ticks_per_cm: 38.5
+    ticks_per_degree: 7
+
+    # The hard limit on a single move. Enforced in the goal callback, so the
+    # model cannot talk its way past it.
+    max_drive_m: 5.0
+    move_timeout_s: 20.0
+
+    encoder_publish_hz: 10.0
+
+    # Odometry (/odom, odom -> base_link, /motion_health). Needs firmware v5.
+    # 0 derives the effective track width from ticks_per_cm and
+    # ticks_per_degree — usually better than a tape measure, as it includes
+    # wheel scrub. The firmware's LEFT channel drives the physical RIGHT wheel,
+    # hence swap_sides; /motion_health says "wrong_direction" if that's wrong.
+    wheelbase_m: 0.0
+    odom_swap_sides: true
+    # Brake as soon as motion health says stalled/slipping.
+    stop_on_stuck: true
+
+/voice:
+  ros__parameters:
+    # Placeholder: the Live session still reads model, prompt and audio device
+    # from robot_core/settings.py and the environment. Moving those here is a
+    # later tidy-up, not a Phase 3 requirement.
+    {}
+
+/explorer:
+  ros__parameters:
+    # Mac vision service. Empty = VISION_SERVICE_BASE_URL from /etc/robot.env.
+    vision_url: ""
+
+    # Maps are saved on the Mac under this name. To re-scan later on the same
+    # map (growth tracking), set continue_map: true and start_pose to where the
+    # robot is standing ON that map: [x, y, theta_rad] — read it off
+    # http://<mac>:8080/v1/slam/map.png.
+    map_name: "home"
+    continue_map: false
+    start_pose: [0.0, 0.0, 0.0]
+    max_minutes: 60.0
+
+    # Guard rails. Both are measured from start_pose: explore only within this
+    # radius (metres; 0 = no limit), and with no_behind only ahead of the
+    # start heading (the half-plane in front of where the robot begins).
+    explore_radius_m: 10.0
+    no_behind: false
+
+    orbit_radius_m: 0.7        # photo distance from the plant
+    orbit_views: 4             # full 360: 4 views, 90 degrees apart
+    revisit_known: true        # photograph known plants again (a new visit)
+    ask_before_drive: false    # image+text model checks each step (slow, thorough)
+
+    # Head. Pan is limited to +-90 and tilt to +-45 in the driver, and both
+    # park at their start position (the *_center_us pulse) on shutdown.
+    tfluna_port: "/dev/serial0"
+    camera_main_size: [1920, 1080]
+    camera_inverted: true      # mounted upside down: rotated 180 deg in the ISP
+    head_height_m: 0.25        # MEASURE: TF-Luna height above the floor
+    pan_axis_x_m: 0.05         # MEASURE: pan axis ahead of the wheel-axle centre
+    hfov_deg: 66.0             # Camera Module 3: 66; Module 3 Wide: 102
+    pwm_chip: 0                # Pi 4: 0. Pi 5: 2
+    pan_channel: 1             # GPIO13
+    tilt_channel: 0            # GPIO12
+    pan_center_us: 2300.0      # measured (check_servo_pulse.py trim): head points straight ahead
+    tilt_center_us: 1750.0     # measured (check_servo_pulse.py trim): head is level
+    pan_us_per_deg: 11.111     # pulse change per degree (2000/180); MEASURE with tests/hardware/check_servo_pulse.py
+    tilt_us_per_deg: 11.111
+    pan_invert: false          # +pan must turn the head LEFT
+    tilt_invert: true          # +tilt must look UP (flipped: this servo was mounted the other way up)
+    servo_speed_dps: 30.0      # head speed, deg/s; lower = slower, below ~10 gets steppy
+    servo_min_us: 500.0        # hard pulse window: no angle or trim can send a pulse outside it. The driver
+    servo_max_us: 2400.0       # shrinks the reachable angles to fit (pan at 2300 us has only ~9 deg to the left):
+                               # re-fit the horn nearer the middle, or widen this if the servo really goes further
+    hold_on_close: true        # on shutdown park at centre and KEEP holding it (false: release the PWM, servos go limp)
