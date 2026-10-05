@@ -116,8 +116,8 @@ VISION_MAX_RESULT_AGE_S = _env("VISION_MAX_RESULT_AGE_S", "1.0", float)
 FACE_ENROLL_SECONDS = _env("ROBOT_FACE_ENROLL_S", "30", float)   # capture time once a face is found
 FACE_SEARCH_SECONDS = _env("ROBOT_FACE_SEARCH_S", "30", float)   # enroll: time allowed to find one
 FACE_MATCH_SECONDS = _env("ROBOT_FACE_MATCH_S", "30", float)     # search + match
-FACE_SEARCH_PANS = (-45.0, -15.0, 15.0, 45.0)                    # head sweep, degrees
-FACE_SEARCH_TILTS = (0.0, 20.0, 40.0)                            # never below level
+FACE_SEARCH_PANS = (-75.0, -15.0, 15.0, 75.0)                    # head sweep, degrees
+FACE_SEARCH_TILTS = (0.0, 30.0, 50.0)                            # never below level
 FACE_MIN_QUALITY = 0.6
 FACE_MIN_SHOTS = 5
 
