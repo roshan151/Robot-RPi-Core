@@ -15,6 +15,16 @@ Pan is clamped to ±90° from the start position, tilt to ±45° (+ is up),
 whatever a caller asks for - and further, to what the servo's pulse window
 (servo_min_us..servo_max_us around its centre) can actually reach.
 
+Soft start
+----------
+A servo has no memory: whatever pulse arrives first, it dashes to at full speed.
+So the pulse each axis was last holding is saved to a tiny file (see
+`state_path`) whenever the head comes to rest. The next open starts its pulses
+from THAT value - where the head physically still is - and then walks to centre
+at the normal slow speed, instead of snapping there. If nobody moved the head
+meanwhile there is no jump at all. (First ever run, or a head moved by hand
+while off: the first pulse is the centre, as before.)
+
 Parking
 -------
 `close()` slews both axes back to 0 at normal speed, waits for them to arrive,
@@ -31,10 +41,13 @@ on the next boot, so after a crash run `python -m robot_core.sensors.gimbal home
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 import threading
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from pathlib import Path
 from typing import Optional, Protocol, Tuple
 
@@ -163,12 +176,15 @@ class Gimbal:
         backend: str = "hardware",        # "hardware" | "fake"
         chip: int = 0,
         hold_on_close: bool = True,       # keep the centre pulse running after close()
+        state_path: Optional[Path] = None,  # where the last held pulses are kept (None: don't)
     ) -> None:
         make = (lambda c: HardwarePwm(c.channel, chip)) if backend == "hardware" else (lambda c: FakePwm())
         self.pan = _Axis(pan, make(pan))
         self.tilt = _Axis(tilt, make(tilt))
         self.hold_on_close = hold_on_close
         self._released = False
+        self._state_path = Path(state_path) if state_path else None
+        self._start_from_saved()
         for name, ax in (("pan", self.pan), ("tilt", self.tilt)):
             if ax.lo > ax.cfg.min_deg + 0.5 or ax.hi < ax.cfg.max_deg - 0.5:
                 log.warning(
@@ -178,17 +194,46 @@ class Gimbal:
                     name, ax.lo, ax.hi, ax.cfg.min_deg, ax.cfg.max_deg,
                     ax.cfg.min_us, ax.cfg.max_us, ax.cfg.center_us)
         self._lock = threading.Lock()
-        self._moving = False
+        self._moving = getattr(self, "_starting", False)
         self._last_motion = time.monotonic()
         self._arrived = threading.Condition(self._lock)
         self._stop = threading.Event()
-        # Start at the start position. The servo's real angle is unknown until
-        # the first pulse; because close() always parks at centre, this pulse
-        # normally asks it to stay exactly where it already is.
+        # The first pulse is where the head was last left (see "Soft start"), so
+        # the servo has nothing to dash to; the loop then walks it to centre.
         for ax in (self.pan, self.tilt):
             ax.out.set_pulse_us(ax.pulse())
         self._thread = threading.Thread(target=self._loop, name="gimbal", daemon=True)
         self._thread.start()
+
+    # ---------------------------------------------------------- soft start
+
+    def _start_from_saved(self) -> None:
+        """Begin each axis at the pulse it was last holding, with centre as the target."""
+        try:
+            saved = json.loads(self._state_path.read_text()) if self._state_path else {}
+        except (OSError, ValueError):
+            return
+        for name, ax in (("pan", self.pan), ("tilt", self.tilt)):
+            us = saved.get(name + "_us")
+            if not isinstance(us, (int, float)) or not ax.cfg.min_us <= us <= ax.cfg.max_us:
+                continue
+            sign = -1.0 if ax.cfg.invert else 1.0
+            ax.pos = (float(us) - ax.cfg.center_us) / (sign * ax.cfg.us_per_deg)
+            ax.target = 0.0                       # then walk home, slowly
+        self._starting = abs(self.pan.pos) > 1e-3 or abs(self.tilt.pos) > 1e-3
+
+    def _save_state(self) -> None:
+        if not self._state_path:
+            return
+        try:
+            with self._lock:
+                data = {"pan_us": round(self.pan.pulse(), 1), "tilt_us": round(self.tilt.pulse(), 1)}
+            self._state_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = self._state_path.with_suffix(".tmp")
+            tmp.write_text(json.dumps(data))
+            os.replace(tmp, self._state_path)
+        except OSError:
+            log.exception("gimbal: could not save the head position")
 
     # ----------------------------------------------------------------- API
 
@@ -254,6 +299,7 @@ class Gimbal:
             finally:
                 self._stop.set()
                 self._thread.join(timeout=1.0)
+                self._save_state()
         if release and not self._released:
             self._released = True
             for ax in (self.pan, self.tilt):
@@ -268,6 +314,7 @@ class Gimbal:
         dt = 1.0 / FRAME_HZ
         nxt = time.monotonic()
         while not self._stop.is_set():
+            arrived = False
             with self._lock:
                 moving = False
                 for ax in (self.pan, self.tilt):
@@ -278,7 +325,10 @@ class Gimbal:
                     self._last_motion = time.monotonic()
                 elif self._moving:
                     self._moving = False
+                    arrived = True
                     self._arrived.notify_all()
+            if arrived:
+                self._save_state()
             nxt += dt
             time.sleep(max(0.0, nxt - time.monotonic()))
 
@@ -302,7 +352,9 @@ def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float
                         invert=bool(p.get("tilt_invert", False)), max_speed_dps=speed,
                         min_us=lo_us, max_us=hi_us),
         backend=backend, chip=int(p.get("pwm_chip", 0)),
-        hold_on_close=bool(p.get("hold_on_close", True)))
+        hold_on_close=bool(p.get("hold_on_close", True)),
+        state_path=(Path(p.get("head_state_file") or Path.home() / ".cache" / "robot-head.json")
+                    if backend == "hardware" else None))
 
 
 ROBOT_YAML = Path(__file__).resolve().parents[2] / "ros2_ws/src/robot_bringup/config/robot.yaml"

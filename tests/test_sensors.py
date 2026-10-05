@@ -106,3 +106,20 @@ def test_visual_motion_static_vs_shift_vs_local():
     local = base[:240, :320].copy()
     local[100:140, 150:190] = 255 - local[100:140, 150:190]      # something sways
     assert not est.update(local).moving
+
+
+def test_gimbal_starts_from_saved_pulse_and_walks_home(tmp_path):
+    f = tmp_path / "head.json"
+    cfg = AxisConfig(channel=1, min_deg=-90.0, max_deg=90.0)
+    g = Gimbal(pan=cfg, backend="fake", state_path=f)
+    g.move_to(pan=40.0, wait=True)
+    time.sleep(0.1)
+    g._stop.set()                                      # power cut / crash: no park at centre
+    g = Gimbal(pan=cfg, backend="fake", state_path=f)
+    try:
+        assert g.pan.pos == pytest.approx(40.0, abs=0.5)    # no jump: first pulse = where it was left
+        assert g.pan.target == 0.0
+        g.wait(10.0)
+        assert g.pan.pos == pytest.approx(0.0, abs=0.5)
+    finally:
+        g.close()
