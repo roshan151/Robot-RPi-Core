@@ -24,6 +24,7 @@ from typing import Optional, Tuple
 import numpy as np
 
 log = logging.getLogger(__name__)
+FRAME_TIMEOUT_S = 4.0       # no frame for this long: the sensor link stalled, so restart the camera once
 
 
 @dataclass(frozen=True)
@@ -42,24 +43,14 @@ class Camera:
                  lores_size: Tuple[int, int] = (320, 240),
                  inverted: bool = True, backend: str = "auto", index: int = 0) -> None:
         self.inverted = inverted
-        self.lores_size = lores_size
+        self.lores_size, self.main_size = lores_size, main_size
         self._seq = 0
         self._lock = threading.Lock()
         self._picam = None
         self._cap = None
         if backend in ("auto", "picamera2"):
             try:
-                from libcamera import Transform
-                from picamera2 import Picamera2
-                cam = Picamera2()
-                cfg = cam.create_video_configuration(
-                    main={"size": main_size, "format": "RGB888"},
-                    lores={"size": lores_size, "format": "YUV420"},
-                    transform=Transform(hflip=int(inverted), vflip=int(inverted)),
-                    buffer_count=3)
-                cam.configure(cfg)
-                cam.start()
-                self._picam = cam
+                self._start()
                 log.info("camera: picamera2 %s + lores %s, inverted=%s", main_size, lores_size, inverted)
             except Exception as exc:                        # noqa: BLE001
                 if backend == "picamera2":
@@ -73,13 +64,44 @@ class Camera:
             if not self._cap.isOpened():
                 raise RuntimeError(f"cannot open camera {index}")
 
+    def _start(self) -> None:
+        from libcamera import Transform
+        from picamera2 import Picamera2
+        cam = Picamera2()
+        cam.configure(cam.create_video_configuration(
+            main={"size": self.main_size, "format": "RGB888"},
+            lores={"size": self.lores_size, "format": "YUV420"},
+            transform=Transform(hflip=int(self.inverted), vflip=int(self.inverted)),
+            buffer_count=3))
+        cam.start()
+        self._picam = cam
+
+    def _request(self):
+        """The next frame, never waiting forever. libcamera sometimes loses the sensor
+        ("frontend has timed out": a loose ribbon, a power dip) and picamera2 would then
+        block for good. Restart the camera once; if it is still silent, raise."""
+        for attempt in (1, 2):
+            try:
+                return self._picam.capture_request(wait=FRAME_TIMEOUT_S)
+            except Exception as exc:                        # noqa: BLE001 — TimeoutError, libcamera errors
+                if attempt == 2:
+                    raise RuntimeError(f"camera gave no frames, even after a reset ({type(exc).__name__})") from exc
+                log.warning("camera: no frames for %.0f s, resetting it", FRAME_TIMEOUT_S)
+                try:
+                    self._picam.stop()
+                    self._picam.close()
+                except Exception:                           # noqa: BLE001
+                    pass
+                time.sleep(1.0)
+                self._start()
+
     def capture(self, gimbal=None) -> Frame:
         import cv2
         with self._lock:
             pan, tilt = gimbal.angles() if gimbal else (0.0, 0.0)
             settled = gimbal.settled() if gimbal else True
             if self._picam is not None:
-                req = self._picam.capture_request()
+                req = self._request()
                 try:
                     main = req.make_array("main")
                     yuv = req.make_array("lores")
@@ -103,7 +125,11 @@ class Camera:
         import cv2
         with self._lock:
             if self._picam is not None:
-                yuv = self._picam.capture_array("lores")
+                req = self._request()
+                try:
+                    yuv = req.make_array("lores")
+                finally:
+                    req.release()
                 return time.monotonic(), np.ascontiguousarray(
                     yuv[: self.lores_size[1], : self.lores_size[0]])
             ok, main = self._cap.read()

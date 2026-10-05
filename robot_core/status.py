@@ -162,7 +162,7 @@ RULES = (
     ("face_tasks", None, "F04"),
     ("vision", r"time", "V02"), ("vision", None, "V01"),
     ("drivetrain", r"timeout|timed out", "S04"), ("arduino", None, "S01"), ("serial", None, "S01"),
-    ("camera", r"open|start", "C01"), ("camera", None, "C02"),
+    ("camera", r"unavailable|cannot open", "C01"), ("camera", None, "C02"),
     ("explore", r"unreachable", "N02"), ("explore", r"vision service", "N03"),
     ("explore", r"stuck", "N01"), ("battery", None, "B01"),
 )

@@ -123,3 +123,31 @@ def test_gimbal_starts_from_saved_pulse_and_walks_home(tmp_path):
         assert g.pan.pos == pytest.approx(0.0, abs=0.5)
     finally:
         g.close()
+
+
+def test_camera_restarts_once_when_frames_stop_and_gives_up_after():
+    import concurrent.futures
+    from robot_core.sensors import camera as cam_mod
+
+    class Stub:
+        def __init__(self, ok): self.ok, self.calls = ok, 0
+        def capture_request(self, wait=None):
+            self.calls += 1
+            if not self.ok:
+                raise concurrent.futures.TimeoutError()
+            return "frame"
+        def stop(self): pass
+        def close(self): pass
+
+    cam = cam_mod.Camera.__new__(cam_mod.Camera)
+    cam._picam = Stub(ok=False)
+    restarts = []
+    cam._start = lambda: (restarts.append(1), setattr(cam, "_picam", Stub(ok=True)))
+    old, cam_mod.time = cam_mod.time, type("T", (), {"sleep": staticmethod(lambda s: None)})
+    try:
+        assert cam._request() == "frame" and len(restarts) == 1
+        cam._picam, cam._start = Stub(ok=False), lambda: setattr(cam, "_picam", Stub(ok=False))
+        with pytest.raises(RuntimeError, match="no frames"):
+            cam._request()
+    finally:
+        cam_mod.time = old

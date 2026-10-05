@@ -106,8 +106,9 @@ def enroll(camera, vision: VisionClient, name: str, seconds: float = settings.FA
             log.warning("enroll: only %d usable frames, nothing saved", len(shots))
             return False
         vision.face_enroll(shots, name)
-    except VisionError as exc:
+    except (VisionError, RuntimeError) as exc:      # RuntimeError: the camera gave up
         log.warning("enroll failed: %s", exc)
+        status.result("enroll failed")
         return False
     log.info("enrolled %s from %d frames", name, len(shots))
     status.result(f"{name} enrolled")
@@ -131,7 +132,7 @@ def match(camera, vision: VisionClient, seconds: float = settings.FACE_MATCH_SEC
             if best and best["similarity"] >= res["threshold"]:
                 status.result(f"{best['label']} matched")
                 return best["label"]
-    except VisionError as exc:
+    except (VisionError, RuntimeError) as exc:
         log.warning("match failed: %s", exc)
     status.error("F01")
     status.result("no match")
