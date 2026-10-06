@@ -158,6 +158,19 @@ If an earlier attempt left ROS or the rospian source half-installed, wipe it and
 
 It asks for confirmation first. It keeps your code, `/etc/robot.env`, Bluetooth pairing and the Pi settings. Add `--full` to also remove the `robot-voice` boot service.
 
+## Setup pisugar 2
+
+   sudo raspi-config nonint do_i2c 0
+
+      wget -O pisugar-power-manager.sh https://cdn.pisugar.com/release/pisugar-power-manager.sh
+   bash pisugar-power-manager.sh -c release
+
+   Check:
+
+      sudo reboot
+   systemctl status pisugar-server --no-pager
+   ls -l /tmp/pisugar-server.sock
+   
 ## If something goes wrong
 
 | Symptom | Fix |
