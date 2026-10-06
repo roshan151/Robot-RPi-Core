@@ -82,8 +82,8 @@
     pwm_chip: 0                # Pi 4: 0. Pi 5: 2
     pan_channel: 1             # GPIO13
     tilt_channel: 0            # GPIO12
-    pan_center_us: 2300.0      # measured (check_servo_pulse.py trim): head points straight ahead
-    tilt_center_us: 1750.0     # measured (check_servo_pulse.py trim): head is level
+    pan_center_us: 1500.0      # measured (check_servo_pulse.py trim): head points straight ahead
+    tilt_center_us: 1500.0     # measured (check_servo_pulse.py trim): head is level
     pan_us_per_deg: 11.111     # pulse change per degree (2000/180); MEASURE with tests/hardware/check_servo_pulse.py
     tilt_us_per_deg: 11.111
     pan_invert: false          # +pan must turn the head LEFT

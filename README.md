@@ -148,15 +148,43 @@ One-time setup, besides [README-SETUP.md](README-SETUP.md):
 2. Measure and set `head_height_m`, `pan_axis_x_m`, `hfov_deg` and the servo `*_center_us` trims under `/explorer` in `robot.yaml`. `+pan` must turn the head left and `+tilt` must look up; flip `pan_invert`/`tilt_invert` if not.
 3. Restart the vision service on the Mac after updating it (DINOv2 downloads on first start).
 
-### Voice commands: look up/down, enroll face, match face, explore
+### Voice commands: look up/down/left/right, enroll face, match face, explore
 
-*"Look up"* / *"look down"* tilt the head 30° from where it is now (or the number you say), stopping at the limits (±45°). The tilt is remembered for the session; a task parks the head, so the next look starts from level.
+*"Look up"* / *"look down"* tilt the head 30° from where it is now (or the number you say), stopping at the limits (±45°). *"Look left"* / *"look right"* pan it the same way (+pan is left, so if your head turns the wrong way flip `pan_invert` in `robot.yaml`); pan stops at its own limit, which is shorter on one side until the horn is re-fitted (see [Head servos](#head-servos-pan--tilt)). The position is remembered for the session; a task parks the head, so the next look starts from level.
 
 In command mode, say it to the robot: *"remember my face, I'm Sam"* (`enroll_face`, about 30 s of frames — stand in front of the camera alone), *"do you know me?"* (`match_face`), *"go explore"* (`explore`, runs the explorer node against the running drivetrain until it finishes).
 
 For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° and 40° up (never below level), stops on the first face, centres it, and holds while it captures, then parks. Tilt is limited to ±45° everywhere; face tasks narrow it to 0°/+45°. The durations are set in [Common variables](#common-variables).
 
 The voice session **closes for the whole task** (so you can't say "stop" until it ends), then reopens. The robot answers by gesture: **nod = it worked / the face is known, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
+
+### Adding a new voice tool
+
+A tool is a function the voice model can call. All of it lives in `robot_core/live/tools.py`; the model never talks to hardware directly. Four edits, plus a test:
+
+1. **Declare it** in `declarations()`: a name, a description that says *when* to use it (the model reads this on every turn, so keep it short and concrete), and its parameters.
+   ```python
+   types.FunctionDeclaration(
+       name="beep",
+       description="Beep the buzzer. Default 1 time; returns at once.",
+       parameters=schema(times={"type": "NUMBER", "description": "How many beeps, default 1."}),
+   ),
+   ```
+2. **Write the handler** as a method on `RobotTools`. It must be quick and must never block (the voice loop waits on it), and it returns a dict with `"ok"` plus whatever the model should know.
+   ```python
+   def _beep(self, times: float = 1) -> Dict[str, Any]:
+       self._buzzer.beep(int(times))
+       return {"ok": True}
+   ```
+3. **Register it** in the table inside `dispatch()`: `"beep": self._beep,` (use a lambda to pass defaults, as `look_left` does). The tool name shows on the OLED automatically, and exceptions become an `{"ok": False}` result instead of crashing the session.
+4. **Tell the model in the prompt**: add a line to the rules in `robot_core/settings.py` so it knows when to use the tool (for example *"beep(): ... "*).
+5. **Add a test** in `tests/test_robot_tools.py` (dispatch it, check the result), and add the name to `test_nine_tools_and_stop_takes_no_arguments` (the test that lists every tool), which will fail until you do.
+
+If the tool needs hardware, create the object in the node and pass it in, the way `head` is: `run_live_agent(motion, run_task, head)` in `voice_node.py` hands it to `RobotTools(...)` through `robot_core/live/agent.py`.
+
+If the job takes a long time (seconds or more, like face enroll), do not make it a tool that blocks. Add its name to `TASKS` in `tools.py` and handle it in `_run_task` in `voice_node.py`: the agent closes the voice session, runs it, and answers with a nod or a shake.
+
+To apply a change on the Pi: `git pull` and `sudo systemctl restart robot-voice`. A rebuild is only needed for a new ROS package or message.
 
 ---
 

@@ -271,6 +271,9 @@ class Gimbal:
         with self._lock:
             return not self._moving and time.monotonic() - self._last_motion >= settle_s
 
+    def pan_limits(self) -> Tuple[float, float]:
+        return self.pan.lo, self.pan.hi
+
     def tilt_limits(self) -> Tuple[float, float]:
         return self.tilt.lo, self.tilt.hi
 

@@ -102,6 +102,22 @@ def declarations() -> list:
             parameters=schema(degrees={"type": "NUMBER", "description": "Degrees down, default 30."}),
         ),
         types.FunctionDeclaration(
+            name="look_left",
+            description=(
+                "Turn the head left from where it is now. Default 30 degrees; the "
+                "head stops at its limit if asked for more. Returns at once."
+            ),
+            parameters=schema(degrees={"type": "NUMBER", "description": "Degrees left, default 30."}),
+        ),
+        types.FunctionDeclaration(
+            name="look_right",
+            description=(
+                "Turn the head right from where it is now. Default 30 degrees; the "
+                "head stops at its limit if asked for more. Returns at once."
+            ),
+            parameters=schema(degrees={"type": "NUMBER", "description": "Degrees right, default 30."}),
+        ),
+        types.FunctionDeclaration(
             name="stop",
             description=(
                 "Stop immediately: cancels everything queued AND interrupts "
@@ -189,6 +205,8 @@ class RobotTools:
             "turn": self._turn,
             "look_up": lambda degrees=DEFAULT_DEGREES: self._look(degrees),
             "look_down": lambda degrees=DEFAULT_DEGREES: self._look(-float(degrees)),
+            "look_left": lambda degrees=DEFAULT_DEGREES: self._look(degrees, "pan"),
+            "look_right": lambda degrees=DEFAULT_DEGREES: self._look(-float(degrees), "pan"),
             "stop": self._stop,
             "answer": self._answer,
             "run_task": self._run_task,
@@ -234,12 +252,12 @@ class RobotTools:
             return {"ok": True, "note": "zero angle, nothing to do"}
         return self._motion.turn(d)
 
-    def _look(self, degrees: float) -> Dict[str, Any]:
+    def _look(self, degrees: float, axis: str = "tilt") -> Dict[str, Any]:
         if self._head is None:
             return {"ok": False, "error": "no head fitted"}
         d = float(degrees)
         sign = 1.0 if d >= 0 else -1.0
-        return self._head.look(sign * min(abs(d), 90.0))    # limits are enforced by the gimbal
+        return self._head.look(sign * min(abs(d), 90.0), axis)    # limits are enforced by the gimbal
 
     def _stop(self) -> Dict[str, Any]:
         """Empty the queue and interrupt the move already running.

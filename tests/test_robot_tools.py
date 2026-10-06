@@ -285,14 +285,20 @@ def test_head_look_tilts_from_where_it_is_and_clamps() -> None:
         assert r("look_down", degrees=100)["tilt"] == -45.0      # -45 limit
         head.release()
         assert r("look_up", degrees=10)["tilt"] == 10.0          # parked: starts from level
+        assert r("look_left")["pan"] == 30.0                     # + pan is left, default 30
+        res = r("look_left", degrees=100)                        # one call is capped at 90, then the limit
+        assert res["pan"] == 81.0 and res["clamped"]             # the default 1500 us centre reaches +81 (500-2400 us window)
+        assert r("look_right", degrees=81)["pan"] == 0.0         # relative to where it is
+        assert r("look_right", degrees=90)["pan"] == -90.0
+        assert r("look_up", degrees=10)["tilt"] == 20.0          # tilt is independent of pan
         assert not RobotTools(LocalMotion(FakeMove()))._look(5)["ok"]
     finally:
         head.release()
 
 
-def test_seven_tools_and_stop_takes_no_arguments() -> None:
+def test_nine_tools_and_stop_takes_no_arguments() -> None:
     decls = {d.name: d for d in declarations()}
-    assert set(decls) == {"drive", "turn", "look_up", "look_down", "stop", "answer", "run_task"}
+    assert set(decls) == {"drive", "turn", "look_up", "look_down", "look_left", "look_right", "stop", "answer", "run_task"}
     assert not getattr(decls["stop"].parameters, "required", []), \
         "a stop that can be malformed is a stop that can fail"
 
