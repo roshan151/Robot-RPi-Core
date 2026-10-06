@@ -310,7 +310,7 @@ class RobotTools:
             return {"ok": True, "note": "already shutting down"}
         self._motion.stop()
         if self._head is not None:
-            self._head.release()
+            self._head.release(hold=False)       # park, then stop the servo pulses: the Pi is about to drop the pins
         self._gestures.play("yes")
         status.task("shutting down")
         status.detail("say stop to cancel")

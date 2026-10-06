@@ -345,3 +345,48 @@ def test_shutdown_powers_off_after_a_delay_and_stop_cancels_it(monkeypatch) -> N
     run(t2.dispatch("stop", {}))
     time.sleep(0.5)
     assert calls == [1]                                  # cancelled
+
+
+def test_shutdown_parks_the_head_and_stops_its_servo_pulses(monkeypatch) -> None:
+    """Incident 2: the Pi must not halt while still driving a live pulse into a powered servo."""
+    from robot_core.head_look import HeadLook
+    from robot_core.live import tools as tools_mod
+    from robot_core.sensors.gimbal import Gimbal
+    monkeypatch.setattr(tools_mod, "SHUTDOWN_DELAY_S", 0.2)
+    g = Gimbal(backend="fake")
+    t = RobotTools(LocalMotion(FakeMove()), head=HeadLook(lambda: g), power_off=lambda: None)
+    run(t.dispatch("look_up", {"degrees": 20}))
+    assert g.tilt.out.enabled
+    run(t.dispatch("shutdown", {}))
+    time.sleep(0.4)
+    assert g.angles() == (0.0, 0.0)                                  # parked first ...
+    assert not g.pan.out.enabled and not g.tilt.out.enabled          # ... then the pulses stopped
+
+
+def test_shutdown_also_stops_pwm_an_earlier_task_left_holding(monkeypatch) -> None:
+    from robot_core.head_look import HeadLook
+    from robot_core.live import tools as tools_mod
+    from robot_core.sensors.gimbal import Gimbal
+    monkeypatch.setattr(tools_mod, "SHUTDOWN_DELAY_S", 0.2)
+    left_holding = Gimbal(backend="fake")                           # e.g. a face task closed it with hold_on_close
+    assert left_holding.pan.out.enabled
+    t = RobotTools(LocalMotion(FakeMove()), head=HeadLook(lambda: left_holding), power_off=lambda: None)
+    run(t.dispatch("shutdown", {}))                                 # the head was never opened by the voice session
+    time.sleep(0.4)
+    assert not left_holding.pan.out.enabled and not left_holding.tilt.out.enabled
+
+
+def test_head_look_refuses_while_servo_supply_is_off() -> None:
+    from robot_core.head_look import HeadLook
+    from robot_core.sensors.gimbal import Gimbal
+    rail = {"on": False}
+    g = Gimbal(backend="fake", power_sense=lambda: rail["on"])
+    head = HeadLook(lambda: g)
+    try:
+        r = head.look(20)
+        assert not r["ok"] and "power" in r["error"]
+        assert g.angles() == (0.0, 0.0)
+        rail["on"] = True
+        assert head.look(20)["ok"]                                  # same call works once the switch is on
+    finally:
+        head.release()

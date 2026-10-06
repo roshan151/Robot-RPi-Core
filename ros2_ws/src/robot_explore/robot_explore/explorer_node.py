@@ -168,12 +168,13 @@ class ExplorerNode(Node):
         p("servo_min_us", 500.0)
         p("servo_max_us", 2400.0)
         p("hold_on_close", True)
+        p("servo_power_gpio", 0)
         v = lambda name: self.get_parameter(name).value
 
         self.gimbal = from_params({n: v(n) for n in (
             "pwm_chip", "pan_channel", "tilt_channel", "pan_center_us", "tilt_center_us",
             "pan_us_per_deg", "tilt_us_per_deg", "pan_invert", "tilt_invert", "servo_speed_dps",
-            "servo_min_us", "servo_max_us", "hold_on_close")})
+            "servo_min_us", "servo_max_us", "hold_on_close", "servo_power_gpio")})
         self.lidar = TFLuna(v("tfluna_port"))
         self.camera = Camera(main_size=tuple(v("camera_main_size")), inverted=bool(v("camera_inverted")))
         self.head = Head(self.gimbal, self.lidar, self.camera, HeadGeometry(

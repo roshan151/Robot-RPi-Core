@@ -37,6 +37,18 @@ Nodes call close() from `destroy_node()`, which runs on Ctrl+C and on systemd's
 SIGTERM. A hard power cut cannot park anything — the start position is assumed
 on the next boot, so after a crash run `python -m robot_core.sensors.gimbal home`
 (it uses the centres in robot.yaml) before trusting the angles.
+
+Servo power
+-----------
+The servos have their own switch, and a servo with no power ignores the pulses it is
+sent. Blind to that, the trajectory above keeps "moving" an unpowered head, and the
+moment the switch goes on the servo is handed a pulse far from where it really is and
+dashes there (it has torn the camera ribbon). So the supply is sensed: `servo_power_gpio`
+in robot.yaml names a pin fed from the servo +5 V through a divider (high = powered).
+While it reads low the head is FROZEN - nothing is stepped, queued moves are dropped,
+new ones are refused - so the pulse the line holds is still the one the servo last
+followed, switching on is a non-event, and motion resumes from there. Unset (0): the
+supply is assumed to be on.
 """
 
 from __future__ import annotations
@@ -49,11 +61,12 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from pathlib import Path
-from typing import Optional, Protocol, Tuple
+from typing import Callable, Optional, Protocol, Tuple
 
 log = logging.getLogger(__name__)
 
 FRAME_HZ = 50.0
+SAVE_EVERY_S = 0.5                  # while moving, refresh the saved head position this often
 PERIOD_US = 1e6 / FRAME_HZ
 
 
@@ -101,6 +114,24 @@ class FakePwm:
 
     def disable(self) -> None:
         self.enabled = False
+
+
+class GpioPowerSense:
+    """Is the servo supply on? Reads BCM pin `pin`: high = powered (wire it from the servo +5 V
+    through a 10k/20k divider). Unwired or broken reads low = "off", the safe answer."""
+
+    def __init__(self, pin: int) -> None:
+        import RPi.GPIO as GPIO                          # rpi-lgpio provides this on current Pi OS
+        self._gpio, self.pin = GPIO, pin
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+    def __call__(self) -> bool:
+        return bool(self._gpio.input(self.pin))
+
+    def close(self) -> None:
+        self._gpio.cleanup(self.pin)
 
 
 @dataclass
@@ -177,6 +208,7 @@ class Gimbal:
         chip: int = 0,
         hold_on_close: bool = True,       # keep the centre pulse running after close()
         state_path: Optional[Path] = None,  # where the last held pulses are kept (None: don't)
+        power_sense: Optional[Callable[[], bool]] = None,   # () -> servo supply present? None: assume yes
     ) -> None:
         make = (lambda c: HardwarePwm(c.channel, chip)) if backend == "hardware" else (lambda c: FakePwm())
         self.pan = _Axis(pan, make(pan))
@@ -184,6 +216,7 @@ class Gimbal:
         self.hold_on_close = hold_on_close
         self._released = False
         self._state_path = Path(state_path) if state_path else None
+        self._power_sense = power_sense
         self._start_from_saved()
         for name, ax in (("pan", self.pan), ("tilt", self.tilt)):
             if ax.lo > ax.cfg.min_deg + 0.5 or ax.hi < ax.cfg.max_deg - 0.5:
@@ -237,11 +270,23 @@ class Gimbal:
 
     # ----------------------------------------------------------------- API
 
+    def powered(self) -> bool:
+        """Is the servo supply on? Always True with no `power_sense`; a failing sensor reads as off."""
+        if self._power_sense is None:
+            return True
+        try:
+            return bool(self._power_sense())
+        except Exception:                                   # noqa: BLE001
+            return False
+
     def move_to(self, pan: Optional[float] = None, tilt: Optional[float] = None,
                 speed_dps: Optional[float] = None, wait: bool = True,
                 timeout: float = 10.0) -> tuple:
         """Slew to (pan, tilt) degrees, clamped to the limits. None = keep.
-        Returns the clamped target actually used."""
+        Returns the clamped target actually used (the current angles, if the servo supply is off)."""
+        if not self.powered():
+            log.warning("gimbal: servo supply is off - move ignored")
+            return self.angles()
         with self._lock:
             for ax, want in ((self.pan, pan), (self.tilt, tilt)):
                 if want is not None:
@@ -303,6 +348,7 @@ class Gimbal:
                 self._stop.set()
                 self._thread.join(timeout=1.0)
                 self._save_state()
+                getattr(self._power_sense, "close", lambda: None)()
         if release and not self._released:
             self._released = True
             for ax in (self.pan, self.tilt):
@@ -315,13 +361,21 @@ class Gimbal:
 
     def _loop(self) -> None:
         dt = 1.0 / FRAME_HZ
-        nxt = time.monotonic()
+        nxt = last_save = time.monotonic()
+        rail = True
         while not self._stop.is_set():
             arrived = False
+            powered = self.powered()
+            if powered != rail:
+                rail = powered
+                log.warning("gimbal: servo supply %s", "back on - resuming from the held pulse" if rail
+                            else "OFF - head frozen, moves refused")
             with self._lock:
                 moving = False
                 for ax in (self.pan, self.tilt):
-                    if ax.step(dt):
+                    if not powered:
+                        ax.target, ax.vel = ax.pos, 0.0     # nothing is following the pulses: forget the order
+                    elif ax.step(dt):
                         moving = True
                         ax.out.set_pulse_us(ax.pulse())
                 if moving:
@@ -332,6 +386,9 @@ class Gimbal:
                     self._arrived.notify_all()
             if arrived:
                 self._save_state()
+            elif moving and time.monotonic() - last_save >= SAVE_EVERY_S:
+                last_save = time.monotonic()
+                self._save_state()                          # a reset mid-move must not leave a stale position
             nxt += dt
             time.sleep(max(0.0, nxt - time.monotonic()))
 
@@ -343,6 +400,7 @@ def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float
     range — the face tasks pass tilt_min=0 so the head never looks below level."""
     speed = float(p.get("servo_speed_dps", 30.0))
     lo_us, hi_us = float(p.get("servo_min_us", 500.0)), float(p.get("servo_max_us", 2400.0))
+    pin = int(p.get("servo_power_gpio") or 0)
     return Gimbal(
         pan=AxisConfig(channel=int(p.get("pan_channel", 1)), min_deg=PAN_DEFAULT.min_deg, max_deg=PAN_DEFAULT.max_deg,
                        center_us=float(p.get("pan_center_us", 1500.0)),
@@ -357,7 +415,8 @@ def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float
         backend=backend, chip=int(p.get("pwm_chip", 0)),
         hold_on_close=bool(p.get("hold_on_close", True)),
         state_path=(Path(p.get("head_state_file") or Path.home() / ".cache" / "robot-head.json")
-                    if backend == "hardware" else None))
+                    if backend == "hardware" else None),
+        power_sense=GpioPowerSense(pin) if pin and backend == "hardware" else None)
 
 
 ROBOT_YAML = Path(__file__).resolve().parents[2] / "ros2_ws/src/robot_bringup/config/robot.yaml"

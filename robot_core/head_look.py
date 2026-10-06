@@ -29,13 +29,23 @@ class HeadLook:
                 self._gimbal = self._open()
                 self._pos = {"pan": 0.0, "tilt": 0.0}
             g = self._gimbal
+            if not g.powered():
+                return {"ok": False, "error": "head servos have no power - switch the servo supply on"}
             lo, hi = (g.tilt_limits if axis == "tilt" else g.pan_limits)()
             wanted = self._pos[axis] + degrees
             self._pos[axis] = g.move_to(**{axis: wanted}, wait=False)[1 if axis == "tilt" else 0]
             return {"ok": True, axis: round(self._pos[axis], 1), "clamped": not lo <= wanted <= hi}
 
-    def release(self) -> None:
+    def release(self, hold: bool = True) -> None:
+        """Park the head. `hold=False` also stops the servo pulses afterwards (servos go limp):
+        used before the Pi powers off, so the signal lines are never left driving a live pulse
+        when the OS takes the pins away from a servo that is still powered."""
         with self._lock:
             g, self._gimbal, self._pos = self._gimbal, None, {"pan": 0.0, "tilt": 0.0}
+        if g is None and not hold:
+            try:
+                g = self._open()           # an earlier close() left the PWM running: take it over to stop it
+            except Exception:              # noqa: BLE001 - no PWM fitted, so nothing is running
+                return
         if g is not None:
-            g.close()
+            g.close(release=None if hold else True)
