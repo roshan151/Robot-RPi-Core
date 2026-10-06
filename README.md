@@ -140,7 +140,7 @@ The robot stops, sweeps the TF-Luna ±45° on the head in each of four direction
 - **Guard rails** (`/explorer` in `robot.yaml`, or `--ros-args -p no_behind:=true -p explore_radius_m:=5.0`): `explore_radius_m` (default `10`, `0` = unlimited) only explores within that radius of `start_pose`; `no_behind: true` only explores ahead of the start heading. Both apply to where it drives and which plants it photographs; the 360° scans still map everything around it. When nothing inside the limits is left, the run ends as complete.
 - **Re-scan later on the same map:** set `continue_map: true` and `start_pose` (where the robot stands, read off the map) under `/explorer` in `robot.yaml`.
 - **Motion health:** `ros2 topic echo /motion_health` compares the command, the encoders and the camera. It reports `stalled` (wheels blocked), `slipping` (wheels turning, image static), `pushed`, or `wrong_direction`; the drivetrain brakes on stalled or slipping.
-- **Park the head by hand** after a crash or power cut: `python -m robot_core.sensors. home` (goes to the centres in `robot.yaml` and keeps holding them; `... release` lets the servos go limp).
+- **Park the head by hand** after a crash or power cut: `python -m robot_core.sensors.gimbal home` (goes to the centres in `robot.yaml` and keeps holding them; `... release` lets the servos go limp).
 
 One-time setup, besides [README-SETUP.md](README-SETUP.md):
 
@@ -159,6 +159,33 @@ For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° 
 The voice session **closes for the whole task** (so you can't say "stop" until it ends), then reopens. The robot answers by gesture: **nod = it worked / the face is known, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
 
 ---
+
+## Head servos (pan / tilt)
+
+Two SG90 micro servos move the head. Each has three wires: **yellow = signal, red = +5 V, brown = ground**. The signals come from the Pi's two hardware-PWM pins, and the servos are powered from a separate 5 V supply, never from the Pi's 5 V pin (a moving servo draws far more than the Pi can spare and will brown the Pi out).
+
+| Servo wire | Pan servo | Tilt servo |
+|------------|-----------|------------|
+| Yellow (signal) | GPIO13 (pin 33) | GPIO12 (pin 32) |
+| Red (+5 V) | + of the external 5 V supply | + of the external 5 V supply |
+| Brown (ground) | - of the external 5 V supply | - of the external 5 V supply |
+
+```
+ External 5 V supply          Pi header
+   (+) ──────────────────────  red  of BOTH servos
+   (-) ──┬───────────────────  brown of BOTH servos
+         └───────────────────  any Pi GND pin (for example pin 34)   <- shared ground, required
+                               pin 33 (GPIO13) ── yellow of the PAN servo
+                               pin 32 (GPIO12) ── yellow of the TILT servo
+```
+
+- **The grounds must be joined.** The supply's - and a Pi GND pin have to meet, or the signal has no reference and the servos jitter or ignore it.
+- **Supply size:** an SG90 draws roughly 10 mA at rest, a few hundred mA while moving, and up to about 0.6 A if it stalls against a stop. A 5 V supply of 1 A or more for the pair is sensible (typical figures, not measured on yours). A 470-1000 uF capacitor across the servo supply, close to the servos, smooths the start-up spike.
+- **Hardware PWM:** the signal pins must be GPIO12 and GPIO13, which `install_pi.sh` sets up with `dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4` in `/boot/firmware/config.txt` (reboot after). Other pins will not work. Do not use GPIO18, which is the audio clock.
+- **Power-on jerk:** a servo moves as soon as it gets power plus a signal, and the signal pins float while the Pi boots. Switch the servo supply on after the Pi is up if you can.
+- **Mechanics:** the pan servo can only turn about 170 degrees (pulses 500-2400 us). `pan_center_us` in `robot.yaml` is the pulse where the head faces straight ahead. With the horn fitted so that is near the end of the travel (currently 2300 us), pan only reaches -90 to +9 degrees; refit the horn so straight ahead is near 1500 us to get the full +-90. Tilt is currently centred at 1750 us and inverted, and reaches +-45 degrees.
+
+Tools: `python tests/hardware/check_head.py` (four look commands with degree variables to find a good centre and sweet spot), `python -m robot_core.sensors.gimbal home` (go to the centres and keep holding), `... release` (let the servos go limp), `... move PAN [TILT]`. The head remembers where it last rested in `~/.cache/robot-head.json` (a few bytes, overwritten) so a restart can begin from there.
 
 ## Status OLED and power dips
 
