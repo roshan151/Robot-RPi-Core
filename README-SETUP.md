@@ -170,7 +170,7 @@ It asks for confirmation first. It keeps your code, `/etc/robot.env`, Bluetooth 
       sudo reboot
    systemctl status pisugar-server --no-pager
    ls -l /tmp/pisugar-server.sock
-   
+
 ## If something goes wrong
 
 | Symptom | Fix |
@@ -235,3 +235,7 @@ cd /sys/class/pwm/pwmchip0
 echo 0 | sudo tee pwm0/enable pwm1/enable
 echo 0 | sudo tee unexport
 echo 1 | sudo tee unexport
+
+# Setup shutdown
+
+echo "$USER ALL=(root) NOPASSWD: /usr/bin/systemctl poweroff" | sudo tee /etc/sudoers.d/robot-shutdown && sudo chmod 440 /etc/sudoers.d/robot-shutdown

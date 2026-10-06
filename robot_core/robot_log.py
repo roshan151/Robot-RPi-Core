@@ -85,6 +85,7 @@ EVENTS = {
     "voice.say",         # what the model said (never played aloud)
     "voice.tool",        # a tool call and its result
     "audio.error",       # microphone, uplink or playback trouble
+    "power.shutdown",    # operator asked for a clean power-off (or it failed)
     "power.dip",         # Pi supply under-voltage began: cause guess, task, tool, battery, temp
     "power.clear",       # ...and ended, with how long it lasted
     "power.flag",        # throttled / freq capped / too hot (live firmware flags)

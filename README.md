@@ -158,6 +158,10 @@ For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° 
 
 The voice session **closes for the whole task** (so you can't say "stop" until it ends), then reopens. The robot answers by gesture: **nod = it worked / the face is known, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
 
+### Shutting the Pi down by voice
+
+Say *"shut down"* / *"power off"* / *"turn off"*. The robot brakes, parks the head, nods, shows `shutting down` on the OLED, and powers the Pi off cleanly after 4 seconds (so the SD card is closed properly). Say *"stop"* within those 4 seconds to cancel. It runs `sudo systemctl poweroff`, so it needs passwordless sudo for that one command; `install_pi.sh` adds it (`/etc/sudoers.d/robot-shutdown`). On an existing Pi, add it once: `echo "$USER ALL=(root) NOPASSWD: /usr/bin/systemctl poweroff" | sudo tee /etc/sudoers.d/robot-shutdown && sudo chmod 440 /etc/sudoers.d/robot-shutdown`. After a shutdown the Pi's own power is still on: wait for the green LED to stop flashing, then cut power. To power back on, use the PiSugar button or reconnect power. A failed shutdown shows `E-X01 shutdown failed` and is logged as `power.shutdown` in `logs.json`.
+
 ### Adding a new voice tool
 
 A tool is a function the voice model can call. All of it lives in `robot_core/live/tools.py`; the model never talks to hardware directly. Four edits, plus a test:
@@ -178,7 +182,7 @@ A tool is a function the voice model can call. All of it lives in `robot_core/li
    ```
 3. **Register it** in the table inside `dispatch()`: `"beep": self._beep,` (use a lambda to pass defaults, as `look_left` does). The tool name shows on the OLED automatically, and exceptions become an `{"ok": False}` result instead of crashing the session.
 4. **Tell the model in the prompt**: add a line to the rules in `robot_core/settings.py` so it knows when to use the tool (for example *"beep(): ... "*).
-5. **Add a test** in `tests/test_robot_tools.py` (dispatch it, check the result), and add the name to `test_nine_tools_and_stop_takes_no_arguments` (the test that lists every tool), which will fail until you do.
+5. **Add a test** in `tests/test_robot_tools.py` (dispatch it, check the result), and add the name to the test that lists every tool (`test_*_tools_and_stop_takes_no_arguments`, rename its count), which will fail until you do.
 
 If the tool needs hardware, create the object in the node and pass it in, the way `head` is: `run_live_agent(motion, run_task, head)` in `voice_node.py` hands it to `RobotTools(...)` through `robot_core/live/agent.py`.
 

@@ -110,6 +110,9 @@ set -u
 # ---------------------------------------------------------------- 4. Pi configuration
 say "Groups and lingering (audio must exist at boot)"
 sudo usermod -aG dialout,audio,bluetooth "$USER"
+# Lets the voice "shut down" tool power the Pi off cleanly - this one command only, no password.
+echo "$USER ALL=(root) NOPASSWD: /usr/bin/systemctl poweroff" | sudo tee /etc/sudoers.d/robot-shutdown >/dev/null
+sudo chmod 440 /etc/sudoers.d/robot-shutdown && sudo visudo -cf /etc/sudoers.d/robot-shutdown >/dev/null || sudo rm -f /etc/sudoers.d/robot-shutdown
 sudo loginctl enable-linger "$USER"
 
 say "Head servos (PWM overlay) and TF-Luna serial port"

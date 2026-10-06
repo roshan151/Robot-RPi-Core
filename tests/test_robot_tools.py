@@ -296,9 +296,9 @@ def test_head_look_tilts_from_where_it_is_and_clamps() -> None:
         head.release()
 
 
-def test_nine_tools_and_stop_takes_no_arguments() -> None:
+def test_ten_tools_and_stop_takes_no_arguments() -> None:
     decls = {d.name: d for d in declarations()}
-    assert set(decls) == {"drive", "turn", "look_up", "look_down", "look_left", "look_right", "stop", "answer", "run_task"}
+    assert set(decls) == {"drive", "turn", "look_up", "look_down", "look_left", "look_right", "shutdown", "stop", "answer", "run_task"}
     assert not getattr(decls["stop"].parameters, "required", []), \
         "a stop that can be malformed is a stop that can fail"
 
@@ -329,3 +329,19 @@ if __name__ == "__main__":
             print(f"  FAIL  {fn.__name__}: {type(e).__name__}: {e}")
     print(f"\n{len(fns) - failed}/{len(fns)} passed")
     sys.exit(1 if failed else 0)
+
+
+def test_shutdown_powers_off_after_a_delay_and_stop_cancels_it(monkeypatch) -> None:
+    from robot_core.live import tools as tools_mod
+    monkeypatch.setattr(tools_mod, "SHUTDOWN_DELAY_S", 0.2)
+    calls = []
+    t = RobotTools(LocalMotion(FakeMove()), power_off=lambda: calls.append(1))
+    res = run(t.dispatch("shutdown", {}))
+    assert res["ok"] and not calls                       # not yet: there is time to say stop
+    time.sleep(0.5)
+    assert calls == [1]
+    t2 = RobotTools(LocalMotion(FakeMove()), power_off=lambda: calls.append(2))
+    run(t2.dispatch("shutdown", {}))
+    run(t2.dispatch("stop", {}))
+    time.sleep(0.5)
+    assert calls == [1]                                  # cancelled

@@ -30,6 +30,8 @@ from __future__ import annotations
 
 import logging
 import re
+import subprocess
+import threading
 from typing import Any, Callable, Dict, Optional, Tuple
 
 from robot_core import robot_log, settings, status
@@ -40,6 +42,17 @@ from robot_core.motion import MotionBackend
 logger = logging.getLogger(__name__)
 
 TASKS = ("enroll_face", "match_face", "explore")
+SHUTDOWN_DELAY_S = 4.0
+
+
+def _system_poweroff() -> None:
+    """Needs passwordless sudo for this one command (install_pi.sh adds it)."""
+    try:
+        subprocess.run(["sudo", "-n", "systemctl", "poweroff"], check=True, timeout=20)
+    except Exception as exc:                                  # noqa: BLE001
+        robot_log.event("power.shutdown", logging.ERROR, state="failed", err=f"{type(exc).__name__}: {exc}")
+        status.task("voice")
+        status.error("X01", "shutdown failed")
 
 
 def declarations() -> list:
@@ -118,6 +131,16 @@ def declarations() -> list:
             parameters=schema(degrees={"type": "NUMBER", "description": "Degrees right, default 30."}),
         ),
         types.FunctionDeclaration(
+            name="shutdown",
+            description=(
+                "Shut the whole robot down cleanly (power off the Pi). Call it ONLY when "
+                "the operator clearly asks to shut down, power off or turn off the robot. "
+                "Never for background speech or a doubtful phrase; if unsure, answer 'unclear'. "
+                "It powers off after about 4 seconds, and 'stop' cancels it in that time."
+            ),
+            parameters=schema(),
+        ),
+        types.FunctionDeclaration(
             name="stop",
             description=(
                 "Stop immediately: cancels everything queued AND interrupts "
@@ -179,8 +202,11 @@ class RobotTools:
 
     def __init__(self, motion: MotionBackend,
                  task_runner: Optional[Callable[[str, str], bool]] = None,
-                 head: Optional[HeadLook] = None) -> None:
+                 head: Optional[HeadLook] = None,
+                 power_off: Optional[Callable[[], None]] = None) -> None:
         self._motion = motion
+        self._power_off = power_off or _system_poweroff
+        self._shutdown_timer: Optional[threading.Timer] = None
         self._head = head                    # look_up / look_down; None = no head
         self._gestures = Gesturer(motion)
         # (task, name) -> success; blocking, run by the agent with the session
@@ -207,6 +233,7 @@ class RobotTools:
             "look_down": lambda degrees=DEFAULT_DEGREES: self._look(-float(degrees)),
             "look_left": lambda degrees=DEFAULT_DEGREES: self._look(degrees, "pan"),
             "look_right": lambda degrees=DEFAULT_DEGREES: self._look(-float(degrees), "pan"),
+            "shutdown": self._shutdown,
             "stop": self._stop,
             "answer": self._answer,
             "run_task": self._run_task,
@@ -268,7 +295,29 @@ class RobotTools:
         turn here would arrive after the move it was meant to cancel had
         already finished.
         """
+        if self._shutdown_timer is not None:                # "stop" also cancels a pending power-off
+            self._shutdown_timer.cancel()
+            self._shutdown_timer = None
+            status.task("voice")
+            robot_log.event("power.shutdown", logging.WARNING, state="cancelled")
         return self._motion.stop()
+
+    def _shutdown(self) -> Dict[str, Any]:
+        """Brake, park the head, nod, then power the Pi off after a short delay so
+        the operator can still say "stop". The OS stops the services cleanly, so the
+        SD card is closed properly instead of being cut off."""
+        if self._shutdown_timer is not None:
+            return {"ok": True, "note": "already shutting down"}
+        self._motion.stop()
+        if self._head is not None:
+            self._head.release()
+        self._gestures.play("yes")
+        status.task("shutting down")
+        status.detail("say stop to cancel")
+        robot_log.event("power.shutdown", logging.WARNING, state="requested")
+        self._shutdown_timer = threading.Timer(SHUTDOWN_DELAY_S, self._power_off)
+        self._shutdown_timer.start()
+        return {"ok": True, "note": f"powering off in {SHUTDOWN_DELAY_S:.0f} seconds; stop cancels"}
 
     def _run_task(self, task: str, name: str = "") -> Dict[str, Any]:
         """Queue a job for the agent. Does not run it: the agent closes the Live
