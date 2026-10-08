@@ -20,7 +20,7 @@
     # make a move stop early — short travel is traction or a lost encoder
     # channel, never calibration. See the calibration section of the README.
     ticks_per_cm: 38.5
-    ticks_per_degree: 7
+    ticks_per_degree: 6.5
 
     # The hard limit on a single move. Enforced in the goal callback, so the
     # model cannot talk its way past it.
