@@ -285,14 +285,20 @@ def test_head_look_tilts_from_where_it_is_and_clamps() -> None:
         assert r("look_down", degrees=100)["tilt"] == -45.0      # -45 limit
         head.release()
         assert r("look_up", degrees=10)["tilt"] == 10.0          # parked: starts from level
+        assert r("look_left")["pan"] == 30.0                     # + pan is left, default 30
+        res = r("look_left", degrees=100)                        # one call is capped at 90, then the limit
+        assert res["pan"] == 81.0 and res["clamped"]             # the default 1500 us centre reaches +81 (500-2400 us window)
+        assert r("look_right", degrees=81)["pan"] == 0.0         # relative to where it is
+        assert r("look_right", degrees=90)["pan"] == -90.0
+        assert r("look_up", degrees=10)["tilt"] == 20.0          # tilt is independent of pan
         assert not RobotTools(LocalMotion(FakeMove()))._look(5)["ok"]
     finally:
         head.release()
 
 
-def test_seven_tools_and_stop_takes_no_arguments() -> None:
+def test_ten_tools_and_stop_takes_no_arguments() -> None:
     decls = {d.name: d for d in declarations()}
-    assert set(decls) == {"drive", "turn", "look_up", "look_down", "stop", "answer", "run_task"}
+    assert set(decls) == {"drive", "turn", "look_up", "look_down", "look_left", "look_right", "shutdown", "stop", "answer", "run_task"}
     assert not getattr(decls["stop"].parameters, "required", []), \
         "a stop that can be malformed is a stop that can fail"
 
@@ -323,3 +329,64 @@ if __name__ == "__main__":
             print(f"  FAIL  {fn.__name__}: {type(e).__name__}: {e}")
     print(f"\n{len(fns) - failed}/{len(fns)} passed")
     sys.exit(1 if failed else 0)
+
+
+def test_shutdown_powers_off_after_a_delay_and_stop_cancels_it(monkeypatch) -> None:
+    from robot_core.live import tools as tools_mod
+    monkeypatch.setattr(tools_mod, "SHUTDOWN_DELAY_S", 0.2)
+    calls = []
+    t = RobotTools(LocalMotion(FakeMove()), power_off=lambda: calls.append(1))
+    res = run(t.dispatch("shutdown", {}))
+    assert res["ok"] and not calls                       # not yet: there is time to say stop
+    time.sleep(0.5)
+    assert calls == [1]
+    t2 = RobotTools(LocalMotion(FakeMove()), power_off=lambda: calls.append(2))
+    run(t2.dispatch("shutdown", {}))
+    run(t2.dispatch("stop", {}))
+    time.sleep(0.5)
+    assert calls == [1]                                  # cancelled
+
+
+def test_shutdown_parks_the_head_and_stops_its_servo_pulses(monkeypatch) -> None:
+    """Incident 2: the Pi must not halt while still driving a live pulse into a powered servo."""
+    from robot_core.head_look import HeadLook
+    from robot_core.live import tools as tools_mod
+    from robot_core.sensors.gimbal import Gimbal
+    monkeypatch.setattr(tools_mod, "SHUTDOWN_DELAY_S", 0.2)
+    g = Gimbal(backend="fake")
+    t = RobotTools(LocalMotion(FakeMove()), head=HeadLook(lambda: g), power_off=lambda: None)
+    run(t.dispatch("look_up", {"degrees": 20}))
+    assert g.tilt.out.enabled
+    run(t.dispatch("shutdown", {}))
+    time.sleep(0.4)
+    assert g.angles() == (0.0, 0.0)                                  # parked first ...
+    assert not g.pan.out.enabled and not g.tilt.out.enabled          # ... then the pulses stopped
+
+
+def test_shutdown_also_stops_pwm_an_earlier_task_left_holding(monkeypatch) -> None:
+    from robot_core.head_look import HeadLook
+    from robot_core.live import tools as tools_mod
+    from robot_core.sensors.gimbal import Gimbal
+    monkeypatch.setattr(tools_mod, "SHUTDOWN_DELAY_S", 0.2)
+    left_holding = Gimbal(backend="fake")                           # e.g. a face task closed it with hold_on_close
+    assert left_holding.pan.out.enabled
+    t = RobotTools(LocalMotion(FakeMove()), head=HeadLook(lambda: left_holding), power_off=lambda: None)
+    run(t.dispatch("shutdown", {}))                                 # the head was never opened by the voice session
+    time.sleep(0.4)
+    assert not left_holding.pan.out.enabled and not left_holding.tilt.out.enabled
+
+
+def test_head_look_refuses_while_servo_supply_is_off() -> None:
+    from robot_core.head_look import HeadLook
+    from robot_core.sensors.gimbal import Gimbal
+    rail = {"on": False}
+    g = Gimbal(backend="fake", power_sense=lambda: rail["on"])
+    head = HeadLook(lambda: g)
+    try:
+        r = head.look(20)
+        assert not r["ok"] and "power" in r["error"]
+        assert g.angles() == (0.0, 0.0)
+        rail["on"] = True
+        assert head.look(20)["ok"]                                  # same call works once the switch is on
+    finally:
+        head.release()

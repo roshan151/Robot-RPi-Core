@@ -21,7 +21,8 @@ Two layers, and the boundary is the point. `robot_core/` is the robot as plain P
 | `robot_core/live/` | The Gemini Live session (`agent.py`) and its tools (`tools.py`: drive, turn, stop, answer, run_task) |
 | `robot_core/gestures.py`, `speech.py` | Yes/no/dance gestures; Gemini text-to-speech cached to disk |
 | `robot_core/run.py` | Run everything without ROS (bench use) |
-| `ros2_ws/src/` | ROS 2 nodes: `robot_interfaces` (actions, messages), `robot_drivetrain`, `robot_voice`, `robot_explore`, `robot_vision` (Mac-service client node), `robot_bringup` (launch files, `robot.yaml`) |
+| `robot_core/status.py`, `oled.py`, `power.py` | Status OLED: short messages (10 words max), error codes, and the Pi under-voltage watcher |
+| `ros2_ws/src/` | ROS 2 nodes: `robot_interfaces` (actions, messages), `robot_drivetrain`, `robot_voice`, `robot_explore`, `robot_vision` (Mac-service client node), `robot_display` (OLED + power watcher), `robot_bringup` (launch files, `robot.yaml`) |
 | `install_pi.sh`, `cleanup_pi.sh`, `README-SETUP.md`, `start_robot.sh`, `robot-voice.service` | Pi installer and its guide, the launcher, the boot service |
 | `flash.sh`, `check_bt_audio.sh`, `vision_test.py`, `read_log.py` | Flash the Arduino (from the Mac), check the buds' audio, test the vision service, read `logs.json` |
 | `tests/` | Unit tests (no hardware or ROS needed); `tests/hardware/` needs the real robot |
@@ -147,9 +148,9 @@ One-time setup, besides [README-SETUP.md](README-SETUP.md):
 2. Measure and set `head_height_m`, `pan_axis_x_m`, `hfov_deg` and the servo `*_center_us` trims under `/explorer` in `robot.yaml`. `+pan` must turn the head left and `+tilt` must look up; flip `pan_invert`/`tilt_invert` if not.
 3. Restart the vision service on the Mac after updating it (DINOv2 downloads on first start).
 
-### Voice commands: look up/down, enroll face, match face, explore
+### Voice commands: look up/down/left/right, enroll face, match face, explore
 
-*"Look up"* / *"look down"* tilt the head 30° from where it is now (or the number you say), stopping at the limits (±45°). The tilt is remembered for the session; a task parks the head, so the next look starts from level.
+*"Look up"* / *"look down"* tilt the head 30° from where it is now (or the number you say), stopping at the limits (±45°). *"Look left"* / *"look right"* pan it the same way (+pan is left, so if your head turns the wrong way flip `pan_invert` in `robot.yaml`); pan stops at its own limit, which is shorter on one side until the horn is re-fitted (see [Head servos](#head-servos-pan--tilt)). The position is remembered for the session; a task parks the head, so the next look starts from level.
 
 In command mode, say it to the robot: *"remember my face, I'm Sam"* (`enroll_face`, about 30 s of frames — stand in front of the camera alone), *"do you know me?"* (`match_face`), *"go explore"* (`explore`, runs the explorer node against the running drivetrain until it finishes).
 
@@ -157,7 +158,125 @@ For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° 
 
 The voice session **closes for the whole task** (so you can't say "stop" until it ends), then reopens. The robot answers by gesture: **nod = it worked / the face is known, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
 
+### Shutting the Pi down by voice
+
+Say *"shut down"* / *"power off"* / *"turn off"*. The robot brakes, parks the head, nods, shows `shutting down` on the OLED, and powers the Pi off cleanly after 4 seconds (so the SD card is closed properly). Say *"stop"* within those 4 seconds to cancel. It runs `sudo systemctl poweroff`, so it needs passwordless sudo for that one command; `install_pi.sh` adds it (`/etc/sudoers.d/robot-shutdown`). On an existing Pi, add it once: `echo "$USER ALL=(root) NOPASSWD: /usr/bin/systemctl poweroff" | sudo tee /etc/sudoers.d/robot-shutdown && sudo chmod 440 /etc/sudoers.d/robot-shutdown`. After a shutdown the Pi's own power is still on: wait for the green LED to stop flashing, then cut power. To power back on, use the PiSugar button or reconnect power. A failed shutdown shows `E-X01 shutdown failed` and is logged as `power.shutdown` in `logs.json`.
+
+### Adding a new voice tool
+
+A tool is a function the voice model can call. All of it lives in `robot_core/live/tools.py`; the model never talks to hardware directly. Four edits, plus a test:
+
+1. **Declare it** in `declarations()`: a name, a description that says *when* to use it (the model reads this on every turn, so keep it short and concrete), and its parameters.
+   ```python
+   types.FunctionDeclaration(
+       name="beep",
+       description="Beep the buzzer. Default 1 time; returns at once.",
+       parameters=schema(times={"type": "NUMBER", "description": "How many beeps, default 1."}),
+   ),
+   ```
+2. **Write the handler** as a method on `RobotTools`. It must be quick and must never block (the voice loop waits on it), and it returns a dict with `"ok"` plus whatever the model should know.
+   ```python
+   def _beep(self, times: float = 1) -> Dict[str, Any]:
+       self._buzzer.beep(int(times))
+       return {"ok": True}
+   ```
+3. **Register it** in the table inside `dispatch()`: `"beep": self._beep,` (use a lambda to pass defaults, as `look_left` does). The tool name shows on the OLED automatically, and exceptions become an `{"ok": False}` result instead of crashing the session.
+4. **Tell the model in the prompt**: add a line to the rules in `robot_core/settings.py` so it knows when to use the tool (for example *"beep(): ... "*).
+5. **Add a test** in `tests/test_robot_tools.py` (dispatch it, check the result), and add the name to the test that lists every tool (`test_*_tools_and_stop_takes_no_arguments`, rename its count), which will fail until you do.
+
+If the tool needs hardware, create the object in the node and pass it in, the way `head` is: `run_live_agent(motion, run_task, head)` in `voice_node.py` hands it to `RobotTools(...)` through `robot_core/live/agent.py`.
+
+If the job takes a long time (seconds or more, like face enroll), do not make it a tool that blocks. Add its name to `TASKS` in `tools.py` and handle it in `_run_task` in `voice_node.py`: the agent closes the voice session, runs it, and answers with a nod or a shake.
+
+To apply a change on the Pi: `git pull` and `sudo systemctl restart robot-voice`. A rebuild is only needed for a new ROS package or message.
+
 ---
+
+## Head servos (pan / tilt)
+
+Two SG90 micro servos move the head. Each has three wires: **yellow = signal, red = +5 V, brown = ground**. The signals come from the Pi's two hardware-PWM pins, and the servos are powered from a separate 5 V supply, never from the Pi's 5 V pin (a moving servo draws far more than the Pi can spare and will brown the Pi out).
+
+| Servo wire | Pan servo | Tilt servo |
+|------------|-----------|------------|
+| Yellow (signal) | GPIO13 (pin 33) | GPIO12 (pin 32) |
+| Red (+5 V) | + of the external 5 V supply | + of the external 5 V supply |
+| Brown (ground) | - of the external 5 V supply | - of the external 5 V supply |
+
+```
+ External 5 V supply          Pi header
+   (+) ──────────────────────  red  of BOTH servos
+   (-) ──┬───────────────────  brown of BOTH servos
+         └───────────────────  any Pi GND pin (for example pin 34)   <- shared ground, required
+                               pin 33 (GPIO13) ── yellow of the PAN servo
+                               pin 32 (GPIO12) ── yellow of the TILT servo
+```
+
+- **The grounds must be joined.** The supply's - and a Pi GND pin have to meet, or the signal has no reference and the servos jitter or ignore it.
+- **Supply size:** an SG90 draws roughly 10 mA at rest, a few hundred mA while moving, and up to about 0.6 A if it stalls against a stop. A 5 V supply of 1 A or more for the pair is sensible (typical figures, not measured on yours). A 470-1000 uF capacitor across the servo supply, close to the servos, smooths the start-up spike.
+- **Hardware PWM:** the signal pins must be GPIO12 and GPIO13, which `install_pi.sh` sets up with `dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4` in `/boot/firmware/config.txt` (reboot after). Other pins will not work. Do not use GPIO18, which is the audio clock.
+- **Power-on jerk:** a servo moves as soon as it gets power plus a signal, and the signal pins float while the Pi boots. Switch the servo supply on after the Pi is up if you can.
+- **Pull each signal line down (10 kΩ from the yellow wire to GND, at the servo end).** Without it the line floats whenever the Pi is booting or halted, and a powered servo chases that noise to an end stop - this is what drives the head into its stops and tears the camera ribbon. It costs two resistors and makes "Pi not driving the pin" mean "no pulse" instead of "random pulse".
+- **Sense the servo supply (recommended).** The servos have their own switch, so the Pi cannot otherwise tell whether they are powered, and it keeps "moving" an unpowered head; the moment the switch goes on the servo dashes to where the software thinks it is. Wire a spare GPIO to the servo +5 V through a divider (10 kΩ from +5 V to the pin, 20 kΩ from the pin to GND; share the ground) and set `servo_power_gpio: <BCM pin>` in `robot.yaml`. While the pin reads low the head is frozen and `look_*` answers "head servos have no power"; switching on changes nothing, and motion resumes from where the head really is. A broken sense wire reads as "off", so it fails safe. `0` (default) = not fitted, supply assumed on.
+- **Switching order:** servo supply on after the Pi is up, off before the Pi is powered off. The voice `shutdown` parks the head and then stops the servo pulses itself (the head goes limp), so the Pi never halts while still driving a live pulse; cutting the servo supply afterwards is still the cleanest.
+- **Mechanics:** the pan servo can only turn about 170 degrees (pulses 500-2400 us). `pan_center_us` in `robot.yaml` is the pulse where the head faces straight ahead. With the horn fitted so that is near the end of the travel (currently 2300 us), pan only reaches -90 to +9 degrees; refit the horn so straight ahead is near 1500 us to get the full +-90. Tilt is currently centred at 1750 us and inverted, and reaches +-45 degrees.
+
+Tools: `python tests/hardware/check_head.py` (four look commands with degree variables to find a good centre and sweet spot), `python -m robot_core.sensors.gimbal home` (go to the centres and keep holding), `... release` (let the servos go limp), `... move PAN [TILT]`. The head remembers where it last rested in `~/.cache/robot-head.json` (a few bytes, overwritten) so a restart can begin from there.
+
+## Status OLED and power dips
+
+A 2.42" SSD1309 OLED (128x64, SPI) shows what the robot is doing. Every node publishes short messages on `/robot/status`; the `display_node` (started by both launch files) draws them and watches the Pi's supply.
+
+### Wiring the OLED
+
+The board's 7-pin header (labelled GND, VCC, SCK, SDA, RES, DC, CS on the back) goes to the Pi's 40-pin header like this. Power the Pi off before connecting.
+
+| OLED pin | Pi GPIO (BCM) | Pi physical pin | What it does |
+|----------|---------------|-----------------|--------------|
+| GND | GND | 25 | Ground |
+| VCC | 3.3 V | 1 | Power. Use 3.3 V, not 5 V, so it matches the Pi's 3.3 V signals |
+| SCK | GPIO11 (SPI0 SCLK) | 23 | SPI clock |
+| SDA | GPIO10 (SPI0 MOSI) | 19 | Data in. On this board "SDA" is the SPI data line, not I2C |
+| RES | GPIO17 | 11 | Reset |
+| DC | GPIO25 | 22 | Data / command select |
+| CS | GPIO8 (SPI0 CE0) | 24 | Chip select |
+
+```
+ OLED          Pi header
+ GND  ───────  pin 25  (GND)
+ VCC  ───────  pin 1   (3.3 V)
+ SCK  ───────  pin 23  (GPIO11)
+ SDA  ───────  pin 19  (GPIO10)
+ RES  ───────  pin 11  (GPIO17)
+ DC   ───────  pin 22  (GPIO25)
+ CS   ───────  pin 24  (GPIO8)
+```
+
+None of these pins clash with the servos (GPIO12 and 13), the TF-Luna, or the Arduino link. Keep the wires short (under about 20 cm) and, if you see noise or a blank screen, check them for loose connections first. The 2.42" boards have a mode resistor on the back: R8 fitted means SPI, R9 to R12 fitted means I2C. If the screen stays blank with correct wiring, check that yours is set to SPI.
+
+### Power the OLED uses
+
+Roughly 10 to 30 mA at 3.3 V (about 0.03 to 0.1 W) for a mostly dark screen of small text like this one, and up to about 60 mA if most pixels are lit. That is a rough figure for this kind of module, not measured on yours, and it is small next to the Pi itself (about 600 mA to 1 A with the camera running) and the servos. The Pi's 3.3 V pin supplies it comfortably.
+
+To measure it on your robot, compare the PiSugar amps in the top right of the screen with the OLED wired and then unwired (with the robot idle); the difference is the screen's draw.
+
+`install_pi.sh` turns SPI on and installs the libraries (`pip install -e ".[oled]"`). Check the wiring with `python tests/hardware/check_oled.py` (stop `robot-voice` first, only one program can own the screen). After pulling this change, rebuild once for the new package: `cd ros2_ws && colcon build --symlink-install`.
+
+Screen rows (21 characters each): power state and the PiSugar volts and amps, always top right (`4.12V -0.85A`, `--` if the PiSugar does not answer, polled every 2 s); task, battery % and uptime; `TOOL` (the voice agent's current call); two detail lines (for explore, `plant_03 capturing 4/8`); a countdown or result (`enroll Sam 0:17`, then `Sam enrolled` or `Sam matched`); the last error code `E-xxx text`; and its cause. Every message is cut to 10 words.
+
+Under-voltage: the firmware's live flag is polled about 5 times a second. Each dip shows `PWR DIP xN`, `E-P01`, and a guess at the cause (wheels, head servo, camera load, just booted, low battery). One small file (`~/.cache/robot-lastdip.json`, overwritten, at most every 10 s) lets the next boot show `last dip: ...` even if the dip reset the Pi; it is deleted once shown.
+
+| Code | Meaning | Code | Meaning |
+|------|---------|------|---------|
+| P01 / P02 | undervolt now / earlier | F01 | no face found |
+| P03 / P04 / P05 | throttled / cpu freq capped / too hot | F02 / F03 / F04 | several faces / too few frames / task failed |
+| S01 / S02 / S03 / S04 | arduino link / wheel stuck / e-stop / cmd timeout | N01 / N02 / N03 | drive stuck / viewpoint unreachable / explore aborted |
+| C01 / C02 | camera open / capture | G01 / G02 | head unavailable / servo range limited |
+| V01 / V02 | vision unreachable / timeout | L01 / L02 / L03 | voice lost / tool failed / unknown tool |
+| A01 / B01 | audio error / battery low | X01 / X02 | unexpected / fatal error |
+
+The screen is optional. With it unplugged or broken the robot runs the same, and the power watcher keeps going: every dip is written to `logs.json` as `power.dip` (cause, task, tool, battery, temp, flags, uptime) and `power.clear` (how long it lasted), plus `power.flag` (throttled, capped, hot), `power.earlier` and `power.lastdip`. Find them with `grep power logs.json`.
+
+The full list is `CODES` in `robot_core/status.py`; `RULES` there maps log warnings to codes.
 
 ## Audio
 
@@ -496,3 +615,43 @@ Then tests/hardware/check_movements.py — with working, signed encoders this sh
 vcgencmd get_throttled                 # anything other than 0x0 means under-voltage or throttling happened
 last -x reboot | head                  # were there real reboots, and when?
 journalctl -b -1 -e --no-pager | tail -40   # last lines of the previous boot, including the explorer's own output
+
+
+## Debug camera
+
+vcgencmd get_throttled
+rpicam-hello -t 5000 --nopreview                 # camera alone
+python tests/hardware/check_camera.py            # camera alone, through our code
+python tests/hardware/check_camera.py head       # opens the head, then moves it
+
+2. Check camera detection
+   rpicam-hello --list-cameras
+   dmesg | grep -i -E "ov5647|unicam|csi|i2c" | tail -20
+   vcgencmd get_throttled
+
+3. Did the rpicam package change
+grep -E "Start-Date|Commandline|Upgrade:" /var/log/apt/history.log | tail -30
+dpkg -l | grep -E "libcamera|rpicam|picamera2|raspi-firmware|linux-image" 
+uname -r
+
+4. 
+rpicam-hello --list-cameras
+dmesg | grep -i -E "ov5647|unicam|csi" | tail -20
+
+5. source .venv/bin/activate
+python -c "import picamera2; print(picamera2.__file__)"
+
+## Debug voltage display
+
+ls -l /tmp/*.sock
+systemctl status pisugar-server --no-pager
+python3 -c "import socket;s=socket.socket(socket.AF_UNIX);s.connect('/tmp/pisugar-server.sock');s.sendall(b'get battery\n');print(s.recv(100))"
+
+## Refresh build
+
+git checkout oled && git pull
+source /opt/ros/jazzy/setup.bash && source .venv/bin/activate
+pip install -e ".[oled]"
+cd ros2_ws && colcon build --symlink-install && source install/setup.bash && cd ..
+
+

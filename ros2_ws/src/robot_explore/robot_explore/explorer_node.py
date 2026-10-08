@@ -41,6 +41,7 @@ from std_msgs.msg import String
 from std_srvs.srv import Trigger
 from tf2_ros import TransformBroadcaster
 
+from robot_core import status
 from robot_core.explore import ExploreConfig, Explorer
 from robot_core.odometry import Pose2D
 from robot_core.sensors.camera import Camera
@@ -49,6 +50,7 @@ from robot_core.sensors.head import Head, HeadGeometry
 from robot_core.sensors.tfluna import TFLuna
 from robot_core.sensors.visual_motion import VisualMotionEstimator
 from robot_core.vision_client import VisionClient
+from robot_display.link import connect
 from robot_interfaces.action import Drive, Turn
 from robot_interfaces.msg import MotionHealth, VisualMotion
 
@@ -166,12 +168,13 @@ class ExplorerNode(Node):
         p("servo_min_us", 500.0)
         p("servo_max_us", 2400.0)
         p("hold_on_close", True)
+        p("servo_power_gpio", 0)
         v = lambda name: self.get_parameter(name).value
 
         self.gimbal = from_params({n: v(n) for n in (
             "pwm_chip", "pan_channel", "tilt_channel", "pan_center_us", "tilt_center_us",
             "pan_us_per_deg", "tilt_us_per_deg", "pan_invert", "tilt_invert", "servo_speed_dps",
-            "servo_min_us", "servo_max_us", "hold_on_close")})
+            "servo_min_us", "servo_max_us", "hold_on_close", "servo_power_gpio")})
         self.lidar = TFLuna(v("tfluna_port"))
         self.camera = Camera(main_size=tuple(v("camera_main_size")), inverted=bool(v("camera_inverted")))
         self.head = Head(self.gimbal, self.lidar, self.camera, HeadGeometry(
@@ -290,6 +293,8 @@ def main(args=None) -> None:
 
     rclpy.init(args=args)
     node = ExplorerNode()
+    connect(node)                        # status + warnings go to the OLED
+    status.task("explore")
     executor = MultiThreadedExecutor(num_threads=4)
     executor.add_node(node)
     try:

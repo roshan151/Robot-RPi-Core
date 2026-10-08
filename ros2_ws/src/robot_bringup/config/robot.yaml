@@ -20,7 +20,7 @@
     # make a move stop early — short travel is traction or a lost encoder
     # channel, never calibration. See the calibration section of the README.
     ticks_per_cm: 38.5
-    ticks_per_degree: 7
+    ticks_per_degree: 6.5
 
     # The hard limit on a single move. Enforced in the goal callback, so the
     # model cannot talk its way past it.
@@ -82,8 +82,8 @@
     pwm_chip: 0                # Pi 4: 0. Pi 5: 2
     pan_channel: 1             # GPIO13
     tilt_channel: 0            # GPIO12
-    pan_center_us: 2300.0      # measured (check_servo_pulse.py trim): head points straight ahead
-    tilt_center_us: 1750.0     # measured (check_servo_pulse.py trim): head is level
+    pan_center_us: 1500.0      # measured (check_servo_pulse.py trim): head points straight ahead
+    tilt_center_us: 1500.0     # measured (check_servo_pulse.py trim): head is level
     pan_us_per_deg: 11.111     # pulse change per degree (2000/180); MEASURE with tests/hardware/check_servo_pulse.py
     tilt_us_per_deg: 11.111
     pan_invert: false          # +pan must turn the head LEFT
@@ -93,3 +93,6 @@
     servo_max_us: 2400.0       # shrinks the reachable angles to fit (pan at 2300 us has only ~9 deg to the left):
                                # re-fit the horn nearer the middle, or widen this if the servo really goes further
     hold_on_close: true        # on shutdown park at centre and KEEP holding it (false: release the PWM, servos go limp)
+    servo_power_gpio: 21       # BCM pin that reads the servo +5 V through a 10k/20k divider (high = on); 0 = none fitted.
+                               # While it reads low the head is frozen and moves are refused, so switching the servos on
+                               # can never snap them to a stale position
