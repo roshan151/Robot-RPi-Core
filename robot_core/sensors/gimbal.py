@@ -291,7 +291,7 @@ class Gimbal:
             for ax, want in ((self.pan, pan), (self.tilt, tilt)):
                 if want is not None:
                     ax.target = ax.clamp(want)
-                    ax.speed = min(speed_dps or ax.cfg.max_speed_dps, ax.cfg.max_speed_dps * 2)
+                    ax.speed = min(speed_dps or ax.cfg.max_speed_dps, ax.cfg.max_speed_dps)    # servo_speed_dps is a hard ceiling
             self._moving = True
             target = (self.pan.target, self.tilt.target)
         if wait:

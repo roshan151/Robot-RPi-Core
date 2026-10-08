@@ -221,3 +221,13 @@ def test_gimbal_saves_its_position_while_still_moving(tmp_path):
         assert json.loads(f.read_text())["pan_us"] > 1500 + 5 * (2000 / 180)    # and the file already knows
     finally:
         g.close(release=True)
+
+
+def test_servo_speed_is_a_hard_ceiling_whatever_a_caller_asks_for():
+    g = Gimbal(backend="fake")                                   # servo_speed_dps default: 30
+    try:
+        g.move_to(pan=40, tilt=20, speed_dps=500, wait=True, timeout=10)
+        for out in (g.pan.out, g.tilt.out):
+            assert np.abs(np.diff(out.pulses)).max() < 30 / 50 * (2000 / 180) + 1      # never faster than 30 deg/s
+    finally:
+        g.close(release=True)

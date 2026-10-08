@@ -93,6 +93,6 @@
     servo_max_us: 2400.0       # shrinks the reachable angles to fit (pan at 2300 us has only ~9 deg to the left):
                                # re-fit the horn nearer the middle, or widen this if the servo really goes further
     hold_on_close: true        # on shutdown park at centre and KEEP holding it (false: release the PWM, servos go limp)
-    servo_power_gpio: 0        # BCM pin that reads the servo +5 V through a 10k/20k divider (high = on); 0 = none fitted.
+    servo_power_gpio: 21       # BCM pin that reads the servo +5 V through a 10k/20k divider (high = on); 0 = none fitted.
                                # While it reads low the head is frozen and moves are refused, so switching the servos on
                                # can never snap them to a stale position
