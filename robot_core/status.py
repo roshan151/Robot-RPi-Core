@@ -1,7 +1,8 @@
 """What the robot is doing, in a few words, for the OLED (see robot_core/oled.py).
 
 Anything can call these from any thread; nothing is stored on disk. Every
-message is cut to 10 words, and the screen shows 8 rows of 21 characters. An
+message is cut to 10 words, and the screen shows a small-print header (task,
+power state, uptime, battery icon) over 7 rows of 21 characters. An
 error is a boxed small-print message that goes away by itself; the space no
 text is using plays an animation (blinking eyes, or `anim("tank")` while driving).
 
@@ -118,11 +119,7 @@ class Board:
         now = self._clock()
         with self._lock:
             pwr = self.power + (f" x{self.dips}" if self.dips else "")
-            bat = "--" if self.battery is None else ""                         # known: oled draws an icon here
-            volts = "--V" if self.volts is None else f"{self.volts:.2f}V"      # top right, always
-            amps = "--A" if self.amps is None else f"{self.amps:+.2f}A"
-            rows = [f"{pwr:<9.9}{volts + ' ' + amps:>12}",
-                    f"{self.task or 'idle':<12.12}{bat:>4} {_up(now - self.t0):>4}",
+            rows = [f"{self.task or 'idle':<13.13}{pwr:<8.8}{_up(now - self.t0):>5}",   # header: small print, battery icon after it
                     f"TOOL {self.tool}" if self.tool else ""]
             rows += (textwrap.wrap(self.detail, WIDTH) + ["", ""])[:2]
             if self._result and now < self._result[1]:
@@ -133,7 +130,7 @@ class Board:
             else:
                 rows.append("")
             rows.append(self.note if now < self._note_until else "")
-        return [r[:WIDTH] for r in rows[:ROWS]] + [""] * (ROWS - len(rows))
+        return rows[:1] + [r[:WIDTH] for r in rows[1:ROWS]] + [""] * (ROWS - len(rows))
 
     def frame(self) -> Frame:
         rows, now = self.lines(), self._clock()

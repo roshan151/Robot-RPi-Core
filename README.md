@@ -257,13 +257,13 @@ None of these pins clash with the servos (GPIO12 and 13), the TF-Luna, or the Ar
 
 Roughly 10 to 30 mA at 3.3 V (about 0.03 to 0.1 W) for a mostly dark screen of small text like this one, and up to about 60 mA if most pixels are lit. That is a rough figure for this kind of module, not measured on yours, and it is small next to the Pi itself (about 600 mA to 1 A with the camera running) and the servos. The Pi's 3.3 V pin supplies it comfortably.
 
-To measure it on your robot, compare the PiSugar amps in the top right of the screen with the OLED wired and then unwired (with the robot idle); the difference is the screen's draw.
+To measure it on your robot, compare the PiSugar amps (`echo "get battery_i" | nc -q 1 127.0.0.1 8423`) with the OLED wired and then unwired (with the robot idle); the difference is the screen's draw.
 
 `install_pi.sh` turns SPI on and installs the libraries (`pip install -e ".[oled]"`). Check the wiring with `python tests/hardware/check_oled.py` (stop `robot-voice` first, only one program can own the screen). After pulling this change, rebuild once for the new package: `cd ros2_ws && colcon build --symlink-install`.
 
-Screen rows (21 characters each): power state and the PiSugar volts and amps, always top right (`4.12V -0.85A`, `--` if the PiSugar does not answer, polled every 2 s); task, a battery icon and uptime; `TOOL` (the voice agent's current call); two detail lines (for explore, `plant_03 capturing 4/8`); a countdown or result (`enroll Sam 0:17`, then `Sam enrolled` or `Sam matched`). Every message is cut to 10 words.
+The screen: a header in small print with the task, power state (`OK`, `DIP xN`), uptime and a battery icon (PiSugar, polled every 2 s; no icon if it does not answer); then rows of 21 characters: `TOOL` (the voice agent's current call); two detail lines (for explore, `plant_03 capturing 4/8`); a countdown or result (`enroll Sam 0:17`, then `Sam enrolled` or `Sam matched`). Every message is cut to 10 words.
 
-An error shows only while it is fresh: a box of small print at the bottom with `E-xxx text` and its cause, gone 20 s after it was last reported (`ERROR_HOLD_S`). The space the text leaves free plays an animation: blinking eyes, and a running tank while the drivetrain executes a move. To add one, write a painter in `robot_core/oled.py`, add a line to `ANIMS`, and call `status.anim("name", seconds)` from any node.
+An error shows only while it is fresh: a box of small print at the bottom with `E-xxx text` and its cause, gone 20 s after it was last reported (`ERROR_HOLD_S`). The space the text leaves free plays an animation: a face with blinking eyes, and a little box robot rolling on its treads while the drivetrain executes a move. To add one, write a painter in `robot_core/oled.py`, add a line to `ANIMS`, and call `status.anim("name", seconds)` from any node.
 
 Under-voltage: the firmware's live flag is polled about 5 times a second. Each dip shows `PWR DIP xN`, `E-P01`, and a guess at the cause (wheels, head servo, camera load, just booted, low battery). One small file (`~/.cache/robot-lastdip.json`, overwritten, at most every 10 s) lets the next boot show `last dip: ...` even if the dip reset the Pi; it is deleted once shown.
 

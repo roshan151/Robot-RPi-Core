@@ -24,7 +24,7 @@ def test_every_row_fits_the_screen_and_messages_are_ten_words():
         b.apply({"k": k, "v": v})
     b.apply({"k": "error", "v": "P01", "t": "q " * 30})
     rows = b.lines()
-    assert len(rows) == status.ROWS and all(len(r) <= status.WIDTH for r in rows)
+    assert len(rows) == status.ROWS and all(len(r) <= status.WIDTH for r in rows[1:]) and len(rows[0]) == 26
     assert len(b.detail.split()) <= status.MAX_WORDS and len(b.tool.split()) <= status.MAX_WORDS
 
 
@@ -32,11 +32,11 @@ def test_timer_counts_down_and_result_replaces_it():
     b, c = board()
     b.apply({"k": "timer", "v": "enroll Sam", "n": 30})
     c.t = 13
-    assert b.lines()[5] == "enroll Sam 0:17"
+    assert b.lines()[4] == "enroll Sam 0:17"
     b.apply({"k": "result", "v": "Sam enrolled", "n": 6})
-    assert b.lines()[5] == "Sam enrolled"
+    assert b.lines()[4] == "Sam enrolled"
     c.t = 20
-    assert b.lines()[5] == ""
+    assert b.lines()[4] == ""
 
 
 def test_error_box_and_new_task_clears_tool_but_keeps_result():
@@ -46,7 +46,7 @@ def test_error_box_and_new_task_clears_tool_but_keeps_result():
     b.apply({"k": "result", "v": "Roshan matched", "n": 6})
     b.apply({"k": "task", "v": "voice"})
     rows = b.lines()
-    assert b.frame().error == ["E-F02 several faces"] and rows[2] == "" and rows[5] == "Roshan matched"
+    assert b.frame().error == ["E-F02 several faces"] and rows[1] == "" and rows[4] == "Roshan matched"
 
 
 def test_error_box_shows_the_whole_message_then_goes_away():
@@ -185,11 +185,10 @@ def test_power_events_land_in_logs_json_without_any_screen(tmp_path):
             __import__("logging").getLogger().removeHandler(h)
 
 
-def test_pisugar_volts_and_amps_are_always_top_right():
+def test_header_is_task_power_uptime_and_the_battery_is_only_an_icon():
     b, _ = board()
-    assert b.lines()[0].endswith("--V --A") and len(b.lines()[0]) == status.WIDTH
+    assert b.lines()[0].split() == ["idle", "OK", "0m"] and b.frame().battery is None
     b.apply({"k": "battery", "n": 82.0, "volts": 4.12, "amps": -0.85})
     b.apply({"k": "power", "v": "DIP", "n": 3})
-    row = b.lines()[0]
-    assert row == "DIP x3   4.12V -0.85A" and len(row) == status.WIDTH
-    assert b.lines()[1].startswith("idle") and "%" not in b.lines()[1] and b.frame().battery == 82.0
+    assert b.lines()[0].split() == ["idle", "DIP", "x3", "0m"] and b.frame().battery == 82.0
+    assert not any(c in "".join(b.lines()) for c in "%VA") and b.volts == 4.12

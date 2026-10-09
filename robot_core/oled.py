@@ -4,8 +4,8 @@ Wiring (BCM / physical pin):  VCC 3.3V (1)  GND (25)  SCK GPIO11 (23)
 SDA = data in = GPIO10 (19)  CS GPIO8 (24)  DC GPIO25 (22)  RES GPIO17 (11)
 and `dtparam=spi=on` in /boot/firmware/config.txt. Needs: pip install ".[oled]".
 
-8 rows x 21 characters, 6x8 pixels each; the battery is an icon, an error is a
-box of small print (4x6) at the bottom, and whatever space the text leaves free
+A header in small print (4x6) with the battery icon, then 7 rows x 21 characters,
+6x8 pixels each; an error is a box of small print at the bottom, and whatever space the text leaves free
 plays an animation. To add one: a painter and a line in ANIMS, then
 `status.anim("name")`. No screen or no libraries is not an error for the robot:
 `start()` logs once and returns False.
@@ -51,40 +51,43 @@ def _battery(d, x: int, y: int, percent: float) -> None:
 
 def _eyes(d, box, pose: str) -> None:
     x0, y0, x1, y1 = box
-    h = min(y1 - y0 - 4, 30)
-    w, lid = h * 5 // 6, 2 if pose == "-" else h                               # "-" = blink
-    cx, cy = (x0 + x1) // 2 + {"<": -8, ">": 8}.get(pose, 0), (y0 + y1) // 2
-    for ex in (cx - w // 4 - w, cx + w // 4):
+    fh = min(y1 - y0 - 4, 40)                                                  # the face, an outline around the eyes
+    fw, cx, cy = fh * 3 // 2, (x0 + x1) // 2, (y0 + y1) // 2
+    d.rounded_rectangle((cx - fw // 2, cy - fh // 2, cx + fw // 2, cy + fh // 2), radius=fh // 4, outline="white")
+    h = fh * 2 // 5
+    w, lid = h * 3 // 4, 2 if pose == "-" else h                               # "-" = blink
+    cx += {"<": -fw // 8, ">": fw // 8}.get(pose, 0)
+    for ex in (cx - w // 2 - w, cx + w // 2):
         d.rounded_rectangle((ex, cy - lid // 2, ex + w, cy + lid // 2), radius=min(w, lid) // 3, fill="white")
 
 
-def _tank(d, box, pose: str) -> None:
-    """Side view, driving right: the treads and the ground move, the body bobs."""
+def _robot(d, box, pose: str) -> None:
+    """A little box robot on two treads, from the front: the treads roll and the head bobs."""
     x0, y0, x1, y1 = box
-    step, s = int(pose), 2 if y1 - y0 >= 30 else 1                             # twice the size when there is room
-    ox, oy = (x0 + x1) // 2 - 12 * s, y1 - 2 - 13 * s
+    step, s = int(pose), 2 if y1 - y0 >= 44 else 1                             # twice the size when there is room
+    ox, oy = (x0 + x1) // 2 - 12 * s, y1 - 2 - 20 * s
 
-    def rect(a, b, c, e, **kw):                                                # in tank units, 24 x 13
+    def rect(a, b, c, e, **kw):                                                # in robot units, 24 x 20
         d.rectangle((ox + a * s, oy + b * s, ox + (c + 1) * s - 1, oy + (e + 1) * s - 1), **kw)
 
     bob = step % 2
-    rect(8, bob, 15, 3 + bob, fill="white")                                    # turret
-    rect(16, 1 + bob, 23, 1 + bob, fill="white")                               # gun
-    rect(3, 4 + bob, 20, 5, fill="white")                                      # hull
-    d.rounded_rectangle((ox, oy + 7 * s, ox + 24 * s - 1, oy + 13 * s - 1), radius=3 * s, outline="white", width=s)
-    for i in range(6):
-        rect((step + 4 * i) % 22 + 1, 7, (step + 4 * i) % 22 + 1, 7, fill="black")         # tread gaps: top runs forward,
-        rect((4 * i - step) % 22 + 1, 12, (4 * i - step) % 22 + 1, 12, fill="black")       # bottom runs back
-    for wx in (3, 9, 15, 20):
-        rect(wx, 9, wx + 1, 10, fill="white")                                  # wheels
-    for gx in range(x0 - step * 2 * s, x1, 8 * s):                             # ground
-        d.line((max(gx, x0), y1 - 1, max(gx + 3 * s, x0), y1 - 1), fill="white")
+    for ex in (3, 13):                                                         # binocular eyes
+        d.rounded_rectangle((ox + ex * s, oy + bob * s, ox + (ex + 8) * s - 1, oy + (6 + bob) * s - 1),
+                            radius=2 * s, fill="white")
+        rect(ex + 3, 2 + bob, ex + 4, 3 + bob, fill="black")
+    rect(11, 6 + bob, 12, 8, fill="white")                                     # neck
+    rect(6, 9, 17, 17, outline="white", width=s)                               # body
+    rect(9, 12, 14, 12, fill="white")                                          # chest panel
+    for tx in (1, 19):                                                         # treads
+        rect(tx, 10, tx + 3, 19, fill="white")
+        for i in range(4):
+            rect(tx, 10 + (step + 3 * i) % 10, tx + 3, 10 + (step + 3 * i) % 10, fill="black")
 
 
 # name -> (one pose per tick of ANIM_HZ, looping; painter(d, box, pose)). "" is the idle face.
 ANIMS = {
     "": ("o" * 22 + "-" + "o" * 10 + "<" * 5 + "o" * 8 + ">" * 5 + "o" * 6 + "-", _eyes),   # open, blink, glance
-    "tank": ("0123", _tank),
+    "tank": ("0123", _robot),                                                               # while driving
 }
 
 
@@ -97,18 +100,19 @@ def draw(device, frame: status.Frame, at: str = "o") -> None:
     from luma.core.legacy.font import LCD_FONT, TINY_FONT   # 5x7 and 3x5 glyphs
     from luma.core.render import canvas
     with canvas(device) as d:
-        for r, line in enumerate(frame.rows):
+        _text(d, 0, 0, frame.rows[0].upper(), TINY_FONT, SMALL_W)             # header; capitals read better at 3x5
+        for r, line in enumerate(frame.rows[1:], 1):
             _text(d, 0, r * CELL_H, line, LCD_FONT, CELL_W)
         if frame.battery is not None:
-            _battery(d, 12 * CELL_W + 2, CELL_H, frame.battery)                # where row 1 used to say 82%
+            _battery(d, device.width - 20, 0, frame.battery)
         top = CELL_H * (max((r for r, line in enumerate(frame.rows) if line), default=-1) + 1)
         bottom = device.height
         if frame.error:                                                        # boxed, over the bottom of the screen
             bottom -= len(frame.error) * SMALL_H + 5
             d.rectangle((0, bottom + 1, device.width - 1, device.height - 1), outline="white", fill="black")
             for i, line in enumerate(frame.error):
-                _text(d, 4, bottom + 3 + i * SMALL_H, line.upper(), TINY_FONT, SMALL_W)   # capitals read better at 3x5
-        if bottom - top >= 14:                                                 # free space under the text
+                _text(d, 4, bottom + 3 + i * SMALL_H, line.upper(), TINY_FONT, SMALL_W)
+        if bottom - top >= 22:                                                 # free space under the text
             ANIMS.get(frame.anim, ANIMS[""])[1](d, (0, top, device.width, bottom), at)
 
 
