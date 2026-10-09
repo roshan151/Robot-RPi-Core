@@ -393,3 +393,42 @@
 {"ts":"2026-10-09T01:39:14.759Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.85,"repeats":3}
 {"ts":"2026-10-09T01:40:34.637Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.83,"repeats":5}
 {"ts":"2026-10-09T01:41:04.699Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.9,"repeats":4}
+{"ts":"2026-10-09T01:41:54.006Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.77,"repeats":1}
+{"ts":"2026-10-09T01:42:40.226Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":2.31,"repeats":1}
+{"ts":"2026-10-09T01:42:40.228Z","lvl":"info","evt":"voice.heard","text":"Hello."}
+{"ts":"2026-10-09T01:42:40.248Z","lvl":"info","evt":"gesture","name":"yes","jobs":[true,true]}
+{"ts":"2026-10-09T01:42:40.249Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[true,true]}
+{"ts":"2026-10-09T01:42:42.571Z","lvl":"info","evt":"voice.heard","text":"Robot shut down."}
+{"ts":"2026-10-09T01:42:42.675Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1500 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-09T01:42:42.678Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-09T01:42:42.679Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply is off - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-09T01:42:43.003Z","lvl":"info","evt":"gesture","name":"yes","jobs":[true,true]}
+{"ts":"2026-10-09T01:42:43.005Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-10-09T01:42:43.011Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-10-09T01:40:48.982Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-09T01:40:49.635Z","lvl":"info","evt":"session.start","mode":"ros","pid":1699,"log":"logs.json"}
+{"ts":"2026-10-09T01:40:54.959Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-09T01:40:54.959Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-09T03:03:24.994Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.92}
+{"ts":"2026-10-09T03:03:31.500Z","lvl":"info","evt":"voice.heard","text":"\u30cf\u30ed\u30fc \u30c7\u30a3\u30fc\u30ef\u30f3"}
+{"ts":"2026-10-09T03:03:31.518Z","lvl":"info","evt":"gesture","name":"yes","jobs":[true,true]}
+{"ts":"2026-10-09T03:03:31.519Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[true,true]}
+{"ts":"2026-10-09T03:03:34.765Z","lvl":"info","evt":"voice.heard","text":"\u091c\u094b \u0906\u0924\u093e \u0939\u0948 \u0928\u093e"}
+{"ts":"2026-10-09T03:03:34.770Z","lvl":"info","evt":"gesture","name":"unclear","jobs":[true,true,true]}
+{"ts":"2026-10-09T03:03:34.771Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"unclear"},"ok":true,"gestured":true,"value":"unclear","jobs":[true,true,true]}
+{"ts":"2026-10-09T03:03:37.307Z","lvl":"info","evt":"voice.heard","text":"Go straight."}
+{"ts":"2026-10-09T03:03:37.325Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
+{"ts":"2026-10-09T03:03:48.776Z","lvl":"info","evt":"voice.heard","text":"Vot. Haan, aisa dala tha bhai, par woh nahin aaya. Move back."}
+{"ts":"2026-10-09T03:03:49.596Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":-1},"ok":true,"queued":true,"op":"drive","value":-1.0}
+{"ts":"2026-10-09T03:03:54.064Z","lvl":"info","evt":"voice.heard","text":"\u092f\u0939 \u0935\u0939 \u0926\u0942\u0938\u0930\u093e \u0921\u093f\u0935\u0940\u095b\u0928 \u0906\u0924\u093e \u0939\u0948 \u091a\u0932\u0924\u093e\u0964"}
+{"ts":"2026-10-09T03:03:54.067Z","lvl":"info","evt":"gesture.skip","name":"unclear","why":"busy"}
+{"ts":"2026-10-09T03:03:54.068Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"unclear"},"ok":true,"gestured":false,"note":"busy moving"}
+{"ts":"2026-10-09T03:04:00.408Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.46,"repeats":6}
+{"ts":"2026-10-09T03:04:00.409Z","lvl":"info","evt":"voice.heard","text":"Shut down hai."}
+{"ts":"2026-10-09T03:04:00.475Z","lvl":"info","evt":"gesture","name":"yes","jobs":[true,true]}
+{"ts":"2026-10-09T03:04:00.476Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-10-09T03:04:00.477Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-10-09T03:04:21.960Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-09T03:04:22.859Z","lvl":"info","evt":"session.start","mode":"ros","pid":1728,"log":"logs.json"}
+{"ts":"2026-10-09T03:04:28.428Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-09T03:04:28.429Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
