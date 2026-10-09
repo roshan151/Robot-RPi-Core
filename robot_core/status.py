@@ -1,14 +1,17 @@
 """What the robot is doing, in a few words, for the OLED (see robot_core/oled.py).
 
 Anything can call these from any thread; nothing is stored on disk. Every
-message is cut to 10 words, and the screen shows 8 rows of 21 characters.
+message is cut to 10 words, and the screen shows 8 rows of 21 characters. An
+error is a boxed small-print message that goes away by itself; the space no
+text is using plays an animation (blinking eyes, or `anim("tank")` while driving).
 
     status.task("explore")            what the robot is working on
     status.tool("drive 0.5m")         the voice agent's current tool call
     status.detail("plant_03 photo 4/8")
     status.timer("enroll Sam", 30)    counts down on screen
     status.result("Sam enrolled")     shown for a few seconds
-    status.error("P01")               E-P01 plus its short text from CODES
+    status.error("P01")               boxed E-P01 plus its short text from CODES, for 20 s
+    status.anim("tank", 10)           animation for the free space; anim("") = back to eyes
 
 One process owns the screen. The others call `set_sink()` with something that
 forwards the message to it (the ROS nodes publish /robot/status); until then
@@ -22,9 +25,11 @@ import re
 import textwrap
 import threading
 import time
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, NamedTuple, Optional
 
 WIDTH, ROWS, MAX_WORDS = 21, 8, 10
+SMALL_WIDTH = 30                                  # characters per line of small print inside the error box
+ERROR_HOLD_S = 20.0                               # an error leaves the screen this long after it was last reported
 
 # Error codes: letter = area, number = what. Texts are kept short for the screen.
 CODES: Dict[str, str] = {
@@ -58,8 +63,16 @@ def _up(seconds: float) -> str:
     return f"{m}m" if m < 60 else f"{m // 60}h{m % 60:02d}" if m < 600 else f"{m // 60}h"
 
 
+class Frame(NamedTuple):
+    """One screen for oled.draw(): the text rows plus the parts that are drawn, not typed."""
+    rows: List[str]
+    battery: Optional[float]                      # percent, for the battery icon
+    error: List[str]                              # small-print lines of the error box; empty = no box
+    anim: str                                     # animation for the free space, a name in oled.ANIMS
+
+
 class Board:
-    """The screen's state. `apply()` takes messages; `lines()` is what to draw."""
+    """The screen's state. `apply()` takes messages; `frame()` is what to draw."""
 
     def __init__(self, clock: Callable[[], float] = time.monotonic) -> None:
         self._clock, self._lock = clock, threading.Lock()
@@ -70,7 +83,8 @@ class Board:
         self.volts = self.amps = None             # from the PiSugar
         self._timer: Optional[tuple] = None       # (label, started, seconds)
         self._result: Optional[tuple] = None      # (text, until)
-        self._note_until = 0.0
+        self._note_until = self._error_until = 0.0
+        self._anim = ("", 0.0)                    # (name, until)
 
     def apply(self, msg: dict) -> None:
         k, v, now = msg.get("k"), words(msg.get("v", "")), self._clock()
@@ -84,6 +98,9 @@ class Board:
                 self.detail = v
             elif k == "error":
                 self.code, self.cause = str(msg.get("v", ""))[:4], words(msg.get("t", ""), 6)
+                self._error_until = now + float(msg.get("n", ERROR_HOLD_S))
+            elif k == "anim":                         # times out, so a lost "stop" cannot leave it running
+                self._anim = (v, now + float(msg.get("n", 30)))
             elif k == "timer":
                 self._timer, self._result = (v, now, float(msg.get("n", 0))), None
             elif k == "timer_stop":
@@ -101,7 +118,7 @@ class Board:
         now = self._clock()
         with self._lock:
             pwr = self.power + (f" x{self.dips}" if self.dips else "")
-            bat = "--" if self.battery is None else f"{self.battery:.0f}%"
+            bat = "--" if self.battery is None else ""                         # known: oled draws an icon here
             volts = "--V" if self.volts is None else f"{self.volts:.2f}V"      # top right, always
             amps = "--A" if self.amps is None else f"{self.amps:+.2f}A"
             rows = [f"{pwr:<9.9}{volts + ' ' + amps:>12}",
@@ -115,9 +132,15 @@ class Board:
                 rows.append(f"{label[:13]} {_mmss(total - (now - t))}")
             else:
                 rows.append("")
-            rows.append(f"E-{self.code} {CODES.get(self.code, '')}" if self.code else "")
-            rows.append(self.cause if self.code else (self.note if now < self._note_until else ""))
+            rows.append(self.note if now < self._note_until else "")
         return [r[:WIDTH] for r in rows[:ROWS]] + [""] * (ROWS - len(rows))
+
+    def frame(self) -> Frame:
+        rows, now = self.lines(), self._clock()
+        with self._lock:
+            error = (textwrap.wrap(f"E-{self.code} {CODES.get(self.code, '')}", SMALL_WIDTH)
+                     + textwrap.wrap(self.cause, SMALL_WIDTH))[:3] if now < self._error_until else []
+            return Frame(rows, self.battery, error, self._anim[0] if now < self._anim[1] else "")
 
 
 BOARD = Board()
@@ -143,7 +166,8 @@ def detail(text: str) -> None: _post(k="detail", v=words(text))
 def timer(label: str, seconds: float) -> None: _post(k="timer", v=words(label, 3), n=seconds)
 def timer_stop() -> None: _post(k="timer_stop")
 def result(text: str, hold: float = 6.0) -> None: _post(k="result", v=words(text), n=hold)
-def error(code: str, text: str = "") -> None: _post(k="error", v=code, t=text)
+def error(code: str, text: str = "", hold: float = ERROR_HOLD_S) -> None: _post(k="error", v=code, t=text, n=hold)
+def anim(name: str, seconds: float = 30.0) -> None: _post(k="anim", v=name, n=seconds)
 def power(state: str, dips: int = 0) -> None: _post(k="power", v=state, n=dips)
 def battery(percent=None, volts=None, amps=None) -> None: _post(k="battery", n=percent, volts=volts, amps=amps)
 def note(text: str, seconds: float = 30.0) -> None: _post(k="note", v=text, n=seconds)

@@ -1,4 +1,4 @@
-"""Wiring check for the status OLED: draws text, then a countdown. Run on the Pi:
+"""Wiring check for the status OLED: text, an error box, the tank, then the eyes. Run on the Pi:
 
     python tests/hardware/check_oled.py
 
@@ -23,6 +23,7 @@ def main() -> None:
     board.apply({"k": "timer", "v": "enroll Sam", "n": 10})
     board.apply({"k": "error", "v": "P01", "t": "wheels drawing current"})
     board.apply({"k": "battery", "n": 82})
+    board.apply({"k": "anim", "v": "tank", "n": 8})
     time.sleep(12)
     board.apply({"k": "result", "v": "Sam enrolled", "n": 4})
     time.sleep(5)

@@ -39,14 +39,34 @@ def test_timer_counts_down_and_result_replaces_it():
     assert b.lines()[5] == ""
 
 
-def test_error_code_row_and_new_task_clears_tool_but_keeps_result():
+def test_error_box_and_new_task_clears_tool_but_keeps_result():
     b, _ = board()
     b.apply({"k": "tool", "v": "drive 1"})
     b.apply({"k": "error", "v": "F02"})
     b.apply({"k": "result", "v": "Roshan matched", "n": 6})
     b.apply({"k": "task", "v": "voice"})
     rows = b.lines()
-    assert rows[6] == "E-F02 several faces" and rows[2] == "" and rows[5] == "Roshan matched"
+    assert b.frame().error == ["E-F02 several faces"] and rows[2] == "" and rows[5] == "Roshan matched"
+
+
+def test_error_box_shows_the_whole_message_then_goes_away():
+    b, c = board()
+    assert b.frame().error == [] and not any("E-" in r for r in b.lines())
+    b.apply({"k": "error", "v": "G02", "t": "pan limited to -50..+9"})
+    assert b.frame().error == ["E-G02 servo range limited", "pan limited to -50..+9"]
+    c.t = status.ERROR_HOLD_S + 1
+    assert b.frame().error == [] and b.code == "G02"
+    for code, text in status.CODES.items():
+        assert len(f"E-{code} {text}") <= status.SMALL_WIDTH
+
+
+def test_animation_is_eyes_until_asked_and_times_out():
+    b, c = board()
+    assert b.frame().anim == ""
+    b.apply({"k": "anim", "v": "tank", "n": 10})
+    assert b.frame().anim == "tank"
+    c.t = 11
+    assert b.frame().anim == ""
 
 
 def test_sink_forwards_json_and_never_raises():
@@ -128,10 +148,15 @@ def test_classify_rules():
 def test_oled_renders_rows_to_a_dummy_device():
     pytest.importorskip("luma.core")
     from luma.core.device import dummy
-    from robot_core.oled import draw
+    from robot_core.oled import ANIMS, draw, pose
     dev = dummy(width=128, height=64)
-    draw(dev, ["PWR OK", "TASK explore"] + [""] * 6)
-    assert dev.image.getbbox() is not None and dev.image.size == (128, 64)
+    seen = set()
+    for anim in list(ANIMS) + ["no such animation"]:
+        for p in set(ANIMS.get(anim, ANIMS[""])[0]):
+            draw(dev, status.Frame(["PWR OK", "TASK explore"] + [""] * 6, 82.0, ["E-P01 UNDERVOLT NOW"], anim), p)
+            assert dev.image.getbbox() is not None and dev.image.size == (128, 64)
+            seen.add(dev.image.tobytes())
+    assert len(seen) > 4 and pose("tank", 0.0) != pose("tank", 0.13)
 
 
 def test_power_events_land_in_logs_json_without_any_screen(tmp_path):
@@ -167,4 +192,4 @@ def test_pisugar_volts_and_amps_are_always_top_right():
     b.apply({"k": "power", "v": "DIP", "n": 3})
     row = b.lines()[0]
     assert row == "DIP x3   4.12V -0.85A" and len(row) == status.WIDTH
-    assert b.lines()[1].startswith("idle") and "82%" in b.lines()[1]
+    assert b.lines()[1].startswith("idle") and "%" not in b.lines()[1] and b.frame().battery == 82.0

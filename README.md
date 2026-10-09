@@ -261,7 +261,9 @@ To measure it on your robot, compare the PiSugar amps in the top right of the sc
 
 `install_pi.sh` turns SPI on and installs the libraries (`pip install -e ".[oled]"`). Check the wiring with `python tests/hardware/check_oled.py` (stop `robot-voice` first, only one program can own the screen). After pulling this change, rebuild once for the new package: `cd ros2_ws && colcon build --symlink-install`.
 
-Screen rows (21 characters each): power state and the PiSugar volts and amps, always top right (`4.12V -0.85A`, `--` if the PiSugar does not answer, polled every 2 s); task, battery % and uptime; `TOOL` (the voice agent's current call); two detail lines (for explore, `plant_03 capturing 4/8`); a countdown or result (`enroll Sam 0:17`, then `Sam enrolled` or `Sam matched`); the last error code `E-xxx text`; and its cause. Every message is cut to 10 words.
+Screen rows (21 characters each): power state and the PiSugar volts and amps, always top right (`4.12V -0.85A`, `--` if the PiSugar does not answer, polled every 2 s); task, a battery icon and uptime; `TOOL` (the voice agent's current call); two detail lines (for explore, `plant_03 capturing 4/8`); a countdown or result (`enroll Sam 0:17`, then `Sam enrolled` or `Sam matched`). Every message is cut to 10 words.
+
+An error shows only while it is fresh: a box of small print at the bottom with `E-xxx text` and its cause, gone 20 s after it was last reported (`ERROR_HOLD_S`). The space the text leaves free plays an animation: blinking eyes, and a running tank while the drivetrain executes a move. To add one, write a painter in `robot_core/oled.py`, add a line to `ANIMS`, and call `status.anim("name", seconds)` from any node.
 
 Under-voltage: the firmware's live flag is polled about 5 times a second. Each dip shows `PWR DIP xN`, `E-P01`, and a guess at the cause (wheels, head servo, camera load, just booted, low battery). One small file (`~/.cache/robot-lastdip.json`, overwritten, at most every 10 s) lets the next boot show `last dip: ...` even if the dip reset the Pi; it is deleted once shown.
 
