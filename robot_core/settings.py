@@ -56,7 +56,7 @@ NORMAL_SEQ_MAX = ESTOP_SEQ_MIN - 1
 #                   Overshooting -> lower it. Undershooting -> raise it.
 # TURN_COAST_TICKS: only for overshoot that is the SAME at 90 and 360 deg (momentum).
 TICKS_PER_CM = _env("ROBOT_TICKS_PER_CM", "38.5", float)
-TICKS_PER_DEGREE = _env("ROBOT_TICKS_PER_DEGREE", "7.37", float)   # measured at 70 % speed
+TICKS_PER_DEGREE = _env("ROBOT_TICKS_PER_DEGREE", "6", float)   # measured at 70 % speed
 TURN_COAST_TICKS = _env("ROBOT_TURN_COAST_TICKS", "0", float)
 DEFAULT_SPEED_PERCENT = _env("ROBOT_DEFAULT_SPEED_PCT", "80.0", float)
 DEFAULT_TURN_DEGREES = _env("ROBOT_DEFAULT_TURN_DEG", "90", float)
