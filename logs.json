@@ -292,3 +292,104 @@
 {"ts":"2026-10-08T22:28:19.299Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
 {"ts":"2026-10-08T22:28:19.300Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
 {"ts":"2026-10-08T22:28:24.952Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.86}
+{"ts":"2026-10-08T22:29:15.855Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.81,"repeats":5}
+{"ts":"2026-10-08T22:29:33.020Z","lvl":"info","evt":"voice.heard","text":"Look up."}
+{"ts":"2026-10-08T22:29:33.154Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1500 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-08T22:29:33.159Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-08T22:29:33.159Z","lvl":"info","evt":"voice.tool","name":"look_up","args":{"degrees":30},"ok":false,"error":"head servos have no power - switch the servo supply on"}
+{"ts":"2026-10-08T22:29:33.782Z","lvl":"info","evt":"voice.say","text":"I'm sorry,","spoken":false}
+{"ts":"2026-10-08T22:29:33.990Z","lvl":"info","evt":"voice.say","text":"but","spoken":false}
+{"ts":"2026-10-08T22:29:34.116Z","lvl":"info","evt":"voice.say","text":"I can't","spoken":false}
+{"ts":"2026-10-08T22:29:34.165Z","lvl":"info","evt":"voice.say","text":"do that","spoken":false}
+{"ts":"2026-10-08T22:29:34.263Z","lvl":"info","evt":"voice.say","text":"right","spoken":false}
+{"ts":"2026-10-08T22:29:34.309Z","lvl":"info","evt":"voice.say","text":"now.","spoken":false}
+{"ts":"2026-10-08T22:29:34.471Z","lvl":"info","evt":"voice.say","text":"It","spoken":false}
+{"ts":"2026-10-08T22:29:34.539Z","lvl":"info","evt":"voice.say","text":"looks","spoken":false}
+{"ts":"2026-10-08T22:29:34.637Z","lvl":"info","evt":"voice.say","text":"like there's","spoken":false}
+{"ts":"2026-10-08T22:29:34.741Z","lvl":"info","evt":"voice.say","text":"an issue","spoken":false}
+{"ts":"2026-10-08T22:29:34.809Z","lvl":"info","evt":"voice.say","text":"with the","spoken":false}
+{"ts":"2026-10-08T22:29:34.906Z","lvl":"info","evt":"voice.say","text":"power","spoken":false}
+{"ts":"2026-10-08T22:29:34.983Z","lvl":"info","evt":"voice.say","text":"to my","spoken":false}
+{"ts":"2026-10-08T22:29:35.038Z","lvl":"info","evt":"voice.say","text":"head","spoken":false}
+{"ts":"2026-10-08T22:29:35.221Z","lvl":"info","evt":"voice.say","text":"servos.","spoken":false}
+{"ts":"2026-10-08T22:29:35.398Z","lvl":"info","evt":"voice.say","text":"Is there","spoken":false}
+{"ts":"2026-10-08T22:29:35.468Z","lvl":"info","evt":"voice.say","text":"anything","spoken":false}
+{"ts":"2026-10-08T22:29:35.537Z","lvl":"info","evt":"voice.say","text":"else","spoken":false}
+{"ts":"2026-10-08T22:29:35.611Z","lvl":"info","evt":"voice.say","text":"I can","spoken":false}
+{"ts":"2026-10-08T22:29:35.638Z","lvl":"info","evt":"voice.say","text":"help you","spoken":false}
+{"ts":"2026-10-08T22:29:35.774Z","lvl":"info","evt":"voice.say","text":"with?","spoken":false}
+{"ts":"2026-10-08T22:29:41.428Z","lvl":"info","evt":"voice.heard","text":"Look down."}
+{"ts":"2026-10-08T22:29:41.438Z","lvl":"info","evt":"voice.tool","name":"look_down","args":{"degrees":30},"ok":false,"error":"head servos have no power - switch the servo supply on"}
+{"ts":"2026-10-08T22:29:41.883Z","lvl":"info","evt":"gesture","name":"no","jobs":[true,true,true]}
+{"ts":"2026-10-08T22:29:41.885Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[true,true,true]}
+{"ts":"2026-10-08T22:29:48.378Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-08T22:29:52.313Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.13,"repeats":5}
+{"ts":"2026-10-08T22:29:52.317Z","lvl":"info","evt":"voice.heard","text":"Look down."}
+{"ts":"2026-10-08T22:29:52.327Z","lvl":"info","evt":"voice.tool","name":"look_down","args":{"degrees":30},"ok":true,"tilt":-30.0,"clamped":false}
+{"ts":"2026-10-08T22:29:57.930Z","lvl":"info","evt":"voice.heard","text":"Look left."}
+{"ts":"2026-10-08T22:29:57.934Z","lvl":"info","evt":"voice.tool","name":"look_left","args":{"degrees":30},"ok":true,"pan":30.0,"clamped":false}
+{"ts":"2026-10-08T22:30:02.017Z","lvl":"info","evt":"voice.heard","text":"Look right."}
+{"ts":"2026-10-08T22:30:02.028Z","lvl":"info","evt":"voice.tool","name":"look_right","args":{"degrees":30},"ok":true,"pan":0.0,"clamped":false}
+{"ts":"2026-10-08T22:30:05.667Z","lvl":"info","evt":"voice.heard","text":"Look up."}
+{"ts":"2026-10-08T22:30:05.673Z","lvl":"info","evt":"voice.tool","name":"look_up","args":{"degrees":30},"ok":true,"tilt":0.0,"clamped":false}
+{"ts":"2026-10-08T22:30:09.674Z","lvl":"info","evt":"voice.heard","text":"Look more up."}
+{"ts":"2026-10-08T22:30:09.677Z","lvl":"info","evt":"voice.tool","name":"look_up","args":{"degrees":30},"ok":true,"tilt":30.0,"clamped":false}
+{"ts":"2026-10-08T22:30:14.086Z","lvl":"info","evt":"voice.heard","text":"Shut down."}
+{"ts":"2026-10-08T22:30:15.541Z","lvl":"info","evt":"gesture","name":"yes","jobs":[true,true]}
+{"ts":"2026-10-08T22:30:15.542Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-10-08T22:30:15.543Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-10-08T22:30:18.632Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-08T22:30:19.278Z","lvl":"info","evt":"session.start","mode":"ros","pid":1699,"log":"logs.json"}
+{"ts":"2026-10-08T22:30:24.479Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-08T22:30:24.479Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-08T23:40:02.816Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.81}
+{"ts":"2026-10-08T23:40:07.863Z","lvl":"info","evt":"voice.heard","text":"Turn right by 90\u00b0."}
+{"ts":"2026-10-08T23:40:07.882Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":90},"ok":true,"queued":true,"op":"turn","value":90.0}
+{"ts":"2026-10-08T23:40:18.698Z","lvl":"info","evt":"voice.heard","text":"Turn 180\u00b0."}
+{"ts":"2026-10-08T23:40:18.996Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":180},"ok":true,"queued":true,"op":"turn","value":180.0}
+{"ts":"2026-10-08T23:40:36.440Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":2.67,"repeats":3}
+{"ts":"2026-10-08T23:40:36.441Z","lvl":"info","evt":"voice.heard","text":"Look up."}
+{"ts":"2026-10-08T23:40:36.542Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1500 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-08T23:40:36.545Z","lvl":"info","evt":"voice.tool","name":"look_up","args":{"degrees":30},"ok":true,"tilt":30.0,"clamped":false}
+{"ts":"2026-10-08T23:40:43.165Z","lvl":"info","evt":"voice.heard","text":"Look down again."}
+{"ts":"2026-10-08T23:40:43.171Z","lvl":"info","evt":"voice.tool","name":"look_down","args":{"degrees":30},"ok":true,"tilt":0.0,"clamped":false}
+{"ts":"2026-10-08T23:40:47.506Z","lvl":"info","evt":"voice.heard","text":"Go straight."}
+{"ts":"2026-10-08T23:40:47.513Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
+{"ts":"2026-10-08T23:41:07.446Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.89,"repeats":4}
+{"ts":"2026-10-08T23:41:07.447Z","lvl":"info","evt":"voice.heard","text":"Again go straight."}
+{"ts":"2026-10-08T23:41:07.453Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
+{"ts":"2026-10-08T23:41:38.243Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.76,"repeats":3}
+{"ts":"2026-10-08T23:41:43.707Z","lvl":"info","evt":"voice.heard","text":"Turn left."}
+{"ts":"2026-10-08T23:41:43.712Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-90},"ok":true,"queued":true,"op":"turn","value":-90.0}
+{"ts":"2026-10-08T23:41:50.599Z","lvl":"info","evt":"voice.heard","text":"Look left by 90\u00b0."}
+{"ts":"2026-10-08T23:41:50.603Z","lvl":"info","evt":"voice.tool","name":"look_left","args":{"degrees":90},"ok":true,"pan":81.0,"clamped":true}
+{"ts":"2026-10-08T23:41:59.577Z","lvl":"info","evt":"voice.heard","text":"look up"}
+{"ts":"2026-10-08T23:41:59.581Z","lvl":"info","evt":"voice.tool","name":"look_up","args":{"degrees":30},"ok":true,"tilt":30.0,"clamped":false}
+{"ts":"2026-10-08T23:42:07.700Z","lvl":"info","evt":"voice.heard","text":"Look back to previous version"}
+{"ts":"2026-10-08T23:42:07.704Z","lvl":"info","evt":"voice.tool","name":"look_down","args":{"degrees":30},"ok":true,"tilt":0.0,"clamped":false}
+{"ts":"2026-10-08T23:42:07.706Z","lvl":"info","evt":"voice.tool","name":"look_right","args":{"degrees":90},"ok":true,"pan":-9.0,"clamped":false}
+{"ts":"2026-10-08T23:42:18.729Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.89,"repeats":4}
+{"ts":"2026-10-08T23:42:21.894Z","lvl":"info","evt":"voice.heard","text":"Reset gimbal to original position"}
+{"ts":"2026-10-08T23:42:21.898Z","lvl":"info","evt":"voice.tool","name":"look_right","args":{"degrees":9},"ok":true,"pan":-18.0,"clamped":false}
+{"ts":"2026-10-08T23:42:21.900Z","lvl":"info","evt":"voice.tool","name":"look_down","args":{"degrees":0},"ok":true,"tilt":0.0,"clamped":false}
+{"ts":"2026-10-08T23:42:29.784Z","lvl":"info","evt":"voice.heard","text":"Look left by 10\u00b0."}
+{"ts":"2026-10-08T23:42:29.793Z","lvl":"info","evt":"voice.tool","name":"look_left","args":{"degrees":10},"ok":true,"pan":-8.0,"clamped":false}
+{"ts":"2026-10-08T23:42:38.994Z","lvl":"info","evt":"voice.heard","text":"Robot shut down."}
+{"ts":"2026-10-08T23:42:39.713Z","lvl":"info","evt":"gesture","name":"yes","jobs":[true,true]}
+{"ts":"2026-10-08T23:42:39.717Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-10-08T23:42:39.725Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-10-08T23:42:04.440Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-08T23:42:05.310Z","lvl":"info","evt":"session.start","mode":"ros","pid":1734,"log":"logs.json"}
+{"ts":"2026-10-09T01:36:39.431Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-09T01:36:39.432Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-09T01:36:45.113Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.81}
+{"ts":"2026-10-09T01:37:15.419Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.85,"repeats":4}
+{"ts":"2026-10-09T01:37:53.645Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-09T01:37:54.428Z","lvl":"info","evt":"session.start","mode":"ros","pid":2305,"log":"logs.json"}
+{"ts":"2026-10-09T01:37:58.839Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-09T01:37:58.840Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-09T01:38:04.432Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.82}
+{"ts":"2026-10-09T01:38:34.615Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.82,"repeats":4}
+{"ts":"2026-10-09T01:39:14.759Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.85,"repeats":3}
+{"ts":"2026-10-09T01:40:34.637Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.83,"repeats":5}
+{"ts":"2026-10-09T01:41:04.699Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.9,"repeats":4}
