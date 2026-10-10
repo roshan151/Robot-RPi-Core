@@ -62,32 +62,39 @@ def _eyes(d, box, pose: str) -> None:
 
 
 def _robot(d, box, pose: str) -> None:
-    """A little box robot on two treads, from the front: the treads roll and the head bobs."""
+    """A little box robot on treads, side on and driving right: the tread rolls, the head
+    bobs, and puffs of dust drift away behind it."""
     x0, y0, x1, y1 = box
     step, s = int(pose), 2 if y1 - y0 >= 44 else 1                             # twice the size when there is room
-    ox, oy = (x0 + x1) // 2 - 12 * s, y1 - 2 - 20 * s
+    ox, oy = (x0 + x1) // 2 - 8 * s, y1 - 2 - 20 * s                           # robot is 22 x 20 units, dust to its left
 
-    def rect(a, b, c, e, **kw):                                                # in robot units, 24 x 20
+    def rect(a, b, c, e, **kw):                                                # in robot units
         d.rectangle((ox + a * s, oy + b * s, ox + (c + 1) * s - 1, oy + (e + 1) * s - 1), **kw)
 
     bob = step % 2
-    for ex in (3, 13):                                                         # binocular eyes
-        d.rounded_rectangle((ox + ex * s, oy + bob * s, ox + (ex + 8) * s - 1, oy + (6 + bob) * s - 1),
-                            radius=2 * s, fill="white")
-        rect(ex + 3, 2 + bob, ex + 4, 3 + bob, fill="black")
-    rect(11, 6 + bob, 12, 8, fill="white")                                     # neck
-    rect(6, 9, 17, 17, outline="white", width=s)                               # body
-    rect(9, 12, 14, 12, fill="white")                                          # chest panel
-    for tx in (1, 19):                                                         # treads
-        rect(tx, 10, tx + 3, 19, fill="white")
-        for i in range(4):
-            rect(tx, 10 + (step + 3 * i) % 10, tx + 3, 10 + (step + 3 * i) % 10, fill="black")
+    d.rounded_rectangle((ox + 11 * s, oy + bob * s, ox + 21 * s - 1, oy + (5 + bob) * s - 1), radius=2 * s, fill="white")
+    rect(17, 1 + bob, 18, 3 + bob, fill="black")                               # the eye and its lens
+    rect(12, 5 + bob, 13, 7, fill="white")                                     # neck
+    rect(4, 8, 15, 13, outline="white", width=s)                               # body
+    rect(16, 10, 19, 10, fill="white")                                         # arm
+    rect(19, 9, 19, 11, fill="white")
+    for (a, b, c, e), fill in (((7, 14, 12, 20), "white"), ((8, 13, 13, 19), "black")):   # the tread: a triangle
+        d.polygon([(ox + a * s, oy + c * s), (ox + b * s - 1, oy + c * s),                 # on its side, outlined
+                   (ox + (b + 5) * s - 1, oy + e * s - 1), (ox + (a - 5) * s, oy + e * s - 1)], fill=fill)
+    for wx, wy in ((5, 17), (10, 17), (15, 17), (10, 14)):
+        rect(wx, wy, wx + 1, wy + 1, fill="white")                             # wheels
+    for i in range(6):
+        rect(2 + (3 * i - step) % 18, 19, 2 + (3 * i - step) % 18, 19, fill="black")       # tread gaps run backwards
+    for k in range(3):                                                         # dust: small and solid, then bigger and hollow
+        age = (step + 2 * k) % 6
+        cx, cy, r = ox - 2.4 * age * s, oy + (18.5 - 0.7 * age) * s, (0.8 + 0.35 * age) * s
+        d.ellipse((cx - r, cy - r, cx + r, cy + r), outline="white", fill="white" if age < 2 else None)
 
 
 # name -> (one pose per tick of ANIM_HZ, looping; painter(d, box, pose)). "" is the idle face.
 ANIMS = {
     "": ("o" * 22 + "-" + "o" * 10 + "<" * 5 + "o" * 8 + ">" * 5 + "o" * 6 + "-", _eyes),   # open, blink, glance
-    "tank": ("0123", _robot),                                                               # while driving
+    "tank": ("012345", _robot),                                                             # while driving
 }
 
 
