@@ -62,33 +62,37 @@ def _eyes(d, box, pose: str) -> None:
 
 
 def _robot(d, box, pose: str) -> None:
-    """A little box robot on treads, side on and driving right: the tread rolls, the head
-    bobs, and puffs of dust drift away behind it."""
+    """A little robot on a tread, driving right: big head with an antenna, the tread rolls,
+    the head bobs, and one cloud of dust grows behind it."""
     x0, y0, x1, y1 = box
     step, s = int(pose), 2 if y1 - y0 >= 44 else 1                             # twice the size when there is room
     ox, oy = (x0 + x1) // 2 - 8 * s, y1 - 2 - 20 * s                           # robot is 22 x 20 units, dust to its left
 
-    def rect(a, b, c, e, **kw):                                                # in robot units
-        d.rectangle((ox + a * s, oy + b * s, ox + (c + 1) * s - 1, oy + (e + 1) * s - 1), **kw)
+    def rect(a, b, c, e, r=0, **kw):                                           # in robot units
+        d.rounded_rectangle((ox + a * s, oy + b * s, ox + (c + 1) * s - 1, oy + (e + 1) * s - 1), radius=r * s, **kw)
 
     bob = step % 2
-    d.rounded_rectangle((ox + 11 * s, oy + bob * s, ox + 21 * s - 1, oy + (5 + bob) * s - 1), radius=2 * s, fill="white")
-    rect(17, 1 + bob, 18, 3 + bob, fill="black")                               # the eye and its lens
-    rect(12, 5 + bob, 13, 7, fill="white")                                     # neck
-    rect(4, 8, 15, 13, outline="white", width=s)                               # body
-    rect(16, 10, 19, 10, fill="white")                                         # arm
-    rect(19, 9, 19, 11, fill="white")
-    for (a, b, c, e), fill in (((7, 14, 12, 20), "white"), ((8, 13, 13, 19), "black")):   # the tread: a triangle
-        d.polygon([(ox + a * s, oy + c * s), (ox + b * s - 1, oy + c * s),                 # on its side, outlined
-                   (ox + (b + 5) * s - 1, oy + e * s - 1), (ox + (a - 5) * s, oy + e * s - 1)], fill=fill)
-    for wx, wy in ((5, 17), (10, 17), (15, 17), (10, 14)):
-        rect(wx, wy, wx + 1, wy + 1, fill="white")                             # wheels
+    rect(9, bob, 11, 2 + bob, 1, fill="white")                                 # antenna
+    rect(10, 3 + bob, 10, 3 + bob, fill="white")
+    rect(5, 4 + bob, 18, 11 + bob, 3, fill="white")                            # head
+    for ex in (11, 15):
+        rect(ex, 6 + bob, ex + 1, 8 + bob, fill="black")                       # eyes, looking where it is going
+    rect(10, 12, 12, 12, fill="white")                                         # neck
+    rect(6, 13, 16, 16, 1, outline="white", width=s)                           # body
+    rect(17, 14, 19, 14, fill="white")                                         # arm
+    rect(19, 13, 19, 15, fill="white")
+    rect(2, 16, 19, 19, 2, outline="white", fill="black", width=s)             # tread
+    for wx in (5, 9, 13, 16):
+        rect(wx, 17, wx, 18, fill="white")                                     # wheels
     for i in range(6):
-        rect(2 + (3 * i - step) % 18, 19, 2 + (3 * i - step) % 18, 19, fill="black")       # tread gaps run backwards
-    for k in range(3):                                                         # dust: small and solid, then bigger and hollow
-        age = (step + 2 * k) % 6
-        cx, cy, r = ox - 2.4 * age * s, oy + (18.5 - 0.7 * age) * s, (0.8 + 0.35 * age) * s
-        d.ellipse((cx - r, cy - r, cx + r, cy + r), outline="white", fill="white" if age < 2 else None)
+        rect(3 + (3 * i - step) % 16, 19, 3 + (3 * i - step) % 16, 19, fill="black")       # tread gaps run backwards
+    r = (1 + 0.5 * step) * s                                                   # the dust cloud: three lobes, growing
+    cx, cy = ox - (1 + 0.9 * step) * s - r, oy + 20 * s - 1 - 0.7 * r - 0.3 * step * s
+    for inset, fill in ((0, "white"), (1, "black")):                           # black inside leaves just the outline
+        for dx, dy, k in ((-0.9, 0.2, 0.6), (0.9, 0.2, 0.6), (0, -0.3, 0.8)):
+            q = k * r - inset
+            if q >= 1 or not inset:
+                d.ellipse((cx + dx * r - q, cy + dy * r - q, cx + dx * r + q, cy + dy * r + q), fill=fill)
 
 
 # name -> (one pose per tick of ANIM_HZ, looping; painter(d, box, pose)). "" is the idle face.
