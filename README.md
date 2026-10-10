@@ -657,3 +657,17 @@ pip install -e ".[oled]"
 cd ros2_ws && colcon build --symlink-install && source install/setup.bash && cd ..
 
 
+## Face enroll issue
+
+rpicam-hello --list-cameras          # which sensor is this?
+
+cd ~/Robot-RPi-Core && python3 -c "
+from robot_core.sensors.camera import Camera, jpeg
+from robot_core.vision_client import VisionClient
+import cv2
+c = Camera(main_size=(640, 480)); v = VisionClient()
+for i in range(15):
+    f = c.capture(); r = v.face_embed(jpeg(f.main), i)
+    print(i, 'no face' if not r else f\"q={r['quality']:.2f} n={r['face_count']} bbox={[int(x) for x in r['face_bbox']]}\")
+cv2.imwrite('/tmp/cam_check.jpg', f.main); c.close()
+"
