@@ -9,7 +9,8 @@ With a `head` (camera on the pan/tilt gimbal) the robot looks for the face: it
 sweeps pan ±45° at a few tilts from level upwards (the voice node limits the
 tilt axis to 0..+45, so the head never looks below its base position), stops on
 the first face it sees, centres it, and holds there while it captures. Without
-a head the camera just looks straight ahead.
+a head the camera just looks straight ahead. Enroll never searches: the head
+stays still where it is and the person steps in front of it.
 """
 
 from __future__ import annotations
@@ -76,9 +77,10 @@ def enroll(camera, vision: VisionClient, name: str, seconds: float = settings.FA
 
     Same rules as vision_test.py enroll: a second face in view rejects the whole
     capture, blurry / angled frames (quality < FACE_MIN_QUALITY) are skipped, and
-    shots are spread evenly across the window.
+    shots are spread evenly across the window. The head stays still (no search):
+    the person comes to the camera.
     """
-    eyes = _Eyes(camera, vision, head)
+    eyes = _Eyes(camera, vision)                     # no head: don't sweep or re-aim while enrolling
     status.timer(f"search {name}", settings.FACE_SEARCH_SECONDS)
     shots, t0, t_face, last = [], clock(), None, float("-inf")
     try:

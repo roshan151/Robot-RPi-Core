@@ -93,10 +93,16 @@ class SeesFaceAt(Vision):
         return super().face_embed(jpeg, seq) if pan >= 15 and tilt >= 20 else None
 
 
+def test_enroll_keeps_the_head_still():
+    head = Head()
+    assert face_tasks.enroll(HeadCamera(head), Vision(), "sam", seconds=30, clock=Clock(), head=head)
+    assert head.moves == [] and head.aimed == 0, "enroll must not search or re-aim"
+
+
 def test_head_searches_upward_only_then_locks_on_the_face_and_holds():
     head = Head()
-    v = SeesFaceAt(head)
-    assert face_tasks.enroll(HeadCamera(head), v, "sam", seconds=30, clock=Clock(), head=head)
+    v = SeesFaceAt(head, sim=0.0)                                # never matches: keeps looking at the face
+    assert face_tasks.match(HeadCamera(head), v, seconds=30, clock=Clock(), head=head) is None
     assert all(tilt >= 0 for _, tilt in head.moves), "looked below the base position"
     assert head.aimed == 1, "should centre on the face once, then hold"
     last_search = head.moves[-1]
