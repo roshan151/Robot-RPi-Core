@@ -19,11 +19,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from robot_core import settings
 from robot_core.gestures import (
-    DRIVE,
-    GESTURE_NO_DEGREES,
-    GESTURE_YES_METERS,
+    GESTURE_NOD_DEGREES,
+    GESTURE_SHAKE_DEGREES,
     NO,
-    TURN,
+    PAN,
+    TILT,
     YES,
     Gesturer,
 )
@@ -31,6 +31,18 @@ from robot_core.motion import LocalMotion
 from robot_core.motion_executor import CANCELLED, DONE, FAILED, MotionExecutor
 
 MOVE_SECONDS = 0.40
+
+
+class FakeHead:
+    """Stand-in for HeadLook: records head gestures, each taking a moment."""
+
+    def __init__(self) -> None:
+        self.calls: list = []
+
+    def gesture(self, axis: str, degrees: float) -> bool:
+        self.calls.append((axis, degrees))
+        time.sleep(0.2)
+        return True
 
 
 class FakeMovement:
@@ -121,13 +133,15 @@ def test_normal_move_completes() -> None:
         assert move.calls == [("left", 30)]
 
 
-def test_gesture_reaches_the_drivetrain() -> None:
+def test_yes_no_move_the_head_not_the_wheels() -> None:
     move = FakeMovement()
     motion = LocalMotion(move)
+    head = FakeHead()
     try:
-        Gesturer(motion).play("yes")
-        assert motion.executor.drain(timeout=3.0)
-        assert [c[0] for c in move.calls] == ["straight", "reverse"], move.calls
+        Gesturer(motion, head).play("yes", wait=True)
+        Gesturer(motion, head).play("no", wait=True)
+        assert head.calls == [(TILT, GESTURE_NOD_DEGREES), (PAN, GESTURE_SHAKE_DEGREES)], head.calls
+        assert move.calls == [], "yes/no must not drive"
     finally:
         motion.close()
 
@@ -138,20 +152,16 @@ def test_gesture_shapes() -> None:
     # builds its function declaration from it.  This asserted against
     # settings.GESTURE_YES_METERS, which has never existed, so the test raised
     # AttributeError before reaching a single one of its real assertions.
-    assert YES == [(DRIVE, +GESTURE_YES_METERS),
-                   (DRIVE, -GESTURE_YES_METERS)]
-    assert NO == [(TURN, -GESTURE_NO_DEGREES),
-                  (TURN, +GESTURE_NO_DEGREES * 2),
-                  (TURN, -GESTURE_NO_DEGREES)]
-    # Steps are signed now, so "net zero" is literally the sum.
-    assert sum(v for _op, v in NO) == 0, "NO gesture is not net-zero"
+    # Head steps go out by the angle and back: up-then-down, left-then-right.
+    assert YES == [(TILT, +GESTURE_NOD_DEGREES)]
+    assert NO == [(PAN, +GESTURE_SHAKE_DEGREES)]
 
 
 def test_gesture_dropped_not_queued() -> None:
     move = FakeMovement()
     motion = LocalMotion(move)
     try:
-        g = Gesturer(motion)
+        g = Gesturer(motion, FakeHead())
         accepted = [g.play("yes") for _ in range(5)]
         assert sum(a is not None for a in accepted) == 1, \
             "rapid gestures were queued instead of dropped"

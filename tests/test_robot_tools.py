@@ -88,6 +88,17 @@ def tools(seconds=0.2):
     return move, motion, RobotTools(motion)
 
 
+class FakeHead:
+    """Stand-in for HeadLook's gesture(): records nods and shakes."""
+
+    def __init__(self) -> None:
+        self.calls: list = []
+
+    def gesture(self, axis: str, degrees: float) -> bool:
+        self.calls.append((axis, degrees))
+        return True
+
+
 # --------------------------------------------------------------------------- #
 # The property that matters
 # --------------------------------------------------------------------------- #
@@ -238,32 +249,36 @@ def test_run_task_hands_the_job_to_the_agent_and_answers_by_gesture() -> None:
     """run_task only queues; the agent runs it with the session closed, then nods
     (yes) or shakes (no) according to whether the job worked."""
     from robot_core.live import agent as agent_mod
-    for ok, expected in ((True, [("straight", 0.1), ("reverse", 0.1)]),
-                         (False, [("left", 30.0), ("right", 60.0), ("left", 30.0)])):
+    for ok, expected in ((True, [("tilt", 20.0)]), (False, [("pan", 30.0)])):
         move = FakeMove(0.01)
         motion = LocalMotion(move)
         ran = []
-        t = RobotTools(motion, lambda task, name: ran.append((task, name)) or ok)
+        head = FakeHead()
+        t = RobotTools(motion, lambda task, name: ran.append((task, name)) or ok, head=head)
         try:
             assert run(t.dispatch("run_task", {"task": "enroll_face", "name": "Sam Smith!"}))["ok"]
             assert t.pending == ("enroll_face", "Sam"), "name must be one clean word"
             assert run(t.dispatch("run_task", {"task": "explore"}))["ok"] is False   # one at a time
             run(agent_mod._run_task(t))
             assert ran == [("enroll_face", "Sam")] and t.pending is None
-            assert move.calls == expected, move.calls
+            time.sleep(0.2)
+            assert head.calls == expected and move.calls == [], (head.calls, move.calls)
         finally:
             motion.close()
 
 
 def test_run_task_refuses_what_it_cannot_do() -> None:
-    move, motion, t = tools()
+    move = FakeMove()
+    motion = LocalMotion(move)
+    head = FakeHead()
+    t = RobotTools(motion, head=head)
     try:
         assert run(t.dispatch("run_task", {"task": "explore"}))["ok"] is False   # no runner wired
         t.task_runner = lambda task, name: True
         r = run(t.dispatch("run_task", {"task": "enroll_face"}))                     # no name said
         assert r["ok"] is False and r["gestured"] is True and t.pending is None
         time.sleep(0.5)
-        assert [c[0] for c in move.calls] == ["left", "right", "left"], "should have shaken its head"
+        assert head.calls == [("pan", 30.0)] and move.calls == [], "should have shaken its head"
         assert run(t.dispatch("run_task", {"task": "fly"}))["ok"] is False
         assert t.pending is None
     finally:
@@ -390,3 +405,89 @@ def test_head_look_refuses_while_servo_supply_is_off() -> None:
         assert head.look(20)["ok"]                                  # same call works once the switch is on
     finally:
         head.release()
+
+
+# --------------------------------------------------------------------------- #
+# Cancelling a task: the cancel-only listener and the shared flag
+# --------------------------------------------------------------------------- #
+
+def test_cancel_listener_only_cancels_and_brakes() -> None:
+    from robot_core import task_cancel
+    from robot_core.live.cancel_watch import CancelTools, declarations as cancel_decls
+    task_cancel.reset()
+    braked = []
+    t = CancelTools(lambda: braked.append(1))
+    try:
+        assert [d.name for d in cancel_decls()] == ["cancel_task"]
+        assert t.pending is None and t.motion is None, "no job hand-off, no move results"
+        assert run(t.dispatch("drive", {"meters": 1.0}))["ok"] is False
+        assert not task_cancel.requested() and braked == []
+        assert run(t.dispatch("cancel_task", {}))["ok"]
+        assert task_cancel.requested() and task_cancel.by() == "voice" and braked == [1]
+    finally:
+        task_cancel.reset()
+
+
+def test_a_task_runs_with_the_listener_beside_it_and_a_cancel_is_answered_yes() -> None:
+    """The listener starts with the job and is shut down when it ends (freeing the
+    microphone for the main session). A cancelled job gets a nod, not a shake."""
+    from robot_core import task_cancel
+    from robot_core.live import agent as agent_mod
+    from robot_core.live import cancel_watch
+    seen = {"started": 0, "cancelled": 0}
+
+    async def fake_watch(motion):
+        seen["started"] += 1
+        try:
+            await asyncio.sleep(3600)
+        except asyncio.CancelledError:
+            seen["cancelled"] += 1
+            raise
+
+    def runner(task, name):
+        time.sleep(0.1)
+        task_cancel.request("voice")        # "stop" while it runs
+        return False                         # the job itself did not finish
+
+    old = cancel_watch.watch
+    cancel_watch.watch = fake_watch
+    move = FakeMove(0.01)
+    motion = LocalMotion(move)
+    head = FakeHead()
+    t = RobotTools(motion, runner, head=head)
+    try:
+        assert run(t.dispatch("run_task", {"task": "follow"}))["ok"]
+        run(agent_mod._run_task(t))
+        assert seen == {"started": 1, "cancelled": 1}
+        time.sleep(0.2)
+        assert head.calls == [("tilt", 20.0)], "a cancelled task is answered with a nod"
+    finally:
+        cancel_watch.watch = old
+        task_cancel.reset()
+        motion.close()
+
+
+def test_listener_failures_retry_and_never_brake() -> None:
+    from robot_core.live import agent as agent_mod
+    from robot_core.live import cancel_watch
+    attempts, braked = [], []
+
+    class Failing:
+        def __init__(self, *a, **kw): attempts.append(kw.get("role"))
+        async def run(self): raise RuntimeError("no network")
+
+    old_agent, old_backoff = agent_mod.LiveAgent, settings.LIVE_RECONNECT_BACKOFF_S
+    agent_mod.LiveAgent, settings.LIVE_RECONNECT_BACKOFF_S = Failing, 0.01
+
+    async def go():
+        w = asyncio.create_task(cancel_watch.watch(types.SimpleNamespace(stop=lambda: braked.append(1))))
+        await asyncio.sleep(0.1)
+        w.cancel()
+        await asyncio.gather(w, return_exceptions=True)
+
+    try:
+        run(go())
+        assert len(attempts) >= 2 and set(attempts) == {"cancel"}, attempts
+        assert braked == [], "the listener dropping must not brake the task"
+    finally:
+        agent_mod.LiveAgent, settings.LIVE_RECONNECT_BACKOFF_S = old_agent, old_backoff

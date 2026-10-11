@@ -8,8 +8,8 @@ say, it says by moving.
 
 Vocabulary
 ----------
-    YES      forward 0.1 m, back 0.1 m          (a nod)
-    NO       left 30°, right 60°, left 30°      (a head shake, net zero)
+    YES      head tilts up, then back down       (a nod - gimbal only, wheels still)
+    NO       head pans left, then back right     (a shake - gimbal only, wheels still)
     UNCLEAR  same as NO — "no" and "I didn't understand you" are deliberately
              the same gesture
     DANCE    a ~20 s celebration ending in a full spin. Net zero on paper:
@@ -41,6 +41,7 @@ not depend on odometry.
 from __future__ import annotations
 
 import logging
+import threading
 from typing import List, Optional, Tuple
 
 from robot_core import robot_log
@@ -53,20 +54,17 @@ Step = Tuple[str, float]
 
 GESTURE_YES_METERS = 0.1
 GESTURE_NO_DEGREES = 30.0
+GESTURE_NOD_DEGREES = 20.0      # head tilt for YES
+GESTURE_SHAKE_DEGREES = 30.0    # head pan for NO
 
 DRIVE = "drive"
 TURN = "turn"
+TILT = "tilt"                   # head steps: (axis, degrees out and back); + tilt up, + pan left
+PAN = "pan"
 
-YES: List[Step] = [
-    (DRIVE, +GESTURE_YES_METERS),
-    (DRIVE, -GESTURE_YES_METERS),
-]
+YES: List[Step] = [(TILT, +GESTURE_NOD_DEGREES)]
 
-NO: List[Step] = [
-    (TURN, -GESTURE_NO_DEGREES),
-    (TURN, +GESTURE_NO_DEGREES * 2),
-    (TURN, -GESTURE_NO_DEGREES),
-]
+NO: List[Step] = [(PAN, +GESTURE_SHAKE_DEGREES)]
 
 DANCE: List[Step] = [
     (TURN,  -GESTURE_NO_DEGREES),
@@ -94,10 +92,12 @@ VOCABULARY = {
 class Gesturer:
     """Plays gestures without ever blocking the caller."""
 
-    def __init__(self, motion: MotionBackend) -> None:
+    def __init__(self, motion: MotionBackend, head=None) -> None:
         self._motion = motion
+        self._head = head                       # HeadLook for the yes/no gestures; None = no head
+        self._head_thread: Optional[threading.Thread] = None
 
-    def play(self, name: str) -> Optional[List[int]]:
+    def play(self, name: str, wait: bool = False) -> Optional[List[int]]:
         """Queue a gesture. Returns job ids, or None if it was suppressed.
 
         Suppressed whenever the robot is already moving or has work queued, for
@@ -117,9 +117,13 @@ class Gesturer:
                 f"unknown gesture {name!r}; expected one of {sorted(VOCABULARY)}"
             )
 
-        if self._motion.busy():
+        head_busy = self._head_thread is not None and self._head_thread.is_alive()
+        if self._motion.busy() or head_busy:
             robot_log.event("gesture.skip", name=key, why="busy")
             return None
+
+        if all(op in (TILT, PAN) for op, _v in steps):
+            return self._play_head(key, steps, wait)
 
         jobs: List[int] = []
         for op, value in steps:
@@ -133,3 +137,26 @@ class Gesturer:
 
         robot_log.event("gesture", name=key, jobs=jobs)
         return jobs
+
+    def _play_head(self, key: str, steps: List[Step], wait: bool) -> Optional[List[int]]:
+        """Run a head gesture on the gimbal, in the background unless `wait`."""
+        if self._head is None:
+            robot_log.event("gesture.skip", name=key, why="no head")
+            return None
+
+        def run() -> None:
+            try:
+                for axis, deg in steps:
+                    if not self._head.gesture(axis, deg):
+                        robot_log.event("gesture.skip", name=key, why="head has no power")
+                        return
+            except Exception as e:                       # noqa: BLE001 - a gesture must never take the session down
+                robot_log.event("gesture.skip", logging.WARNING, name=key, why=f"{type(e).__name__}: {e}")
+
+        robot_log.event("gesture", name=key, head=True)
+        if wait:
+            run()
+        else:
+            self._head_thread = threading.Thread(target=run, name=f"gesture-{key}", daemon=True)
+            self._head_thread.start()
+        return []

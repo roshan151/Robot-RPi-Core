@@ -1,6 +1,7 @@
 # Robot-Computer-Vision → ROS 2 — the plan
 
 > **Amended by `EXPLORE-DESIGN.md`** for the final hardware: no LD14P lidar (the TF-Luna on the head is the scanner), TF-Luna on the Pi UART instead of the Arduino, SLAM on the Mac instead of `slam_toolbox` on the Pi, pan limited to ±45°.
+> **Amended by `FOLLOW-DESIGN.md`**: person following is a voice `run_task("follow")` job — the Pi captures and moves, the Mac detects, identifies and plans each step.
 
 The single source of truth for this rebuild. Supersedes `ROS2-MIGRATION.md` and
 `COMPUTE-BUDGET.md`, both of which contained decisions that have since changed.
@@ -723,6 +724,10 @@ Add the servo tool to the agent — it can aim its own camera, which is a genuin
 new capability rather than a peripheral.
 
 ### Phase 5 — lidar + reactive obstacle avoidance *(a weekend)*
+
+> **Superseded (camera plan):** there is no plan to fit the LD14P. Obstacle
+> avoidance comes from the fixed mono global-shutter camera instead — see
+> `docs/CAMERA-PLAN.md` Phase 2. The steps below are kept for reference.
 
 1. udev rules for `/dev/arduino` and `/dev/lidar` **first**.
 2. Clone `ldlidar_ros2` into `ros2_ws/src`, colcon build, launch with the port

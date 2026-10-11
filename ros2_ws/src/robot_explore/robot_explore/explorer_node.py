@@ -152,6 +152,8 @@ class ExplorerNode(Node):
         p("tfluna_port", "/dev/serial0")
         p("camera_main_size", [1920, 1080])
         p("camera_inverted", True)
+        p("camera_backend", "auto")
+        p("camera_index", 0)
         p("head_height_m", 0.25)
         p("pan_axis_x_m", 0.05)
         p("hfov_deg", 66.0)
@@ -176,7 +178,8 @@ class ExplorerNode(Node):
             "pan_us_per_deg", "tilt_us_per_deg", "pan_invert", "tilt_invert", "servo_speed_dps",
             "servo_min_us", "servo_max_us", "hold_on_close", "servo_power_gpio")})
         self.lidar = TFLuna(v("tfluna_port"))
-        self.camera = Camera(main_size=tuple(v("camera_main_size")), inverted=bool(v("camera_inverted")))
+        self.camera = Camera(main_size=tuple(v("camera_main_size")), inverted=bool(v("camera_inverted")),
+                             backend=v("camera_backend"), index=int(v("camera_index")))
         self.head = Head(self.gimbal, self.lidar, self.camera, HeadGeometry(
             height_m=float(v("head_height_m")), pan_axis_x_m=float(v("pan_axis_x_m")),
             hfov_deg=float(v("hfov_deg"))))

@@ -88,6 +88,26 @@ class VisionClient:
         return self._call("POST", "/v1/faces/enroll", timeout=60.0, data={"label": label},
                           files=self._files(jpegs))
 
+    # -------------------------------------------------------------- follow
+
+    def follow_start(self, label: str = "") -> Optional[dict]:
+        """None when `label` is not enrolled (empty label: nobody is)."""
+        return self._call("POST", "/v1/follow/start", ok_404=True, json={"label": label})
+
+    def follow_step(self, jpeg: bytes, seq: int, pan_deg: float = 0.0, tilt_deg: float = 0.0,
+                    hfov_deg: float = 66.0, camera_height_m: float = 0.25,
+                    range_m: Optional[float] = None) -> dict:
+        """Where the person is and how to move: turn `turn_deg` (+ right), then drive `drive_m`."""
+        data = {"seq": seq, "pan_deg": pan_deg, "tilt_deg": tilt_deg, "hfov_deg": hfov_deg,
+                "camera_height_m": camera_height_m}
+        if range_m is not None:
+            data["range_m"] = range_m
+        return self._call("POST", "/v1/follow/step", timeout=20.0, data=data,
+                          files={"image": ("f.jpg", jpeg, "image/jpeg")})
+
+    def follow_stop(self) -> dict:
+        return self._call("POST", "/v1/follow/stop")
+
     # -------------------------------------------------------------- plants
 
     def plant_embed(self, jpeg: bytes, seq: int = 0) -> list:
