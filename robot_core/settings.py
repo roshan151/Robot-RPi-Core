@@ -119,6 +119,8 @@ FACE_MATCH_SECONDS = _env("ROBOT_FACE_MATCH_S", "30", float)     # search + matc
 FACE_SEARCH_PANS = (-75.0, -15.0, 15.0, 75.0)                    # head sweep, degrees
 FACE_SEARCH_TILTS = (0.0, 30.0, 50.0)                            # never below level
 FACE_MIN_QUALITY = 0.6
+FOLLOW_SECONDS = _env("ROBOT_FOLLOW_S", "300", float)            # follow mode ends after this
+FOLLOW_TILT_DEG = _env("ROBOT_FOLLOW_TILT", "20", float)         # head tilt while following
 FACE_MIN_SHOTS = 5
 
 # --- Logging ------------------------------------------------------------------
@@ -147,6 +149,8 @@ known, no = it failed or the face is unknown.
                                  robot shakes its head and does nothing.
   run_task("match_face")         "do you know me?" / "who am I?"
   run_task("explore")            "go explore" / "map the house and find the plants"
+  run_task("follow", name)       "follow Sam" -> name "Sam"; "follow me" -> no name
+                                 (follows whichever enrolled person it sees)
 
 Rules that matter:
   - Call stop() the instant you hear "stop", and whenever you are unsure

@@ -62,6 +62,7 @@ def _open_head():
 
 
 head_look = HeadLook(_open_head)
+_motion = None                               # RosMotion, set in main(); follow drives with it
 
 
 def run_task(task: str, name: str) -> bool:
@@ -87,7 +88,7 @@ def _run_task(task: str, name: str) -> bool:
     from robot_core.sensors.head import Head, HeadGeometry
     from robot_core.vision_client import VisionClient
     camera = Camera(main_size=(640, 480))
-    gimbal = head = None
+    gimbal = head = lidar = None
     try:
         # The head is the explorer's hardware: same channels and trims, read from
         # robot.yaml. Tilt is limited to 0..+45 here, so it only ever looks up from
@@ -96,16 +97,28 @@ def _run_task(task: str, name: str) -> bool:
             with open(os.path.join(get_package_share_directory("robot_bringup"), "config", "robot.yaml")) as f:
                 p = yaml.safe_load(f)["/explorer"]["ros__parameters"]
             gimbal = from_params(p, tilt_min=0.0)
-            head = Head(gimbal, None, camera, HeadGeometry(hfov_deg=float(p.get("hfov_deg", 66.0))))
+            if task == "follow":             # TF-Luna gives follow a range; it works without one
+                try:
+                    from robot_core.sensors.tfluna import TFLuna
+                    lidar = TFLuna(p["tfluna_port"])
+                except Exception as e:                          # noqa: BLE001
+                    robot_log.event("task.error", logging.WARNING, err=f"tfluna unavailable: {e}")
+            head = Head(gimbal, lidar, camera, HeadGeometry(
+                height_m=float(p.get("head_height_m", 0.25)), hfov_deg=float(p.get("hfov_deg", 66.0))))
         except Exception as e:                                  # noqa: BLE001
             robot_log.event("task.error", logging.WARNING, err=f"head unavailable: {type(e).__name__}: {e}")
         vision = VisionClient()
         if task == "enroll_face":
             return face_tasks.enroll(camera, vision, name, head=head)
+        if task == "follow":
+            from robot_core import follow
+            return follow.follow(camera, vision, _motion, name, head=head)
         return face_tasks.match(camera, vision, head=head) is not None
     finally:
         if gimbal:
             gimbal.close()                   # parks the head at its start position
+        if lidar:
+            lidar.close()
         camera.close()
 
 
@@ -129,6 +142,8 @@ def main(args=None) -> None:
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     motion = RosMotion(node, loop)
+    global _motion
+    _motion = motion
 
     try:
         # Blocking, and correctly so: this runs before the session opens, on

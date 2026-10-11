@@ -41,7 +41,7 @@ from robot_core.motion import MotionBackend
 
 logger = logging.getLogger(__name__)
 
-TASKS = ("enroll_face", "match_face", "explore")
+TASKS = ("enroll_face", "match_face", "explore", "follow")
 SHUTDOWN_DELAY_S = 4.0
 
 
@@ -178,14 +178,17 @@ def declarations() -> list:
                 "gesture (yes = worked / face known, no = failed / face unknown). "
                 "'enroll_face' learns the face in front of the camera under "
                 "`name` (required). 'match_face' checks whether that face is "
-                "known. 'explore' maps the house and photographs every plant."
+                "known. 'explore' maps the house and photographs every plant. "
+                "'follow' follows an enrolled person: `name` if one was said, "
+                "empty for 'follow me'."
             ),
             parameters=schema(
                 task={"type": "STRING", "description": "One of: " + ", ".join(TASKS),
                       "_required": True},
                 name={"type": "STRING",
                       "description": "The name the operator said to enrol, e.g. 'register Roshan' "
-                                     "-> 'Roshan'. Required for enroll_face. Never guess or make "
+                                     "-> 'Roshan', or to follow, e.g. 'follow Roshan' -> 'Roshan'. "
+                                     "Required for enroll_face. Never guess or make "
                                      "one up: if none was said, leave it empty."},
             ),
         ),

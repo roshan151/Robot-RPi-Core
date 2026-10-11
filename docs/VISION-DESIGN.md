@@ -1,6 +1,7 @@
 # Vision & Perception — Design Doc
 
 > **Amended by `EXPLORE-DESIGN.md`**: pan is ±45° (not ±90°), there is no 2-D lidar — range at a bearing comes from the TF-Luna on the head, aimed with the camera — and SLAM runs on the Mac.
+> **Amended by `FOLLOW-DESIGN.md`**: follow is stop-and-go with all processing on the Mac (`/v1/follow/step`); no Pi tracker or `follow_node` yet (§4.6, §7.2).
 
 Companion to `PLAN.md` (ROS 2 migration) and `HARDWARE-BASICS.md`. This doc covers
 only the vision/perception layer: object detection, object tracking, gimbal aim,
