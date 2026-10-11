@@ -88,6 +88,17 @@ def tools(seconds=0.2):
     return move, motion, RobotTools(motion)
 
 
+class FakeHead:
+    """Stand-in for HeadLook's gesture(): records nods and shakes."""
+
+    def __init__(self) -> None:
+        self.calls: list = []
+
+    def gesture(self, axis: str, degrees: float) -> bool:
+        self.calls.append((axis, degrees))
+        return True
+
+
 # --------------------------------------------------------------------------- #
 # The property that matters
 # --------------------------------------------------------------------------- #
@@ -238,32 +249,36 @@ def test_run_task_hands_the_job_to_the_agent_and_answers_by_gesture() -> None:
     """run_task only queues; the agent runs it with the session closed, then nods
     (yes) or shakes (no) according to whether the job worked."""
     from robot_core.live import agent as agent_mod
-    for ok, expected in ((True, [("straight", 0.1), ("reverse", 0.1)]),
-                         (False, [("left", 30.0), ("right", 60.0), ("left", 30.0)])):
+    for ok, expected in ((True, [("tilt", 20.0)]), (False, [("pan", 30.0)])):
         move = FakeMove(0.01)
         motion = LocalMotion(move)
         ran = []
-        t = RobotTools(motion, lambda task, name: ran.append((task, name)) or ok)
+        head = FakeHead()
+        t = RobotTools(motion, lambda task, name: ran.append((task, name)) or ok, head=head)
         try:
             assert run(t.dispatch("run_task", {"task": "enroll_face", "name": "Sam Smith!"}))["ok"]
             assert t.pending == ("enroll_face", "Sam"), "name must be one clean word"
             assert run(t.dispatch("run_task", {"task": "explore"}))["ok"] is False   # one at a time
             run(agent_mod._run_task(t))
             assert ran == [("enroll_face", "Sam")] and t.pending is None
-            assert move.calls == expected, move.calls
+            time.sleep(0.2)
+            assert head.calls == expected and move.calls == [], (head.calls, move.calls)
         finally:
             motion.close()
 
 
 def test_run_task_refuses_what_it_cannot_do() -> None:
-    move, motion, t = tools()
+    move = FakeMove()
+    motion = LocalMotion(move)
+    head = FakeHead()
+    t = RobotTools(motion, head=head)
     try:
         assert run(t.dispatch("run_task", {"task": "explore"}))["ok"] is False   # no runner wired
         t.task_runner = lambda task, name: True
         r = run(t.dispatch("run_task", {"task": "enroll_face"}))                     # no name said
         assert r["ok"] is False and r["gestured"] is True and t.pending is None
         time.sleep(0.5)
-        assert [c[0] for c in move.calls] == ["left", "right", "left"], "should have shaken its head"
+        assert head.calls == [("pan", 30.0)] and move.calls == [], "should have shaken its head"
         assert run(t.dispatch("run_task", {"task": "fly"}))["ok"] is False
         assert t.pending is None
     finally:

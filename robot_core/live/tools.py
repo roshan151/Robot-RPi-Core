@@ -211,7 +211,7 @@ class RobotTools:
         self._power_off = power_off or _system_poweroff
         self._shutdown_timer: Optional[threading.Timer] = None
         self._head = head                    # look_up / look_down; None = no head
-        self._gestures = Gesturer(motion)
+        self._gestures = Gesturer(motion, head)
         # (task, name) -> success; blocking, run by the agent with the session
         # closed. `pending` is how run_task hands a job to the agent.
         self.task_runner = task_runner
@@ -312,9 +312,9 @@ class RobotTools:
         if self._shutdown_timer is not None:
             return {"ok": True, "note": "already shutting down"}
         self._motion.stop()
+        self._gestures.play("yes", wait=True)    # nod first: it uses the head, which is parked next
         if self._head is not None:
             self._head.release(hold=False)       # park, then stop the servo pulses: the Pi is about to drop the pins
-        self._gestures.play("yes")
         status.task("shutting down")
         status.detail("say stop to cancel")
         robot_log.event("power.shutdown", logging.WARNING, state="requested")

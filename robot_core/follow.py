@@ -3,14 +3,17 @@
 A stop-and-go loop with all the thinking on the Mac (Vision-Microservice
 `follow.py`, see docs/FOLLOW-DESIGN.md):
 
-    capture -> POST /v1/follow/step -> turn turn_deg -> drive drive_m -> repeat
+    capture -> POST /v1/follow/step -> aim head -> turn turn_deg -> drive drive_m -> repeat
+
+While searching the robot stays put and only the head sweeps (`head` in the
+answer: pan, tilt above FOLLOW_TILT_DEG).
 
 The robot stands still while the Mac decides; the person is expected to walk
 slowly. The head is held straight ahead at FOLLOW_TILT_DEG, high enough to see
 a standing person's face from ~1.3 m and low enough for the TF-Luna to hit
 their body. Plain functions over injected parts — no ROS, no audio.
 
-Ends when the Mac says the person is gone (lost, then a full circle searched)
+Ends when the Mac says the person is gone (lost, then a full head sweep)
 or after `seconds`. Returns True if it locked onto the person at all.
 """
 
@@ -47,7 +50,10 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
            clock: Callable[[], float] = time.monotonic) -> bool:
     """Follow `name` (empty: whichever enrolled person is seen first)."""
     if vision.follow_start(name) is None:
-        status.error("F01", f"{name or 'nobody'} not enrolled")
+        why = f"{name or 'nobody'} not enrolled"
+        log.warning("follow failed: %s", why)
+        status.error("F01", why)
+        status.detail(why)
         status.result("follow failed")
         return False
     lidar = getattr(head, "lidar", None) if head else None
@@ -56,6 +62,7 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
         head.gimbal.wait_settled()
     status.timer(f"follow {name}".strip(), seconds)
     res: dict = {}
+    why = ""                                          # why the follow failed, if it did
     t0, seq = clock(), 0
     try:
         while clock() - t0 < seconds:
@@ -70,12 +77,17 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
             status.detail(f"{res['state']} {res.get('distance_m') or ''}")
             if res["state"] == "gone":
                 break
+            look = res.get("head")
+            if head and look:
+                head.gimbal.move_to(look[0], settings.FOLLOW_TILT_DEG + look[1], wait=True)
+                head.gimbal.wait_settled()
             if res["turn_deg"]:
                 _move(motion, motion.turn, res["turn_deg"])
             if res["drive_m"]:
                 _move(motion, motion.drive, res["drive_m"])
     except (VisionError, RuntimeError) as exc:       # RuntimeError: camera or drivetrain gave up
         log.warning("follow ended: %s", exc)
+        why = f"vision error: {exc}" if isinstance(exc, VisionError) else str(exc)
     finally:
         if motion.busy():
             motion.stop()
@@ -85,6 +97,12 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
             pass
     followed = bool(res.get("followed"))
     if not followed:
-        status.error("F01")
+        if not why:
+            who = name or "anyone"
+            why = (f"searched, {who} not found" if res.get("state") == "gone"
+                   else f"time up, {who} not found" if res else "no answer from vision")
+        log.warning("follow failed: %s", why)
+        status.error("F01", why)
+        status.detail(why)
     status.result(f"followed {res.get('target')}" if followed else "follow failed")
     return followed
