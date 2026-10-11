@@ -154,6 +154,36 @@ def test_camera_restarts_once_when_frames_stop_and_gives_up_after():
 
 
 
+
+def test_usb_camera_asks_for_mjpeg_one_buffer_and_drops_the_stale_frame(monkeypatch):
+    import cv2
+    import numpy as np
+    from robot_core.sensors import camera as cam_mod
+
+    class FakeCap:
+        def __init__(self, index):
+            self.props, self.n, self.grabbed = {}, 0, 0
+        def set(self, prop, value): self.props[prop] = value
+        def isOpened(self): return True
+        def grab(self):
+            self.n += 1
+            self.grabbed += 1
+            return True
+        def read(self):
+            self.n += 1
+            return True, np.full((1080, 1920, 3), self.n, np.uint8)
+        def release(self): pass
+
+    monkeypatch.setattr(cv2, "VideoCapture", FakeCap)
+    cam = cam_mod.Camera(main_size=(1920, 1080), inverted=False, backend="opencv")
+    cap = cam._cap
+    assert cap.props[cv2.CAP_PROP_FOURCC] == cv2.VideoWriter_fourcc(*"MJPG")
+    assert cap.props[cv2.CAP_PROP_BUFFERSIZE] == 1
+    f = cam.capture()
+    assert cap.grabbed == 1 and int(f.main[0, 0, 0]) == 2, "the queued frame is dropped first"
+    assert f.main.shape == (1080, 1920, 3) and f.lores.shape == (240, 320)
+
+
 # --- servo supply: a head that cannot move must never be "moved" -----------------------
 
 def test_gimbal_freezes_while_servo_supply_is_off_and_resumes_without_a_jump():

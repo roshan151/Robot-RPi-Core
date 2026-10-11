@@ -70,7 +70,8 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
             seq += 1
             rng: Optional[float] = lidar.read(n=5, timeout=0.5) if lidar else None
             res = vision.follow_step(
-                jpeg(frame.main), seq, pan_deg=frame.pan_deg, tilt_deg=frame.tilt_deg,
+                jpeg(frame.main, settings.FACE_WIRE_LONG_EDGE), seq,
+                pan_deg=frame.pan_deg, tilt_deg=frame.tilt_deg,
                 hfov_deg=head.geom.hfov_deg if head else 66.0,
                 camera_height_m=head.geom.height_m if head else 0.25, range_m=rng)
             log.info("follow %d: %s", seq, res)

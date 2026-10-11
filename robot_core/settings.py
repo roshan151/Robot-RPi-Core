@@ -122,6 +122,13 @@ FACE_MIN_QUALITY = 0.6
 FOLLOW_SECONDS = _env("ROBOT_FOLLOW_S", "300", float)            # follow mode ends after this
 FOLLOW_TILT_DEG = _env("ROBOT_FOLLOW_TILT", "20", float)         # head tilt while following
 FACE_MIN_SHOTS = 5
+# Long edge of frames sent for faces and follow. Faces need the pixels: with the
+# wide USB HD lens a 640 px frame leaves a face at 2 m ~18 px wide (useless), the
+# full 1920 px ~55 px. A smaller camera frame is sent as it is (never upscaled).
+FACE_WIRE_LONG_EDGE = _env("ROBOT_FACE_WIRE_PX", "1920", int)
+FACE_ENROLL_TILT_DEG = _env("ROBOT_FACE_ENROLL_TILT", "20", float)  # enroll starts here, then frames the face
+FACE_FRAME_DEADBAND = 0.12      # enroll re-aims when the face centre is this far (share of frame) off centre
+FACE_EDGE_MARGIN = 0.02         # a shot is kept only with the whole face this far inside the frame
 
 # --- Logging ------------------------------------------------------------------
 LOG_PATH = _env("ROBOT_LOG_PATH", "logs.json")

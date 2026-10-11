@@ -10,7 +10,10 @@ detector, the photos, the motion check — sees an upright image. Note that
 picamera2's "RGB888" is BGR in memory, which is exactly what OpenCV wants.
 
 Falls back to OpenCV's VideoCapture (with a software flip) on a laptop or with
-a USB camera.
+a USB camera (backend="opencv" forces it, e.g. the USB HD head camera once a
+ribbon camera is fitted for something else). USB frames are requested as MJPEG
+(1080p30 fits USB 2.0) with a one-frame buffer, and capture() drops the queued
+frame first, so a picture taken after the head moves is from after it moved.
 """
 
 from __future__ import annotations
@@ -59,6 +62,8 @@ class Camera:
         if self._picam is None:
             import cv2
             self._cap = cv2.VideoCapture(index)
+            self._cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+            self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, main_size[0])
             self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, main_size[1])
             if not self._cap.isOpened():
@@ -109,6 +114,7 @@ class Camera:
                     req.release()
                 lores = np.ascontiguousarray(yuv[: self.lores_size[1], : self.lores_size[0]])
             else:
+                self._cap.grab()                            # drop the frame queued before this call
                 ok, main = self._cap.read()
                 if not ok:
                     raise RuntimeError("camera read failed")

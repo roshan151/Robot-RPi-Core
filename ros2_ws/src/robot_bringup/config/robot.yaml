@@ -74,11 +74,19 @@
     # Head. Pan is limited to +-90 and tilt to +-45 in the driver, and both
     # park at their start position (the *_center_us pulse) on shutdown.
     tfluna_port: "/dev/serial0"
-    camera_main_size: [1920, 1080]
-    camera_inverted: true      # mounted upside down: rotated 180 deg in the ISP
+    # Head camera. Phase 1 swaps the ribbon Camera V2 for the USB HD camera
+    # (PS5268, 1080p HDR). "auto" opens a ribbon camera if one answers, else
+    # USB; set "opencv" once the Phase 2 mono camera takes the ribbon port, so
+    # the head keeps the USB camera. On the swap, also set face_camera_size to
+    # [1920, 1080] and hfov_deg to the measured value (~105).
+    camera_backend: "auto"     # auto | picamera2 (ribbon) | opencv (USB)
+    camera_index: 0            # USB camera: /dev/videoN
+    camera_main_size: [1920, 1080]   # explore photos
+    face_camera_size: [640, 480]     # enroll / match / follow. V2: [640, 480]; USB HD: [1920, 1080]
+    camera_inverted: true      # mounted upside down: rotated 180 deg (ISP on the ribbon camera, software on USB)
     head_height_m: 0.25        # MEASURE: TF-Luna height above the floor
     pan_axis_x_m: 0.05         # MEASURE: pan axis ahead of the wheel-axle centre
-    hfov_deg: 66.0             # Camera Module 3: 66; Module 3 Wide: 102
+    hfov_deg: 66.0             # Camera Module 3: 66; Module 3 Wide: 102; USB HD (PS5268): ~105, MEASURE
     pwm_chip: 0                # Pi 4: 0. Pi 5: 2
     pan_channel: 1             # GPIO13
     tilt_channel: 0            # GPIO12

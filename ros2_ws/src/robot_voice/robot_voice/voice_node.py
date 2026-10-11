@@ -87,15 +87,18 @@ def _run_task(task: str, name: str) -> bool:
     from robot_core.sensors.gimbal import from_params
     from robot_core.sensors.head import Head, HeadGeometry
     from robot_core.vision_client import VisionClient
-    camera = Camera(main_size=(640, 480))
+    # The head is the explorer's hardware: same camera, channels and trims, read
+    # from robot.yaml.
+    with open(os.path.join(get_package_share_directory("robot_bringup"), "config", "robot.yaml")) as f:
+        p = yaml.safe_load(f)["/explorer"]["ros__parameters"]
+    camera = Camera(main_size=tuple(p.get("face_camera_size", (640, 480))),
+                    inverted=bool(p.get("camera_inverted", True)),
+                    backend=p.get("camera_backend", "auto"), index=int(p.get("camera_index", 0)))
     gimbal = head = lidar = None
     try:
-        # The head is the explorer's hardware: same channels and trims, read from
-        # robot.yaml. Tilt is limited to 0..+45 here, so it only ever looks up from
-        # its base position. No PWM (overlay missing)? Carry on with a fixed camera.
+        # Tilt is limited to 0..+45 here, so it only ever looks up from its base
+        # position. No PWM (overlay missing)? Carry on with a fixed camera.
         try:
-            with open(os.path.join(get_package_share_directory("robot_bringup"), "config", "robot.yaml")) as f:
-                p = yaml.safe_load(f)["/explorer"]["ros__parameters"]
             gimbal = from_params(p, tilt_min=0.0)
             if task == "follow":             # TF-Luna gives follow a range; it works without one
                 try:

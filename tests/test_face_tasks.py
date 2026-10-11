@@ -10,7 +10,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from robot_core import face_tasks  # noqa: E402
+from robot_core import face_tasks, settings  # noqa: E402
 
 
 class Clock:
@@ -93,10 +93,39 @@ class SeesFaceAt(Vision):
         return super().face_embed(jpeg, seq) if pan >= 15 and tilt >= 20 else None
 
 
-def test_enroll_keeps_the_head_still():
+def test_enroll_frames_the_face_but_never_sweeps():
     head = Head()
     assert face_tasks.enroll(HeadCamera(head), Vision(), "sam", seconds=30, clock=Clock(), head=head)
-    assert head.moves == [] and head.aimed == 0, "enroll must not search or re-aim"
+    assert head.moves == [(0.0, settings.FACE_ENROLL_TILT_DEG)], "enroll must not sweep"
+    assert head.aimed > 0, "an off-centre face should be re-aimed at"
+
+
+def test_enroll_holds_still_on_a_centred_face():
+    head = Head()
+    v = Vision()
+    v.face_embed = lambda jpeg, seq=0: {"embedding": [1.0], "face_count": 1, "quality": 0.9,
+                                        "face_bbox": [24, 14, 40, 34]}       # centre of the 64x48 frame
+    assert face_tasks.enroll(HeadCamera(head), v, "sam", seconds=30, clock=Clock(), head=head)
+    assert head.aimed == 0
+
+
+class CutFace(Vision):
+    def face_embed(self, jpeg, seq=0):
+        out = super().face_embed(jpeg, seq)
+        out["face_bbox"] = [10, -12, 30, 20]         # top of the face above the frame
+        return out
+
+
+def test_enroll_keeps_no_shot_with_the_face_cut_off():
+    v = CutFace()
+    assert not face_tasks.enroll(Camera(), v, "sam", seconds=30, clock=Clock())
+    assert v.enrolled is None
+
+
+def test_full_face_scales_wire_boxes_back_to_the_frame():
+    big = SimpleNamespace(main=np.zeros((1080, 1920, 3), np.uint8))
+    assert face_tasks.full_face(big, [800, 300, 1000, 560])
+    assert not face_tasks.full_face(big, [800, -40, 1000, 560])
 
 
 def test_head_searches_upward_only_then_locks_on_the_face_and_holds():
