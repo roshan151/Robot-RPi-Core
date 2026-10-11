@@ -56,7 +56,7 @@ NORMAL_SEQ_MAX = ESTOP_SEQ_MIN - 1
 #                   Overshooting -> lower it. Undershooting -> raise it.
 # TURN_COAST_TICKS: only for overshoot that is the SAME at 90 and 360 deg (momentum).
 TICKS_PER_CM = _env("ROBOT_TICKS_PER_CM", "38.5", float)
-TICKS_PER_DEGREE = _env("ROBOT_TICKS_PER_DEGREE", "7.37", float)   # measured at 70 % speed
+TICKS_PER_DEGREE = _env("ROBOT_TICKS_PER_DEGREE", "6", float)   # measured at 70 % speed
 TURN_COAST_TICKS = _env("ROBOT_TURN_COAST_TICKS", "0", float)
 DEFAULT_SPEED_PERCENT = _env("ROBOT_DEFAULT_SPEED_PCT", "80.0", float)
 DEFAULT_TURN_DEGREES = _env("ROBOT_DEFAULT_TURN_DEG", "90", float)
@@ -154,8 +154,11 @@ Rules that matter:
   - Never guess a movement you are unsure of. The robot drives on a floor with
     obstacles it cannot see. If you did not understand, answer("unclear").
   - Ignore speech that is not addressed to you, and background conversation.
-  - look_up() / look_down() tilt the head from where it is now; the default is
-    30 degrees and the head stops at its own limit if asked for more.
+  - look_up() / look_down() / look_left() / look_right() move the head from where
+    it is now; the default is 30 degrees and the head stops at its own limit if
+    asked for more.
+  - shutdown() powers the robot off. Call it only when the operator clearly says
+    to shut down, power off or turn off; if unsure, answer("unclear") instead.
   - Defaults when no number is given: 1 metre, 90 degrees.
   - turn() takes positive degrees for RIGHT, negative for LEFT.
     drive() takes positive metres for FORWARD, negative for BACKWARD.

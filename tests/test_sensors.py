@@ -123,3 +123,111 @@ def test_gimbal_starts_from_saved_pulse_and_walks_home(tmp_path):
         assert g.pan.pos == pytest.approx(0.0, abs=0.5)
     finally:
         g.close()
+
+
+def test_camera_restarts_once_when_frames_stop_and_gives_up_after():
+    import concurrent.futures
+    from robot_core.sensors import camera as cam_mod
+
+    class Stub:
+        def __init__(self, ok): self.ok, self.calls = ok, 0
+        def capture_request(self, wait=None):
+            self.calls += 1
+            if not self.ok:
+                raise concurrent.futures.TimeoutError()
+            return "frame"
+        def stop(self): pass
+        def close(self): pass
+
+    cam = cam_mod.Camera.__new__(cam_mod.Camera)
+    cam._picam = Stub(ok=False)
+    restarts = []
+    cam._start = lambda: (restarts.append(1), setattr(cam, "_picam", Stub(ok=True)))
+    old, cam_mod.time = cam_mod.time, type("T", (), {"sleep": staticmethod(lambda s: None)})
+    try:
+        assert cam._request() == "frame" and len(restarts) == 1
+        cam._picam, cam._start = Stub(ok=False), lambda: setattr(cam, "_picam", Stub(ok=False))
+        with pytest.raises(RuntimeError, match="no frames"):
+            cam._request()
+    finally:
+        cam_mod.time = old
+
+
+
+# --- servo supply: a head that cannot move must never be "moved" -----------------------
+
+def test_gimbal_freezes_while_servo_supply_is_off_and_resumes_without_a_jump():
+    """Incident 1: servo switch off while commands arrive, then switched on. The pulse the
+    line holds must stay where the servo last followed it, so switching on is a non-event."""
+    rail = {"on": True}
+    g = Gimbal(backend="fake", power_sense=lambda: rail["on"])
+    try:
+        g.move_to(10, 10, speed_dps=60, wait=True, timeout=5)
+        held = (g.pan.out.pulses[-1], g.tilt.out.pulses[-1])
+        written = (len(g.pan.out.pulses), len(g.tilt.out.pulses))
+        rail["on"] = False
+        assert g.move_to(80, -40, wait=True, timeout=2) == g.angles()          # refused, not queued
+        time.sleep(0.3)
+        assert g.angles() == pytest.approx((10, 10), abs=0.01)
+        rail["on"] = True
+        time.sleep(0.3)                                                         # power returns
+        assert g.angles() == pytest.approx((10, 10), abs=0.01)                  # nothing was waiting to run
+        assert (len(g.pan.out.pulses), len(g.tilt.out.pulses)) == written       # no pulse written meanwhile
+        assert (g.pan.out.pulses[-1], g.tilt.out.pulses[-1]) == held
+        g.move_to(20, 0, speed_dps=60, wait=True, timeout=5)                    # and it works again
+        assert np.abs(np.diff(g.pan.out.pulses)).max() < 60 / 50 * (2000 / 180) + 1
+    finally:
+        g.close(release=True)
+
+
+def test_gimbal_drops_a_move_in_flight_when_servo_supply_dies():
+    rail = {"on": True}
+    g = Gimbal(backend="fake", power_sense=lambda: rail["on"])
+    try:
+        g.move_to(60, 40, speed_dps=30, wait=False)
+        time.sleep(0.4)
+        rail["on"] = False
+        time.sleep(0.2)
+        frozen = g.angles()
+        assert 0 < frozen[0] < 60                                               # it had started to move
+        time.sleep(0.4)
+        rail["on"] = True
+        time.sleep(0.4)
+        assert g.angles() == pytest.approx(frozen, abs=0.01)                    # the order did not survive the outage
+    finally:
+        g.close(release=True)
+
+
+def test_a_failing_power_sensor_reads_as_off():
+    def broken():
+        raise OSError("gpio gone")
+    g = Gimbal(backend="fake", power_sense=broken)
+    try:
+        assert not g.powered()
+        assert g.move_to(30, 30, wait=True, timeout=2) == (0.0, 0.0)
+    finally:
+        g.close(release=True)
+
+
+def test_gimbal_saves_its_position_while_still_moving(tmp_path):
+    """A reset mid-slew must not leave the soft start with a stale position."""
+    import json
+    f = tmp_path / "head.json"
+    g = Gimbal(backend="fake", state_path=f)
+    try:
+        g.move_to(pan=60, speed_dps=30, wait=False)
+        time.sleep(1.0)
+        assert not g.settled()                                                  # still moving
+        assert json.loads(f.read_text())["pan_us"] > 1500 + 5 * (2000 / 180)    # and the file already knows
+    finally:
+        g.close(release=True)
+
+
+def test_servo_speed_is_a_hard_ceiling_whatever_a_caller_asks_for():
+    g = Gimbal(backend="fake")                                   # servo_speed_dps default: 30
+    try:
+        g.move_to(pan=40, tilt=20, speed_dps=500, wait=True, timeout=10)
+        for out in (g.pan.out, g.tilt.out):
+            assert np.abs(np.diff(out.pulses)).max() < 30 / 50 * (2000 / 180) + 1      # never faster than 30 deg/s
+    finally:
+        g.close(release=True)

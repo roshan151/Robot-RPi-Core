@@ -42,7 +42,7 @@ from rclpy.node import Node
 from std_srvs.srv import Trigger
 from tf2_ros import TransformBroadcaster
 
-from robot_core import settings
+from robot_core import settings, status
 from robot_core.drivetrain import SerialDrivetrain
 from robot_core.motion_executor import CANCELLED, DONE, MotionExecutor
 from robot_core.odometry import DiffDriveOdometry, MotionHealth, effective_wheelbase_m
@@ -251,6 +251,7 @@ class DrivetrainNode(Node):
         job_id = self._exec.submit(op, value, gesture=goal_handle.request.gesture)
         timeout = float(self.get_parameter("move_timeout_s").value)
         deadline = self.get_clock().now().nanoseconds / 1e9 + timeout + 1.0
+        status.anim("tank", timeout + 2.0)        # OLED: the tank runs while the wheels do
 
         event = None
         while event is None:
@@ -262,6 +263,7 @@ class DrivetrainNode(Node):
                 if self.get_clock().now().nanoseconds / 1e9 > deadline:
                     break
 
+        status.anim("")
         result = action_type.Result()
         counts = self._drivetrain.get_encoder_status()
         result.ticks_left = int(counts["motor1_count"])

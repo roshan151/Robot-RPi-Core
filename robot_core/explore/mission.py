@@ -30,6 +30,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional, Protocol, Sequence, Tuple
 
+from robot_core import status as screen
 from robot_core.odometry import Pose2D, wrap
 from robot_core.sensors.camera import jpeg
 from robot_core.vision_client import VisionError
@@ -97,6 +98,7 @@ class Explorer:
         self.m2o = Pose2D(*cfg.start_pose)
         self.stats = Stats()
         self._handled: List[Tuple[float, float]] = []
+        self._plant = ""                              # plant_NN on the OLED
         self._obstacles_odom: List[Tuple[float, float]] = []
         self._stop = threading.Event()
 
@@ -107,6 +109,7 @@ class Explorer:
 
     def _say(self, msg: str) -> None:
         log.info("explore: %s", msg)
+        screen.detail(msg)
         self.status(msg)
 
     def run(self) -> Stats:
@@ -264,12 +267,14 @@ class Explorer:
         if not self._in_scope(s.map_xy):
             return False                             # outside the radius / behind the start
         self._handled.append(s.map_xy)
+        self._plant = f"plant_{len(self._handled):02d}"
         match = self.vision.plant_match(self.vision.plant_embed(s.crop), s.map_xy)
         label = self.identify(s, match)
         if label is None:
             return False
         self._say(f"plant at ({s.map_xy[0]:.2f}, {s.map_xy[1]:.2f}): "
                   f"{'new' if not label else label} — photographing it from all sides")
+        screen.detail(f"{self._plant} {'new' if not label else label}, starting photos")
         views = self.orbit(s.map_xy)
         if not views:
             self._say("could not reach any viewpoint around the plant — skipping")
@@ -279,6 +284,7 @@ class Explorer:
                 "map": self.cfg.map_name, "detector_confidence": s.confidence}
         res = self.vision.plant_enroll([v[0] for v in views], label, meta)
         (self.stats.plants_revisited if label else self.stats.plants_new).append(res["label"])
+        screen.detail(f"{res['label']} saved {res['photos_saved']} photos")
         self._say(f"saved {res['photos_saved']} photos as {res['label']} ({res['folder']})")
         return True
 
@@ -318,12 +324,14 @@ class Explorer:
         for i, vp in enumerate(vps, 1):
             if self._stop.is_set():
                 break
+            screen.detail(f"{self._plant} moving to view {i}/{len(vps)}")
             now = self.map_pose()
             path = self.vision.slam_plan((now.x, now.y), vp["pose"][:2])
             if path is None or self.follow(path, max_dist=float("inf")) != "arrived":
                 self._say(f"viewpoint {i}/{len(vps)} unreachable — skipping")
                 continue
             self.face(target)
+            screen.detail(f"{self._plant} capturing {i}/{len(vps)}")
             views.append(self.photograph(target, vp.get("angle_deg")))
         return views
 

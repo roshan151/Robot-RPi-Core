@@ -19,7 +19,7 @@ import logging
 import time
 from typing import Callable, Optional
 
-from robot_core import settings
+from robot_core import settings, status
 from robot_core.sensors.camera import jpeg
 from robot_core.vision_client import VisionClient, VisionError
 
@@ -79,6 +79,7 @@ def enroll(camera, vision: VisionClient, name: str, seconds: float = settings.FA
     shots are spread evenly across the window.
     """
     eyes = _Eyes(camera, vision, head)
+    status.timer(f"search {name}", settings.FACE_SEARCH_SECONDS)
     shots, t0, t_face, last = [], clock(), None, float("-inf")
     try:
         while True:
@@ -90,21 +91,27 @@ def enroll(camera, vision: VisionClient, name: str, seconds: float = settings.FA
             face = eyes.look()
             if face and t_face is None:
                 t_face = clock()
+                status.timer(f"enroll {name}", seconds)
             if face and face["face_count"] > 1:
                 log.warning("enroll rejected: %d faces in view", face["face_count"])
+                status.result("enroll rejected")
                 return False
             if face and face["quality"] >= settings.FACE_MIN_QUALITY \
                     and clock() - last >= seconds / max_shots:
                 shots.append(eyes.last_jpeg)
                 last = clock()
         if len(shots) < settings.FACE_MIN_SHOTS:
+            status.error("F01" if t_face is None else "F03")
+            status.result("enroll failed")
             log.warning("enroll: only %d usable frames, nothing saved", len(shots))
             return False
         vision.face_enroll(shots, name)
-    except VisionError as exc:
+    except (VisionError, RuntimeError) as exc:      # RuntimeError: the camera gave up
         log.warning("enroll failed: %s", exc)
+        status.result("enroll failed")
         return False
     log.info("enrolled %s from %d frames", name, len(shots))
+    status.result(f"{name} enrolled")
     return True
 
 
@@ -113,6 +120,7 @@ def match(camera, vision: VisionClient, seconds: float = settings.FACE_MATCH_SEC
     """The enrolled name of whoever is in front of the camera, or None after
     `seconds` (which includes the time spent searching)."""
     eyes = _Eyes(camera, vision, head)
+    status.timer("match", seconds)
     t0 = clock()
     try:
         while clock() - t0 < seconds:
@@ -122,7 +130,10 @@ def match(camera, vision: VisionClient, seconds: float = settings.FACE_MATCH_SEC
             res = vision.face_match(face["embedding"])
             best = res["matches"][0] if res["matches"] else None
             if best and best["similarity"] >= res["threshold"]:
+                status.result(f"{best['label']} matched")
                 return best["label"]
-    except VisionError as exc:
+    except (VisionError, RuntimeError) as exc:
         log.warning("match failed: %s", exc)
+    status.error("F01")
+    status.result("no match")
     return None

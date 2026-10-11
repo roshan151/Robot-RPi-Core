@@ -40,6 +40,7 @@ class BatteryState:
     percent: Optional[float] = None
     volts: Optional[float] = None
     charging: Optional[bool] = None
+    amps: Optional[float] = None          # battery current; sign as the PiSugar reports it
 
     @property
     def ok(self) -> bool:
@@ -66,6 +67,7 @@ class BatteryState:
             "pct": None if self.percent is None else round(self.percent, 1),
             "volts": None if self.volts is None else round(self.volts, 2),
             "charging": self.charging,
+            "amps": None if self.amps is None else round(self.amps, 2),
         }
 
 
@@ -114,6 +116,10 @@ def read(retries: int = 3, delay: float = 1.0) -> BatteryState:
                 pass
             try:
                 state.volts = float(_value(_query("get battery_v")))
+            except (ValueError, IndexError):
+                pass
+            try:
+                state.amps = float(_value(_query("get battery_i")))
             except (ValueError, IndexError):
                 pass
             try:

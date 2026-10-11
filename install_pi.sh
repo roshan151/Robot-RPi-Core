@@ -26,7 +26,7 @@ OTHER_PACKAGES=(
   python3-picamera2 python3-libcamera python3-opencv python3-numpy python3-yaml   # camera + vision
   libportaudio2 alsa-utils pulseaudio-utils bluez pipewire pipewire-pulse pipewire-alsa wireplumber libspa-0.2-bluetooth  # audio, buds (pipewire-alsa routes PortAudio to the buds)
 )
-PIP_EXTRAS="voice,explore"
+PIP_EXTRAS="voice,explore,oled"
 
 say() { printf '\n== %s\n' "$*"; }
 
@@ -110,6 +110,9 @@ set -u
 # ---------------------------------------------------------------- 4. Pi configuration
 say "Groups and lingering (audio must exist at boot)"
 sudo usermod -aG dialout,audio,bluetooth "$USER"
+# Lets the voice "shut down" tool power the Pi off cleanly - this one command only, no password.
+echo "$USER ALL=(root) NOPASSWD: /usr/bin/systemctl poweroff" | sudo tee /etc/sudoers.d/robot-shutdown >/dev/null
+sudo chmod 440 /etc/sudoers.d/robot-shutdown && sudo visudo -cf /etc/sudoers.d/robot-shutdown >/dev/null || sudo rm -f /etc/sudoers.d/robot-shutdown
 sudo loginctl enable-linger "$USER"
 
 say "Head servos (PWM overlay) and TF-Luna serial port"
@@ -117,6 +120,7 @@ OVERLAY="dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4"
 grep -qxF "$OVERLAY" /boot/firmware/config.txt || echo "$OVERLAY" | sudo tee -a /boot/firmware/config.txt >/dev/null
 sudo raspi-config nonint do_serial_cons 1     # 1 = no login shell on the serial port
 sudo raspi-config nonint do_serial_hw 0       # 0 = serial hardware on
+sudo raspi-config nonint do_spi 0              # 0 = SPI on (status OLED)
 
 say "Boot service file (not started yet)"
 UID_NOW=$(id -u)

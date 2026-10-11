@@ -1,0 +1,30 @@
+[0:04:32.286473933] [3218]  INFO Camera camera_manager.cpp:340 libcamera v0.7.2+rpt20260817
+[0:04:32.316242710] [3222]  INFO RPI pipeline_base.cpp:1133 Using configuration file '/usr/share/libcamera/pipeline/rpi/vc4/rpi_apps.yaml'
+[0:04:32.348445789] [3222]  INFO IPAProxy ipa_proxy.cpp:184 Using tuning file /usr/share/libcamera/ipa/rpi/vc4/ov5647.json
+[0:04:32.354835651] [3222]  INFO Camera camera_manager.cpp:223 Adding camera '/base/soc/i2c0mux/i2c@1/ov5647@36' for pipeline handler rpi/vc4
+[0:04:32.354903982] [3222]  INFO RPI vc4.cpp:445 Registered camera /base/soc/i2c0mux/i2c@1/ov5647@36 to Unicam device /dev/media0 and ISP device /dev/media2
+Made wayland-egl preview window
+Mode selection for 1296:972:12:P
+    SGBRG10_CSI2P,640x480/0 - Score: 3296
+    SGBRG10_CSI2P,1296x972/0 - Score: 1000
+    SGBRG10_CSI2P,1920x1080/0 - Score: 1349.67
+    SGBRG10_CSI2P,2592x1944/0 - Score: 1567
+Stream configuration adjusted
+[0:04:32.583285667] [3218]  INFO Camera camera.cpp:1216 configuring streams: (0) 1296x972-YUV420/sYCC (1) 1296x972-SGBRG10_CSI2P/RAW
+[0:04:32.583774260] [3222]  INFO RPI vc4.cpp:620 Sensor: /base/soc/i2c0mux/i2c@1/ov5647@36 - Selected sensor format: 1296x972-SGBRG10_1X10/RAW - Selected unicam format: 1296x972-pGAA/RAW
+[0:04:33.704115986] [3222]  WARN V4L2 v4l2_videodevice.cpp:2096 /dev/video0[17:cap]: Dequeue timer of 1000000.00us has expired!
+[0:04:33.704223186] [3222] ERROR RPI pipeline_base.cpp:1371 Camera frontend has timed out!
+[0:04:33.704238019] [3222] ERROR RPI pipeline_base.cpp:1372 Please check that your camera sensor connector is attached securely.
+[0:04:33.704250648] [3222] ERROR RPI pipeline_base.cpp:1373 Alternatively, try another cable and/or sensor.
+ERROR: Device timeout detected, attempting a restart!!!
+[0:04:34.808112497] [3222]  WARN V4L2 v4l2_videodevice.cpp:2096 /dev/video0[17:cap]: Dequeue timer of 1000000.00us has expired!
+[0:04:34.808254103] [3222] ERROR RPI pipeline_base.cpp:1371 Camera frontend has timed out!
+[0:04:34.808269343] [3222] ERROR RPI pipeline_base.cpp:1372 Please check that your camera sensor connector is attached securely.
+[0:04:34.808300601] [3222] ERROR RPI pipeline_base.cpp:1373 Alternatively, try another cable and/or sensor.
+ERROR: Device timeout detected, attempting a restart!!!
+[0:04:35.921195259] [3222]  WARN V4L2 v4l2_videodevice.cpp:2096 /dev/video0[17:cap]: Dequeue timer of 1000000.00us has expired!
+[0:04:35.921329625] [3222] ERROR RPI pipeline_base.cpp:1371 Camera frontend has timed out!
+[0:04:35.921362142] [3222] ERROR RPI pipeline_base.cpp:1372 Please check that your camera sensor connector is attached securely.
+[0:04:35.921386049] [3222] ERROR RPI pipeline_base.cpp:1373 Alternatively, try another cable and/or sensor.
+ERROR: Device timeout detected, attempting a restart!!!
+^C
