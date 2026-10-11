@@ -147,3 +147,15 @@ def test_head_match_reports_unknown_when_nobody_is_found():
     h2 = nobody.head
     assert face_tasks.match(HeadCamera(h2), nobody, seconds=30, clock=Clock(), head=h2) is None
     assert all(t >= 0 for _, t in h2.moves) and len(h2.moves) > 4      # it did sweep
+
+
+def test_a_cancelled_enroll_saves_nothing_and_a_cancelled_match_finds_nobody():
+    from robot_core import task_cancel
+    task_cancel.request("service")
+    try:
+        v = Vision()
+        assert not face_tasks.enroll(Camera(), v, "sam", seconds=30, clock=Clock())
+        assert v.enrolled is None
+        assert face_tasks.match(Camera(), Vision(sim=0.9), seconds=5, clock=Clock()) is None
+    finally:
+        task_cancel.reset()

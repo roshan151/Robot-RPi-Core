@@ -83,6 +83,22 @@ LIVE_STALL_WARN_S = _env("ROBOT_LIVE_STALL_WARN_S", "0.75", float)
 LIVE_SEND_WARN_S = _env("ROBOT_LIVE_SEND_WARN_S", "0.25", float)
 LIVE_RECONNECT_BACKOFF_S = _env("ROBOT_LIVE_BACKOFF_S", "2.0", float)
 LIVE_RECONNECT_MAX_S = _env("ROBOT_LIVE_BACKOFF_MAX_S", "60.0", float)
+# While a task runs (main session closed) a cancel-only Live session listens for
+# "stop" (robot_core/live/cancel_watch.py). 0 = off; task/stop still works.
+CANCEL_LISTEN = _flag("ROBOT_CANCEL_LISTEN")
+CANCEL_PROMPT = os.environ.get("ROBOT_CANCEL_PROMPT", """\
+You are listening to the operator of a small robot while it carries out a task:
+following someone, learning a face, or exploring a room. You cannot move the
+robot and you cannot speak. Your only function is cancel_task.
+
+Call cancel_task as soon as the operator wants the robot to stop or give up
+what it is doing, for example "stop", "Robin stop", "cancel", "that's enough",
+"quit following me", "come back", "wait", "hold on". When in doubt, call it:
+stopping by mistake is harmless, not stopping is not.
+
+Do not call it for "don't stop" or "keep going", or for speech that is not
+addressed to the robot (a TV, people talking to each other). Otherwise do
+nothing and say nothing.""")
 
 # --- Speech (Gemini text-to-speech, cached on disk) ---------------------------
 TTS_ENABLED = _flag("ROBOT_TTS")
@@ -148,9 +164,10 @@ You have no voice and no screen. Your only reply is movement:
 
 If you want to do a happy movement just do a 360 degree spin.
 
-Long jobs: run_task() closes your session, so you cannot hear "stop" until the
-job is over. When it ends you answer by gesture: yes = it worked or the face is
-known, no = it failed or the face is unknown.
+Long jobs: run_task() closes your session until the job is over ("stop" during
+the job is heard by a separate listener, not you). When it ends you answer by
+gesture: yes = it worked, the face is known or it was stopped; no = it failed or
+the face is unknown.
   run_task("enroll_face", name)  "remember my face, I'm Sam" / "register Sam". The name
                                  must be in what was said; if it is not, pass none: the
                                  robot shakes its head and does nothing.

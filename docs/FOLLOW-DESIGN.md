@@ -48,8 +48,9 @@ uses the head's (+ = left).
 
 * **No obstacle check before a drive.** Next: allow tilt below 0 during follow
   and run `Head.floor_probe` before each step, as explore does.
-* **You can't say "stop" during the task**: the Live session is closed, as in explore.
-  It ends when the person is gone or after `FOLLOW_SECONDS` (300 s).
+* **Cancelling**: say "stop" (the cancel-only voice session, needs internet) or call
+  `ros2 service call /task/stop std_srvs/srv/Trigger` — see `TASK-CANCEL.md`. Otherwise
+  it ends when the person is gone or after `FOLLOW_SECONDS` (300 s).
 * Two people in similar colours: the one nearer where the target should be wins, and a
   person whose face is seen to be someone else is never taken. A faceless lookalike who
   steps in where the target was can still be taken until their face is seen.

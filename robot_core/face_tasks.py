@@ -22,7 +22,7 @@ import logging
 import time
 from typing import Callable, Optional
 
-from robot_core import settings, status
+from robot_core import settings, status, task_cancel
 from robot_core.sensors.camera import jpeg
 from robot_core.vision_client import VisionClient, VisionError
 
@@ -120,6 +120,9 @@ def enroll(camera, vision: VisionClient, name: str, seconds: float = settings.FA
     shots, t0, t_face, last = [], clock(), None, float("-inf")
     try:
         while True:
+            if task_cancel.requested():
+                status.result("enroll cancelled")
+                return False                           # nothing saved
             now = clock()
             if t_face is None and now - t0 >= settings.FACE_SEARCH_SECONDS:
                 break                                  # never found anyone
@@ -164,6 +167,9 @@ def match(camera, vision: VisionClient, seconds: float = settings.FACE_MATCH_SEC
     t0 = clock()
     try:
         while clock() - t0 < seconds:
+            if task_cancel.requested():
+                status.result("match cancelled")
+                return None
             face = eyes.look()
             if not face:
                 continue
