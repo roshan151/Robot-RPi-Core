@@ -432,3 +432,352 @@
 {"ts":"2026-10-09T03:04:22.859Z","lvl":"info","evt":"session.start","mode":"ros","pid":1728,"log":"logs.json"}
 {"ts":"2026-10-09T03:04:28.428Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
 {"ts":"2026-10-09T03:04:28.429Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T14:27:00.093Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-11T14:27:00.759Z","lvl":"info","evt":"session.start","mode":"ros","pid":2508,"log":"logs.json"}
+{"ts":"2026-10-11T14:27:06.450Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T14:27:06.450Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T14:27:11.119Z","lvl":"error","evt":"voice.drop","err":"PortAudioError: Error querying device -1"}
+{"ts":"2026-10-11T14:27:11.120Z","lvl":"info","evt":"voice.error","text":"Voice session failed. port audio error. Check the log.","detail":"port audio error"}
+{"ts":"2026-10-11T14:27:18.946Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T14:27:18.947Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T14:27:46.827Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-11T14:27:47.569Z","lvl":"info","evt":"session.start","mode":"ros","pid":1714,"log":"logs.json"}
+{"ts":"2026-10-11T14:27:53.560Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T14:27:53.561Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T14:28:14.459Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.85}
+{"ts":"2026-10-11T14:28:22.977Z","lvl":"info","evt":"voice.heard","text":"Enroll face for Roshan"}
+{"ts":"2026-10-11T14:28:22.988Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"name":"Roshan","task":"enroll_face"},"ok":true,"starting":"enroll_face","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-10-11T14:28:23.107Z","lvl":"info","evt":"task.start","task":"enroll_face","name":"Roshan","_unregistered":true}
+{"ts":"2026-10-11T14:28:23.775Z","lvl":"warn","evt":"task.error","err":"head unavailable: error: 'unexpected error'","_unregistered":true}
+{"ts":"2026-10-11T14:29:00.096Z","lvl":"info","evt":"task.end","task":"enroll_face","ok":true,"_unregistered":true}
+{"ts":"2026-10-11T14:29:00.098Z","lvl":"info","evt":"gesture","name":"yes","jobs":[true,true]}
+{"ts":"2026-10-11T14:29:00.099Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[true,true]}
+{"ts":"2026-10-11T14:29:01.727Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T14:29:01.727Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T14:29:07.305Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.93,"repeats":1}
+{"ts":"2026-10-11T14:29:23.424Z","lvl":"info","evt":"voice.heard","text":"Detect Roshan. If you can find him, follow him."}
+{"ts":"2026-10-11T14:29:23.427Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow","name":"Roshan"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-10-11T14:29:23.614Z","lvl":"info","evt":"task.start","task":"follow","name":"Roshan","_unregistered":true}
+{"ts":"2026-10-11T14:29:23.728Z","lvl":"warn","evt":"task.error","err":"head unavailable: error: 'unexpected error'","_unregistered":true}
+{"ts":"2026-10-11T14:29:36.579Z","lvl":"info","evt":"task.end","task":"follow","ok":false,"_unregistered":true}
+{"ts":"2026-10-11T14:29:36.583Z","lvl":"info","evt":"gesture","name":"no","jobs":[true,true,true]}
+{"ts":"2026-10-11T14:29:36.584Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[true,true,true]}
+{"ts":"2026-10-11T14:29:40.174Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T14:29:40.175Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T14:29:45.744Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.92,"repeats":3}
+{"ts":"2026-10-11T14:29:56.100Z","lvl":"info","evt":"voice.heard","text":"Follow Roshan."}
+{"ts":"2026-10-11T14:29:56.104Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"name":"Roshan","task":"follow"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-10-11T14:29:56.203Z","lvl":"info","evt":"task.start","task":"follow","name":"Roshan","_unregistered":true}
+{"ts":"2026-10-11T14:29:56.290Z","lvl":"warn","evt":"task.error","err":"head unavailable: error: 'unexpected error'","_unregistered":true}
+{"ts":"2026-10-11T14:30:09.015Z","lvl":"info","evt":"task.end","task":"follow","ok":false,"_unregistered":true}
+{"ts":"2026-10-11T14:30:09.018Z","lvl":"info","evt":"gesture","name":"no","jobs":[true,true,true]}
+{"ts":"2026-10-11T14:30:09.019Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[true,true,true]}
+{"ts":"2026-10-11T14:30:12.603Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T14:30:12.605Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T14:30:18.241Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.99,"repeats":3}
+{"ts":"2026-10-11T14:30:25.835Z","lvl":"info","evt":"voice.heard","text":"robot shutdown"}
+{"ts":"2026-10-11T14:30:25.873Z","lvl":"info","evt":"gesture","name":"yes","jobs":[true,true]}
+{"ts":"2026-10-11T14:30:25.876Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-10-11T14:30:25.878Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-10-11T14:30:15.559Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-11T14:30:16.389Z","lvl":"info","evt":"session.start","mode":"ros","pid":1714,"log":"logs.json"}
+{"ts":"2026-10-11T14:46:09.494Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T14:46:09.494Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T14:46:15.381Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.05}
+{"ts":"2026-10-11T15:05:53.229Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-11T15:05:53.928Z","lvl":"info","evt":"session.start","mode":"ros","pid":2062,"log":"logs.json"}
+{"ts":"2026-10-11T15:05:59.892Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T15:05:59.892Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T15:06:00.057Z","lvl":"warn","evt":"log","msg":"playback failed (sounddevice): Error opening OutputStream: Sample format not supported [PaErrorCode -9994]","src":"robot_core.speech"}
+{"ts":"2026-10-11T15:06:00.121Z","lvl":"error","evt":"voice.drop","err":"PortAudioError: Error querying device -1"}
+{"ts":"2026-10-11T15:06:00.122Z","lvl":"info","evt":"voice.error","text":"Voice session failed. port audio error. Check the log.","detail":"port audio error"}
+{"ts":"2026-10-11T15:06:00.132Z","lvl":"warn","evt":"log","msg":"playback failed (sounddevice): Error opening OutputStream: Sample format not supported [PaErrorCode -9994]","src":"robot_core.speech"}
+{"ts":"2026-10-11T15:06:02.510Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T15:06:02.510Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T15:06:02.513Z","lvl":"warn","evt":"log","msg":"playback failed (sounddevice): Error opening OutputStream: Sample format not supported [PaErrorCode -9994]","src":"robot_core.speech"}
+{"ts":"2026-10-11T15:06:02.577Z","lvl":"error","evt":"voice.drop","err":"PortAudioError: Error querying device -1"}
+{"ts":"2026-10-11T15:06:02.578Z","lvl":"info","evt":"voice.error","text":"Voice session failed. port audio error. Check the log.","detail":"port audio error"}
+{"ts":"2026-10-11T15:06:02.581Z","lvl":"warn","evt":"log","msg":"playback failed (sounddevice): Error opening OutputStream: Sample format not supported [PaErrorCode -9994]","src":"robot_core.speech"}
+{"ts":"2026-10-11T15:06:07.021Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T15:06:07.021Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T15:06:07.024Z","lvl":"warn","evt":"log","msg":"playback failed (sounddevice): Error opening OutputStream: Illegal combination of I/O devices [PaErrorCode -9993]","src":"robot_core.speech"}
+{"ts":"2026-10-11T15:06:07.085Z","lvl":"error","evt":"voice.drop","err":"PortAudioError: Error querying device -1"}
+{"ts":"2026-10-11T15:06:07.086Z","lvl":"info","evt":"voice.error","text":"Voice session failed. port audio error. Check the log.","detail":"port audio error"}
+{"ts":"2026-10-11T15:06:07.089Z","lvl":"warn","evt":"log","msg":"playback failed (sounddevice): Error opening OutputStream: Illegal combination of I/O devices [PaErrorCode -9993]","src":"robot_core.speech"}
+{"ts":"2026-10-11T15:06:42.035Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-11T15:06:42.799Z","lvl":"info","evt":"session.start","mode":"ros","pid":1707,"log":"logs.json"}
+{"ts":"2026-10-11T15:06:47.972Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T15:06:47.972Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T15:07:08.884Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.92}
+{"ts":"2026-10-11T15:07:15.853Z","lvl":"info","evt":"voice.heard","text":"enroll face for ration"}
+{"ts":"2026-10-11T15:07:15.869Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"name":"Roshan","task":"enroll_face"},"ok":true,"starting":"enroll_face","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-10-11T15:07:15.958Z","lvl":"info","evt":"task.start","task":"enroll_face","name":"Roshan","_unregistered":true}
+{"ts":"2026-10-11T15:07:16.623Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T15:08:14.391Z","lvl":"warn","evt":"log","msg":"enroll: only 1 usable frames, nothing saved","src":"robot_core.face_tasks"}
+{"ts":"2026-10-11T15:08:17.665Z","lvl":"info","evt":"task.end","task":"enroll_face","ok":false,"_unregistered":true}
+{"ts":"2026-10-11T15:08:17.666Z","lvl":"info","evt":"gesture","name":"no","head":true}
+{"ts":"2026-10-11T15:08:17.667Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-10-11T15:08:17.700Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T15:08:18.048Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T15:08:18.049Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T15:08:23.544Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.84,"repeats":1}
+{"ts":"2026-10-11T15:08:54.566Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.85,"repeats":2}
+{"ts":"2026-10-11T15:09:10.136Z","lvl":"info","evt":"voice.heard","text":"Turn left."}
+{"ts":"2026-10-11T15:09:10.143Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-90},"ok":true,"queued":true,"op":"turn","value":-90.0}
+{"ts":"2026-10-11T15:09:15.775Z","lvl":"info","evt":"voice.heard","text":"Turn right."}
+{"ts":"2026-10-11T15:09:15.793Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":90},"ok":true,"queued":true,"op":"turn","value":90.0}
+{"ts":"2026-10-11T15:09:27.097Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.76,"repeats":5}
+{"ts":"2026-10-11T15:09:37.279Z","lvl":"info","evt":"voice.heard","text":"Register my face. My name is Roshan."}
+{"ts":"2026-10-11T15:09:37.283Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"enroll_face","name":"Roshan"},"ok":true,"starting":"enroll_face","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-10-11T15:09:37.452Z","lvl":"info","evt":"task.start","task":"enroll_face","name":"Roshan","_unregistered":true}
+{"ts":"2026-10-11T15:09:37.868Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T15:10:09.223Z","lvl":"warn","evt":"log","msg":"enroll: only 0 usable frames, nothing saved","src":"robot_core.face_tasks"}
+{"ts":"2026-10-11T15:10:10.598Z","lvl":"info","evt":"task.end","task":"enroll_face","ok":false,"_unregistered":true}
+{"ts":"2026-10-11T15:10:10.600Z","lvl":"info","evt":"gesture","name":"no","head":true}
+{"ts":"2026-10-11T15:10:10.602Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-10-11T15:10:10.634Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T15:10:11.092Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T15:10:11.093Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T15:10:16.707Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.96,"repeats":1}
+{"ts":"2026-10-11T15:10:54.853Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.81,"repeats":3}
+{"ts":"2026-10-11T15:11:02.579Z","lvl":"info","evt":"voice.heard","text":"Robot shut down."}
+{"ts":"2026-10-11T15:11:02.585Z","lvl":"info","evt":"gesture","name":"yes","head":true}
+{"ts":"2026-10-11T15:11:04.519Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-10-11T15:11:04.520Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-10-11T15:09:10.264Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-11T15:09:11.045Z","lvl":"info","evt":"session.start","mode":"ros","pid":1736,"log":"logs.json"}
+{"ts":"2026-10-11T15:15:13.890Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T15:15:13.890Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T15:15:19.639Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.93}
+{"ts":"2026-10-11T15:16:05.278Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.91,"repeats":4}
+{"ts":"2026-10-11T15:16:17.177Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-11T15:16:17.836Z","lvl":"info","evt":"session.start","mode":"ros","pid":2202,"log":"logs.json"}
+{"ts":"2026-10-11T15:16:22.391Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T15:16:22.391Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T15:16:28.103Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.03}
+{"ts":"2026-10-11T15:16:58.640Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":2.67,"repeats":2}
+{"ts":"2026-10-11T15:16:58.641Z","lvl":"info","evt":"voice.heard","text":"Enroll by face. My name is Roshan."}
+{"ts":"2026-10-11T15:16:58.652Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"enroll_face","name":"Roshan"},"ok":true,"starting":"enroll_face","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-10-11T15:16:58.867Z","lvl":"info","evt":"task.start","task":"enroll_face","name":"Roshan","_unregistered":true}
+{"ts":"2026-10-11T15:16:59.583Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T15:16:59.587Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T15:17:27.806Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T15:17:36.387Z","lvl":"info","evt":"task.end","task":"enroll_face","ok":true,"_unregistered":true}
+{"ts":"2026-10-11T15:17:36.389Z","lvl":"info","evt":"gesture","name":"yes","head":true}
+{"ts":"2026-10-11T15:17:36.391Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-10-11T15:17:36.453Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T15:17:36.871Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T15:17:36.872Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T15:17:42.530Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.98}
+{"ts":"2026-10-11T15:17:59.795Z","lvl":"info","evt":"voice.heard","text":"Can you see Roshan if so follow him."}
+{"ts":"2026-10-11T15:17:59.799Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow","name":"Roshan"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-10-11T15:17:59.905Z","lvl":"info","evt":"task.start","task":"follow","name":"Roshan","_unregistered":true}
+{"ts":"2026-10-11T15:18:00.333Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T15:18:22.946Z","lvl":"warn","evt":"log","msg":"follow failed: searched, Roshan not found","src":"robot_core.follow"}
+{"ts":"2026-10-11T15:18:24.521Z","lvl":"info","evt":"task.end","task":"follow","ok":false,"_unregistered":true}
+{"ts":"2026-10-11T15:18:24.522Z","lvl":"info","evt":"gesture","name":"no","head":true}
+{"ts":"2026-10-11T15:18:24.523Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-10-11T15:18:24.543Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T15:18:24.987Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T15:18:24.987Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T15:18:30.492Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.85,"repeats":4}
+{"ts":"2026-10-11T15:18:42.085Z","lvl":"info","evt":"voice.heard","text":"Search for Russian. If you can find him, follow him."}
+{"ts":"2026-10-11T15:18:42.089Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow","name":"Roshan"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-10-11T15:18:42.230Z","lvl":"info","evt":"task.start","task":"follow","name":"Roshan","_unregistered":true}
+{"ts":"2026-10-11T15:18:42.648Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T15:19:04.829Z","lvl":"warn","evt":"log","msg":"follow failed: searched, Roshan not found","src":"robot_core.follow"}
+{"ts":"2026-10-11T15:19:06.373Z","lvl":"info","evt":"task.end","task":"follow","ok":false,"_unregistered":true}
+{"ts":"2026-10-11T15:19:06.374Z","lvl":"info","evt":"gesture","name":"no","head":true}
+{"ts":"2026-10-11T15:19:06.376Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-10-11T15:19:06.407Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T15:19:06.842Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T15:19:06.842Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T15:19:12.693Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.2,"repeats":3}
+{"ts":"2026-10-11T15:19:17.454Z","lvl":"info","evt":"voice.heard","text":"Robot shut down."}
+{"ts":"2026-10-11T15:19:17.463Z","lvl":"info","evt":"gesture","name":"yes","head":true}
+{"ts":"2026-10-11T15:19:19.393Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-10-11T15:19:19.395Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-10-11T15:18:23.211Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-11T15:18:23.964Z","lvl":"info","evt":"session.start","mode":"ros","pid":1714,"log":"logs.json"}
+{"ts":"2026-10-11T15:18:29.157Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T15:18:29.158Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T18:50:38.412Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.01}
+{"ts":"2026-10-11T18:50:51.620Z","lvl":"info","evt":"voice.heard","text":"my face for face detection my name is Roshan."}
+{"ts":"2026-10-11T18:50:51.639Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"name":"Roshan","task":"enroll_face"},"ok":true,"starting":"enroll_face","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-10-11T18:50:51.802Z","lvl":"info","evt":"task.start","task":"enroll_face","name":"Roshan","_unregistered":true}
+{"ts":"2026-10-11T18:50:52.468Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T18:51:22.599Z","lvl":"warn","evt":"log","msg":"enroll: only 0 usable frames, nothing saved","src":"robot_core.face_tasks"}
+{"ts":"2026-10-11T18:51:23.348Z","lvl":"info","evt":"task.end","task":"enroll_face","ok":false,"_unregistered":true}
+{"ts":"2026-10-11T18:51:23.349Z","lvl":"info","evt":"gesture","name":"no","head":true}
+{"ts":"2026-10-11T18:51:23.351Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-10-11T18:51:23.371Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T18:51:23.815Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T18:51:23.816Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T18:51:29.401Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.91,"repeats":2}
+{"ts":"2026-10-11T18:51:34.490Z","lvl":"info","evt":"voice.heard","text":"Enroll my face. My name is Roshan."}
+{"ts":"2026-10-11T18:51:34.494Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"enroll_face","name":"Roshan"},"ok":true,"starting":"enroll_face","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-10-11T18:51:34.655Z","lvl":"info","evt":"task.start","task":"enroll_face","name":"Roshan","_unregistered":true}
+{"ts":"2026-10-11T18:51:35.119Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T18:52:13.363Z","lvl":"info","evt":"task.end","task":"enroll_face","ok":true,"_unregistered":true}
+{"ts":"2026-10-11T18:52:13.364Z","lvl":"info","evt":"gesture","name":"yes","head":true}
+{"ts":"2026-10-11T18:52:13.366Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-10-11T18:52:13.386Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T18:52:13.818Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T18:52:13.819Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T18:52:19.240Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.8,"repeats":1}
+{"ts":"2026-10-11T18:52:30.259Z","lvl":"info","evt":"voice.heard","text":"Can you see Roshan around you? If so, follow him."}
+{"ts":"2026-10-11T18:52:30.263Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"name":"Roshan","task":"follow"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-10-11T18:52:30.424Z","lvl":"info","evt":"task.start","task":"follow","name":"Roshan","_unregistered":true}
+{"ts":"2026-10-11T18:52:30.826Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T18:52:53.865Z","lvl":"warn","evt":"log","msg":"follow failed: searched, Roshan not found","src":"robot_core.follow"}
+{"ts":"2026-10-11T18:52:55.408Z","lvl":"info","evt":"task.end","task":"follow","ok":false,"_unregistered":true}
+{"ts":"2026-10-11T18:52:55.409Z","lvl":"info","evt":"gesture","name":"no","head":true}
+{"ts":"2026-10-11T18:52:55.410Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-10-11T18:52:55.442Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T18:52:55.952Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T18:52:55.952Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T18:53:01.710Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.12,"repeats":2}
+{"ts":"2026-10-11T18:53:08.046Z","lvl":"info","evt":"voice.heard","text":"Do you see Roshan? If so, follow him."}
+{"ts":"2026-10-11T18:53:08.281Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow","name":"Roshan"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-10-11T18:53:08.441Z","lvl":"info","evt":"task.start","task":"follow","name":"Roshan","_unregistered":true}
+{"ts":"2026-10-11T18:53:08.841Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T18:53:33.385Z","lvl":"warn","evt":"log","msg":"follow failed: searched, Roshan not found","src":"robot_core.follow"}
+{"ts":"2026-10-11T18:53:34.972Z","lvl":"info","evt":"task.end","task":"follow","ok":false,"_unregistered":true}
+{"ts":"2026-10-11T18:53:34.973Z","lvl":"info","evt":"gesture","name":"no","head":true}
+{"ts":"2026-10-11T18:53:34.975Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-10-11T18:53:35.006Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T18:53:35.432Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T18:53:35.432Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T18:53:40.973Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.9,"repeats":1}
+{"ts":"2026-10-11T18:53:42.750Z","lvl":"info","evt":"voice.heard","text":"per"}
+{"ts":"2026-10-11T18:53:42.756Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-10-11T18:53:47.462Z","lvl":"info","evt":"voice.heard","text":"Go straight."}
+{"ts":"2026-10-11T18:53:47.467Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
+{"ts":"2026-10-11T18:53:55.344Z","lvl":"info","evt":"voice.heard","text":"Let me send you the link of the animation."}
+{"ts":"2026-10-11T18:53:55.349Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-10-11T18:54:13.466Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.82,"repeats":8}
+{"ts":"2026-10-11T18:54:26.597Z","lvl":"info","evt":"voice.heard","text":"meu filho"}
+{"ts":"2026-10-11T18:54:26.604Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-10-11T18:54:44.693Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.72,"repeats":1}
+{"ts":"2026-10-11T18:54:44.694Z","lvl":"info","evt":"voice.heard","text":"Stop moving."}
+{"ts":"2026-10-11T18:54:44.699Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-10-11T18:55:08.981Z","lvl":"info","evt":"voice.heard","text":"Robot shut down."}
+{"ts":"2026-10-11T18:55:08.989Z","lvl":"info","evt":"gesture","name":"yes","head":true}
+{"ts":"2026-10-11T18:55:10.931Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-10-11T18:55:10.934Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-10-11T18:55:15.981Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.03,"repeats":4}
+{"ts":"2026-10-11T18:53:42.810Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-11T18:53:43.722Z","lvl":"info","evt":"session.start","mode":"ros","pid":1709,"log":"logs.json"}
+{"ts":"2026-10-11T18:53:48.874Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T18:53:48.874Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-11T18:56:22.713Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.93}
+{"ts":"2026-10-11T18:56:32.970Z","lvl":"info","evt":"voice.heard","text":"Robot shut down."}
+{"ts":"2026-10-11T18:56:32.982Z","lvl":"info","evt":"gesture","name":"yes","head":true}
+{"ts":"2026-10-11T18:56:33.060Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T18:56:33.062Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T18:56:33.063Z","lvl":"info","evt":"gesture.skip","name":"yes","why":"head has no power"}
+{"ts":"2026-10-11T18:56:33.063Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply is off - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-11T18:56:33.384Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-10-11T18:56:33.385Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-10-11T18:56:42.962Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-11T18:56:43.597Z","lvl":"info","evt":"session.start","mode":"ros","pid":1707,"log":"logs.json"}
+{"ts":"2026-10-11T18:56:48.747Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-11T18:56:48.748Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-13T16:16:26.636Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.84}
+{"ts":"2026-10-13T16:16:30.269Z","lvl":"info","evt":"voice.heard","text":"\u0918\u0942\u092e\u0924\u093e \u0930\u0939\u0924\u093e\u0964"}
+{"ts":"2026-10-13T16:16:30.279Z","lvl":"info","evt":"gesture","name":"unclear","head":true}
+{"ts":"2026-10-13T16:16:30.281Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"unclear"},"ok":true,"gestured":true,"value":"unclear","jobs":[]}
+{"ts":"2026-10-13T16:16:30.384Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-13T16:16:36.428Z","lvl":"info","evt":"voice.heard","text":"I'll have to fix it."}
+{"ts":"2026-10-13T16:16:36.444Z","lvl":"info","evt":"gesture","name":"unclear","head":true}
+{"ts":"2026-10-13T16:16:36.445Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"unclear"},"ok":true,"gestured":true,"value":"unclear","jobs":[]}
+{"ts":"2026-10-13T16:16:40.456Z","lvl":"info","evt":"voice.heard","text":"But when I say animation eyes I start kiya toh"}
+{"ts":"2026-10-13T16:16:40.459Z","lvl":"info","evt":"gesture","name":"unclear","head":true}
+{"ts":"2026-10-13T16:16:40.461Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"unclear"},"ok":true,"gestured":true,"value":"unclear","jobs":[]}
+{"ts":"2026-10-13T16:16:48.997Z","lvl":"info","evt":"voice.heard","text":"cute lag raha hai to iska bhi main isi par rahega eyes ka ya jaise bunny ka vaisa sa thoda rahega."}
+{"ts":"2026-10-13T16:16:49.000Z","lvl":"info","evt":"gesture","name":"unclear","head":true}
+{"ts":"2026-10-13T16:16:49.002Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"unclear"},"ok":true,"gestured":true,"value":"unclear","jobs":[]}
+{"ts":"2026-10-13T16:16:53.809Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-13T16:16:54.902Z","lvl":"info","evt":"voice.heard","text":"\u0915\u094d\u092f\u093e \u0928\u0939\u0940\u0902 \u092f\u0939 \u0910\u0938\u0947 \u092f\u0939 \u091f\u0948\u0902\u0915 \u091f\u093e\u0907\u092a \u0915\u093e \u0930\u0939\u0947\u0917\u093e\u0964 \u0907\u0938\u0915\u093e"}
+{"ts":"2026-10-13T16:16:54.905Z","lvl":"info","evt":"gesture","name":"unclear","head":true}
+{"ts":"2026-10-13T16:16:54.906Z","lvl":"info","evt":"gesture.skip","name":"unclear","why":"head has no power"}
+{"ts":"2026-10-13T16:16:54.907Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"unclear"},"ok":true,"gestured":true,"value":"unclear","jobs":[]}
+{"ts":"2026-10-13T16:16:58.974Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.57,"repeats":5}
+{"ts":"2026-10-13T16:16:58.975Z","lvl":"info","evt":"voice.heard","text":"Robot shut down."}
+{"ts":"2026-10-13T16:16:58.990Z","lvl":"info","evt":"gesture","name":"yes","head":true}
+{"ts":"2026-10-13T16:16:58.991Z","lvl":"info","evt":"gesture.skip","name":"yes","why":"head has no power"}
+{"ts":"2026-10-13T16:16:58.992Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply is off - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-13T16:16:59.314Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-10-13T16:16:59.316Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-10-13T16:17:23.421Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-13T16:17:24.110Z","lvl":"info","evt":"session.start","mode":"ros","pid":1713,"log":"logs.json"}
+{"ts":"2026-10-13T16:17:30.251Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-13T16:17:30.252Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-13T16:30:41.199Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.06}
+{"ts":"2026-10-13T16:30:55.995Z","lvl":"info","evt":"voice.heard","text":"Go straight."}
+{"ts":"2026-10-13T16:30:56.006Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
+{"ts":"2026-10-13T16:31:18.685Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.97,"repeats":3}
+{"ts":"2026-10-13T16:31:18.686Z","lvl":"info","evt":"voice.heard","text":"Turn right."}
+{"ts":"2026-10-13T16:31:18.802Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":90},"ok":true,"queued":true,"op":"turn","value":90.0}
+{"ts":"2026-10-13T16:31:29.481Z","lvl":"info","evt":"voice.heard","text":"Stop."}
+{"ts":"2026-10-13T16:31:29.486Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-10-13T16:32:02.007Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.88,"repeats":4}
+{"ts":"2026-10-13T16:32:02.009Z","lvl":"info","evt":"voice.heard","text":"Turn right."}
+{"ts":"2026-10-13T16:32:02.014Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":90},"ok":true,"queued":true,"op":"turn","value":90.0}
+{"ts":"2026-10-13T16:32:11.510Z","lvl":"info","evt":"voice.heard","text":"Stop."}
+{"ts":"2026-10-13T16:32:11.515Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+                                                                                                                                               {"ts":"2026-10-13T16:32:42.296Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-13T16:32:43.036Z","lvl":"info","evt":"session.start","mode":"ros","pid":1706,"log":"logs.json"}
+{"ts":"2026-10-13T16:32:48.432Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-13T16:32:48.433Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-13T16:34:15.855Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.93}
+{"ts":"2026-10-13T16:34:22.659Z","lvl":"info","evt":"voice.heard","text":"Turn left."}
+{"ts":"2026-10-13T16:34:22.670Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-90},"ok":true,"queued":true,"op":"turn","value":-90.0}
+{"ts":"2026-10-13T16:34:37.123Z","lvl":"info","evt":"voice.heard","text":"Robot shut down."}
+{"ts":"2026-10-13T16:34:37.128Z","lvl":"info","evt":"gesture","name":"yes","head":true}
+{"ts":"2026-10-13T16:34:37.250Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-13T16:34:39.195Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-10-13T16:34:39.196Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-10-13T16:35:10.984Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-13T16:35:11.688Z","lvl":"info","evt":"session.start","mode":"ros","pid":1702,"log":"logs.json"}
+{"ts":"2026-10-13T16:35:17.140Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-13T16:35:17.141Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-13T16:42:11.907Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.85}
+{"ts":"2026-10-13T16:42:18.060Z","lvl":"info","evt":"voice.heard","text":"Turn left."}
+{"ts":"2026-10-13T16:42:18.071Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-90},"ok":true,"queued":true,"op":"turn","value":-90.0}
+{"ts":"2026-10-13T16:42:35.984Z","lvl":"info","evt":"voice.heard","text":"Go straight for half a meter."}
+{"ts":"2026-10-13T16:42:35.989Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":0.5},"ok":true,"queued":true,"op":"drive","value":0.5}
+{"ts":"2026-10-13T16:42:55.404Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.98,"repeats":2}
+{"ts":"2026-10-13T16:43:11.570Z","lvl":"info","evt":"voice.heard","text":"Robot shut down."}
+{"ts":"2026-10-13T16:43:11.574Z","lvl":"info","evt":"gesture","name":"yes","head":true}
+{"ts":"2026-10-13T16:43:11.683Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-13T16:43:13.206Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-13T16:43:13.207Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply is off - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-13T16:43:13.529Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-10-13T16:43:13.530Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-10-13T16:43:07.416Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-13T16:43:08.167Z","lvl":"info","evt":"session.start","mode":"ros","pid":1701,"log":"logs.json"}
+{"ts":"2026-10-13T16:43:13.552Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-13T16:43:13.552Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-13T16:43:19.291Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.95}
+{"ts":"2026-10-13T16:43:22.726Z","lvl":"info","evt":"voice.heard","text":"Turn left by 90\u00b0."}
+{"ts":"2026-10-13T16:43:22.749Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-90},"ok":true,"queued":true,"op":"turn","value":-90.0}
+{"ts":"2026-10-13T16:46:34.278Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.85,"repeats":2}
+{"ts":"2026-10-13T16:46:34.281Z","lvl":"info","evt":"voice.heard","text":"Turn right."}
+{"ts":"2026-10-13T16:46:34.295Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":90},"ok":true,"queued":true,"op":"turn","value":90.0}
+{"ts":"2026-10-13T16:46:45.351Z","lvl":"info","evt":"voice.heard","text":"Stop"}
+{"ts":"2026-10-13T16:46:45.370Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-10-13T16:47:05.441Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.38,"repeats":3}
+{"ts":"2026-10-13T16:47:05.442Z","lvl":"info","evt":"voice.heard","text":"Stop."}
+{"ts":"2026-10-13T16:47:05.446Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-10-13T16:47:08.728Z","lvl":"info","evt":"voice.heard","text":"Robot shut down."}
+{"ts":"2026-10-13T16:47:08.731Z","lvl":"info","evt":"gesture","name":"yes","head":true}
+{"ts":"2026-10-13T16:47:09.300Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-10-13T16:47:11.225Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-10-13T16:47:11.227Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-10-13T16:47:10.229Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-10-13T16:47:11.028Z","lvl":"info","evt":"session.start","mode":"ros","pid":1723,"log":"logs.json"}
+{"ts":"2026-10-13T16:47:16.241Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","modality":"AUDIO"}
+{"ts":"2026-10-13T16:47:16.242Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-10-13T16:56:04.654Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.9}
+{"ts":"2026-10-13T16:56:41.159Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.75,"repeats":2}
