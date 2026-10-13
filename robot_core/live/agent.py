@@ -38,6 +38,7 @@ from typing import Any, Dict, Optional
 from robot_core import settings
 from robot_core import robot_log
 from robot_core import speech
+from robot_core import task_cancel
 from robot_core.live.tools import RobotTools, declarations
 
 logger = logging.getLogger(__name__)
@@ -74,9 +75,16 @@ def _is_config_rejection(exc: BaseException) -> bool:
 class LiveAgent:
     """One connected session. Construct, `run()`, and it returns when done."""
 
-    def __init__(self, tools: RobotTools, model: Optional[str] = None) -> None:
+    def __init__(self, tools: RobotTools, model: Optional[str] = None,
+                 system_prompt: Optional[str] = None, tool_declarations=declarations,
+                 announce: bool = True, role: str = "main") -> None:
+        # The defaults are the main session; the cancel listener
+        # (live/cancel_watch.py) passes its own prompt and tool, and no chime.
         self.model = model or settings.GEMINI_LIVE_MODEL
         self._tools = tools
+        self._prompt = system_prompt or settings.LIVE_SYSTEM_PROMPT
+        self._declarations = tool_declarations
+        self._announce, self.role = announce, role
         self._audio_q: "asyncio.Queue[bytes]" = asyncio.Queue(maxsize=64)
         self._stream = None
         self._dropped = 0
@@ -103,8 +111,8 @@ class LiveAgent:
         # pair is the difference between "it ignored me" and "it misheard me".
         cfg: Dict[str, Any] = {
             "response_modalities": [settings.LIVE_RESPONSE_MODALITY],
-            "system_instruction": settings.LIVE_SYSTEM_PROMPT,
-            "tools": [{"function_declarations": declarations()}],
+            "system_instruction": self._prompt,
+            "tools": [{"function_declarations": self._declarations()}],
 
             # Let Gemini perform server-side voice activity detection (VAD).
             #
@@ -438,13 +446,14 @@ class LiveAgent:
 
         async with connection as session:
             robot_log.event("voice.connect", backend="gemini-live",
-                            model=self.model,
+                            model=self.model, role=self.role,
                             modality=settings.LIVE_RESPONSE_MODALITY)
 
             # Spoken BEFORE the microphone opens, so it cannot be streamed to
             # the model as if the operator had said it. Blocking, and the guard
             # after it covers the room's reverb tail.
-            speech.connected()
+            if self._announce:
+                speech.connected()
 
             self._open_microphone()
             try:
@@ -529,20 +538,32 @@ async def _run_task(tools: RobotTools) -> None:
 
     Called with the Live session already closed. The job blocks (a minute of
     camera frames, or a whole exploration), so it goes to a worker thread.
+    Meanwhile the cancel listener (live/cancel_watch.py) listens for "stop";
+    a cancelled task is answered with a nod: "yes, stopped".
     """
     task, name = tools.pending
     tools.pending = None
     tools.motion.stop()                      # anything the model had queued yields to the job
+    task_cancel.reset()
     robot_log.event("task.start", task=task, name=name)
+    listener = None
+    if settings.CANCEL_LISTEN:
+        from robot_core.live.cancel_watch import watch
+        listener = asyncio.create_task(watch(tools.motion), name="cancel-listener")
     try:
         ok = bool(await asyncio.get_running_loop().run_in_executor(
             None, tools.task_runner, task, name))
     except Exception as e:                   # noqa: BLE001
         ok = False
         robot_log.event("task.error", logging.ERROR, task=task, err=f"{type(e).__name__}: {e}")
-    robot_log.event("task.end", task=task, ok=ok)
+    finally:
+        if listener is not None:             # frees the microphone before the main session reopens
+            listener.cancel()
+            await asyncio.gather(listener, return_exceptions=True)
+    cancelled = task_cancel.requested()
+    robot_log.event("task.end", task=task, ok=ok, cancelled=cancelled)
 
-    await tools.dispatch("answer", {"value": "yes" if ok else "no"})
+    await tools.dispatch("answer", {"value": "yes" if ok or cancelled else "no"})
     # Let the gesture finish before the microphone reopens, and drop its move
     # results so the next session is not told about them.
     for _ in range(100):

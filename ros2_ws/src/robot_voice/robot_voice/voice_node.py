@@ -25,13 +25,14 @@ import logging
 import os
 import subprocess
 import threading
+import time
 
 import rclpy
 from ament_index_python.packages import get_package_share_directory
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
-from robot_core import robot_log, settings, speech, status
+from robot_core import robot_log, settings, speech, status, task_cancel
 from robot_core.live.agent import run_live_agent
 from robot_core.head_look import HeadLook
 from robot_display.link import connect
@@ -41,12 +42,20 @@ from robot_voice.ros_bridge import RosMotion
 def _explore() -> bool:
     """Run explore mode as a child process and wait for it. The drivetrain is
     already up (command mode), so this is just the explorer node; it exits by
-    itself when the mission ends, and non-zero if it could not run."""
+    itself when the mission ends, and non-zero if it could not run. A cancelled
+    task asks it to stop (explore/stop: after the current step, map saved)."""
     params = os.path.join(get_package_share_directory("robot_bringup"), "config", "robot.yaml")
     proc = subprocess.Popen(["ros2", "run", "robot_explore", "explorer_node",
                              "--ros-args", "--params-file", params])
     try:
-        return proc.wait() == 0
+        asked = False
+        while proc.poll() is None:
+            if task_cancel.requested() and not asked and _explore_stop is not None:
+                from std_srvs.srv import Trigger
+                _explore_stop.call_async(Trigger.Request())
+                asked = True
+            time.sleep(0.2)
+        return proc.returncode == 0
     finally:
         if proc.poll() is None:              # we are being torn down mid-mission
             proc.terminate()
@@ -63,6 +72,7 @@ def _open_head():
 
 head_look = HeadLook(_open_head)
 _motion = None                               # RosMotion, set in main(); follow drives with it
+_explore_stop = None                         # explore/stop client, set in main()
 
 
 def run_task(task: str, name: str) -> bool:
@@ -87,15 +97,18 @@ def _run_task(task: str, name: str) -> bool:
     from robot_core.sensors.gimbal import from_params
     from robot_core.sensors.head import Head, HeadGeometry
     from robot_core.vision_client import VisionClient
-    camera = Camera(main_size=(640, 480))
+    # The head is the explorer's hardware: same camera, channels and trims, read
+    # from robot.yaml.
+    with open(os.path.join(get_package_share_directory("robot_bringup"), "config", "robot.yaml")) as f:
+        p = yaml.safe_load(f)["/explorer"]["ros__parameters"]
+    camera = Camera(main_size=tuple(p.get("face_camera_size", (640, 480))),
+                    inverted=bool(p.get("camera_inverted", True)),
+                    backend=p.get("camera_backend", "auto"), index=int(p.get("camera_index", 0)))
     gimbal = head = lidar = None
     try:
-        # The head is the explorer's hardware: same channels and trims, read from
-        # robot.yaml. Tilt is limited to 0..+45 here, so it only ever looks up from
-        # its base position. No PWM (overlay missing)? Carry on with a fixed camera.
+        # Tilt is limited to 0..+45 here, so it only ever looks up from its base
+        # position. No PWM (overlay missing)? Carry on with a fixed camera.
         try:
-            with open(os.path.join(get_package_share_directory("robot_bringup"), "config", "robot.yaml")) as f:
-                p = yaml.safe_load(f)["/explorer"]["ros__parameters"]
             gimbal = from_params(p, tilt_min=0.0)
             if task == "follow":             # TF-Luna gives follow a range; it works without one
                 try:
@@ -142,8 +155,23 @@ def main(args=None) -> None:
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     motion = RosMotion(node, loop)
-    global _motion
+    global _motion, _explore_stop
     _motion = motion
+
+    # Cancel the running task without the voice session (no internet needed):
+    #   ros2 service call /task/stop std_srvs/srv/Trigger
+    # The cancel listener does the same when you say "stop" during a task.
+    from std_srvs.srv import Trigger
+
+    def _on_task_stop(_req, resp):
+        task_cancel.request("service")
+        robot_log.event("task.cancel", by="service")
+        motion.stop()
+        resp.success, resp.message = True, "cancelling the running task (if any) and braking"
+        return resp
+
+    node.create_service(Trigger, "task/stop", _on_task_stop)
+    _explore_stop = node.create_client(Trigger, "explore/stop")
 
     try:
         # Blocking, and correctly so: this runs before the session opens, on

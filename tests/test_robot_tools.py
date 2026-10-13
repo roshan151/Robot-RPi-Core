@@ -405,3 +405,89 @@ def test_head_look_refuses_while_servo_supply_is_off() -> None:
         assert head.look(20)["ok"]                                  # same call works once the switch is on
     finally:
         head.release()
+
+
+# --------------------------------------------------------------------------- #
+# Cancelling a task: the cancel-only listener and the shared flag
+# --------------------------------------------------------------------------- #
+
+def test_cancel_listener_only_cancels_and_brakes() -> None:
+    from robot_core import task_cancel
+    from robot_core.live.cancel_watch import CancelTools, declarations as cancel_decls
+    task_cancel.reset()
+    braked = []
+    t = CancelTools(lambda: braked.append(1))
+    try:
+        assert [d.name for d in cancel_decls()] == ["cancel_task"]
+        assert t.pending is None and t.motion is None, "no job hand-off, no move results"
+        assert run(t.dispatch("drive", {"meters": 1.0}))["ok"] is False
+        assert not task_cancel.requested() and braked == []
+        assert run(t.dispatch("cancel_task", {}))["ok"]
+        assert task_cancel.requested() and task_cancel.by() == "voice" and braked == [1]
+    finally:
+        task_cancel.reset()
+
+
+def test_a_task_runs_with_the_listener_beside_it_and_a_cancel_is_answered_yes() -> None:
+    """The listener starts with the job and is shut down when it ends (freeing the
+    microphone for the main session). A cancelled job gets a nod, not a shake."""
+    from robot_core import task_cancel
+    from robot_core.live import agent as agent_mod
+    from robot_core.live import cancel_watch
+    seen = {"started": 0, "cancelled": 0}
+
+    async def fake_watch(motion):
+        seen["started"] += 1
+        try:
+            await asyncio.sleep(3600)
+        except asyncio.CancelledError:
+            seen["cancelled"] += 1
+            raise
+
+    def runner(task, name):
+        time.sleep(0.1)
+        task_cancel.request("voice")        # "stop" while it runs
+        return False                         # the job itself did not finish
+
+    old = cancel_watch.watch
+    cancel_watch.watch = fake_watch
+    move = FakeMove(0.01)
+    motion = LocalMotion(move)
+    head = FakeHead()
+    t = RobotTools(motion, runner, head=head)
+    try:
+        assert run(t.dispatch("run_task", {"task": "follow"}))["ok"]
+        run(agent_mod._run_task(t))
+        assert seen == {"started": 1, "cancelled": 1}
+        time.sleep(0.2)
+        assert head.calls == [("tilt", 20.0)], "a cancelled task is answered with a nod"
+    finally:
+        cancel_watch.watch = old
+        task_cancel.reset()
+        motion.close()
+
+
+def test_listener_failures_retry_and_never_brake() -> None:
+    from robot_core.live import agent as agent_mod
+    from robot_core.live import cancel_watch
+    attempts, braked = [], []
+
+    class Failing:
+        def __init__(self, *a, **kw): attempts.append(kw.get("role"))
+        async def run(self): raise RuntimeError("no network")
+
+    old_agent, old_backoff = agent_mod.LiveAgent, settings.LIVE_RECONNECT_BACKOFF_S
+    agent_mod.LiveAgent, settings.LIVE_RECONNECT_BACKOFF_S = Failing, 0.01
+
+    async def go():
+        w = asyncio.create_task(cancel_watch.watch(types.SimpleNamespace(stop=lambda: braked.append(1))))
+        await asyncio.sleep(0.1)
+        w.cancel()
+        await asyncio.gather(w, return_exceptions=True)
+
+    try:
+        run(go())
+        assert len(attempts) >= 2 and set(attempts) == {"cancel"}, attempts
+        assert braked == [], "the listener dropping must not brake the task"
+    finally:
+        agent_mod.LiveAgent, settings.LIVE_RECONNECT_BACKOFF_S = old_agent, old_backoff

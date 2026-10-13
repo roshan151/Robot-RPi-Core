@@ -131,6 +131,7 @@ Stop the service before running `./start_robot.sh` by hand — two copies will f
 sudo systemctl stop robot-voice     # explore and command mode can't share the serial port or camera
 ./start_robot.sh explore            # ends by itself when nothing reachable is left unexplored
 ros2 service call /explore/stop std_srvs/srv/Trigger   # stop early; the map is still saved
+# (explore started by voice: say "stop", or ros2 service call /task/stop std_srvs/srv/Trigger)
 ros2 topic echo /explore/status     # what it is doing, in plain English
 ```
 
@@ -156,7 +157,7 @@ In command mode, say it to the robot: *"remember my face, I'm Sam"* (`enroll_fac
 
 For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° and 40° up (never below level), stops on the first face, centres it, and holds while it captures, then parks. Tilt is limited to ±45° everywhere; face tasks narrow it to 0°/+45°. The durations are set in [Common variables](#common-variables).
 
-The voice session **closes for the whole task** (so you can't say "stop" until it ends), then reopens. The robot answers by gesture: **nod = it worked / the face is known, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
+The voice session **closes for the whole task**, then reopens. While the task runs, a cancel-only voice session listens: say *"stop"* / *"Robin stop"* / *"that's enough"* and the robot brakes and ends the task (needs internet). Without internet: `ros2 service call /task/stop std_srvs/srv/Trigger`. See [docs/TASK-CANCEL.md](docs/TASK-CANCEL.md). The robot answers by gesture: **nod = it worked / the face is known / it stopped when asked, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
 
 ### Shutting the Pi down by voice
 

@@ -725,6 +725,10 @@ new capability rather than a peripheral.
 
 ### Phase 5 — lidar + reactive obstacle avoidance *(a weekend)*
 
+> **Superseded (camera plan):** there is no plan to fit the LD14P. Obstacle
+> avoidance comes from the fixed mono global-shutter camera instead — see
+> `docs/CAMERA-PLAN.md` Phase 2. The steps below are kept for reference.
+
 1. udev rules for `/dev/arduino` and `/dev/lidar` **first**.
 2. Clone `ldlidar_ros2` into `ros2_ws/src`, colcon build, launch with the port
    and 230400 baud. Verify `ros2 topic hz /scan` — expect ~6 Hz.

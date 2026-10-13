@@ -229,7 +229,7 @@ match call. Require `quality > 0.6` before even sending.
 ### `POST /v1/faces/match` — identity lookup
 
 ```json
-{ "matches": [ { "label": "roshan", "similarity": 0.89 } ], "threshold": 0.75, "gallery_size": 12 }
+{ "matches": [ { "label": "roshan", "similarity": 0.62 } ], "threshold": 0.45, "gallery_size": 12 }
 ```
 
 Below `threshold` (`MATCH_THRESHOLD`), treat as `unknown` — don't let the model force a guess. And
@@ -508,6 +508,11 @@ stronger signal than one, at no extra design cost.
 `/people` publishes the bbox immediately and the identity a beat later. Position
 lag is unacceptable; identity lag is fine.
 
+Follow mode (stop-and-go on the Mac) applies this as: lock on 2 agreeing face
+matches, then carry identity by continuity — expected bearing, a bank of
+clothes looks learned while tracking (including the back), and faces that rule
+people out. See `CAMERA-PLAN.md` Phase 1 and `FOLLOW-DESIGN.md`.
+
 ---
 
 ## Part 7 — Behaviors
@@ -676,7 +681,7 @@ bookkeeping.
 | `DETECT_LONG_EDGE_PX` | 640 | `robot.yaml` | Match the detector's input size |
 | `SETTLE_MS` | 120 | `robot.yaml` | No planner-grade capture within this of a slew |
 | `MIN_INLIERS` | 8 | `robot.yaml` | Below this, the LK track is lost |
-| `MATCH_THRESHOLD` | 0.75 | server | Below this, `unknown` |
+| `MATCH_THRESHOLD` | 0.45 | server | Below this, `unknown`. Was 0.75: only near-duplicate frames passed (CAMERA-PLAN Phase 0) |
 | `APPROACH_STANDOFF_M` | 1.5 | `robot.yaml` | Approach ring radius |
 | `MAX_APPROACH_M` | 3.0 | `robot.yaml` | Odom-only bound |
 | `MIN_OBSTACLE_M` | 0.45 | `robot.yaml` | Authoritative; owned by `obstacle_node` |

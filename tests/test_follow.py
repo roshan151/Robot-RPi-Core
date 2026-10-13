@@ -101,3 +101,21 @@ def test_head_is_held_ahead_and_its_range_and_geometry_are_sent():
     assert h.moves == [(0.0, follow.settings.FOLLOW_TILT_DEG)]
     geo = v.calls[0][1]
     assert (geo["range_m"], geo["hfov_deg"], geo["camera_height_m"]) == (1.8, 60.0, 0.3)
+
+
+def test_cancel_during_a_turn_brakes_drives_no_further_and_ends():
+    from robot_core import task_cancel
+    task_cancel.reset()
+
+    class StopsMidTurn(Motion):
+        def turn(self, d):
+            task_cancel.request("voice")             # "stop" heard while turning
+            return super().turn(d)
+
+    v, m = Vision([step("tracking", turn=-20.0, drive=0.5)] + [step("tracking", drive=0.5)] * 5), StopsMidTurn()
+    try:
+        assert follow.follow(Camera(), v, m, "Sam", seconds=60, clock=Clock())   # had locked on
+        assert m.moves == [("turn", -20.0)], "no drive after the cancel"
+        assert v.stopped and len(v.calls) == 1
+    finally:
+        task_cancel.reset()

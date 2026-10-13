@@ -13,8 +13,10 @@ slowly. The head is held straight ahead at FOLLOW_TILT_DEG, high enough to see
 a standing person's face from ~1.3 m and low enough for the TF-Luna to hit
 their body. Plain functions over injected parts — no ROS, no audio.
 
-Ends when the Mac says the person is gone (lost, then a full head sweep)
-or after `seconds`. Returns True if it locked onto the person at all.
+Ends when the Mac says the person is gone (lost, then a full head sweep),
+after `seconds`, or when the task is cancelled (`task_cancel`: "stop" to the
+cancel-only voice session, or the task/stop service). Returns True if it locked
+onto the person at all.
 """
 
 from __future__ import annotations
@@ -23,7 +25,7 @@ import logging
 import time
 from typing import Callable, Optional
 
-from robot_core import settings, status
+from robot_core import settings, status, task_cancel
 from robot_core.sensors.camera import jpeg
 from robot_core.vision_client import VisionClient, VisionError
 
@@ -35,11 +37,15 @@ MOVE_TIMEOUT_S = 30.0
 def _move(motion, fn, value: float) -> None:
     """Send one turn/drive and wait for it to finish: the next frame must be
     taken standing still."""
+    if task_cancel.requested():
+        return
     res = fn(value)
     if not res.get("ok"):
         raise RuntimeError(f"move refused: {res.get('error')}")
     deadline = time.monotonic() + MOVE_TIMEOUT_S
     while motion.busy():
+        if task_cancel.requested():
+            return                                   # the canceller braked; follow() ends
         if time.monotonic() > deadline:
             raise RuntimeError("move timed out")
         time.sleep(0.1)
@@ -65,12 +71,13 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
     why = ""                                          # why the follow failed, if it did
     t0, seq = clock(), 0
     try:
-        while clock() - t0 < seconds:
+        while clock() - t0 < seconds and not task_cancel.requested():
             frame = camera.capture(head.gimbal) if head else camera.capture()
             seq += 1
             rng: Optional[float] = lidar.read(n=5, timeout=0.5) if lidar else None
             res = vision.follow_step(
-                jpeg(frame.main), seq, pan_deg=frame.pan_deg, tilt_deg=frame.tilt_deg,
+                jpeg(frame.main, settings.FACE_WIRE_LONG_EDGE), seq,
+                pan_deg=frame.pan_deg, tilt_deg=frame.tilt_deg,
                 hfov_deg=head.geom.hfov_deg if head else 66.0,
                 camera_height_m=head.geom.height_m if head else 0.25, range_m=rng)
             log.info("follow %d: %s", seq, res)
@@ -96,6 +103,10 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
         except VisionError:
             pass
     followed = bool(res.get("followed"))
+    if task_cancel.requested():
+        log.info("follow cancelled (%s)", task_cancel.by())
+        status.result("follow cancelled")
+        return followed
     if not followed:
         if not why:
             who = name or "anyone"

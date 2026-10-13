@@ -11,7 +11,7 @@ records the simple first version. **It amends `VISION-DESIGN.md`** (§4.6
 | `follow_node` on the Pi, driven by a local optical-flow tracker between 1–2 Hz detections (VISION-DESIGN 4.2, 4.6) | **Stop-and-go on the Mac.** The Pi captures one frame, waits for `/v1/follow/step`, turns, drives, then looks again. No tracker on the Pi | The person is expected to walk slowly and the robot can wait, so nothing is extrapolated from a stale detection |
 | Distance from the LD14P scan at the person's bearing | TF-Luna on the head, when its beam (the image centre column) lands on the person. Otherwise the floor point under the box's bottom edge, using the camera height | There is no 2-D lidar (EXPLORE-DESIGN Part 0) |
 | Gimbal tracks the person | Head held at **pan 0, tilt `FOLLOW_TILT_DEG` (20°)**. The base turns to face the person | Simplest. At 20° a standing face is visible from ~1.3 m and the beam hits the torso at 1–3 m |
-| Identity: 2 consecutive face matches, sticky for the track (VISION-DESIGN Part 6) | Unchanged. After that, the track is followed by the **colour histogram of the person's clothes**, because the face is rarely visible from behind. A face match refreshes it | — |
+| Identity: 2 consecutive face matches, sticky for the track (VISION-DESIGN Part 6) | Unchanged. After that, identity is carried by **continuity** — where they should be next frame, and a bank of **clothes looks** (torso + legs histograms, up to 8, learned while tracking, back included). A face that is someone else's rules a person out. Details: `CAMERA-PLAN.md` Phase 1 | The face is rarely visible from behind |
 | Obstacle veto at `MIN_OBSTACLE_M` | **None yet.** It never reverses, closes only to `standoff_m` (1.2 m) and drives at most 0.5 m per step | The voice node limits tilt to 0..45°, so `Head.floor_probe` can't look down. See Part 3 |
 
 Unchanged: `robot_core` imports no ROS, one request in flight to the Mac, and
@@ -36,10 +36,10 @@ locks onto whichever enrolled person is confirmed first.
 
 | State | Meaning | Move |
 |---|---|---|
-| `searching` | Not locked yet (or lost for a while) | Look twice per heading, then turn 30°. After a lock is lost it turns toward the side the person was last seen |
+| `searching` | Not locked yet (or lost for a while) | The robot stays put and the **head** sweeps (`head` in the answer: pan, tilt above the follow tilt): left to 90° in 30° steps, up 45°, across to −90°, down, back to centre. The sweep pauses while anyone is in view |
 | `tracking` | Found | Turn to face them (deadband 8°). If within 25° of ahead and the distance is known, drive `min(distance − 1.2, 0.5)` m |
 | `holding` | Missed for ≤ 3 frames | Nothing |
-| `gone` | A full 360° searched with no luck | The Pi ends the task |
+| `gone` | The whole head sweep with no luck | The Pi ends the task |
 
 `turn_deg` uses the drive/turn tools' convention (+ = right); `bearing_deg`
 uses the head's (+ = left).
@@ -48,8 +48,11 @@ uses the head's (+ = left).
 
 * **No obstacle check before a drive.** Next: allow tilt below 0 during follow
   and run `Head.floor_probe` before each step, as explore does.
-* **You can't say "stop" during the task**: the Live session is closed, as in explore.
-  It ends when the person is gone or after `FOLLOW_SECONDS` (300 s).
-* Two people in similar colours can swap tracks until a face is seen again.
+* **Cancelling**: say "stop" (the cancel-only voice session, needs internet) or call
+  `ros2 service call /task/stop std_srvs/srv/Trigger` — see `TASK-CANCEL.md`. Otherwise
+  it ends when the person is gone or after `FOLLOW_SECONDS` (300 s).
+* Two people in similar colours: the one nearer where the target should be wins, and a
+  person whose face is seen to be someone else is never taken. A faceless lookalike who
+  steps in where the target was can still be taken until their face is seen.
 * Feet out of frame and no TF-Luna hit means the distance is unknown, so the robot
   turns but doesn't drive.

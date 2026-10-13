@@ -83,6 +83,22 @@ LIVE_STALL_WARN_S = _env("ROBOT_LIVE_STALL_WARN_S", "0.75", float)
 LIVE_SEND_WARN_S = _env("ROBOT_LIVE_SEND_WARN_S", "0.25", float)
 LIVE_RECONNECT_BACKOFF_S = _env("ROBOT_LIVE_BACKOFF_S", "2.0", float)
 LIVE_RECONNECT_MAX_S = _env("ROBOT_LIVE_BACKOFF_MAX_S", "60.0", float)
+# While a task runs (main session closed) a cancel-only Live session listens for
+# "stop" (robot_core/live/cancel_watch.py). 0 = off; task/stop still works.
+CANCEL_LISTEN = _flag("ROBOT_CANCEL_LISTEN")
+CANCEL_PROMPT = os.environ.get("ROBOT_CANCEL_PROMPT", """\
+You are listening to the operator of a small robot while it carries out a task:
+following someone, learning a face, or exploring a room. You cannot move the
+robot and you cannot speak. Your only function is cancel_task.
+
+Call cancel_task as soon as the operator wants the robot to stop or give up
+what it is doing, for example "stop", "Robin stop", "cancel", "that's enough",
+"quit following me", "come back", "wait", "hold on". When in doubt, call it:
+stopping by mistake is harmless, not stopping is not.
+
+Do not call it for "don't stop" or "keep going", or for speech that is not
+addressed to the robot (a TV, people talking to each other). Otherwise do
+nothing and say nothing.""")
 
 # --- Speech (Gemini text-to-speech, cached on disk) ---------------------------
 TTS_ENABLED = _flag("ROBOT_TTS")
@@ -122,6 +138,13 @@ FACE_MIN_QUALITY = 0.6
 FOLLOW_SECONDS = _env("ROBOT_FOLLOW_S", "300", float)            # follow mode ends after this
 FOLLOW_TILT_DEG = _env("ROBOT_FOLLOW_TILT", "20", float)         # head tilt while following
 FACE_MIN_SHOTS = 5
+# Long edge of frames sent for faces and follow. Faces need the pixels: with the
+# wide USB HD lens a 640 px frame leaves a face at 2 m ~18 px wide (useless), the
+# full 1920 px ~55 px. A smaller camera frame is sent as it is (never upscaled).
+FACE_WIRE_LONG_EDGE = _env("ROBOT_FACE_WIRE_PX", "1920", int)
+FACE_ENROLL_TILT_DEG = _env("ROBOT_FACE_ENROLL_TILT", "20", float)  # enroll starts here, then frames the face
+FACE_FRAME_DEADBAND = 0.12      # enroll re-aims when the face centre is this far (share of frame) off centre
+FACE_EDGE_MARGIN = 0.02         # a shot is kept only with the whole face this far inside the frame
 
 # --- Logging ------------------------------------------------------------------
 LOG_PATH = _env("ROBOT_LOG_PATH", "logs.json")
@@ -141,9 +164,10 @@ You have no voice and no screen. Your only reply is movement:
 
 If you want to do a happy movement just do a 360 degree spin.
 
-Long jobs: run_task() closes your session, so you cannot hear "stop" until the
-job is over. When it ends you answer by gesture: yes = it worked or the face is
-known, no = it failed or the face is unknown.
+Long jobs: run_task() closes your session until the job is over ("stop" during
+the job is heard by a separate listener, not you). When it ends you answer by
+gesture: yes = it worked, the face is known or it was stopped; no = it failed or
+the face is unknown.
   run_task("enroll_face", name)  "remember my face, I'm Sam" / "register Sam". The name
                                  must be in what was said; if it is not, pass none: the
                                  robot shakes its head and does nothing.
