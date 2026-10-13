@@ -1,0 +1,66 @@
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.60  E,0,0,0,0,2100
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.91  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   1.93  B,5,drv8871-v5-odo built Oct  1 2026 13:06:38   <- reset: power-on (the Arduino's 5V supply dropped completely — USB power was interrupted: check the USB cable, connector, and port); brown-out (the Arduino's 5V rail sagged below ~2.7V — something is dragging down or coupling into the 5V supply)
+   2.01  E,0,0,0,0,300
+   2.52  E,0,0,0,0,800
+   3.02  E,0,0,0,0,1300
+   3.02  >>> V,1,100   (set speed)
+   3.02  >>> I,2,R   (turn right)
+   3.04  A,1
+   3.04  A,2
+   3.52  E,0,81,0,81,1800
+   4.02  E,0,282,0,282,2300
+   4.02  >>> S,3   (STOP — wheels should ramp down and brake now)
+   4.04  A,3
+   4.53  E,332,332,332,332,2800
+   5.03  E,799,332,799,332,3300
+   5.51  E,1264,332,1264,332,3800
+   6.01  E,1730,332,1730,332,4300
+   6.03  --- going silent; nothing should move
+   6.52  E,2196,332,2196,332,4800
+   7.02  E,2662,332,2662,332,5300
+   7.52  E,3129,332,3129,332,5800
+   8.03  E,3595,332,3595,332,6300
+   8.53  E,4063,332,4063,332,6800
+   9.01  E,4528,332,4528,332,7300
+
+=== summary
+max telemetry gap: 0.10s  (OK)
+boots seen: [(1.91, '5'), (1.91, '5'), (1.91, '5'), (1.91, '5'), (1.91, '5'), (1.91, '5'), (1.91, '5'), (1.91, '5'), (1.91, '5'), (1.91, '5'), (1.91, '5'), (1.91, '5'), (1.91, '5'), (1.91, '5'), (1.93, '5')]  (expect exactly one, at start)
+Now: did BOTH wheels stop after the S line? Did any wheel start on its own?
