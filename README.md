@@ -438,7 +438,7 @@ motor terminals. Per the driver's truth table (mirrored in `motorWrite()`):
 Arduino          DRV8871 board          Wheel
 ─────────        ─────────────          ─────
 D5  (PWM) ──→    LEFT  board IN1        Motor 2  = LEFT wheel
-D6  (PWM) ──→    LEFT  board IN2
+D11 (PWM) ──→    LEFT  board IN2  (was D6 -- pin died)
 D9  (PWM) ──→    RIGHT board IN2  ⚠     Motor 1  = RIGHT wheel
 D10 (PWM) ──→    RIGHT board IN1  ⚠
 Star GND  ──→    both boards POWER−     (own wire each, no ground ring)
@@ -507,7 +507,7 @@ R=−187 before the flag was set.
 ### Motor ↔ encoder pairing (invariant)
 
 **Each motor's driver channel and its encoder channel must name the same
-wheel.** The left board (D5/D6) must be paired with the left encoder (D2/D4);
+wheel.** The left board (D5/D11) must be paired with the left encoder (D2/D4);
 the right board (D9/D10) with the right encoder (D3/D7).
 
 This is easy to violate and expensive to diagnose, because straight moves hide

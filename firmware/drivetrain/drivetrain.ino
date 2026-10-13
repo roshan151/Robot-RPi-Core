@@ -11,7 +11,7 @@
  * Wiring (TSINY colours: yellow=A, white=B, blue=Vcc, green=GND,
  *         red/black = motor power -> DRV8871 MOTOR terminals only):
  *   D5  (PWM) -> LEFT  board IN1  (forward)
- *   D6  (PWM) -> LEFT  board IN2  (reverse)
+ *   D11 (PWM) -> LEFT  board IN2  (reverse)  [was D6 -- pin died]
  *   D9  (PWM) -> RIGHT board IN1  (forward)
  *   D10 (PWM) -> RIGHT board IN2  (reverse)
  *   D2        <- LEFT  encoder A (yellow)  INPUT_PULLUP, RISING int
@@ -76,7 +76,7 @@ void resetFlagsInit(void) {
 
 // ------------------------------ Pins ---------------------------- //
 #define IN1_L  5     // Left  motor forward (PWM)
-#define IN2_L  6     // Left  motor reverse (PWM)
+#define IN2_L  11    // Left  motor reverse (PWM) -- moved from D6 (dead pin)
 #define IN1_R  9     // Right motor forward (PWM)
 #define IN2_R  10    // Right motor reverse (PWM)
 #define ENC_L    2   // Left  encoder channel A (INT0)
