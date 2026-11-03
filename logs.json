@@ -1247,3 +1247,45 @@
 {"ts":"2026-11-03T22:47:14.068Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.84}
 {"ts":"2026-11-03T22:48:19.385Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.04}
 {"ts":"2026-11-03T22:48:28.090Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1,"repeats":60}
+{"ts":"2026-11-03T23:24:55.667Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-03T23:24:56.600Z","lvl":"info","evt":"session.start","mode":"ros","pid":1745,"log":"logs.json"}
+{"ts":"2026-11-03T23:25:03.462Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-03T23:25:03.463Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-03T23:25:27.677Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.96}
+{"ts":"2026-11-03T23:26:09.097Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.9,"repeats":1}
+{"ts":"2026-11-03T23:26:40.058Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1}
+{"ts":"2026-11-03T23:28:50.096Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-03T23:28:50.920Z","lvl":"info","evt":"session.start","mode":"ros","pid":1716,"log":"logs.json"}
+{"ts":"2026-11-03T23:29:14.715Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-03T23:29:14.716Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-03T23:29:21.287Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.99}
+{"ts":"2026-11-03T23:29:59.999Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1}
+{"ts":"2026-11-03T23:30:14.463Z","lvl":"error","evt":"voice.drop","err":"LiveAgentError: uplink stuck: send took >5.0s"}
+{"ts":"2026-11-03T23:30:14.465Z","lvl":"info","evt":"voice.error","text":"Voice session failed. live agent error. Check the log.","detail":"live agent error"}
+{"ts":"2026-11-03T23:30:23.130Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-03T23:30:23.130Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-03T23:30:28.792Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.02,"repeats":2}
+{"ts":"2026-11-03T23:31:09.384Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.77,"repeats":1}
+{"ts":"2026-11-03T23:31:40.148Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.92,"repeats":3}
+{"ts":"2026-11-03T23:32:10.504Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.77,"repeats":1}
+{"ts":"2026-11-03T23:33:08.796Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.77,"repeats":3}
+{"ts":"2026-11-03T23:33:45.093Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.77,"repeats":3}
+{"ts":"2026-11-03T23:34:04.562Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1,"repeats":61}
+{"ts":"2026-11-03T23:38:40.033Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-03T23:38:40.745Z","lvl":"info","evt":"session.start","mode":"ros","pid":4754,"log":"logs.json"}
+{"ts":"2026-11-03T23:38:45.612Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-03T23:38:45.613Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-03T23:38:51.408Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.08}
+{"ts":"2026-11-03T23:39:08.825Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1}
+{"ts":"2026-11-03T23:39:25.399Z","lvl":"error","evt":"voice.drop","err":"LiveAgentError: uplink stuck: send took >5.0s"}
+{"ts":"2026-11-03T23:39:25.401Z","lvl":"info","evt":"voice.error","text":"Voice session failed. live agent error. Check the log.","detail":"live agent error"}
+{"ts":"2026-11-03T23:39:34.091Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-03T23:39:34.092Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-03T23:39:39.692Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.98,"repeats":1}
+{"ts":"2026-11-03T23:39:55.202Z","lvl":"info","evt":"voice.heard","text":"Look up."}
+{"ts":"2026-11-03T23:39:55.369Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-03T23:39:55.375Z","lvl":"info","evt":"voice.tool","name":"look_up","args":{"degrees":30},"ok":true,"tilt":30.0,"clamped":false,"delta":30.0}
+{"ts":"2026-11-03T23:40:02.015Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-03T23:40:26.155Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.82,"repeats":3}
+{"ts":"2026-11-03T23:40:58.323Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.77,"repeats":1}
+{"ts":"2026-11-03T23:41:30.409Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.77}
