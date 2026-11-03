@@ -216,10 +216,20 @@ class LiveAgent:
             t0 = time.monotonic()
             # send_realtime_input is the current name; older SDKs used
             # send(input=..., end_of_turn=False). Try the modern one first.
-            if hasattr(session, "send_realtime_input"):
-                await session.send_realtime_input(audio=blob)
-            else:
-                await session.send(input=blob)
+            # Watchdog: a send stuck behind a dead/back-pressured socket would
+            # otherwise hang here forever while the mic queue drops everything.
+            # Raising lets _run_supervised reconnect.
+            try:
+                if hasattr(session, "send_realtime_input"):
+                    await asyncio.wait_for(
+                        session.send_realtime_input(audio=blob),
+                        settings.LIVE_SEND_TIMEOUT_S)
+                else:
+                    await asyncio.wait_for(
+                        session.send(input=blob), settings.LIVE_SEND_TIMEOUT_S)
+            except asyncio.TimeoutError:
+                raise LiveAgentError(
+                    f"uplink stuck: send took >{settings.LIVE_SEND_TIMEOUT_S}s")
 
             # A single chunk is ~64 ms of audio. If sending one takes longer
             # than that we are falling behind in real time, and the mic queue

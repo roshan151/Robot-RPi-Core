@@ -81,6 +81,7 @@ AUDIO_INPUT_DEVICE = _env("ROBOT_AUDIO_INPUT_DEVICE", "")              # blank =
 BT_MAC = _env("BT_MAC", "")
 LIVE_STALL_WARN_S = _env("ROBOT_LIVE_STALL_WARN_S", "0.75", float)
 LIVE_SEND_WARN_S = _env("ROBOT_LIVE_SEND_WARN_S", "0.25", float)
+LIVE_SEND_TIMEOUT_S = _env("ROBOT_LIVE_SEND_TIMEOUT_S", "5.0", float)
 LIVE_RECONNECT_BACKOFF_S = _env("ROBOT_LIVE_BACKOFF_S", "2.0", float)
 LIVE_RECONNECT_MAX_S = _env("ROBOT_LIVE_BACKOFF_MAX_S", "60.0", float)
 # While a task runs (main session closed) a cancel-only Live session listens for
