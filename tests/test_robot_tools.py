@@ -313,7 +313,7 @@ def test_head_look_tilts_from_where_it_is_and_clamps() -> None:
 
 def test_ten_tools_and_stop_takes_no_arguments() -> None:
     decls = {d.name: d for d in declarations()}
-    assert set(decls) == {"drive", "turn", "look_up", "look_down", "look_left", "look_right", "shutdown", "stop", "answer", "run_task"}
+    assert set(decls) == {"drive", "turn", "look_up", "look_down", "look_left", "look_right", "look_straight", "retrace", "shutdown", "stop", "answer", "run_task"}
     assert not getattr(decls["stop"].parameters, "required", []), \
         "a stop that can be malformed is a stop that can fail"
 

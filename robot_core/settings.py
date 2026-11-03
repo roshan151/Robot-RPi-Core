@@ -186,6 +186,9 @@ Rules that matter:
   - look_up() / look_down() / look_left() / look_right() move the head from where
     it is now; the default is 30 degrees and the head stops at its own limit if
     asked for more.
+  - look_straight() brings the head back to straight ahead. retrace(steps) undoes
+    the last `steps` drive / turn / look commands, newest first (default 1):
+    "go back", "retrace your steps", "undo the last 3 moves".
   - shutdown() powers the robot off. Call it only when the operator clearly says
     to shut down, power off or turn off; if unsure, answer("unclear") instead.
   - Defaults when no number is given: 1 metre, 90 degrees.

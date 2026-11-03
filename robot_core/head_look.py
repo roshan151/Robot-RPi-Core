@@ -32,9 +32,20 @@ class HeadLook:
             if not g.powered():
                 return {"ok": False, "error": "head servos have no power - switch the servo supply on"}
             lo, hi = (g.tilt_limits if axis == "tilt" else g.pan_limits)()
-            wanted = self._pos[axis] + degrees
+            before, wanted = self._pos[axis], self._pos[axis] + degrees
             self._pos[axis] = g.move_to(**{axis: wanted}, wait=False)[1 if axis == "tilt" else 0]
-            return {"ok": True, axis: round(self._pos[axis], 1), "clamped": not lo <= wanted <= hi}
+            return {"ok": True, axis: round(self._pos[axis], 1), "clamped": not lo <= wanted <= hi,
+                    "delta": self._pos[axis] - before}      # what actually moved (after clamping): used to retrace
+
+    def center(self) -> Dict[str, Any]:
+        """Back to straight ahead: both axes to the position the head started from."""
+        deltas = {}
+        for axis in ("tilt", "pan"):
+            r = self.look(-self._pos[axis], axis)
+            if not r.get("ok"):
+                return r
+            deltas[axis] = r["delta"]
+        return {"ok": True, "pan": 0.0, "tilt": 0.0, "deltas": deltas}
 
     def gesture(self, axis: str, *degrees: float) -> bool:
         """Blocking: move `axis` by each of `degrees` in turn (each relative to the last),
