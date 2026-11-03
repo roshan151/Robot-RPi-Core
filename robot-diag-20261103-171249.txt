@@ -1,0 +1,199 @@
+HEAD DIAGNOSTICS  2026-11-03 17:12:47 CST   (read-only: nothing is moved or written)
+
+====================================================================================================
+ 1. SYSTEM AND CODE VERSION
+====================================================================================================
+[ OK ] model: Raspberry Pi 4 Model B Rev 1.5
+    expect: Raspberry Pi 4 Model B: PWM chip 0 (pwm_chip: 0 in robot.yaml).
+[INFO] os: Debian GNU/Linux 13 (trixie)   kernel: 6.18.50+rpt-rpi-v8   python: 3.13.5
+[INFO] uptime: 34m53s
+    expect: A short uptime means the Pi rebooted recently (a power dip, a crash or a manual
+            reboot).
+[INFO] user: roshan   groups: adm audio bluetooth cdrom dialout games gpio i2c input lpadmin netdev plugdev render roshan spi sudo users video
+    expect: Pin and PWM access normally needs the 'gpio' group (the default for the first user).
+[INFO] repo: /home/roshan/Robot-RPi-Core  branch follow  commit 01428bf 2026-11-03 gimbal diagnostics and UNC cam + mic documentation  uncommitted files: 1
+    expect: The branch and commit you think the robot is running (git pull + restart robot-voice
+            after changes).
+[ OK ] gimbal.py contains the fail-safe (PWM readback, fault latch, OLED codes G03-G08)
+
+====================================================================================================
+ 2. THE PI'S OWN SUPPLY (servo current spikes can sag it)
+====================================================================================================
+[ OK ] get_throttled = 0x0: no under-voltage, no throttling
+    expect: 0x0. Under-voltage that appears when the head starts moving means the servos' current
+            or ground return is disturbing the Pi - the 'power.dip' lines in section 9 show when.
+            Bits 16-19 stay set until the next reboot, so reboot first if you want a clean
+            reading.
+[ OK ] cpu temperature: 47.2 C
+    expect: Under about 75 C. Hotter can throttle the Pi.
+
+====================================================================================================
+ 3. BOOT CONFIG (/boot/firmware/config.txt)
+====================================================================================================
+  active lines of /boot/firmware/config.txt (line number, [section]):
+      6  [all] dtparam=i2c_arm=on
+      7  [all] dtparam=i2s=on
+      8  [all] dtparam=spi=on
+     11  [all] dtparam=audio=on
+     17  [all] camera_auto_detect=1
+     20  [all] display_auto_detect=1
+     23  [all] auto_initramfs=1
+     26  [all] dtoverlay=vc4-kms-v3d
+     27  [all] max_framebuffers=2
+     30  [all] disable_fw_kms_setup=1
+     33  [all] arm_64bit=1
+     38  [all] disable_overscan=1
+     41  [all] arm_boost=1
+     47  [cm4] otg_mode=1
+     50  [cm5] dtoverlay=dwc2,dr_mode=host
+     53  [pi5] dtoverlay=nospi10
+     56  [all] dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
+     57  [all] enable_uart=1
+[ OK ] PWM overlay present exactly once
+    expect: dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
+[INFO] onboard audio: ['dtparam=audio=on']   snd_bcm2835 loaded: True
+    expect: Low-confidence suspect: on a Pi 4 the analogue audio output uses PWM hardware/clock.
+            The robot's audio is Bluetooth, so dtparam=audio=off is a cheap way to rule it out.
+
+====================================================================================================
+ 4. KERNEL PWM CHANNELS (/sys/class/pwm)
+====================================================================================================
+[INFO] pwmchip0: npwm=2  exported channels: ['pwm0']
+[ OK ] pwmchip0/pwm0 (tilt GPIO12): enable=1 period=20000000 ns (20.0 ms) duty_cycle=1900000 ns (1900 us, 9.5%) polarity=normal  [RUNNING]
+          -> about -45 deg from straight ahead (tilt: + is up), if the head is following the pulse
+    expect: While the robot runs the head: both channels exported, enable=1, period=20000000 (20
+            ms), duty near your centres (tilt 1,400,000, pan 1,600,000 at rest), always inside
+            500,000-2,400,000. With the service stopped, a channel still 'RUNNING' is the held-
+            centre pulse left by the last run (hold_on_close): normal, and it still drives a
+            powered servo. 'exported, not running' or no channels at all is also fine.
+
+====================================================================================================
+ 5. PIN FUNCTIONS AND THE SERVO-SUPPLY SENSE PIN
+====================================================================================================
+[ OK ] GPIO12 (tilt): 12: a0    pd | lo // GPIO12 = PWM0_0
+[ OK ] GPIO13 (pan): 13: a0    pd | lo // GPIO13 = PWM0_1
+    expect: function a0 with 'GPIOnn = PWM0_CHANn'. ip/op/no instead means the pin is NOT set to
+            PWM (overlay missing or something else claimed it). The level reads lo with no pulses
+            running (with pulses it flickers); a steady hi with the head idle means something is
+            driving or shorting the line high.
+[INFO] sense pin GPIO4: 4: ip    pd | hi // GPIO4 = input
+[INFO] sense reads HIGH in 20/20 samples -> servo supply sensed ON (or the pin is stuck high)
+    expect: Run this once with the servo switch OFF (expect lo) and once ON (expect hi). If it
+            ignores the switch, the divider (10 kOhm from servo +5 V to the pin, 20 kOhm from the
+            pin to GND, shared ground) is wrong or the pin is physically not pin 7.
+
+====================================================================================================
+ 6. WHO OWNS THE HEAD, AND ITS SAVED STATE
+====================================================================================================
+[INFO] service robot-voice: failed
+[ OK ] restarts since the service started: 0   last start: Tue 2026-11-03 15:45:07 CST   result: timeout
+    expect: 0. Each automatic restart re-opens the head, so a crash loop repeats the first-pulse
+            moment over and over.
+[INFO] 0 robot process(es) that could drive the head
+    expect: At most one owner (the service, or one script - never both).
+[INFO] head lock /dev/shm/robot-gimbal.lock: held by nobody
+    expect: Nobody until the first look command opens the head, then exactly one process. Only
+            this user's processes are visible.
+[ OK ] no fault latched
+[INFO] saved pan pulse: 1600 us (centre 1600, +0 us)
+    expect: Close to your centre (within roughly +-300 us). The next start begins from this pulse;
+            near 500 or 2400 means it starts at an end stop.
+[INFO] saved tilt pulse: 1400 us (centre 1400, +0 us)
+    state file /home/roshan/.cache/robot-head.json modified 29m46s ago
+
+====================================================================================================
+ 7. ROBOT.YAML - SOURCE COPY vs THE COPY THE SERVICE READS
+====================================================================================================
+  key               repo copy     installed copy  
+  pwm_chip          0             0               
+  pan_channel       1             1               
+  tilt_channel      0             0               
+  pan_center_us     1600.0        1600.0          
+  tilt_center_us    1400.0        1400.0          
+  pan_us_per_deg    11.111        11.111          
+  tilt_us_per_deg   11.111        11.111          
+  pan_invert        false         false           
+  tilt_invert       true          true            
+  servo_speed_dps   60.0          60.0            
+  servo_min_us      500.0         500.0           
+  servo_max_us      2400.0        2400.0          
+  hold_on_close     true          true            
+  servo_power_gpio  4             4               
+[ OK ] installed robot.yaml matches the repo copy for every head key
+[INFO] pan: reachable -90..+72 deg (asked -90..+90); centre 1600 us; 11.11 us/deg; invert False
+[INFO] tilt: reachable -45..+45 deg (asked -45..+45); centre 1400 us; 11.11 us/deg; invert True
+    expect: Centres roughly 1300-1700 us, about 11.1 us per degree, speed at or below 60 deg/s. A
+            reachable range narrower than asked (e.g. pan +72 instead of +90) just means the horn
+            is off-centre in its travel.
+
+====================================================================================================
+ 8. PYTHON PACKAGES THE HEAD NEEDS (in the robot's own environment)
+====================================================================================================
+  interpreter: /home/roshan/Robot-RPi-Core/.venv/bin/python
+    rpi-hardware-pwm  0.3.1
+    rpi-lgpio         0.6
+    RPi.GPIO          MISSING
+    lgpio             0.2.2.0
+[ OK ] PWM library and GPIO library present
+
+====================================================================================================
+ 9. RECENT HEAD AND POWER EVENTS FROM THE ROBOT'S LOG (times are UTC)
+====================================================================================================
+  /home/roshan/Robot-RPi-Core/logs.json  (last 1248 readable lines, modified 24m20s ago)
+    10-13T16:47:09  warn  log            gimbal: pan limited to -90..+72 deg (wanted -90..+90) 
+    10-13T17:34:12  warn  log            gimbal: pan limited to -90..+72 deg (wanted -90..+90) 
+    10-13T17:35:43  warn  log            gimbal: pan limited to -90..+72 deg (wanted -90..+90) 
+    10-13T17:53:38  warn  log            gimbal: pan limited to -90..+72 deg (wanted -90..+90) 
+    10-13T17:53:56  warn  log            gimbal: pan limited to -90..+72 deg (wanted -90..+90) 
+    11-03T19:50:34  warn  log            gimbal: pan limited to -90..+72 deg (wanted -90..+90) 
+    11-03T19:50:40  warn  log            gimbal: servo supply OFF - head frozen, moves refused
+    11-03T19:50:53  warn  log            gimbal: servo supply back on - resuming from the held 
+    11-03T19:50:54  warn  log            gimbal: servo supply OFF - head frozen, moves refused
+    11-03T19:51:32  warn  log            gimbal: servo supply back on - resuming from the held 
+    11-03T19:51:32  warn  log            gimbal: servo supply OFF - head frozen, moves refused
+    11-03T19:51:35  warn  log            gimbal: servo supply back on - resuming from the held 
+    11-03T19:51:36  warn  log            gimbal: servo supply OFF - head frozen, moves refused
+    11-03T19:51:52  info  gesture.skip   
+    11-03T19:51:52  warn  log            gimbal: servo supply is off - move ignored
+    11-03T19:54:29  warn  log            gimbal: pan limited to -90..+72 deg (wanted -90..+90) 
+    11-03T20:27:11  warn  log            gimbal: pan limited to -90..+72 deg (wanted -90..+90) 
+    11-03T20:27:16  warn  log            gimbal: servo supply OFF - head frozen, moves refused
+    11-03T20:27:39  warn  log            gimbal: servo supply back on - resuming from the held 
+    11-03T20:27:40  warn  log            gimbal: servo supply OFF - head frozen, moves refused
+    11-03T20:28:08  info  gesture.skip   
+    11-03T20:28:08  warn  log            gimbal: servo supply is off - move ignored
+    11-03T20:29:35  warn  log            gimbal: pan limited to -90..+72 deg (wanted -90..+90) 
+    11-03T21:30:24  warn  log            gimbal: pan limited to -90..+72 deg (wanted -90..+90) 
+    11-03T21:31:11  warn  log            gimbal: servo supply OFF - head frozen, moves refused
+    11-03T21:32:24  warn  log            gimbal: servo supply is off - move ignored
+    11-03T21:44:42  warn  log            gimbal: pan limited to -90..+72 deg (wanted -90..+90) 
+    11-03T21:44:48  warn  log            gimbal: servo supply OFF - head frozen, moves refused
+    11-03T21:45:03  warn  log            gimbal: servo supply is off - move ignored
+    11-03T22:42:59  warn  log            gimbal: pan limited to -90..+72 deg (wanted -90..+90) 
+[ OK ] gimbal FAULT lines in this window: 0
+    expect: 0. Each names what tripped the fail-safe.
+[ OK ] power dips in this window: 0
+    expect: 0. A cause of 'head servo moving' repeating at the moment of a snap points at servo
+            current disturbing the Pi.
+
+====================================================================================================
+ 10. WHAT ONLY A MULTIMETER OR SCOPE CAN TELL YOU (write the numbers down)
+====================================================================================================
+  Servo supply, across +5 V and GND AT THE SERVO CONNECTOR:
+      idle ~5.0 V.  While a servo starts moving it must stay above 4.5 V (use the meter's min-hold).  Below ~4.3 V the
+      servo electronics can reset -> snaps and shaking.  Fix: 2 A supply, 470-1000 uF capacitor at the connector, short thick wires.
+  Ground return, millivolts between the servo's brown wire (at the servo) and a Pi GND pin, WHILE it moves:
+      about 0 mV (under ~50 mV).  Hundreds of mV = the servo's current is returning through the Pi's ground wire.
+  Pull-down resistors, power off, ohms from each signal wire to GND:  about 10 kOhm.  Open = not connected; a few hundred
+      ohms = wrong resistor or a short.  README says to ground them at the servo end, not back at the Pi.
+  Sense divider midpoint (the wire to the sense GPIO), volts to GND:  servo supply ON about 3.0-3.3 V; OFF about 0 V.
+      Above 3.4 V = divider wrong (risks the pin).  Compare with section 5.
+  Signal at the servo, on a scope or logic analyser: a 50 Hz train, 3.3 V high, pulse 0.5-2.4 ms, clean edges.
+      A missing, narrow or noisy pulse at the moment of the snap is the answer.
+  Nothing from the servo +5 V should be connected to the Pi's 5 V pins: two supplies tied together fight.
+
+====================================================================================================
+ SUMMARY
+====================================================================================================
+  OK 14   INFO 15   WARN 0   FAIL 0
+  no WARN or FAIL - the problem is then in what only a meter can see (section 10) or in a moment this snapshot missed.
