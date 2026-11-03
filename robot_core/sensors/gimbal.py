@@ -84,14 +84,8 @@ class HardwarePwm:
 
     def __init__(self, channel: int, chip: int = 0) -> None:
         from rpi_hardware_pwm import HardwarePWM
-        # A channel left running (hold_on_close, a restart, a crash) is the one true record of
-        # where the servo is. Read it BEFORE HardwarePWM(), which writes a 0 duty on open, and
-        # put it straight back, so the servo never loses its pulse and nothing has to guess.
-        self.live_us = _running_pulse_us(chip, channel)
         self._pwm = HardwarePWM(pwm_channel=channel, hz=FRAME_HZ, chip=chip)
         self._started = False
-        if self.live_us is not None:
-            self.set_pulse_us(self.live_us)
 
     def set_pulse_us(self, us: float) -> None:
         duty = 100.0 * us / PERIOD_US
@@ -105,20 +99,6 @@ class HardwarePwm:
         if self._started:
             self._pwm.stop()
             self._started = False
-
-
-def _running_pulse_us(chip: int, channel: int) -> Optional[float]:
-    """The pulse (us) a still-enabled 50 Hz channel is sending right now, else None."""
-    d = Path(f"/sys/class/pwm/pwmchip{chip}/pwm{channel}")
-    try:
-        if (d / "enable").read_text().strip() != "1":
-            return None
-        period_ns, duty_ns = int((d / "period").read_text()), int((d / "duty_cycle").read_text())
-    except (OSError, ValueError):
-        return None
-    if abs(period_ns - PERIOD_US * 1000) > 1000 or duty_ns <= 0:
-        return None                         # not a servo frame we set up
-    return duty_ns / 1000.0
 
 
 class FakePwm:
@@ -261,14 +241,13 @@ class Gimbal:
     # ---------------------------------------------------------- soft start
 
     def _start_from_saved(self) -> None:
-        """Begin each axis at the pulse it was last holding, with centre as the target: the pulse
-        still running on the channel if there is one, else the one saved in the state file."""
+        """Begin each axis at the pulse it was last holding, with centre as the target."""
         try:
             saved = json.loads(self._state_path.read_text()) if self._state_path else {}
         except (OSError, ValueError):
-            saved = {}
+            return
         for name, ax in (("pan", self.pan), ("tilt", self.tilt)):
-            us = getattr(ax.out, "live_us", None) or saved.get(name + "_us")
+            us = saved.get(name + "_us")
             if not isinstance(us, (int, float)) or not ax.cfg.min_us <= us <= ax.cfg.max_us:
                 continue
             sign = -1.0 if ax.cfg.invert else 1.0
