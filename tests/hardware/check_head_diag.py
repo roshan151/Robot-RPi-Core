@@ -2,8 +2,9 @@
 """Read-only diagnostics for the pan/tilt head. Run it ON THE PI, as the user the robot runs as (no sudo):
 
     python3 tests/hardware/check_head_diag.py              # everything, once (about 5 s)
-    python3 tests/hardware/check_head_diag.py --watch 20   # also watch the servo-supply sense pin for 20 s:
-                                                           # flip the servo switch OFF then ON while it runs
+    python3 tests/hardware/check_head_diag.py --watch 60   # also record live changes for 60 s (sense pin, PWM clock,
+                                                           # PWM channels, supply flags, audio sinks): command the
+                                                           # robot to look and talk while it runs
 
 It only READS. It never touches the PWM channels, the servo pins, the robot, or any file in the repo, so it is
 safe to run with the servos powered and the robot running. Every check prints OK / WARN / FAIL / INFO plus a
@@ -115,6 +116,31 @@ def pin(n: int) -> dict:
     if not m:
         return {"error": True, "raw": out or "pinctrl not found"}
     return {"func": m.group(2), "pull": m.group(3), "level": m.group(4), "note": m.group(5), "raw": out.splitlines()[0]}
+
+
+def clock_hz() -> int:
+    """The PWM clock the firmware really runs (vcgencmd measure_clock pwm); -1 if unavailable."""
+    rc, out = sh("vcgencmd", "measure_clock", "pwm")
+    m = re.search(r"=\s*(\d+)", out) if rc == 0 else None
+    return int(m.group(1)) if m else -1
+
+
+def sinks() -> dict:
+    """{sink name: state} from PipeWire/PulseAudio, and the default sink under '*default'."""
+    rc, out = sh("pactl", "list", "short", "sinks")
+    res = {}
+    for line in out.splitlines() if rc == 0 else []:
+        f = line.split("\t")
+        if len(f) >= 5:
+            res[f[1]] = f[-1]
+    if res:
+        rc, d = sh("pactl", "get-default-sink")
+        res["*default"] = d if rc == 0 else "?"
+    return res
+
+
+def is_analog(name: str) -> bool:
+    return bool(re.search(r"bcm2835|headphones", name, re.I))
 
 
 KEYS = ("pwm_chip pan_channel tilt_channel pan_center_us tilt_center_us pan_us_per_deg tilt_us_per_deg pan_invert "
@@ -313,6 +339,19 @@ def sec_pwm(eff: dict) -> None:
                      f"if the head is following the pulse")
             if not os.access(ch / "duty_cycle", os.W_OK):
                 check("WARN", f"{ch.name}: this user cannot write duty_cycle", "The user running the robot must be able to write it (udev rule / gpio group).")
+    hz = clock_hz()
+    if hz >= 0:
+        check("INFO", f"PWM clock (vcgencmd measure_clock pwm): {hz:,} Hz",
+              "Normally about 99,995,000 (100 MHz) once a channel runs; the kernel assumes that and scales every pulse and the 20 ms "
+              "period by it. What matters is that it NEVER changes: a faster clock makes every pulse shorter (pan right, tilt up), "
+              "a slower one longer. --watch shows whether it moves when the robot talks or looks.")
+    s = sinks()
+    if s:
+        analog = {k: v for k, v in s.items() if k != "*default" and is_analog(k)}
+        bad = "RUNNING" in analog.values() or is_analog(s.get("*default", ""))
+        check("WARN" if bad else "INFO", f"default audio sink: {s.get('*default', '?')}   analogue-jack sinks: {analog or 'none'}",
+              "The default sink is the Bluetooth buds, a USB device or HDMI. The Pi's analogue jack (bcm2835 / Headphones) is generated "
+              "with PWM hardware that shares its clock with the servo channels and can disturb them when it plays.")
     expect("While the robot runs the head: both channels exported, enable=1, period=20000000 (20 ms), duty near your centres "
            "(tilt 1,400,000, pan 1,600,000 at rest), always inside 500,000-2,400,000. With the service stopped, a channel "
            "still 'RUNNING' is the held-centre pulse left by the last run (hold_on_close): normal, and it still drives a "
@@ -321,7 +360,7 @@ def sec_pwm(eff: dict) -> None:
 
 # ------------------------------------------------------------------ 5. pins
 
-def sec_pins(eff: dict, watch: int) -> None:
+def sec_pins(eff: dict) -> None:
     section("5. PIN FUNCTIONS AND THE SERVO-SUPPLY SENSE PIN")
     for n, name in ((12, "tilt"), (13, "pan")):
         p = pin(n)
@@ -331,7 +370,7 @@ def sec_pins(eff: dict, watch: int) -> None:
         pwm = "PWM" in p["note"].upper()
         check("OK" if pwm else "FAIL", f"GPIO{n} ({name}): {p['raw']}")
     else:
-        expect("function a0 with 'GPIOnn = PWM0_CHANn'. ip/op/no instead means the pin is NOT set to PWM (overlay missing or "
+        expect("function a0 with 'GPIOnn = PWM0_0' (or PWM0_1). ip/op/no instead means the pin is NOT set to PWM (overlay missing or "
                "something else claimed it). The level reads lo with no pulses running (with pulses it flickers); a steady hi "
                "with the head idle means something is driving or shorting the line high.")
     gpio = int(num(eff, "servo_power_gpio"))
@@ -360,16 +399,6 @@ def sec_pins(eff: dict, watch: int) -> None:
     expect("Run this once with the servo switch OFF (expect lo) and once ON (expect hi). If it ignores the switch, the divider "
            "(10 kOhm from servo +5 V to the pin, 20 kOhm from the pin to GND, shared ground) is wrong or the pin is "
            "physically not pin 7.")
-    if watch:
-        emit(f"  watching GPIO{gpio} for {watch} s - flip the servo switch OFF, then ON, now ...")
-        last, t0 = None, time.time()
-        while time.time() - t0 < watch:
-            lv = pin(gpio).get("level")
-            if lv != last:
-                emit(f"    t+{time.time() - t0:5.1f}s  GPIO{gpio} = {lv}")
-                last = lv
-            time.sleep(0.05)
-        expect("One clean change per flip of the switch, nothing in between. Extra changes (bounce) mean a loose connection.")
 
 
 # ------------------------------------------------------------------ 6. who owns the head
@@ -534,6 +563,65 @@ def sec_logs() -> None:
           "0. A cause of 'head servo moving' repeating at the moment of a snap points at servo current disturbing the Pi.")
 
 
+# ------------------------------------------------------------------ live watch
+
+def sec_watch(eff: dict, seconds: int) -> None:
+    section(f"LIVE WATCH - {seconds} s")
+    emit("  Armed. Ask the robot to look now, and let it talk. One line per change; silence = nothing changed.")
+    emit("  Keep a hand on the servo switch: if the head snaps, switch it off.")
+    gpio = int(num(eff, "servo_power_gpio"))
+    chip = SYS_PWM / f"pwmchip{int(num(eff, 'pwm_chip'))}"
+    state = {"sinks": {}}
+
+    def sample(n: int) -> dict:
+        d = {}
+        if gpio:
+            d["sense"] = pin(gpio).get("level", "?")
+        hz = clock_hz()
+        d["pwm clock"] = f"{hz / 1e6:.1f} MHz" if hz >= 0 else "n/a"
+        for ch in sorted(chip.glob("pwm[0-9]*")):         # the first look exports them, so look again every sample
+            en, per, duty = read(ch / "enable"), to_int(read(ch / "period")), to_int(read(ch / "duty_cycle"))
+            d[ch.name] = f"en={en} period={per / 1e6:.2f} ms duty={duty / 1e3:.0f} us"
+        d["throttled"] = read("/sys/devices/platform/soc/soc:firmware/get_throttled") or "n/a"
+        if n % 5 == 0:
+            state["sinks"] = {f"sink {k}": v for k, v in sinks().items()}
+        d.update(state["sinks"])
+        return d
+
+    t0, prev, n, clocks, saw = time.time(), {}, 0, set(), {"sense": set(), "thr": set(), "analog": set()}
+    while time.time() - t0 < seconds:
+        cur = sample(n)
+        if not prev:
+            emit("  start: " + "   ".join(f"{k}={v}" for k, v in cur.items()))
+        else:
+            diff = [f"{k}: {prev.get(k, '-')} -> {v}" for k, v in cur.items() if prev.get(k) != v]
+            if diff:
+                emit(f"    t+{time.time() - t0:5.1f}s  " + ";  ".join(diff))
+        if cur["pwm clock"] not in ("n/a", "0.0 MHz"):
+            clocks.add(cur["pwm clock"])
+        saw["sense"].add(cur.get("sense"))
+        saw["thr"].add(cur["throttled"])
+        saw["analog"] |= {v for k, v in cur.items() if k.startswith("sink ") and is_analog(k) and v == "RUNNING"}
+        prev, n = cur, n + 1
+        time.sleep(0.05)
+    emit(f"  ({n} samples)")
+    if len(clocks) > 1:
+        check("FAIL", f"the PWM clock CHANGED while watching: {sorted(clocks)}",
+              "One value. A change rescales every servo pulse and the 20 ms period by the same factor - this alone can snap the head.")
+    elif clocks:
+        check("OK", f"PWM clock steady at {clocks.pop()}")
+    else:
+        check("INFO", "PWM clock never read as running (no channel enabled during the watch?)")
+    if "lo" in saw["sense"] and "hi" in saw["sense"]:
+        check("WARN", "the servo-supply sense pin went low during the watch", "Stays hi unless you switched the servo supply off.")
+    if len(saw["thr"] - {"n/a"}) > 1:
+        check("FAIL", f"the Pi's supply flags changed during the watch: {sorted(saw['thr'])}", "Unchanged (0x0).")
+    if saw["analog"]:
+        check("WARN", "the analogue audio output was RUNNING during the watch", "IDLE or SUSPENDED: the robot's voice should not use the analogue jack.")
+    expect("Healthy: channels appear when the head opens, duty ramps in small steps from the old pulse to the target and stops, "
+           "the clock never changes, sense stays hi, throttled stays 0x0. Whatever else changes on the same line as the snap is the lead.")
+
+
 # ------------------------------------------------------------------ 10. by hand
 
 def sec_manual() -> None:
@@ -560,7 +648,7 @@ def sec_manual() -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Read-only diagnostics for the pan/tilt head.")
     ap.add_argument("--watch", type=int, default=0, metavar="SECONDS",
-                    help="also watch the servo-supply sense pin for this long while you flip the servo switch")
+                    help="also record live changes (sense pin, PWM clock, channels, supply flags, audio sinks) for this long while you command the robot")
     ap.add_argument("--no-save", action="store_true", help="do not write ~/robot-diag-<time>.txt")
     args = ap.parse_args()
     emit(f"HEAD DIAGNOSTICS  {dt.datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}   (read-only: nothing is moved or written)", "1")
@@ -570,11 +658,13 @@ def main() -> int:
     sec_power()
     sec_boot()
     sec_pwm(eff)
-    sec_pins(eff, args.watch)
+    sec_pins(eff)
     sec_owners(eff)
     sec_config(src, inst, eff)
     sec_packages()
     sec_logs()
+    if args.watch:
+        sec_watch(eff, args.watch)
     sec_manual()
     section("SUMMARY")
     emit(f"  OK {COUNT['OK']}   INFO {COUNT['INFO']}   WARN {COUNT['WARN']}   FAIL {COUNT['FAIL']}")
