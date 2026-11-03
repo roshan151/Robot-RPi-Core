@@ -26,7 +26,7 @@ Two layers, and the boundary is the point. `robot_core/` is the robot as plain P
 | `install_pi.sh`, `cleanup_pi.sh`, `README-SETUP.md`, `start_robot.sh`, `robot-voice.service` | Pi installer and its guide, the launcher, the boot service |
 | `flash.sh`, `check_bt_audio.sh`, `vision_test.py`, `read_log.py` | Flash the Arduino (from the Mac), check the buds' audio, test the vision service, read `logs.json` |
 | `tests/` | Unit tests (no hardware or ROS needed); `tests/hardware/` needs the real robot |
-| `docs/` | `PLAN.md`, `VISION-DESIGN.md`, `EXPLORE-DESIGN.md`, `HARDWARE-BASICS.md` |
+| `docs/` | `PLAN.md`, `VISION-DESIGN.md`, `EXPLORE-DESIGN.md`, `FOLLOW-DESIGN.md`, `HARDWARE-BASICS.md` |
 
 The Mac service lives in its own repo, **Vision-Microservice**.
 
@@ -131,6 +131,7 @@ Stop the service before running `./start_robot.sh` by hand — two copies will f
 sudo systemctl stop robot-voice     # explore and command mode can't share the serial port or camera
 ./start_robot.sh explore            # ends by itself when nothing reachable is left unexplored
 ros2 service call /explore/stop std_srvs/srv/Trigger   # stop early; the map is still saved
+# (explore started by voice: say "stop", or ros2 service call /task/stop std_srvs/srv/Trigger)
 ros2 topic echo /explore/status     # what it is doing, in plain English
 ```
 
@@ -156,7 +157,7 @@ In command mode, say it to the robot: *"remember my face, I'm Sam"* (`enroll_fac
 
 For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° and 40° up (never below level), stops on the first face, centres it, and holds while it captures, then parks. Tilt is limited to ±45° everywhere; face tasks narrow it to 0°/+45°. The durations are set in [Common variables](#common-variables).
 
-The voice session **closes for the whole task** (so you can't say "stop" until it ends), then reopens. The robot answers by gesture: **nod = it worked / the face is known, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
+The voice session **closes for the whole task**, then reopens. While the task runs, a cancel-only voice session listens: say *"stop"* / *"Robin stop"* / *"that's enough"* and the robot brakes and ends the task (needs internet). Without internet: `ros2 service call /task/stop std_srvs/srv/Trigger`. See [docs/TASK-CANCEL.md](docs/TASK-CANCEL.md). The robot answers by gesture: **nod = it worked / the face is known / it stopped when asked, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
 
 ### Shutting the Pi down by voice
 
@@ -437,7 +438,7 @@ motor terminals. Per the driver's truth table (mirrored in `motorWrite()`):
 Arduino          DRV8871 board          Wheel
 ─────────        ─────────────          ─────
 D5  (PWM) ──→    LEFT  board IN1        Motor 2  = LEFT wheel
-D6  (PWM) ──→    LEFT  board IN2
+D11 (PWM) ──→    LEFT  board IN2  (was D6 -- pin died)
 D9  (PWM) ──→    RIGHT board IN2  ⚠     Motor 1  = RIGHT wheel
 D10 (PWM) ──→    RIGHT board IN1  ⚠
 Star GND  ──→    both boards POWER−     (own wire each, no ground ring)
@@ -506,7 +507,7 @@ R=−187 before the flag was set.
 ### Motor ↔ encoder pairing (invariant)
 
 **Each motor's driver channel and its encoder channel must name the same
-wheel.** The left board (D5/D6) must be paired with the left encoder (D2/D4);
+wheel.** The left board (D5/D11) must be paired with the left encoder (D2/D4);
 the right board (D9/D10) with the right encoder (D3/D7).
 
 This is easy to violate and expensive to diagnose, because straight moves hide

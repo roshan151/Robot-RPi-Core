@@ -74,25 +74,33 @@
     # Head. Pan is limited to +-90 and tilt to +-45 in the driver, and both
     # park at their start position (the *_center_us pulse) on shutdown.
     tfluna_port: "/dev/serial0"
-    camera_main_size: [1920, 1080]
-    camera_inverted: true      # mounted upside down: rotated 180 deg in the ISP
+    # Head camera. Phase 1 swaps the ribbon Camera V2 for the USB HD camera
+    # (PS5268, 1080p HDR). "auto" opens a ribbon camera if one answers, else
+    # USB; set "opencv" once the Phase 2 mono camera takes the ribbon port, so
+    # the head keeps the USB camera. On the swap, also set face_camera_size to
+    # [1920, 1080] and hfov_deg to the measured value (~105).
+    camera_backend: "auto"     # auto | picamera2 (ribbon) | opencv (USB)
+    camera_index: 0            # USB camera: /dev/videoN
+    camera_main_size: [1920, 1080]   # explore photos
+    face_camera_size: [640, 480]     # enroll / match / follow. V2: [640, 480]; USB HD: [1920, 1080]
+    camera_inverted: true      # mounted upside down: rotated 180 deg (ISP on the ribbon camera, software on USB)
     head_height_m: 0.25        # MEASURE: TF-Luna height above the floor
     pan_axis_x_m: 0.05         # MEASURE: pan axis ahead of the wheel-axle centre
-    hfov_deg: 66.0             # Camera Module 3: 66; Module 3 Wide: 102
+    hfov_deg: 66.0             # Camera Module 3: 66; Module 3 Wide: 102; USB HD (PS5268): ~105, MEASURE
     pwm_chip: 0                # Pi 4: 0. Pi 5: 2
     pan_channel: 1             # GPIO13
     tilt_channel: 0            # GPIO12
-    pan_center_us: 1500.0      # measured (check_servo_pulse.py trim): head points straight ahead
-    tilt_center_us: 1500.0     # measured (check_servo_pulse.py trim): head is level
+    pan_center_us: 1600.0      # measured (check_servo_pulse.py trim): head points straight ahead
+    tilt_center_us: 1400.0     # measured (check_servo_pulse.py trim): head is level
     pan_us_per_deg: 11.111     # pulse change per degree (2000/180); MEASURE with tests/hardware/check_servo_pulse.py
     tilt_us_per_deg: 11.111
     pan_invert: false          # +pan must turn the head LEFT
     tilt_invert: true          # +tilt must look UP (flipped: this servo was mounted the other way up)
-    servo_speed_dps: 30.0      # head speed, deg/s; lower = slower, below ~10 gets steppy
+    servo_speed_dps: 60.0      # head speed, deg/s; lower = slower, below ~10 gets steppy
     servo_min_us: 500.0        # hard pulse window: no angle or trim can send a pulse outside it. The driver
     servo_max_us: 2400.0       # shrinks the reachable angles to fit (pan at 2300 us has only ~9 deg to the left):
                                # re-fit the horn nearer the middle, or widen this if the servo really goes further
     hold_on_close: true        # on shutdown park at centre and KEEP holding it (false: release the PWM, servos go limp)
-    servo_power_gpio: 21       # BCM pin that reads the servo +5 V through a 10k/20k divider (high = on); 0 = none fitted.
+    servo_power_gpio: 4        # BCM pin that reads the servo +5 V through a 10k/20k divider (high = on); 0 = none fitted.
                                # While it reads low the head is frozen and moves are refused, so switching the servos on
                                # can never snap them to a stale position

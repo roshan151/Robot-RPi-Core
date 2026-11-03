@@ -42,8 +42,8 @@ def go(g, pan=None, tilt=None):
 
 
 def main():
-    UP, DOWN, LEFT, RIGHT = 20, 20, 20, 20       # degrees: change these
-    PAN_CENTER_US, TILT_CENTER_US = 1500, 1500   # None = the centres in robot.yaml; a number overrides, to hunt for a new one (11 us = 1 deg)
+    UP, DOWN, LEFT, RIGHT = 45, 30, 90, 90       # degrees: change these
+    PAN_CENTER_US, TILT_CENTER_US = 1600, 1400   # None = the centres in robot.yaml; a number overrides, to hunt for a new one (11 us = 1 deg)
     FIT_HORNS = False    # True: just hold 0/0 so you can fit each horn at the middle of its travel
     RELEASE_AT_END = False   # False: keep holding centre when the script ends. True: let go (servos go limp)
 

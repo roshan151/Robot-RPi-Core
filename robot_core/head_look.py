@@ -36,6 +36,36 @@ class HeadLook:
             self._pos[axis] = g.move_to(**{axis: wanted}, wait=False)[1 if axis == "tilt" else 0]
             return {"ok": True, axis: round(self._pos[axis], 1), "clamped": not lo <= wanted <= hi}
 
+    def gesture(self, axis: str, *degrees: float) -> bool:
+        """Blocking: move `axis` by each of `degrees` in turn (each relative to the last),
+        then back to where it started (a nod or a head shake). False if the head has no power."""
+        with self._lock:
+            if self._gimbal is None:
+                self._gimbal = self._open()
+                self._pos = {"pan": 0.0, "tilt": 0.0}
+            g, start = self._gimbal, self._pos[axis]
+        if not g.powered():
+            return False
+        pos = start
+        for d in degrees:
+            pos += d
+            g.move_to(**{axis: pos}, wait=True)
+        g.move_to(**{axis: start}, wait=True)
+        return True
+
+    def pan_to(self, degrees: float, wait: bool = False) -> bool:
+        """Pan to `degrees` from where the head started (+ left), without changing the
+        remembered position; `wait=False` returns at once. False if the head has no power."""
+        with self._lock:
+            if self._gimbal is None:
+                self._gimbal = self._open()
+                self._pos = {"pan": 0.0, "tilt": 0.0}
+            g, start = self._gimbal, self._pos["pan"]
+        if not g.powered():
+            return False
+        g.move_to(pan=start + degrees, wait=wait)
+        return True
+
     def release(self, hold: bool = True) -> None:
         """Park the head. `hold=False` also stops the servo pulses afterwards (servos go limp):
         used before the Pi powers off, so the signal lines are never left driving a live pulse
