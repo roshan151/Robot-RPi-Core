@@ -94,8 +94,8 @@ class FakeHead:
     def __init__(self) -> None:
         self.calls: list = []
 
-    def gesture(self, axis: str, degrees: float) -> bool:
-        self.calls.append((axis, degrees))
+    def gesture(self, axis: str, *degrees: float) -> bool:
+        self.calls.append((axis, *degrees))
         return True
 
 
@@ -249,7 +249,7 @@ def test_run_task_hands_the_job_to_the_agent_and_answers_by_gesture() -> None:
     """run_task only queues; the agent runs it with the session closed, then nods
     (yes) or shakes (no) according to whether the job worked."""
     from robot_core.live import agent as agent_mod
-    for ok, expected in ((True, [("tilt", 20.0)]), (False, [("pan", 30.0)])):
+    for ok, expected in ((True, [("tilt", 30.0, -60.0)]), (False, [("pan", 45.0, -90.0)])):
         move = FakeMove(0.01)
         motion = LocalMotion(move)
         ran = []
@@ -278,7 +278,7 @@ def test_run_task_refuses_what_it_cannot_do() -> None:
         r = run(t.dispatch("run_task", {"task": "enroll_face"}))                     # no name said
         assert r["ok"] is False and r["gestured"] is True and t.pending is None
         time.sleep(0.5)
-        assert head.calls == [("pan", 30.0)] and move.calls == [], "should have shaken its head"
+        assert head.calls == [("pan", 45.0, -90.0)] and move.calls == [], "should have shaken its head"
         assert run(t.dispatch("run_task", {"task": "fly"}))["ok"] is False
         assert t.pending is None
     finally:
@@ -460,7 +460,7 @@ def test_a_task_runs_with_the_listener_beside_it_and_a_cancel_is_answered_yes() 
         run(agent_mod._run_task(t))
         assert seen == {"started": 1, "cancelled": 1}
         time.sleep(0.2)
-        assert head.calls == [("tilt", 20.0)], "a cancelled task is answered with a nod"
+        assert head.calls == [("tilt", 30.0, -60.0)], "a cancelled task is answered with a nod"
     finally:
         cancel_watch.watch = old
         task_cancel.reset()

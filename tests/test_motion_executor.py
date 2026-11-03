@@ -39,9 +39,14 @@ class FakeHead:
     def __init__(self) -> None:
         self.calls: list = []
 
-    def gesture(self, axis: str, degrees: float) -> bool:
-        self.calls.append((axis, degrees))
+    def gesture(self, axis: str, *degrees: float) -> bool:
+        self.calls.append((axis, *degrees))
         time.sleep(0.2)
+        return True
+
+    def pan_to(self, degrees: float, wait: bool = False) -> bool:
+        if not wait:
+            self.calls.append(("pan_to", degrees))
         return True
 
 
@@ -140,7 +145,8 @@ def test_yes_no_move_the_head_not_the_wheels() -> None:
     try:
         Gesturer(motion, head).play("yes", wait=True)
         Gesturer(motion, head).play("no", wait=True)
-        assert head.calls == [(TILT, GESTURE_NOD_DEGREES), (PAN, GESTURE_SHAKE_DEGREES)], head.calls
+        assert head.calls == [(TILT, GESTURE_NOD_DEGREES, -2 * GESTURE_NOD_DEGREES),
+                              (PAN, GESTURE_SHAKE_DEGREES, -2 * GESTURE_SHAKE_DEGREES)], head.calls
         assert move.calls == [], "yes/no must not drive"
     finally:
         motion.close()
@@ -152,9 +158,24 @@ def test_gesture_shapes() -> None:
     # builds its function declaration from it.  This asserted against
     # settings.GESTURE_YES_METERS, which has never existed, so the test raised
     # AttributeError before reaching a single one of its real assertions.
-    # Head steps go out by the angle and back: up-then-down, left-then-right.
-    assert YES == [(TILT, +GESTURE_NOD_DEGREES)]
-    assert NO == [(PAN, +GESTURE_SHAKE_DEGREES)]
+    # Head steps: up, down past level, back; left, right past centre, back.
+    assert YES == [(TILT, +GESTURE_NOD_DEGREES, -2 * GESTURE_NOD_DEGREES)]
+    assert NO == [(PAN, +GESTURE_SHAKE_DEGREES, -2 * GESTURE_SHAKE_DEGREES)]
+
+
+def test_dance_counter_pans_the_head_in_step_with_each_turn() -> None:
+    move = FakeMovement()
+    motion = LocalMotion(move)
+    try:
+        head = FakeHead()
+        assert Gesturer(motion, head).play("dance", wait=True) == []
+        assert [n for n, _v in move.calls] == ["left", "reverse", "right", "reverse", "left",
+                                                "reverse", "right", "reverse", "left", "straight"]
+        # one pan per turn, opposite to the body (+pan left = +turn right), spin back to centre
+        assert head.calls == [("pan_to", -30.0), ("pan_to", 30.0), ("pan_to", -30.0),
+                              ("pan_to", 30.0), ("pan_to", 0.0)], head.calls
+    finally:
+        motion.close()
 
 
 def test_gesture_dropped_not_queued() -> None:
