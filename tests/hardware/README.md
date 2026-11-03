@@ -10,6 +10,7 @@ precisely so `pytest` does not try to collect them.
 | `check_encoders.py` | **Run this after any harness change.** Hand-roll each wheel forward: both counters must go *up*, and rolling the left wheel must move `enc_left`. It is the only way to tell a swapped A/B pair from a mirror-mounted motor |
 | `check_head.py` | Moves the head up / down / left / right by angles you set at the top of `main()`, to find good values and check directions. Stop `robot-voice` first (it holds the PWM) |
 | `check_servo_pulse.py` | **Run before `check_head.py` whenever a head servo misbehaves.** Raw pulses, never more than 150 us from centre, no angles or invert: tells a positional servo (holds an angle) from a continuous-rotation one (pulse = speed), measures the dead zone, and `trim` finds the centre pulse |
+| `check_head_diag.py` | **Read-only** health report for the head: Pi supply flags, boot config, PWM channels, pin states, servo-supply sense, who owns the head, saved state, `robot.yaml` source vs installed, packages, recent log events. Safe while the robot runs; prints an `expect:` line for each check and saves a copy to `~/robot-diag-<time>.txt`. `--watch 20` also watches the sense pin while you flip the servo switch |
 | `check_movements.py` | Closed-loop moves end to end |
 | `check_timed.py` | Timing and sync-error behaviour across a run |
 | `check_vision_service.ipynb` | **Run from the Pi.** Pings every vision-service endpoint on the Mac mini, verifies the response contract, and measures p50/p95/p99 detect latency. Needs the service up, not the robot |

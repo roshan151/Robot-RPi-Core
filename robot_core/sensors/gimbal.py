@@ -49,12 +49,27 @@ While it reads low the head is FROZEN - nothing is stepped, queued moves are dro
 new ones are refused - so the pulse the line holds is still the one the servo last
 followed, switching on is a non-event, and motion resumes from there. Unset (0): the
 supply is assumed to be on.
+
+Fail-safe
+---------
+Anything wrong with the head's output STOPS it instead of letting it snap: both PWM channels are
+disabled (the 10 k pull-downs on the signal lines then hold them low, so the servos go limp rather
+than being driven), every move is refused, and the reason goes to the OLED (G03-G08, status.CODES).
+A fault is latched in `<state_path>.fault`, so restarting the service does not quietly try again;
+fix the cause, then `python -m robot_core.sensors.gimbal reset`. What trips it:
+  pwm    the kernel channel no longer holds what we wrote (checked right after the first pulse and
+         every 0.2 s): another process or driver reprogrammed it, or it was unexported
+  pulse  one 20 ms frame moved a pulse further than the speed limit allows, or the angle is not a number
+  loop   the 50 Hz thread hit an exception - it must not die with a pulse still running
+  busy   another process or Gimbal already drives the PWM channels (opens dead; not latched)
+A Gimbal that is latched or busy still constructs, but dead: it never touches the hardware.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import threading
 import time
@@ -63,9 +78,14 @@ from pathlib import Path
 from pathlib import Path
 from typing import Callable, Optional, Protocol, Tuple
 
+from robot_core import status
+
 log = logging.getLogger(__name__)
 
 FRAME_HZ = 50.0
+CHECK_EVERY_S = 0.2                 # how often the kernel PWM channel is compared with what we wrote
+LOCK_PATH = "/dev/shm/robot-gimbal.lock"    # one owner of the PWM channels at a time (flock)
+FAULT_CODES = {"pwm": "G04", "pulse": "G05", "loop": "G06", "latched": "G07", "busy": "G08"}
 SAVE_EVERY_S = 0.5                  # while moving, refresh the saved head position this often
 PERIOD_US = 1e6 / FRAME_HZ
 
@@ -73,6 +93,7 @@ PERIOD_US = 1e6 / FRAME_HZ
 class PwmOutput(Protocol):
     def set_pulse_us(self, us: float) -> None: ...
     def disable(self) -> None: ...
+    def verify(self) -> Optional[str]: ...      # None while the output still is what we wrote
 
 
 class HardwarePwm:
@@ -86,8 +107,10 @@ class HardwarePwm:
         from rpi_hardware_pwm import HardwarePWM
         self._pwm = HardwarePWM(pwm_channel=channel, hz=FRAME_HZ, chip=chip)
         self._started = False
+        self._dir, self._us = Path(f"/sys/class/pwm/pwmchip{chip}/pwm{channel}"), 0.0
 
     def set_pulse_us(self, us: float) -> None:
+        self._us = us
         duty = 100.0 * us / PERIOD_US
         if self._started:
             self._pwm.change_duty_cycle(duty)
@@ -99,6 +122,18 @@ class HardwarePwm:
         if self._started:
             self._pwm.stop()
             self._started = False
+
+    def verify(self) -> Optional[str]:
+        """None while the kernel channel still holds exactly what we last wrote, else what differs."""
+        if not self._started:
+            return None
+        try:
+            en, per, duty = (int((self._dir / f).read_text()) for f in ("enable", "period", "duty_cycle"))
+        except (OSError, ValueError) as e:
+            return f"unreadable ({e})"
+        if en != 1 or abs(per - PERIOD_US * 1000) > 1000 or abs(duty - self._us * 1000) > 2000:
+            return f"enable={en} period={per} duty={duty} ns, but wrote {self._us:.0f} us"
+        return None
 
 
 class FakePwm:
@@ -114,6 +149,9 @@ class FakePwm:
 
     def disable(self) -> None:
         self.enabled = False
+
+    def verify(self) -> Optional[str]:
+        return None
 
 
 class GpioPowerSense:
@@ -132,6 +170,33 @@ class GpioPowerSense:
 
     def close(self) -> None:
         self._gpio.cleanup(self.pin)
+
+
+def _claim_pwm() -> Optional[int]:
+    '''Lock the PWM channels for this Gimbal: an fd; -1 if no lock file can be made (carry on unlocked rather
+    than lose the head); None if another Gimbal, in this or any other process, holds it. Two writers on one
+    channel fight over the pulse. The lock dies with its process.'''
+    import fcntl
+    try:
+        try:
+            fd = os.open(LOCK_PATH, os.O_RDONLY)            # O_CREAT on another user's file is refused (fs.protected_regular)
+        except FileNotFoundError:
+            fd = os.open(LOCK_PATH, os.O_RDONLY | os.O_CREAT, 0o666)
+    except OSError:
+        return -1
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        os.close(fd)
+        return None
+    except OSError:
+        os.close(fd)
+        return -1
+    return fd
+
+
+class _Fault(Exception):
+    """The head's output is not what we think it is. args = (kind, why); kind picks the OLED code."""
 
 
 @dataclass
@@ -159,6 +224,7 @@ class _Axis:
         self.vel = 0.0
         self.target = 0.0
         self.speed = cfg.max_speed_dps
+        self.last_us = 0.0      # the pulse last written: one frame may not jump far from it
         # The angles this servo can really reach: inside min_deg..max_deg AND
         # inside the min_us..max_us pulse window around this centre. Clamping to
         # this keeps the reported angle honest - a pulse silently cut short would
@@ -210,6 +276,18 @@ class Gimbal:
         state_path: Optional[Path] = None,  # where the last held pulses are kept (None: don't)
         power_sense: Optional[Callable[[], bool]] = None,   # () -> servo supply present? None: assume yes
     ) -> None:
+        self.fault = self.fault_code = ""        # set = tripped: PWM off, moves refused (see "Fail-safe")
+        self._fault_path = Path(state_path).with_suffix(".fault") if state_path else None
+        self._lockfd: Optional[int] = -1
+        if self._fault_path and self._fault_path.exists():
+            was = self._fault_path.read_text().strip() if os.access(self._fault_path, os.R_OK) else "?"
+            self._mark("latched", f"run gimbal reset (was {was})")
+        elif backend == "hardware":
+            self._lockfd = _claim_pwm()
+            if self._lockfd is None:
+                self._mark("busy", "another process drives the head")
+        if self.fault:
+            backend = "fake"                     # opens dead: nothing below touches the hardware
         make = (lambda c: HardwarePwm(c.channel, chip)) if backend == "hardware" else (lambda c: FakePwm())
         self.pan = _Axis(pan, make(pan))
         self.tilt = _Axis(tilt, make(tilt))
@@ -235,6 +313,11 @@ class Gimbal:
         # the servo has nothing to dash to; the loop then walks it to centre.
         for ax in (self.pan, self.tilt):
             ax.out.set_pulse_us(ax.pulse())
+            ax.last_us = ax.pulse()
+        for ax in (self.pan, self.tilt):         # the first pulse must really be on the line before anything moves
+            bad = ax.out.verify()
+            if bad and not self.fault:
+                self._trip("pwm", f"ch{ax.cfg.channel} {bad}")
         self._thread = threading.Thread(target=self._loop, name="gimbal", daemon=True)
         self._thread.start()
 
@@ -271,7 +354,10 @@ class Gimbal:
     # ----------------------------------------------------------------- API
 
     def powered(self) -> bool:
-        """Is the servo supply on? Always True with no `power_sense`; a failing sensor reads as off."""
+        """May the head move? False once it has faulted, or while the servo supply is off (always True with
+        no `power_sense`; a failing sensor reads as off)."""
+        if self.fault:
+            return False
         if self._power_sense is None:
             return True
         try:
@@ -279,13 +365,28 @@ class Gimbal:
         except Exception:                                   # noqa: BLE001
             return False
 
+    def refuse(self) -> str:
+        """The head will not move: put the reason on the OLED and return it in words ("" if it will)."""
+        if self.powered():
+            return ""
+        if self.fault:
+            status.error(self.fault_code, self.fault.split(": ", 1)[-1])
+            return f"head switched off after a fault ({self.fault}); it needs a reset"
+        status.error("G03", "servo switch off?")
+        return "head servos have no power - switch the servo supply on"
+
     def move_to(self, pan: Optional[float] = None, tilt: Optional[float] = None,
                 speed_dps: Optional[float] = None, wait: bool = True,
                 timeout: float = 10.0) -> tuple:
         """Slew to (pan, tilt) degrees, clamped to the limits. None = keep.
-        Returns the clamped target actually used (the current angles, if the servo supply is off)."""
-        if not self.powered():
-            log.warning("gimbal: servo supply is off - move ignored")
+        Returns the clamped target actually used (the current angles, if the head is stopped or the
+        request is not a usable number)."""
+        why = self.refuse()
+        if why:
+            log.warning("gimbal: %s - move ignored", why)
+            return self.angles()
+        if any(v is not None and not math.isfinite(v) for v in (pan, tilt, speed_dps)) or (speed_dps or 0) < 0:
+            log.warning("gimbal: refused pan=%s tilt=%s speed=%s", pan, tilt, speed_dps)    # clamp(nan) is the top limit
             return self.angles()
         with self._lock:
             for ax, want in ((self.pan, pan), (self.tilt, tilt)):
@@ -349,6 +450,9 @@ class Gimbal:
                 self._thread.join(timeout=1.0)
                 self._save_state()
                 getattr(self._power_sense, "close", lambda: None)()
+                if self._lockfd is not None and self._lockfd >= 0:
+                    os.close(self._lockfd)       # let the next Gimbal in
+                self._lockfd = -1
         if release and not self._released:
             self._released = True
             for ax in (self.pan, self.tilt):
@@ -357,19 +461,64 @@ class Gimbal:
                 except Exception:                          # noqa: BLE001
                     log.exception("gimbal: disabling PWM failed")
 
+    # ----------------------------------------------------------- fail-safe
+
+    def _mark(self, kind: str, why: str) -> None:
+        self.fault, self.fault_code = f"{kind}: {why}", FAULT_CODES[kind]
+        log.warning("gimbal: FAULT %s - head stopped", self.fault)
+        status.error(self.fault_code, why)
+
+    def _trip(self, kind: str, why: str) -> None:
+        """Stop driving the head: PWM off on both axes, moves refused, latched on disk (see "Fail-safe")."""
+        if self.fault:
+            return
+        self._mark(kind, why)
+        for ax in (self.pan, self.tilt):
+            try:
+                ax.out.disable()
+            except Exception:                               # noqa: BLE001
+                log.warning("gimbal: disabling PWM failed", exc_info=True)
+        with self._lock:
+            self._moving = False
+            self._arrived.notify_all()                      # anyone in wait() returns at once
+        if self._fault_path:
+            try:
+                self._fault_path.parent.mkdir(parents=True, exist_ok=True)
+                self._fault_path.write_text(self.fault)
+            except OSError:
+                log.warning("gimbal: could not latch the fault on disk", exc_info=True)
+
+    def _write(self, ax: _Axis) -> None:
+        us = ax.pulse()
+        step = 2 * ax.cfg.max_speed_dps * abs(ax.cfg.us_per_deg) / FRAME_HZ + 5.0       # full speed is half this
+        if not math.isfinite(ax.pos) or abs(us - ax.last_us) > step:
+            raise _Fault("pulse", f"ch{ax.cfg.channel} {ax.last_us:.0f} to {us:.0f} us in one frame")
+        ax.out.set_pulse_us(us)
+        ax.last_us = us
+
     # -------------------------------------------------------------- engine
 
     def _loop(self) -> None:
+        try:
+            self._run()
+        except _Fault as f:
+            self._trip(*f.args)
+        except Exception as e:                              # noqa: BLE001 - a dead loop would leave its last pulse running
+            self._trip("loop", f"{type(e).__name__}: {e}")
+
+    def _run(self) -> None:
         dt = 1.0 / FRAME_HZ
-        nxt = last_save = time.monotonic()
+        nxt = last_save = last_check = time.monotonic()
         rail = True
-        while not self._stop.is_set():
+        while not self._stop.is_set() and not self.fault:
             arrived = False
             powered = self.powered()
             if powered != rail:
                 rail = powered
                 log.warning("gimbal: servo supply %s", "back on - resuming from the held pulse" if rail
                             else "OFF - head frozen, moves refused")
+                if not rail:
+                    status.error("G03", "servo switch off?")
             with self._lock:
                 moving = False
                 for ax in (self.pan, self.tilt):
@@ -377,7 +526,7 @@ class Gimbal:
                         ax.target, ax.vel = ax.pos, 0.0     # nothing is following the pulses: forget the order
                     elif ax.step(dt):
                         moving = True
-                        ax.out.set_pulse_us(ax.pulse())
+                        self._write(ax)
                 if moving:
                     self._last_motion = time.monotonic()
                 elif self._moving:
@@ -389,8 +538,18 @@ class Gimbal:
             elif moving and time.monotonic() - last_save >= SAVE_EVERY_S:
                 last_save = time.monotonic()
                 self._save_state()                          # a reset mid-move must not leave a stale position
+            if time.monotonic() - last_check >= CHECK_EVERY_S:
+                last_check = time.monotonic()
+                for ax in (self.pan, self.tilt):
+                    bad = ax.out.verify()
+                    if bad:
+                        raise _Fault("pwm", f"ch{ax.cfg.channel} {bad}")
             nxt += dt
             time.sleep(max(0.0, nxt - time.monotonic()))
+
+
+def _state_file(p: dict) -> Path:
+    return Path(p.get("head_state_file") or Path.home() / ".cache" / "robot-head.json")
 
 
 def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float = TILT_DEFAULT.max_deg,
@@ -414,8 +573,7 @@ def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float
                         min_us=lo_us, max_us=hi_us),
         backend=backend, chip=int(p.get("pwm_chip", 0)),
         hold_on_close=bool(p.get("hold_on_close", True)),
-        state_path=(Path(p.get("head_state_file") or Path.home() / ".cache" / "robot-head.json")
-                    if backend == "hardware" else None),
+        state_path=_state_file(p) if backend == "hardware" else None,
         power_sense=GpioPowerSense(pin) if pin and backend == "hardware" else None)
 
 
@@ -440,10 +598,16 @@ def main() -> None:
              cut, before anything trusts the angles
     release  park, then stop the PWM so the servos relax
     move     go to PAN [TILT] degrees first, then park
+    reset    clear a latched fault (see "Fail-safe") once its cause is fixed; touches no hardware
     Channels and centres come from robot.yaml, like every node's.'''
     import sys
     logging.basicConfig(level=logging.INFO)
     cmd = sys.argv[1] if len(sys.argv) > 1 else "home"
+    if cmd == "reset":
+        latch = _state_file(params_from_robot_yaml()).with_suffix(".fault")
+        print(f"cleared: {latch.read_text().strip()}" if latch.exists() else "no fault was latched")
+        latch.unlink(missing_ok=True)
+        return
     g = from_params(params_from_robot_yaml())
     try:
         if cmd == "move" and len(sys.argv) > 2:

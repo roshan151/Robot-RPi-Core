@@ -29,8 +29,12 @@ class HeadLook:
                 self._gimbal = self._open()
                 self._pos = {"pan": 0.0, "tilt": 0.0}
             g = self._gimbal
-            if not g.powered():
-                return {"ok": False, "error": "head servos have no power - switch the servo supply on"}
+            why = g.refuse()
+            if why:
+                if g.fault:                      # tripped: let go of it, so the next look re-checks (a latched fault stays dead)
+                    g.close()
+                    self._gimbal = None
+                return {"ok": False, "error": why}
             lo, hi = (g.tilt_limits if axis == "tilt" else g.pan_limits)()
             before, wanted = self._pos[axis], self._pos[axis] + degrees
             self._pos[axis] = g.move_to(**{axis: wanted}, wait=False)[1 if axis == "tilt" else 0]
