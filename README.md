@@ -83,7 +83,8 @@ Lookup order, first hit wins: the real environment, `ROBOT_ENV_FILE` (a path), `
 | `ROBOT_TICKS_PER_CM`, `ROBOT_TICKS_PER_DEGREE` | Drive calibration, see [Calibration](#calibration) |
 | `ROBOT_MAX_DRIVE_M` | Longest single drive, default `5` |
 | `ROBOT_TTS` | Robot speech, on by default; `0` mutes it |
-| `BT_MAC`, `ROBOT_AUDIO_INPUT_DEVICE`, `ROBOT_TTS_DEVICE` | Bluetooth buds and audio devices |
+| `BT_MAC`, `ROBOT_AUDIO_INPUT_DEVICE`, `ROBOT_TTS_DEVICE` | Bluetooth buds and audio devices (leave `ROBOT_AUDIO_INPUT_DEVICE` blank: the mic is picked through PipeWire) |
+| `ROBOT_MIC_MODE`, `ROBOT_ROOM_MIC`, `ROBOT_ROUTE_POLL_FAST_S`, `ROBOT_ROUTE_FAST_FOR_S`, `ROBOT_ROUTE_POLL_S` | Mic choice: buds if their mic is up, else the camera mic (`auto`/`buds`/`room`), the camera mic's PipeWire name, and the buds check schedule (30 s for 5 min, then 2 min). See [docs/USB-CAMERA-MIC.md](docs/USB-CAMERA-MIC.md) |
 | `ROBOT_FACE_SEARCH_S`, `ROBOT_FACE_ENROLL_S`, `ROBOT_FACE_MATCH_S` | Face tasks: time to find a face when enrolling, capture time once found, and total time for a match (all default 30 s) |
 | `VISION_DETECT_HZ`, `VISION_DETECT_TIMEOUT_S` | Detect rate (2.0) and hard timeout, no retry (0.6 s) |
 | `ROBOT_LOG_PATH` | Robot event log, default `logs.json` |
@@ -307,8 +308,9 @@ Then:
 1. Put the MAC in `/etc/robot.env` as `BT_MAC=AA:BB:CC:DD:EE:FF` (used by `check_bt_audio.sh`).
 2. `sudo usermod -aG bluetooth,audio roshan151`, and **`sudo loginctl enable-linger roshan151`** — without lingering, the user's audio server doesn't exist at boot and the service hears nothing. `robot-voice.service` already points at it (`XDG_RUNTIME_DIR`, `PULSE_SERVER`; `id -u` must be 1000, else edit both).
 3. Reboot with the buds on and nearby. The service waits 5 s for them to connect.
-4. Check: `pactl list short sources | grep bluez` (the mic) and `python -m robot_core.speech "hello there"` (the speaker). If several devices exist, set `ROBOT_AUDIO_INPUT_DEVICE` / `ROBOT_TTS_DEVICE`.
+4. Check: `pactl list short sources | grep bluez` (the mic) and `python -m robot_core.speech "hello there"` (the speaker). If several speakers exist, set `ROBOT_TTS_DEVICE`; leave `ROBOT_AUDIO_INPUT_DEVICE` blank (the robot picks the mic itself, step 6).
 5. Use 16 kHz wideband for the mic: run `./check_bt_audio.sh`. If it says mSBC isn't offered, add `monitor.bluez.properties = { bluez5.enable-msbc = true }` in `~/.config/wireplumber/wireplumber.conf.d/51-bluez.conf`, restart `wireplumber`, reconnect the buds, and run it again.
+6. **No buds?** The USB camera's built-in mic takes over, and the robot then acts only when addressed as "Robin" ("stop" always works). It re-checks for the buds every 30 s for 5 minutes after start, then every 2 minutes. Check the camera mic with `./check_audio.sh`; setup and test steps are in [docs/USB-CAMERA-MIC.md](docs/USB-CAMERA-MIC.md).
 
 The buds must be in headset mode (HFP) for their microphone to work, which is why step 5 matters.
 

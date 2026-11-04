@@ -38,7 +38,9 @@ from typing import Any, Dict, Optional
 from robot_core import settings
 from robot_core import robot_log
 from robot_core import speech
+from robot_core import status
 from robot_core import task_cancel
+from robot_core import audio_route
 from robot_core.live.tools import RobotTools, declarations
 
 logger = logging.getLogger(__name__)
@@ -77,9 +79,12 @@ class LiveAgent:
 
     def __init__(self, tools: RobotTools, model: Optional[str] = None,
                  system_prompt: Optional[str] = None, tool_declarations=declarations,
-                 announce: bool = True, role: str = "main") -> None:
+                 announce: bool = True, role: str = "main",
+                 route: Optional[audio_route.Route] = None) -> None:
         # The defaults are the main session; the cancel listener
         # (live/cancel_watch.py) passes its own prompt and tool, and no chime.
+        # With a `route` the session ends (`rerouted`) when the buds come or go.
+        self.route, self.rerouted = route, False
         self.model = model or settings.GEMINI_LIVE_MODEL
         self._tools = tools
         self._prompt = system_prompt or settings.LIVE_SYSTEM_PROMPT
@@ -306,6 +311,16 @@ class LiveAgent:
                     "live session closed by the server (receive stream ended)")
             last = time.monotonic()
 
+    async def _pump_route(self) -> None:
+        """Returns when the buds come or go, which ends the session so the
+        supervisor reconnects with the right mic and prompt."""
+        while True:
+            await asyncio.sleep(audio_route.poll_interval())
+            now = await asyncio.to_thread(audio_route.current)
+            if now.mode != self.route.mode:
+                self.rerouted = True
+                return
+
     async def _pump_task(self) -> None:
         """Returns the moment run_task queues a job, which ends the session cleanly
         (microphone closed, socket closed) so `_run_supervised` can run it."""
@@ -489,6 +504,8 @@ class LiveAgent:
                 # does not yet; RosMotion does, and gets the model told what
                 # became of every move it asked for.
                 tasks.append(asyncio.create_task(self._pump_task(), name="task"))
+                if self.route is not None:
+                    tasks.append(asyncio.create_task(self._pump_route(), name="route"))
                 results = getattr(self._tools.motion, "results", None)
                 if results is not None:
                     tasks.append(asyncio.create_task(
@@ -509,11 +526,17 @@ async def _run_supervised(tools: RobotTools) -> None:
     """Reconnect on failure, with backoff. Motors stop first, every time."""
     backoff = settings.LIVE_RECONNECT_BACKOFF_S
     while True:
-        agent = LiveAgent(tools)
+        route = audio_route.use()            # buds if their mic is up, else the camera's
+        status.note(f"mic: {route.mode}", 5.0)
+        agent = LiveAgent(tools, system_prompt=settings.live_prompt(route.mode), route=route)
         try:
             await agent.run()
             if tools.pending is not None:
                 await _run_task(tools)       # the session is closed; reconnect after it
+                backoff = settings.LIVE_RECONNECT_BACKOFF_S
+                continue
+            if agent.rerouted:               # buds came or went: brake, reconnect on the other mic
+                tools.motion.stop()
                 backoff = settings.LIVE_RECONNECT_BACKOFF_S
                 continue
             robot_log.event("session.stop", reason="live session closed")

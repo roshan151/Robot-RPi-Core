@@ -21,7 +21,7 @@ This amends `FOLLOW-DESIGN.md` (identity while following) and
 |---|---|---|---|
 | 0 | none (Camera V2 on the ribbon) | Recognition that works across light and pose; enrolment of the whole face | **Implemented** |
 | 1 | USB HD camera (innomaker PS5268, 1080p30, 120 dB HDR, 121° D) on the gimbal | HDR faces, ~1.7× wider view, faces from ~1.0 m to ~2.8 m; enrol auto-framing; follow keeps the person when their back is turned | **Implemented** (code); swap the camera to use it |
-| 2 | Mono global-shutter camera (innomaker OV9281, 1280×800, 118° H) on the ribbon, fixed to the chassis | Visual odometry, SLAM, obstacle avoidance without a lidar | Planned |
+| 2 | Mono global-shutter camera (innomaker OV9281, 1280×800, 118° H) on the ribbon, fixed to the chassis | Visual odometry, SLAM, obstacle avoidance without a lidar | **On hold**: the USB camera is the only camera for now, and its mic is the voice fallback (`USB-CAMERA-MIC.md`) |
 
 ---
 

@@ -24,7 +24,7 @@ ROS_PACKAGES=(   # the rospian repo has no ros-base bundle, so list what the rob
 OTHER_PACKAGES=(
   curl gnupg git ca-certificates python3-venv
   python3-picamera2 python3-libcamera python3-opencv python3-numpy python3-yaml   # camera + vision
-  libportaudio2 alsa-utils pulseaudio-utils bluez pipewire pipewire-pulse pipewire-alsa wireplumber libspa-0.2-bluetooth  # audio, buds (pipewire-alsa routes PortAudio to the buds)
+  libportaudio2 alsa-utils pulseaudio-utils v4l-utils bluez pipewire pipewire-pulse pipewire-alsa wireplumber libspa-0.2-bluetooth  # audio, buds (pipewire-alsa routes PortAudio to the buds)
 )
 PIP_EXTRAS="voice,explore,oled"
 

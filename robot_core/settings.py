@@ -79,6 +79,13 @@ LIVE_RESPONSE_MODALITY = _env("ROBOT_LIVE_MODALITY", "AUDIO").upper()   # native
 LIVE_PLAY_AUDIO = _env("ROBOT_LIVE_PLAY_AUDIO", "0") in ("1", "true", "yes")   # keep off: the mic would hear it
 AUDIO_INPUT_DEVICE = _env("ROBOT_AUDIO_INPUT_DEVICE", "")              # blank = system default
 BT_MAC = _env("BT_MAC", "")
+# Which mic (robot_core/audio_route.py): the buds when their mic is up, else the
+# camera's ("room"). Re-checked every 30 s for 5 min after start, then every 2 min.
+MIC_MODE = _env("ROBOT_MIC_MODE", "auto").lower()               # auto | buds | room
+ROOM_MIC = _env("ROBOT_ROOM_MIC", "alsa_input.usb-")            # piece of the camera mic's PipeWire name
+ROUTE_POLL_FAST_S = _env("ROBOT_ROUTE_POLL_FAST_S", "30", float)
+ROUTE_FAST_FOR_S = _env("ROBOT_ROUTE_FAST_FOR_S", "300", float)
+ROUTE_POLL_S = _env("ROBOT_ROUTE_POLL_S", "120", float)
 LIVE_STALL_WARN_S = _env("ROBOT_LIVE_STALL_WARN_S", "0.75", float)
 LIVE_SEND_WARN_S = _env("ROBOT_LIVE_SEND_WARN_S", "0.25", float)
 LIVE_SEND_TIMEOUT_S = _env("ROBOT_LIVE_SEND_TIMEOUT_S", "5.0", float)
@@ -195,6 +202,24 @@ Rules that matter:
   - turn() takes positive degrees for RIGHT, negative for LEFT.
     drive() takes positive metres for FORWARD, negative for BACKWARD.
 """)
+
+# Added to the prompt above in room mode: no buds, so the mic on the robot's
+# head hears everyone in the room, and the TV.
+ROOM_MIC_RULE = os.environ.get("ROBOT_ROOM_MIC_PROMPT", """\
+Room microphone (this overrides the rules above): you are listening through a
+microphone on your own head and will hear people who are not talking to you,
+and the TV. Act only on a request that addresses you by name: "Robin, go
+forward", "follow me, Robin"; the name can be anywhere in the sentence.
+Without your name, do nothing at all: no move, no gesture, no task, not even
+answer("unclear"). The one exception is stop: call stop() for any "stop",
+"wait" or "hold on", with or without your name.
+""")
+
+
+def live_prompt(mic_mode: str) -> str:
+    """The main session's prompt: LIVE_SYSTEM_PROMPT, plus ROOM_MIC_RULE when
+    listening through the camera's mic instead of the buds."""
+    return LIVE_SYSTEM_PROMPT + ("\n" + ROOM_MIC_RULE if mic_mode == "room" else "")
 
 
 # --- Secrets ------------------------------------------------------------------

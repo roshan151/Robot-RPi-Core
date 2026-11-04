@@ -56,11 +56,13 @@ class CancelTools:
 
 async def watch(motion) -> None:
     """Listen until cancelled (by the agent, when the task ends)."""
+    from robot_core import audio_route
     from robot_core.live.agent import LiveAgent, LiveConfigError   # agent imports us lazily
 
     tools = CancelTools(motion.stop)
     backoff = settings.LIVE_RECONNECT_BACKOFF_S
     while True:
+        audio_route.use()                               # whichever mic is live: buds, else the camera's
         agent = LiveAgent(tools, system_prompt=settings.CANCEL_PROMPT,
                           tool_declarations=declarations, announce=False, role="cancel")
         try:

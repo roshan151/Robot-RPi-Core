@@ -12,8 +12,8 @@ Audio follows one rule:
 | **Buds mode** — buds for everything: their mic for voice, their speaker for the robot's voice | **Room mode** — the camera's built-in mic for voice |
 | Every command is acted on, as today | Only commands that **address the robot as "Robin"** are acted on. "Stop" always works, name or not |
 
-Status: **planned, not implemented.** This doc is the change list and the
-setup steps.
+Status: **implemented** (code, config, `check_audio.sh`, tests). The hardware
+and Pi setup in Part 3 are still to do.
 
 ---
 
@@ -31,7 +31,7 @@ setup steps.
 
 ---
 
-## Part 1 — Code changes (≈150 lines + ≈70 lines of tests)
+## Part 1 — Code changes (≈130 lines + ≈130 lines of tests)
 
 ### 1.1 Camera — config only (`ros2_ws/src/robot_bringup/config/robot.yaml`, `/explorer`)
 
@@ -60,8 +60,9 @@ class Route:
     source: str | None    # PipeWire input to make the default
     sink: str | None      # with buds: their output; room: leave as is
 
-def current() -> Route    # from `pactl list short sources` / `sinks`
-def apply(route) -> None  # pactl set-default-source / set-default-sink
+def current() -> Route         # from `pactl list short sources` / `sinks`
+def use() -> Route             # current(), made the default (pactl set-default-source/-sink), logged
+def poll_interval() -> float   # 30 s for 5 min after start, then 120 s
 ```
 
 * **Buds** = an input named `bluez_input.*` (PipeWire) or `bluez_source.*`
@@ -94,9 +95,11 @@ def apply(route) -> None  # pactl set-default-source / set-default-sink
 ### 1.4 `robot_core/live/agent.py` (≈25 lines)
 
 * `_run_supervised`, before each `LiveAgent(...)`:
-  `route = audio_route.current(); audio_route.apply(route)`, then the main
-  prompt is `LIVE_SYSTEM_PROMPT` plus `ROOM_MIC_RULE` in room mode. The
-  `system_prompt=` parameter already exists (added for the cancel listener).
+  `route = audio_route.use()`, then the main prompt is
+  `settings.live_prompt(route.mode)`. All prompt text and the rule for
+  combining it live in `settings.py` (`LIVE_SYSTEM_PROMPT`, `ROOM_MIC_RULE`,
+  `live_prompt()`, next to `CANCEL_PROMPT`). The `system_prompt=` parameter
+  already exists (added for the cancel listener).
 * Log `audio.route mode=… source=…` (new name in `robot_log.EVENTS`) and
   show `mic: buds` / `mic: room` on the OLED for a few seconds (`status.note`).
 * A route watch in the main session re-reads the route on a schedule:
@@ -113,7 +116,7 @@ def apply(route) -> None  # pactl set-default-source / set-default-sink
 
 ### 1.5 `robot_core/live/cancel_watch.py` (≈3 lines)
 
-`audio_route.apply(audio_route.current())` before each connect, so the
+`audio_route.use()` before each connect, so the
 listener hears whichever mic is live. Its prompt and behaviour do not change.
 
 ### 1.6 Scripts, service and docs (no Python)

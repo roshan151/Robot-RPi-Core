@@ -53,7 +53,7 @@ PROBLEMS: list = []
 
 def emit(text: str = "", color: str = "") -> None:
     PLAIN.append(text)
-    print(f"\033[{color}m{text}\033[0m" if USE_COLOR and color else text)
+    print(f"\033[{color}m{text}\033[0m" if USE_COLOR and color else text, flush=True)
 
 
 def section(title: str) -> None:
@@ -341,10 +341,13 @@ def sec_pwm(eff: dict) -> None:
                 check("WARN", f"{ch.name}: this user cannot write duty_cycle", "The user running the robot must be able to write it (udev rule / gpio group).")
     hz = clock_hz()
     if hz >= 0:
-        check("INFO", f"PWM clock (vcgencmd measure_clock pwm): {hz:,} Hz",
-              "Normally about 99,995,000 (100 MHz) once a channel runs; the kernel assumes that and scales every pulse and the 20 ms "
-              "period by it. What matters is that it NEVER changes: a faster clock makes every pulse shorter (pan right, tilt up), "
-              "a slower one longer. --watch shows whether it moves when the robot talks or looks.")
+        off = hz > 0 and abs(hz - 100e6) / 100e6 > 0.02
+        check("WARN" if off else "INFO", f"PWM clock (vcgencmd measure_clock pwm): {hz:,} Hz"
+              + (f" = {hz / 1e6 - 100:+.1f}% vs the 100 MHz the overlay assumes" if hz else ""),
+              "About 99,995,000 (100 MHz). The kernel scales every pulse and the 20 ms period by the rate it believes; if the hardware "
+              "really runs faster, everything comes out that much too short (pan right, tilt up), slower = too long. Check the "
+              "kernel's belief: sudo grep -i pwm /sys/kernel/debug/clk/clk_summary. Separately, it must NEVER change while the robot "
+              "runs (--watch).")
     s = sinks()
     if s:
         analog = {k: v for k, v in s.items() if k != "*default" and is_analog(k)}
@@ -571,7 +574,7 @@ def sec_watch(eff: dict, seconds: int) -> None:
     emit("  Keep a hand on the servo switch: if the head snaps, switch it off.")
     gpio = int(num(eff, "servo_power_gpio"))
     chip = SYS_PWM / f"pwmchip{int(num(eff, 'pwm_chip'))}"
-    state = {"sinks": {}}
+    state = {"slow": {}}
 
     def sample(n: int) -> dict:
         d = {}
@@ -582,13 +585,25 @@ def sec_watch(eff: dict, seconds: int) -> None:
         for ch in sorted(chip.glob("pwm[0-9]*")):         # the first look exports them, so look again every sample
             en, per, duty = read(ch / "enable"), to_int(read(ch / "period")), to_int(read(ch / "duty_cycle"))
             d[ch.name] = f"en={en} period={per / 1e6:.2f} ms duty={duty / 1e3:.0f} us"
-        d["throttled"] = read("/sys/devices/platform/soc/soc:firmware/get_throttled") or "n/a"
-        if n % 5 == 0:
-            state["sinks"] = {f"sink {k}": v for k, v in sinks().items()}
-        d.update(state["sinks"])
+        if n % 5 == 0:                                     # the slower reads
+            raw = read("/sys/devices/platform/soc/soc:firmware/get_throttled")
+            if raw is None:
+                rc, out = sh("vcgencmd", "get_throttled")
+                raw = out.split("=")[-1] if rc == 0 else "n/a"
+            state["slow"] = {"throttled": raw, **{f"sink {k}": v for k, v in sinks().items()}}
+        d.update(state["slow"])
         return d
 
-    t0, prev, n, clocks, saw = time.time(), {}, 0, set(), {"sense": set(), "thr": set(), "analog": set()}
+    t0, clocks, saw = time.time(), set(), {"sense": set(), "thr": set(), "analog": set()}
+    try:
+        _watch_loop(sample, seconds, t0, clocks, saw)
+    except KeyboardInterrupt:
+        emit("  (stopped with Ctrl-C)")
+    return _watch_verdict(clocks, saw)
+
+
+def _watch_loop(sample, seconds, t0, clocks, saw) -> None:
+    prev, n = {}, 0
     while time.time() - t0 < seconds:
         cur = sample(n)
         if not prev:
@@ -605,6 +620,9 @@ def sec_watch(eff: dict, seconds: int) -> None:
         prev, n = cur, n + 1
         time.sleep(0.05)
     emit(f"  ({n} samples)")
+
+
+def _watch_verdict(clocks, saw) -> None:
     if len(clocks) > 1:
         check("FAIL", f"the PWM clock CHANGED while watching: {sorted(clocks)}",
               "One value. A change rescales every servo pulse and the 20 ms period by the same factor - this alone can snap the head.")
