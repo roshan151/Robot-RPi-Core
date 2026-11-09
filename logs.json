@@ -1289,3 +1289,60 @@
 {"ts":"2026-11-03T23:40:26.155Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.82,"repeats":3}
 {"ts":"2026-11-03T23:40:58.323Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.77,"repeats":1}
 {"ts":"2026-11-03T23:41:30.409Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.77}
+{"ts":"2026-11-09T19:27:54.298Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-09T19:27:55.021Z","lvl":"info","evt":"session.start","mode":"ros","pid":3205,"log":"logs.json"}
+{"ts":"2026-11-09T19:27:59.601Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-09T19:28:01.694Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-09T19:28:01.694Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-09T19:28:08.068Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.56}
+{"ts":"2026-11-09T19:28:11.029Z","lvl":"info","evt":"voice.heard","text":"Robin go straight."}
+{"ts":"2026-11-09T19:28:11.709Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
+{"ts":"2026-11-09T19:28:24.654Z","lvl":"info","evt":"voice.heard","text":"Robin, go straight."}
+{"ts":"2026-11-09T19:28:24.661Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
+{"ts":"2026-11-09T19:28:37.584Z","lvl":"info","evt":"voice.heard","text":"Robin turn by 180\u00b0."}
+{"ts":"2026-11-09T19:28:37.913Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":180},"ok":true,"queued":true,"op":"turn","value":180.0}
+{"ts":"2026-11-09T19:28:48.883Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":3.8,"repeats":5}
+{"ts":"2026-11-09T19:28:48.886Z","lvl":"info","evt":"voice.heard","text":"Turn right by another 30\u00b0."}
+{"ts":"2026-11-09T19:28:48.891Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-09T19:28:56.735Z","lvl":"info","evt":"voice.heard","text":"Robin turn right by another 30 degrees."}
+{"ts":"2026-11-09T19:28:56.740Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":30},"ok":true,"queued":true,"op":"turn","value":30.0}
+{"ts":"2026-11-09T19:29:07.641Z","lvl":"info","evt":"voice.heard","text":"Can you look for a face? Robin, can you detect face?"}
+{"ts":"2026-11-09T19:29:07.646Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"match_face"},"ok":true,"starting":"match_face","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-09T19:29:07.737Z","lvl":"info","evt":"task.start","task":"match_face","name":"","_unregistered":true}
+{"ts":"2026-11-09T19:29:07.925Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-09T19:29:11.226Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"cancel","modality":"AUDIO"}
+{"ts":"2026-11-09T19:29:18.399Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T19:29:20.603Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T19:29:23.296Z","lvl":"warn","evt":"log","msg":"match failed: POST /v1/faces/embed: HTTPConnectionPool(host='10.0.0.55', port=8080): Max retries exceeded with url: /v1/faces/embed (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f86cce660>: Failed to establish a new connection: [Errno 113] No route to host'))","src":"robot_core.face_tasks"}
+{"ts":"2026-11-09T19:29:23.300Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T19:29:24.060Z","lvl":"info","evt":"task.end","task":"match_face","ok":false,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-09T19:29:24.062Z","lvl":"info","evt":"gesture","name":"no","head":true}
+{"ts":"2026-11-09T19:29:24.064Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-11-09T19:29:24.087Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T19:29:24.090Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T19:29:24.093Z","lvl":"info","evt":"gesture.skip","name":"no","why":"head has no power"}
+{"ts":"2026-11-09T19:29:24.123Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-09T19:29:24.195Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='events' coro=<LiveAgent._pump_events() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:252> exception=APIError('1000 None. ')>","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:277 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-09T19:29:24.207Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='mic-uplink' coro=<LiveAgent._pump_audio() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:214> exception=ConnectionClosedOK(Close(code=1000, reason=''), Close(code=<CloseCode.NORMAL_CLOSURE: 1000>, reason=''), False)>","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:229 in _pump_audio","tasks.py:507 in wait_for","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-09T19:29:24.539Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-09T19:29:24.541Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-09T19:29:30.712Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.48,"repeats":4}
+{"ts":"2026-11-09T19:29:43.764Z","lvl":"info","evt":"voice.heard","text":"Robin robot shut down"}
+{"ts":"2026-11-09T19:29:43.771Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T19:29:44.093Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-09T19:29:44.094Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-09T19:29:46.890Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-09T19:29:47.839Z","lvl":"info","evt":"session.start","mode":"ros","pid":1693,"log":"logs.json"}
+{"ts":"2026-11-09T19:29:51.109Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-09T19:33:17.724Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-09T19:33:17.724Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-09T19:33:24.192Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.58}
+{"ts":"2026-11-09T19:33:45.764Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1}
+{"ts":"2026-11-09T19:33:58.206Z","lvl":"error","evt":"voice.drop","err":"LiveAgentError: uplink stuck: send took >5.0s"}
+{"ts":"2026-11-09T19:33:58.209Z","lvl":"info","evt":"voice.error","text":"Voice session failed. live agent error. Check the log.","detail":"live agent error"}
+{"ts":"2026-11-09T19:34:06.538Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-09T19:34:06.943Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-09T19:34:06.944Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-09T19:34:13.196Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.56}
+{"ts":"2026-11-09T19:34:28.522Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-09T19:34:29.248Z","lvl":"info","evt":"session.start","mode":"ros","pid":2242,"log":"logs.json"}
