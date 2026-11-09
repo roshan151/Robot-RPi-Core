@@ -84,7 +84,7 @@ Lookup order, first hit wins: the real environment, `ROBOT_ENV_FILE` (a path), `
 | `ROBOT_MAX_DRIVE_M` | Longest single drive, default `5` |
 | `ROBOT_TTS` | Robot speech, on by default; `0` mutes it |
 | `BT_MAC`, `ROBOT_AUDIO_INPUT_DEVICE`, `ROBOT_TTS_DEVICE` | Bluetooth buds and audio devices (leave `ROBOT_AUDIO_INPUT_DEVICE` blank: the mic is picked through PipeWire) |
-| `ROBOT_MIC_MODE`, `ROBOT_ROOM_MIC`, `ROBOT_ROUTE_POLL_FAST_S`, `ROBOT_ROUTE_FAST_FOR_S`, `ROBOT_ROUTE_POLL_S` | Mic choice: buds if their mic is up, else the camera mic (`auto`/`buds`/`room`), the camera mic's PipeWire name, and the buds check schedule (30 s for 5 min, then 2 min). See [docs/USB-CAMERA-MIC.md](docs/USB-CAMERA-MIC.md) |
+| `ROBOT_MIC_MODE`, `ROBOT_ROOM_MIC`, `ROBOT_ROUTE_POLL_FAST_S`, `ROBOT_ROUTE_FAST_FOR_S`, `ROBOT_ROUTE_POLL_S` | Mic choice: buds if their mic is up, else the camera mic (`auto`/`buds`/`room`), the camera mic's PipeWire name, and the buds check schedule (30 s for 5 min, then 2 min). `buds_check: false` under `/voice` in `robot.yaml` turns the buds checks off (camera mic only). See [docs/USB-CAMERA-MIC.md](docs/USB-CAMERA-MIC.md) |
 | `ROBOT_FACE_SEARCH_S`, `ROBOT_FACE_ENROLL_S`, `ROBOT_FACE_MATCH_S` | Face tasks: time to find a face when enrolling, capture time once found, and total time for a match (all default 30 s) |
 | `VISION_DETECT_HZ`, `VISION_DETECT_TIMEOUT_S` | Detect rate (2.0) and hard timeout, no retry (0.6 s) |
 | `ROBOT_LOG_PATH` | Robot event log, default `logs.json` |

@@ -41,10 +41,12 @@
 
 /voice:
   ros__parameters:
-    # Placeholder: the Live session still reads model, prompt and audio device
-    # from robot_core/settings.py and the environment. Moving those here is a
-    # later tidy-up, not a Phase 3 requirement.
-    {}
+    # The Live session still reads model, prompt and audio device from
+    # robot_core/settings.py and the environment.
+    # Look for the Bluetooth buds and prefer them when their mic is up
+    # (docs/USB-CAMERA-MIC.md). false = never look: always the camera mic, and
+    # only "Robin, ..." commands are obeyed ("stop" always works).
+    buds_check: true
 
 /explorer:
   ros__parameters:

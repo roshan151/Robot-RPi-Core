@@ -125,3 +125,29 @@ def test_the_session_route_check_notices_the_change(monkeypatch):
         return a.rerouted
 
     assert asyncio.run(go())
+
+
+def test_buds_check_off_means_no_checks_and_the_room_rule(monkeypatch):
+    """robot.yaml buds_check: false sets MIC_MODE to room: the session gets the
+    "Robin" prompt and no route to watch."""
+    from robot_core.live import agent as agent_mod
+
+    fake_pactl(monkeypatch, sources=[CAM, BUDS_IN])             # buds connected, but ignored
+    monkeypatch.setattr(settings, "MIC_MODE", "room")
+    seen = {}
+
+    class Fake:
+        def __init__(self, tools, system_prompt=None, route=None, **kw):
+            seen.update(prompt=system_prompt, route=route)
+            self.rerouted = False
+
+        async def run(self):
+            raise asyncio.CancelledError
+
+    monkeypatch.setattr(agent_mod, "LiveAgent", Fake)
+    tools = types.SimpleNamespace(pending=None, motion=types.SimpleNamespace(stop=lambda: None))
+    try:
+        asyncio.run(agent_mod._run_supervised(tools))
+    except asyncio.CancelledError:
+        pass
+    assert seen == {"prompt": settings.live_prompt("room"), "route": None}

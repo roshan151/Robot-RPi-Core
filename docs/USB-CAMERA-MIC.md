@@ -270,6 +270,7 @@ listener hears whichever mic is live. Its prompt and behaviour do not change.
 
 | Variable | Default | Meaning |
 |---|---|---|
+| `buds_check` (robot.yaml, `/voice`) | `true` | `false` = never look for the buds: camera mic only, "Robin" rule, no checks. Overrides `ROBOT_MIC_MODE` |
 | `ROBOT_MIC_MODE` | `auto` | `auto` = buds if their mic is up, else room; `buds` / `room` force it |
 | `ROBOT_ROOM_MIC` | `alsa_input.usb-` | Piece of the camera mic's PipeWire name |
 | `ROBOT_ROUTE_POLL_FAST_S` | `30` | Buds check interval for the first `ROBOT_ROUTE_FAST_FOR_S` after the voice node starts |

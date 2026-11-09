@@ -138,6 +138,8 @@ def _run_task(task: str, name: str) -> bool:
 def main(args=None) -> None:
     rclpy.init(args=args)
     node = Node("voice")
+    if not node.declare_parameter("buds_check", True).value:   # robot.yaml /voice
+        settings.MIC_MODE = "room"                            # camera mic only, no buds checks
 
     log_path = robot_log.setup(None)
     robot_log.event("session.start", mode="ros", pid=os.getpid(),

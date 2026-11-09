@@ -528,7 +528,8 @@ async def _run_supervised(tools: RobotTools) -> None:
     while True:
         route = audio_route.use()            # buds if their mic is up, else the camera's
         status.note(f"mic: {route.mode}", 5.0)
-        agent = LiveAgent(tools, system_prompt=settings.live_prompt(route.mode), route=route)
+        agent = LiveAgent(tools, system_prompt=settings.live_prompt(route.mode),
+                          route=route if settings.MIC_MODE == "auto" else None)   # None: no buds checks
         try:
             await agent.run()
             if tools.pending is not None:
