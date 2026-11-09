@@ -13,8 +13,8 @@ from robot_core.sensors.gimbal import params_from_robot_yaml
 
 p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 p.add_argument("mode", choices=["detect", "enroll", "match"])
-p.add_argument("--url", default=os.getenv("VISION_SERVICE_BASE_URL", "http://127.0.0.1:8080"))
-p.add_argument("--camera", type=int, default=None, help="USB camera /dev/videoN (default: robot.yaml camera_index)")
+p.add_argument("--url", default=os.getenv("VISION_SERVICE_BASE_URL", "http://roshans-mac-mini.local:8080"))
+p.add_argument("--camera", type=int, default=0, help="USB camera /dev/videoN (default: robot.yaml camera_index)")
 p.add_argument("--seconds", type=float, default=60, help="enroll capture length")
 a = p.parse_args()
 a.url = a.url.rstrip("/")

@@ -41,12 +41,10 @@
 
 /voice:
   ros__parameters:
-    # The Live session still reads model, prompt and audio device from
-    # robot_core/settings.py and the environment.
     # Look for the Bluetooth buds and prefer them when their mic is up
     # (docs/USB-CAMERA-MIC.md). false = never look: always the camera mic, and
     # only "Robin, ..." commands are obeyed ("stop" always works).
-    buds_check: true
+    buds_check: false
 
 /explorer:
   ros__parameters:
