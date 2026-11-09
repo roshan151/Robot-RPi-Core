@@ -150,6 +150,7 @@ class ExplorerNode(Node):
         p("ask_before_drive", False)
         p("autostart", True)
         p("tfluna_port", "/dev/serial0")
+        p("tfluna_fitted", True)
         p("camera_main_size", [1920, 1080])
         p("camera_inverted", True)
         p("camera_backend", "auto")
@@ -173,6 +174,10 @@ class ExplorerNode(Node):
         p("servo_power_gpio", 0)
         v = lambda name: self.get_parameter(name).value
 
+        if not v("tfluna_fitted"):
+            # The map, plant ranging and the floor check before every step all
+            # come from the TF-Luna; without it the robot would drive blind.
+            raise SystemExit("explore needs the TF-Luna (robot.yaml tfluna_fitted: false)")
         self.gimbal = from_params({n: v(n) for n in (
             "pwm_chip", "pan_channel", "tilt_channel", "pan_center_us", "tilt_center_us",
             "pan_us_per_deg", "tilt_us_per_deg", "pan_invert", "tilt_invert", "servo_speed_dps",

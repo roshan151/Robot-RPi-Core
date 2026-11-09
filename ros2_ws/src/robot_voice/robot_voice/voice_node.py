@@ -45,6 +45,13 @@ def _explore() -> bool:
     itself when the mission ends, and non-zero if it could not run. A cancelled
     task asks it to stop (explore/stop: after the current step, map saved)."""
     params = os.path.join(get_package_share_directory("robot_bringup"), "config", "robot.yaml")
+    import yaml
+    with open(params) as f:
+        if not yaml.safe_load(f)["/explorer"]["ros__parameters"].get("tfluna_fitted", True):
+            # No TF-Luna: no map, no plant ranging, no floor checks (it would drive blind).
+            robot_log.event("task.error", logging.WARNING, err="explore needs the TF-Luna (robot.yaml tfluna_fitted: false)")
+            status.result("explore needs TF-Luna")
+            return False
     proc = subprocess.Popen(["ros2", "run", "robot_explore", "explorer_node",
                              "--ros-args", "--params-file", params])
     try:
@@ -110,7 +117,7 @@ def _run_task(task: str, name: str) -> bool:
         # position. No PWM (overlay missing)? Carry on with a fixed camera.
         try:
             gimbal = from_params(p, tilt_min=0.0)
-            if task == "follow":             # TF-Luna gives follow a range; it works without one
+            if task == "follow" and p.get("tfluna_fitted", True):   # gives follow a range; works without
                 try:
                     from robot_core.sensors.tfluna import TFLuna
                     lidar = TFLuna(p["tfluna_port"])
