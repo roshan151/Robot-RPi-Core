@@ -74,7 +74,7 @@
     # Head. Pan is limited to +-90 and tilt to +-45 in the driver, and both
     # park at their start position (the *_center_us pulse) on shutdown.
     tfluna_port: "/dev/serial0"
-    tfluna_fitted: true        # false = TF-Luna removed: follow runs without it, explore is refused
+    tfluna_fitted: false        # false = TF-Luna removed: follow runs without it, explore is refused
     # Head camera: the USB U20CAM-1080P-WDR (PS5268, 1080p HDR) on the gimbal,
     # the only camera (docs/USB-CAMERA-MIC.md). Its built-in mic is the voice
     # fallback when the buds are off.
