@@ -278,3 +278,28 @@ listener hears whichever mic is live. Its prompt and behaviour do not change.
 | `ROBOT_ROOM_MIC_PROMPT` | see `settings.py` | The "Robin" rule added in room mode |
 | `ROBOT_AUDIO_INPUT_DEVICE` | blank | Leave blank: the mic is chosen through PipeWire |
 | `BT_MAC` | blank | Prefer these buds when several are paired |
+
+
+## Testing
+
+sudo apt install v4l-utils ffmpeg            # once
+
+lsusb                                         # camera listed?
+v4l2-ctl --list-devices                       # which /dev/videoN (usually video0; video1 is metadata)
+v4l2-ctl -d /dev/video0 --list-formats-ext    # should list MJPG 1920x1080 @ 30 fps
+
+# Frame-rate check: streams 300 frames and prints the fps it gets
+v4l2-ctl -d /dev/video0 --set-fmt-video=width=1920,height=1080,pixelformat=MJPG \
+         --stream-mmap --stream-count=300
+
+# One snapshot
+ffmpeg -f v4l2 -input_format mjpeg -video_size 1920x1080 -i /dev/video0 -frames:v 1 snap.jpg
+
+# 10 s video, saved as the camera sends it (no re-encode, almost no CPU)
+ffmpeg -f v4l2 -input_format mjpeg -video_size 1920x1080 -framerate 30 -i /dev/video0 -t 10 -c copy test.mkv
+
+# Live view (Pi desktop or VNC only)
+ffplay -f v4l2 -input_format mjpeg -video_size 1280x720 /dev/video0
+
+# Copy to the Mac to look at (run on the Mac)
+scp roshan151@<pi>:~/snap.jpg ~/Desktop/
