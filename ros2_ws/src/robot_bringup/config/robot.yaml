@@ -49,7 +49,7 @@
 /explorer:
   ros__parameters:
     # Mac vision service. Empty = VISION_SERVICE_BASE_URL from /etc/robot.env.
-    vision_url: ""
+    vision_url: "http://roshans-mac-mini.local:8080"
 
     # Maps are saved on the Mac under this name. To re-scan later on the same
     # map (growth tracking), set continue_map: true and start_pose to where the
