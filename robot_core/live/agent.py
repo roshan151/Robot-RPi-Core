@@ -142,6 +142,12 @@ class LiveAgent:
                 turn_coverage="TURN_INCLUDES_ONLY_ACTIVITY",
             ),
         }
+        if hasattr(types, "Behavior"):
+            # gemini-3.8-live runs tool calls in the background by default and then acts
+            # again on the "queued" answers and the [robot] results: moves repeat. BLOCKING
+            # is how 3.1 behaved, which the move queue and _pump_results are built for.
+            for decl in cfg["tools"][0]["function_declarations"]:
+                decl.behavior = types.Behavior.BLOCKING
         try:
             cfg["input_audio_transcription"] = types.AudioTranscriptionConfig()
             cfg["output_audio_transcription"] = types.AudioTranscriptionConfig()
