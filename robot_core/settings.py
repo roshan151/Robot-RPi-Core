@@ -74,7 +74,7 @@ def _first_env(*names):
 
 
 GEMINI_API_KEY = _first_env("GEMINI_API_KEY", "GOOGLE_API_KEY")
-GEMINI_LIVE_MODEL = _env("GEMINI_LIVE_MODEL", "gemini-3.1-flash-live-preview")
+GEMINI_LIVE_MODEL = _env("GEMINI_LIVE_MODEL", "gemini-3.8-live")   # 3.1-flash-live-preview retires 2026-11-17; proactive audio is always on in 3.8
 LIVE_RESPONSE_MODALITY = _env("ROBOT_LIVE_MODALITY", "AUDIO").upper()   # native-audio models reject TEXT
 LIVE_PLAY_AUDIO = _env("ROBOT_LIVE_PLAY_AUDIO", "0") in ("1", "true", "yes")   # keep off: the mic would hear it
 AUDIO_INPUT_DEVICE = _env("ROBOT_AUDIO_INPUT_DEVICE", "")              # blank = system default
@@ -89,6 +89,10 @@ ROUTE_POLL_S = _env("ROBOT_ROUTE_POLL_S", "120", float)
 LIVE_STALL_WARN_S = _env("ROBOT_LIVE_STALL_WARN_S", "0.75", float)
 LIVE_SEND_WARN_S = _env("ROBOT_LIVE_SEND_WARN_S", "0.25", float)
 LIVE_SEND_TIMEOUT_S = _env("ROBOT_LIVE_SEND_TIMEOUT_S", "5.0", float)
+# Session resumption + context-window compression for the main session (robot.yaml
+# /voice live_resume turns it off): the conversation survives the ~10 min connection
+# resets, and the oldest turns are dropped instead of the session ending at its limit.
+LIVE_RESUME = _flag("ROBOT_LIVE_RESUME")
 LIVE_RECONNECT_BACKOFF_S = _env("ROBOT_LIVE_BACKOFF_S", "2.0", float)
 LIVE_RECONNECT_MAX_S = _env("ROBOT_LIVE_BACKOFF_MAX_S", "60.0", float)
 # While a task runs (main session closed) a cancel-only Live session listens for

@@ -84,7 +84,7 @@ Lookup order, first hit wins: the real environment, `ROBOT_ENV_FILE` (a path), `
 | `ROBOT_MAX_DRIVE_M` | Longest single drive, default `5` |
 | `ROBOT_TTS` | Robot speech, on by default; `0` mutes it |
 | `BT_MAC`, `ROBOT_AUDIO_INPUT_DEVICE`, `ROBOT_TTS_DEVICE` | Bluetooth buds and audio devices (leave `ROBOT_AUDIO_INPUT_DEVICE` blank: the mic is picked through PipeWire) |
-| `ROBOT_MIC_MODE`, `ROBOT_ROOM_MIC`, `ROBOT_ROUTE_POLL_FAST_S`, `ROBOT_ROUTE_FAST_FOR_S`, `ROBOT_ROUTE_POLL_S` | Mic choice: buds if their mic is up, else the camera mic (`auto`/`buds`/`room`), the camera mic's PipeWire name, and the buds check schedule (30 s for 5 min, then 2 min). `buds_check: false` under `/voice` in `robot.yaml` turns the buds checks off (camera mic only). See [docs/USB-CAMERA-MIC.md](docs/USB-CAMERA-MIC.md) |
+| `ROBOT_MIC_MODE`, `ROBOT_ROOM_MIC`, `ROBOT_ROUTE_POLL_FAST_S`, `ROBOT_ROUTE_FAST_FOR_S`, `ROBOT_ROUTE_POLL_S` | Mic choice: buds if their mic is up, else the camera mic (`auto`/`buds`/`room`), the camera mic's PipeWire name, and the buds check schedule (30 s for 5 min, then 2 min). `buds_check: false` under `/voice` in `robot.yaml` turns the buds checks off (camera mic only). `live_resume` (same section, default `true`) keeps the Gemini conversation across the ~10-minute connection resets (session resumption) and drops the oldest turns instead of ending the session after ~15 minutes of audio (context-window compression); after any voice drop, `voice.diag` in `logs.json` records Wi-Fi signal and power save, load and the Pi's throttle flags. See [docs/USB-CAMERA-MIC.md](docs/USB-CAMERA-MIC.md) |
 | `ROBOT_FACE_SEARCH_S`, `ROBOT_FACE_ENROLL_S`, `ROBOT_FACE_MATCH_S` | Face tasks: time to find a face when enrolling, capture time once found, and total time for a match (all default 30 s) |
 | `VISION_DETECT_HZ`, `VISION_DETECT_TIMEOUT_S` | Detect rate (2.0) and hard timeout, no retry (0.6 s) |
 | `ROBOT_LOG_PATH` | Robot event log, default `logs.json` |
@@ -216,6 +216,7 @@ Two SG90 micro servos move the head. Each has three wires: **yellow = signal, re
 - **The grounds must be joined.** The supply's - and a Pi GND pin have to meet, or the signal has no reference and the servos jitter or ignore it.
 - **Supply size:** an SG90 draws roughly 10 mA at rest, a few hundred mA while moving, and up to about 0.6 A if it stalls against a stop. A 5 V supply of 1 A or more for the pair is sensible (typical figures, not measured on yours). A 470-1000 uF capacitor across the servo supply, close to the servos, smooths the start-up spike.
 - **Hardware PWM:** the signal pins must be GPIO12 and GPIO13, which `install_pi.sh` sets up with `dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4` in `/boot/firmware/config.txt` (reboot after). Other pins will not work. Do not use GPIO18, which is the audio clock.
+- **Analog audio must be off (`dtparam=audio=off` in `/boot/firmware/config.txt`, set by `install_pi.sh`).** On a Pi 4 the 3.5 mm jack uses the same PWM hardware as GPIO12/13: any sound played there, even with nothing plugged in, corrupts the servo pulses and the head slams right/up. Without the buds the robot's speech would go to that jack. The gimbal's PWM check cannot see it (the kernel's PWM settings still read back unchanged). For robot speech without buds, use a USB or HDMI speaker.
 - **Power-on jerk:** a servo moves as soon as it gets power plus a signal, and the signal pins float while the Pi boots. Switch the servo supply on after the Pi is up if you can.
 - **Pull each signal line down (10 kΩ from the yellow wire to GND, at the servo end).** Without it the line floats whenever the Pi is booting or halted, and a powered servo chases that noise to an end stop - this is what drives the head into its stops and tears the camera ribbon. It costs two resistors and makes "Pi not driving the pin" mean "no pulse" instead of "random pulse".
 - **Sense the servo supply (recommended).** The servos have their own switch, so the Pi cannot otherwise tell whether they are powered, and it keeps "moving" an unpowered head; the moment the switch goes on the servo dashes to where the software thinks it is. Wire a spare GPIO to the servo +5 V through a divider (10 kΩ from +5 V to the pin, 20 kΩ from the pin to GND; share the ground) and set `servo_power_gpio: <BCM pin>` in `robot.yaml`. While the pin reads low the head is frozen and `look_*` answers "head servos have no power"; switching on changes nothing, and motion resumes from where the head really is. A broken sense wire reads as "off", so it fails safe. `0` (default) = not fitted, supply assumed on.
@@ -619,61 +620,17 @@ Calibrate polarity: run tests/hardware/check_encoders.py, roll each wheel in the
 Then tests/hardware/check_movements.py — with working, signed encoders this should be the first honest closed-loop run the bot has ever had.
 
 
-# debugging explore
-vcgencmd get_throttled                 # anything other than 0x0 means under-voltage or throttling happened
-last -x reboot | head                  # were there real reboots, and when?
-journalctl -b -1 -e --no-pager | tail -40   # last lines of the previous boot, including the explorer's own output
+## Refresh Code and Build
+Code changes take affect using `sudo systemctl restart robot-voice`; for dependancy changes to take effect:
 
+### 1. Stop the robot
+sudo systemctl stop robot-voice
 
-## Debug camera
+### 2. Rebuild the ROS workspace
+cd ~/Robot-RPi-Core/ros2_ws
+source /opt/ros/jazzy/setup.bash
+source ../.venv/bin/activate          # colcon is installed in the venv
+colcon build --symlink-install
 
-vcgencmd get_throttled
-rpicam-hello -t 5000 --nopreview                 # camera alone
-python tests/hardware/check_camera.py            # camera alone, through our code
-python tests/hardware/check_camera.py head       # opens the head, then moves it
-
-2. Check camera detection
-   rpicam-hello --list-cameras
-   dmesg | grep -i -E "ov5647|unicam|csi|i2c" | tail -20
-   vcgencmd get_throttled
-
-3. Did the rpicam package change
-grep -E "Start-Date|Commandline|Upgrade:" /var/log/apt/history.log | tail -30
-dpkg -l | grep -E "libcamera|rpicam|picamera2|raspi-firmware|linux-image" 
-uname -r
-
-4. 
-rpicam-hello --list-cameras
-dmesg | grep -i -E "ov5647|unicam|csi" | tail -20
-
-5. source .venv/bin/activate
-python -c "import picamera2; print(picamera2.__file__)"
-
-## Debug voltage display
-
-ls -l /tmp/*.sock
-systemctl status pisugar-server --no-pager
-python3 -c "import socket;s=socket.socket(socket.AF_UNIX);s.connect('/tmp/pisugar-server.sock');s.sendall(b'get battery\n');print(s.recv(100))"
-
-## Refresh build
-
-git checkout oled && git pull
-source /opt/ros/jazzy/setup.bash && source .venv/bin/activate
-pip install -e ".[oled]"
-cd ros2_ws && colcon build --symlink-install && source install/setup.bash && cd ..
-
-
-## Face enroll issue
-
-rpicam-hello --list-cameras          # which sensor is this?
-
-cd ~/Robot-RPi-Core && python3 -c "
-from robot_core.sensors.camera import Camera, jpeg
-from robot_core.vision_client import VisionClient
-import cv2
-c = Camera(main_size=(640, 480)); v = VisionClient()
-for i in range(15):
-    f = c.capture(); r = v.face_embed(jpeg(f.main), i)
-    print(i, 'no face' if not r else f\"q={r['quality']:.2f} n={r['face_count']} bbox={[int(x) for x in r['face_bbox']]}\")
-cv2.imwrite('/tmp/cam_check.jpg', f.main); c.close()
-"
+### 3. Start it again
+sudo systemctl start robot-voice
