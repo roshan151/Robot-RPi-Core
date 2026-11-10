@@ -8,7 +8,7 @@ return whether it worked / whether the face is known.
 With a `head` (camera on the pan/tilt gimbal) the robot looks for the face: it
 sweeps pan ±45° at a few tilts from level upwards (the voice node limits the
 tilt axis to 0..+45, so the head never looks below its base position), stops on
-the first face it sees, centres it, and holds there while it captures. Without
+the first face it sees, centres it, and keeps it framed while it captures. Without
 a head the camera just looks straight ahead. Enroll never searches (the person
 steps in front of the robot) but it does frame: the head starts at
 FACE_ENROLL_TILT_DEG and keeps re-aiming at the face whenever it drifts off
@@ -62,9 +62,8 @@ class _Eyes:
         elif head:
             if face:
                 self._lost = 0
-                if not self.locked:
-                    self.locked = True
-                    self._centre(frame, face["face_bbox"])
+                self.locked = True
+                self._frame(frame, face["face_bbox"])   # centre it, then keep it framed (as enroll)
             elif self.locked:
                 self._lost += 1
                 self.locked = self._lost < LOST_FRAMES

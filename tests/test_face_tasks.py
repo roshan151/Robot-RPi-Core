@@ -128,12 +128,12 @@ def test_full_face_scales_wire_boxes_back_to_the_frame():
     assert not face_tasks.full_face(big, [800, -40, 1000, 560])
 
 
-def test_head_searches_upward_only_then_locks_on_the_face_and_holds():
+def test_head_searches_upward_only_then_locks_on_the_face_and_keeps_it_framed():
     head = Head()
     v = SeesFaceAt(head, sim=0.0)                                # never matches: keeps looking at the face
     assert face_tasks.match(HeadCamera(head), v, seconds=30, clock=Clock(), head=head) is None
     assert all(tilt >= 0 for _, tilt in head.moves), "looked below the base position"
-    assert head.aimed == 1, "should centre on the face once, then hold"
+    assert head.aimed > 1, "an off-centre face should keep being re-aimed at, as in enroll"
     last_search = head.moves[-1]
     assert last_search[0] >= 15 and last_search[1] >= 20       # stopped searching where it found it
 

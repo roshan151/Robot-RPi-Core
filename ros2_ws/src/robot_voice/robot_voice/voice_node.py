@@ -149,6 +149,8 @@ def main(args=None) -> None:
         settings.MIC_MODE = "room"                            # camera mic only, no buds checks
     if not node.declare_parameter("live_resume", True).value:  # robot.yaml /voice
         settings.LIVE_RESUME = False
+    if node.declare_parameter("gesture_text_only", False).value:  # robot.yaml /voice
+        settings.GESTURE_TEXT_ONLY = True
 
     log_path = robot_log.setup(None)
     robot_log.event("session.start", mode="ros", pid=os.getpid(),
