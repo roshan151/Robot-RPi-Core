@@ -45,6 +45,10 @@
     # (docs/USB-CAMERA-MIC.md). false = never look: always the camera mic, and
     # only "Robin, ..." commands are obeyed ("stop" always works).
     buds_check: false
+    # Gemini session resumption + context-window compression: the conversation carries
+    # over the ~10 min connection resets, and old turns are dropped (never the prompt)
+    # instead of the session ending after ~15 min of audio. false = off.
+    live_resume: true
 
 /explorer:
   ros__parameters:

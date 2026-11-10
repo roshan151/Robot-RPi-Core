@@ -98,6 +98,12 @@ class Gesturer:
         self._motion = motion
         self._head = head                       # HeadLook for the yes/no gestures; None = no head
         self._head_thread: Optional[threading.Thread] = None
+        self._cancel = threading.Event()        # set by stop(): a running gesture sends no further step
+
+    def cancel(self) -> None:
+        """Stop a gesture that sends its steps one at a time (dance with a head, nods).
+        The caller still brakes the move in progress."""
+        self._cancel.set()
 
     def play(self, name: str, wait: bool = False) -> Optional[List[int]]:
         """Queue a gesture. Returns job ids, or None if it was suppressed.
@@ -124,6 +130,7 @@ class Gesturer:
             robot_log.event("gesture.skip", name=key, why="busy")
             return None
 
+        self._cancel.clear()
         if all(op in (TILT, PAN) for op, *_ in steps):
             return self._play_head(key, steps, wait)
         if self._head is not None:
@@ -150,6 +157,8 @@ class Gesturer:
             heading = 0.0
             try:
                 for op, value in steps:
+                    if self._cancel.is_set():
+                        break
                     if op == TURN:
                         heading += value
                         self._head.pan_to(((heading + 180) % 360) - 180)    # starts now, doesn't wait
@@ -160,9 +169,9 @@ class Gesturer:
                         robot_log.event("gesture.skip", name=key, why="backend refused",
                                         detail=result.get("error", ""))
                         break
-                    while self._motion.busy():                                # this step done...
+                    while self._motion.busy() and not self._cancel.is_set():  # this step done...
                         time.sleep(0.02)
-                    if op == TURN:
+                    if op == TURN and not self._cancel.is_set():
                         self._head.pan_to(((heading + 180) % 360) - 180, wait=True)  # ...and the head too
             except Exception as e:                       # noqa: BLE001 - a gesture must never take the session down
                 robot_log.event("gesture.skip", logging.WARNING, name=key, why=f"{type(e).__name__}: {e}")
@@ -189,6 +198,8 @@ class Gesturer:
         def run() -> None:
             try:
                 for axis, *degrees in steps:
+                    if self._cancel.is_set():
+                        return
                     if not self._head.gesture(axis, *degrees):
                         robot_log.event("gesture.skip", name=key, why="head has no power")
                         return

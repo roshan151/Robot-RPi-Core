@@ -491,3 +491,198 @@ def test_listener_failures_retry_and_never_brake() -> None:
         assert braked == [], "the listener dropping must not brake the task"
     finally:
         agent_mod.LiveAgent, settings.LIVE_RECONNECT_BACKOFF_S = old_agent, old_backoff
+
+
+# --------------------------------------------------------------------------- #
+# Stop ends a dance; the uplink watchdog; the server's GoAway
+# --------------------------------------------------------------------------- #
+
+class PanHead(FakeHead):
+    def pan_to(self, degrees: float, wait: bool = False) -> bool:
+        self.calls.append(("pan_to", degrees))
+        return True
+
+
+def test_stop_ends_a_dance_instead_of_letting_it_send_its_next_step() -> None:
+    """With a head the dance sends one step at a time from a thread; stop must
+    end that thread, not just brake the step in flight."""
+    move = FakeMove(0.3)
+    motion = LocalMotion(move)
+    t = RobotTools(motion, head=PanHead())
+    try:
+        assert run(t.dispatch("answer", {"value": "dance"}))["ok"]
+        time.sleep(0.15)                                   # first step under way
+        run(t.dispatch("stop", {}))
+        time.sleep(1.0)                                    # long enough for several more steps
+        assert len(move.calls) == 1, move.calls
+    finally:
+        motion.close()
+
+
+class StuckSession:
+    """A websocket whose sends never complete (dead link)."""
+    def __init__(self) -> None:
+        self.aborted = False
+        self._ws = types.SimpleNamespace(transport=types.SimpleNamespace(abort=self._abort))
+
+    def _abort(self) -> None:
+        self.aborted = True
+
+    async def send_realtime_input(self, audio=None) -> None:
+        await asyncio.Event().wait()
+
+
+def test_a_stuck_uplink_aborts_the_socket_on_time() -> None:
+    from robot_core.live.agent import LiveAgent, LiveAgentError
+    old = settings.LIVE_SEND_TIMEOUT_S
+    settings.LIVE_SEND_TIMEOUT_S = 0.2
+    session = StuckSession()
+
+    async def go():
+        a = LiveAgent(types.SimpleNamespace(motion=None, pending=None))
+        a._audio_q.put_nowait(b"\0" * 64)
+        t0 = time.monotonic()
+        try:
+            await asyncio.wait_for(a._pump_audio(session), 3)
+        except LiveAgentError as e:
+            return time.monotonic() - t0, str(e)
+
+    try:
+        took, err = run(go())
+        assert took < 1.0 and "uplink stuck" in err and session.aborted
+    finally:
+        settings.LIVE_SEND_TIMEOUT_S = old
+
+
+def test_goaway_ends_the_session_and_it_reconnects_without_braking() -> None:
+    from robot_core.live import agent as agent_mod
+
+    class GoAwaySession:
+        async def receive(self):
+            yield types.SimpleNamespace(go_away=types.SimpleNamespace(time_left="10s"),
+                                        tool_call=None, server_content=None)
+
+    async def pump():
+        a = agent_mod.LiveAgent(types.SimpleNamespace(motion=None, pending=None))
+        await asyncio.wait_for(a._pump_events(GoAwaySession()), 2)
+        return a.go_away
+
+    assert run(pump())
+
+    braked, made = [], []
+
+    class Fake:
+        def __init__(self, tools, **kw):
+            self.rerouted, self.go_away = False, False
+            self.resume_handle = self.resumed_from = None
+            self.connected = True
+            made.append(self)
+
+        async def run(self):
+            if len(made) == 1:
+                self.go_away = True
+                return
+            raise asyncio.CancelledError
+
+    old = agent_mod.LiveAgent
+    agent_mod.LiveAgent = Fake
+    t = types.SimpleNamespace(pending=None, motion=types.SimpleNamespace(stop=lambda: braked.append(1)))
+    try:
+        try:
+            run(agent_mod._run_supervised(t))
+        except asyncio.CancelledError:
+            pass
+        assert len(made) == 2 and braked == []
+    finally:
+        agent_mod.LiveAgent = old
+
+
+# --------------------------------------------------------------------------- #
+# Session resumption, context-window compression, drop diagnostics
+# --------------------------------------------------------------------------- #
+
+def _config_types():
+    t = sys.modules["google.genai.types"]
+    class _S:
+        def __init__(self, **kw): self.__dict__.update(kw)
+    for n in ("SessionResumptionConfig", "ContextWindowCompressionConfig", "SlidingWindow",
+              "RealtimeInputConfig", "AutomaticActivityDetection", "AudioTranscriptionConfig"):
+        if not hasattr(t, n):
+            setattr(t, n, _S)
+
+
+def test_main_session_asks_for_resumption_and_compression_with_its_handle() -> None:
+    from robot_core.live.agent import LiveAgent
+    _config_types()
+    t = types.SimpleNamespace(motion=None, pending=None)
+    cfg = LiveAgent(t, resume=True, resume_handle="h1")._config()
+    assert cfg["session_resumption"].handle == "h1"
+    assert hasattr(cfg["context_window_compression"], "sliding_window")
+    off = LiveAgent(t)._config()                       # the cancel listener, or live_resume: false
+    assert "session_resumption" not in off and "context_window_compression" not in off
+
+
+def test_the_latest_resumption_handle_is_kept() -> None:
+    from robot_core.live import agent as agent_mod
+
+    class S:
+        async def receive(self):
+            yield types.SimpleNamespace(session_resumption_update=types.SimpleNamespace(
+                resumable=True, new_handle="h2"), go_away=None, tool_call=None, server_content=None)
+            yield types.SimpleNamespace(go_away=types.SimpleNamespace(time_left="5s"),
+                                        tool_call=None, server_content=None)
+
+    async def go():
+        a = agent_mod.LiveAgent(types.SimpleNamespace(motion=None, pending=None), resume=True)
+        await asyncio.wait_for(a._pump_events(S()), 2)
+        return a.resume_handle
+
+    assert run(go()) == "h2"
+
+
+def test_supervisor_resumes_after_goaway_and_drops_starts_fresh_when_a_resume_is_refused() -> None:
+    from robot_core.live import agent as agent_mod
+    seen, diags = [], []
+
+    class Fake:
+        def __init__(self, tools, resume=False, resume_handle=None, **kw):
+            self.rerouted = self.go_away = False
+            self.resumed_from = self.resume_handle = resume_handle
+            self.connected, self.model = False, "m"
+            seen.append(resume_handle)
+
+        async def run(self):
+            n = len(seen)
+            if n == 1:                                   # fresh session, then the server's GoAway
+                self.connected, self.resume_handle, self.go_away = True, "h1", True
+                return
+            if n == 2:                                   # resume refused before connecting (1007)
+                raise RuntimeError("1007 invalid argument: bad handle")
+            raise asyncio.CancelledError                 # third: fresh again; end the test
+
+    old = (agent_mod.LiveAgent, agent_mod._drop_diagnostics, agent_mod._on_failure,
+           settings.LIVE_RECONNECT_BACKOFF_S)
+    agent_mod.LiveAgent, agent_mod._drop_diagnostics = Fake, lambda: {"wifi_dbm": -71}
+    agent_mod._on_failure = lambda *a: None
+    settings.LIVE_RECONNECT_BACKOFF_S = 0.01
+    t = types.SimpleNamespace(pending=None, motion=types.SimpleNamespace(stop=lambda: None))
+    try:
+        try:
+            run(agent_mod._run_supervised(t))
+        except asyncio.CancelledError:
+            pass
+        assert seen == [None, "h1", None], "resume after GoAway; a refused resume is retried fresh, not fatal"
+    finally:
+        (agent_mod.LiveAgent, agent_mod._drop_diagnostics, agent_mod._on_failure,
+         settings.LIVE_RECONNECT_BACKOFF_S) = old
+
+
+def test_drop_diagnostics_read_wifi_power_save_load_and_throttling(monkeypatch) -> None:
+    from robot_core.live import agent as agent_mod
+    outs = {("iw", "dev", "wlan0", "link"): "Connected to aa:bb\n\tsignal: -67 dBm\n",
+            ("iw", "dev", "wlan0", "get", "power_save"): "Power save: on\n",
+            ("vcgencmd", "get_throttled"): "throttled=0x50005\n"}
+    monkeypatch.setattr(agent_mod.subprocess, "run",
+                        lambda cmd, **kw: types.SimpleNamespace(stdout=outs.get(tuple(cmd), "")))
+    d = agent_mod._drop_diagnostics()
+    assert d["wifi_dbm"] == -67 and d["wifi_power_save"] == "on" and d["throttled"] == "0x50005"

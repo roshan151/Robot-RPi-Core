@@ -32,6 +32,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+import subprocess
 import time
 from typing import Any, Dict, Optional
 
@@ -80,11 +81,17 @@ class LiveAgent:
     def __init__(self, tools: RobotTools, model: Optional[str] = None,
                  system_prompt: Optional[str] = None, tool_declarations=declarations,
                  announce: bool = True, role: str = "main",
-                 route: Optional[audio_route.Route] = None) -> None:
+                 route: Optional[audio_route.Route] = None,
+                 resume: bool = False, resume_handle: Optional[str] = None) -> None:
         # The defaults are the main session; the cancel listener
         # (live/cancel_watch.py) passes its own prompt and tool, and no chime.
         # With a `route` the session ends (`rerouted`) when the buds come or go.
         self.route, self.rerouted = route, False
+        self.go_away = False                  # the server announced the session's end: reconnect, no brake
+        # resume: session resumption + context-window compression (main session only).
+        # resume_handle: the server's token for the conversation to carry on; updated as it sends new ones.
+        self._resume, self.resumed_from, self.resume_handle = resume, resume_handle, resume_handle
+        self.connected = False
         self.model = model or settings.GEMINI_LIVE_MODEL
         self._tools = tools
         self._prompt = system_prompt or settings.LIVE_SYSTEM_PROMPT
@@ -142,6 +149,13 @@ class LiveAgent:
             # Older SDK without the config type — the agent still works, the
             # log is just quieter about what was said.
             logger.debug("SDK has no AudioTranscriptionConfig; skipping")
+        if self._resume:
+            # Carry the conversation across the ~10 min connection resets (GoAway), and
+            # drop the oldest turns (never the system prompt) instead of ending the
+            # session at its length limit.
+            cfg["session_resumption"] = types.SessionResumptionConfig(handle=self.resume_handle)
+            cfg["context_window_compression"] = types.ContextWindowCompressionConfig(
+                sliding_window=types.SlidingWindow())
         return cfg
 
     # ------------------------------------------------------------------ #
@@ -224,17 +238,19 @@ class LiveAgent:
             # Watchdog: a send stuck behind a dead/back-pressured socket would
             # otherwise hang here forever while the mic queue drops everything.
             # Raising lets _run_supervised reconnect.
-            try:
-                if hasattr(session, "send_realtime_input"):
-                    await asyncio.wait_for(
-                        session.send_realtime_input(audio=blob),
-                        settings.LIVE_SEND_TIMEOUT_S)
-                else:
-                    await asyncio.wait_for(
-                        session.send(input=blob), settings.LIVE_SEND_TIMEOUT_S)
-            except asyncio.TimeoutError:
+            # Not wait_for: on timeout it waits for the stuck send to finish cancelling,
+            # which on a dead connection took minutes. asyncio.wait returns on time,
+            # then the socket is aborted so everything stuck on it unwinds at once.
+            send = asyncio.ensure_future(
+                session.send_realtime_input(audio=blob) if hasattr(session, "send_realtime_input")
+                else session.send(input=blob))
+            done, _ = await asyncio.wait({send}, timeout=settings.LIVE_SEND_TIMEOUT_S)
+            if not done:
+                send.add_done_callback(lambda t: t.cancelled() or t.exception())   # nothing left to report it
+                _abort_socket(session)
                 raise LiveAgentError(
                     f"uplink stuck: send took >{settings.LIVE_SEND_TIMEOUT_S}s")
+            send.result()
 
             # A single chunk is ~64 ms of audio. If sending one takes longer
             # than that we are falling behind in real time, and the mic queue
@@ -289,6 +305,17 @@ class LiveAgent:
                         stalled_s=round(gap, 2),
                     )
                 last = time.monotonic()
+
+                if getattr(response, "go_away", None) is not None:
+                    # The server is about to end the session (its length limit). Leave
+                    # now and reconnect, instead of being cut off with 1008.
+                    robot_log.event("voice.goaway", time_left=str(getattr(response.go_away, "time_left", "")))
+                    self.go_away = True
+                    return
+
+                upd = getattr(response, "session_resumption_update", None)
+                if upd is not None and getattr(upd, "resumable", False) and getattr(upd, "new_handle", None):
+                    self.resume_handle = upd.new_handle       # the latest point the conversation can resume from
 
                 calls = self._extract_tool_calls(response)
                 if calls:
@@ -472,7 +499,9 @@ class LiveAgent:
         async with connection as session:
             robot_log.event("voice.connect", backend="gemini-live",
                             model=self.model, role=self.role,
-                            modality=settings.LIVE_RESPONSE_MODALITY)
+                            modality=settings.LIVE_RESPONSE_MODALITY,
+                            resumed=self.resumed_from is not None)
+            self.connected = True
 
             # Spoken BEFORE the microphone opens, so it cannot be streamed to
             # the model as if the operator had said it. Blocking, and the guard
@@ -525,19 +554,26 @@ class LiveAgent:
 async def _run_supervised(tools: RobotTools) -> None:
     """Reconnect on failure, with backoff. Motors stop first, every time."""
     backoff = settings.LIVE_RECONNECT_BACKOFF_S
+    handle: Optional[str] = None             # session resumption: the conversation to carry on
     while True:
         route = audio_route.use()            # buds if their mic is up, else the camera's
         status.note(f"mic: {route.mode}", 5.0)
         agent = LiveAgent(tools, system_prompt=settings.live_prompt(route.mode),
-                          route=route if settings.MIC_MODE == "auto" else None)   # None: no buds checks
+                          route=route if settings.MIC_MODE == "auto" else None,   # None: no buds checks
+                          resume=settings.LIVE_RESUME, resume_handle=handle)
         try:
             await agent.run()
+            handle = agent.resume_handle
             if tools.pending is not None:
                 await _run_task(tools)       # the session is closed; reconnect after it
                 backoff = settings.LIVE_RECONNECT_BACKOFF_S
                 continue
             if agent.rerouted:               # buds came or went: brake, reconnect on the other mic
                 tools.motion.stop()
+                handle = None                # the other mic has another prompt: start a fresh session
+                backoff = settings.LIVE_RECONNECT_BACKOFF_S
+                continue
+            if agent.go_away:                # session length limit: reconnect straight away
                 backoff = settings.LIVE_RECONNECT_BACKOFF_S
                 continue
             robot_log.event("session.stop", reason="live session closed")
@@ -546,6 +582,13 @@ async def _run_supervised(tools: RobotTools) -> None:
             raise
         except Exception as e:
             _on_failure(tools, agent, e)
+            robot_log.event("voice.diag", **await asyncio.to_thread(_drop_diagnostics))
+            # Resume after a drop; but a resume that never connected (handle expired or
+            # refused) is retried as a fresh session, not treated as a bad configuration.
+            handle = agent.resume_handle if agent.connected else None
+            if agent.resumed_from is not None and not agent.connected:
+                await asyncio.sleep(backoff)
+                continue
             if isinstance(e, LiveConfigError) or _is_config_rejection(e):
                 # Retrying a rejected configuration just produces the same
                 # error forever, braking the motors on every attempt. Say what
@@ -559,7 +602,9 @@ async def _run_supervised(tools: RobotTools) -> None:
                     fix=("native-audio Live models are speech-to-speech and "
                          "only accept AUDIO. Set ROBOT_LIVE_MODALITY=AUDIO — "
                          "the robot stays silent because the returned audio is "
-                         "discarded, not played."),
+                         "discarded, not played. If the model refuses session "
+                         "resumption / compression, set live_resume: false under "
+                         "/voice in robot.yaml."),
                 )
                 raise
 
@@ -607,6 +652,38 @@ async def _run_task(tools: RobotTools) -> None:
     results = getattr(tools.motion, "results", None)
     while results is not None and not results.empty():
         results.get_nowait()
+
+
+def _drop_diagnostics() -> Dict[str, Any]:
+    """Why might the link have died? Wi-Fi signal and power save, load, the Pi's
+    under-voltage/throttle flags. Best effort; run in a thread (subprocesses)."""
+    def run(*cmd: str) -> str:
+        try:
+            return subprocess.run(cmd, capture_output=True, text=True, timeout=2).stdout
+        except Exception:                               # noqa: BLE001
+            return ""
+    out: Dict[str, Any] = {}
+    m = re.search(r"signal:\s*(-?\d+)", run("iw", "dev", "wlan0", "link"))
+    out["wifi_dbm"] = int(m.group(1)) if m else None
+    m = re.search(r"Power save:\s*(\w+)", run("iw", "dev", "wlan0", "get", "power_save"))
+    out["wifi_power_save"] = m.group(1) if m else None
+    try:
+        with open("/proc/loadavg") as f:
+            out["load"] = f.read().split()[:3]
+    except OSError:
+        out["load"] = None
+    m = re.search(r"throttled=(0x[0-9a-fA-F]+)", run("vcgencmd", "get_throttled"))
+    out["throttled"] = m.group(1) if m else None
+    return out
+
+
+def _abort_socket(session) -> None:
+    """Drop the session's TCP connection without a close handshake (which would
+    wait on the same dead link). Best effort: google-genai keeps it in `_ws`."""
+    try:
+        session._ws.transport.abort()
+    except Exception:                                   # noqa: BLE001
+        pass
 
 
 def _spoken_cause(exc: BaseException) -> str:

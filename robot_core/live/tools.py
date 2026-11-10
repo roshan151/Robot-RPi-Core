@@ -363,6 +363,7 @@ class RobotTools:
             self._shutdown_timer = None
             status.task("voice")
             robot_log.event("power.shutdown", logging.WARNING, state="cancelled")
+        self._gestures.cancel()                              # a dance sends its steps one by one: no more
         r = self._motion.stop()
         # Cancelled moves never ran, so they are not part of the path taken (approximate
         # for the one in flight).

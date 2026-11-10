@@ -96,6 +96,8 @@ def test_buds_coming_or_going_ends_the_session_and_it_reconnects_with_the_other_
         def __init__(self, tools, system_prompt=None, route=None, **kw):
             prompts.append(system_prompt)
             self.rerouted = False
+            self.resume_handle = self.resumed_from = None
+            self.connected = True
 
         async def run(self):
             Fake.n += 1
@@ -140,6 +142,8 @@ def test_buds_check_off_means_no_checks_and_the_room_rule(monkeypatch):
         def __init__(self, tools, system_prompt=None, route=None, **kw):
             seen.update(prompt=system_prompt, route=route)
             self.rerouted = False
+            self.resume_handle = self.resumed_from = None
+            self.connected = True
 
         async def run(self):
             raise asyncio.CancelledError

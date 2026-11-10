@@ -147,6 +147,8 @@ def main(args=None) -> None:
     node = Node("voice")
     if not node.declare_parameter("buds_check", True).value:   # robot.yaml /voice
         settings.MIC_MODE = "room"                            # camera mic only, no buds checks
+    if not node.declare_parameter("live_resume", True).value:  # robot.yaml /voice
+        settings.LIVE_RESUME = False
 
     log_path = robot_log.setup(None)
     robot_log.event("session.start", mode="ros", pid=os.getpid(),
