@@ -86,6 +86,8 @@ EVENTS = {
     "voice.tool",        # a tool call and its result
     "audio.error",       # microphone, uplink or playback trouble
     "voice.diag",        # after a drop: Wi-Fi signal and power save, load, Pi throttle flags
+    "face.look",         # match scan: a head position and how many faces it saw
+    "face.check",        # match: one centred face against the gallery (best name, similarity)
     "voice.goaway",      # the server announced the session's end; reconnecting
     "audio.route",       # which mic the next session uses: buds or room (camera)
     "power.shutdown",    # operator asked for a clean power-off (or it failed)

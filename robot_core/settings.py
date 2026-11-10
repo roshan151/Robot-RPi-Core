@@ -146,8 +146,8 @@ VISION_MAX_RESULT_AGE_S = _env("VISION_MAX_RESULT_AGE_S", "1.0", float)
 # --- Voice face tasks ---------------------------------------------------------
 FACE_ENROLL_SECONDS = _env("ROBOT_FACE_ENROLL_S", "30", float)   # capture time once a face is found
 FACE_SEARCH_SECONDS = _env("ROBOT_FACE_SEARCH_S", "30", float)   # enroll: time allowed to find one
-FACE_MATCH_SECONDS = _env("ROBOT_FACE_MATCH_S", "30", float)     # search + match
-FACE_SEARCH_PANS = (-75.0, -15.0, 15.0, 75.0)                    # head sweep, degrees
+FACE_MATCH_SECONDS = _env("ROBOT_FACE_MATCH_S", "60", float)     # one scan + a match per face, at most
+FACE_SEARCH_PANS = (-90.0, -60.0, -30.0, 0.0, 30.0, 60.0, 90.0)   # match scan, right to left (+ = left)
 FACE_SEARCH_TILTS = (0.0, 30.0, 50.0)                            # never below level
 FACE_MIN_QUALITY = 0.6
 FOLLOW_SECONDS = _env("ROBOT_FOLLOW_S", "300", float)            # follow mode ends after this

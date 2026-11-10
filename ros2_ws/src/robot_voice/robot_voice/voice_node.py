@@ -127,7 +127,8 @@ def _run_task(task: str, name: str) -> bool:
                 height_m=float(p.get("head_height_m", 0.25)), hfov_deg=float(p.get("hfov_deg", 66.0))))
         except Exception as e:                                  # noqa: BLE001
             robot_log.event("task.error", logging.WARNING, err=f"head unavailable: {type(e).__name__}: {e}")
-        vision = VisionClient()
+        # The same Mac as the explorer's (robot.yaml /explorer vision_url), else /etc/robot.env.
+        vision = VisionClient(p["vision_url"]) if p.get("vision_url") else VisionClient()
         if task == "enroll_face":
             return face_tasks.enroll(camera, vision, name, head=head)
         if task == "follow":

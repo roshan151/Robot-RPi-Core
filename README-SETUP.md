@@ -239,3 +239,14 @@ echo 1 | sudo tee unexport
 # Setup shutdown
 
 echo "$USER ALL=(root) NOPASSWD: /usr/bin/systemctl poweroff" | sudo tee /etc/sudoers.d/robot-shutdown && sudo chmod 440 /etc/sudoers.d/robot-shutdown
+
+## Turning wifi power saving off
+
+1. sudo tee /etc/NetworkManager/conf.d/wifi-powersave-off.conf >/dev/null <<'EOF'
+[connection]
+wifi.powersave = 2
+EOF
+
+2. sudo systemctl restart NetworkManager
+
+3. Check: iw dev wlan0 get power_save
