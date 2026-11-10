@@ -1346,3 +1346,137 @@
 {"ts":"2026-11-09T19:34:13.196Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.56}
 {"ts":"2026-11-09T19:34:28.522Z","lvl":"info","evt":"session.start","mode":"display"}
 {"ts":"2026-11-09T19:34:29.248Z","lvl":"info","evt":"session.start","mode":"ros","pid":2242,"log":"logs.json"}
+{"ts":"2026-11-09T19:34:33.827Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-09T19:34:36.006Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-09T19:34:36.007Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-09T19:34:42.837Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.97}
+{"ts":"2026-11-09T19:35:10.353Z","lvl":"info","evt":"voice.heard","text":"Robin can you detect face?"}
+{"ts":"2026-11-09T19:35:10.364Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"match_face"},"ok":true,"starting":"match_face","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-09T19:35:10.522Z","lvl":"info","evt":"task.start","task":"match_face","name":"","_unregistered":true}
+{"ts":"2026-11-09T19:35:10.681Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-09T19:35:15.744Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"cancel","modality":"AUDIO"}
+{"ts":"2026-11-09T19:35:17.395Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.58,"repeats":1}
+{"ts":"2026-11-09T19:35:24.069Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T19:35:26.613Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T19:35:27.986Z","lvl":"warn","evt":"log","msg":"match failed: POST /v1/faces/embed: HTTPConnectionPool(host='10.0.0.55', port=8080): Max retries exceeded with url: /v1/faces/embed (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f7bb08050>: Failed to establish a new connection: [Errno 113] No route to host'))","src":"robot_core.face_tasks"}
+{"ts":"2026-11-09T19:35:27.988Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T19:35:28.722Z","lvl":"info","evt":"task.end","task":"match_face","ok":false,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-09T19:35:28.723Z","lvl":"info","evt":"gesture","name":"no","head":true}
+{"ts":"2026-11-09T19:35:28.725Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-11-09T19:35:28.753Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T19:35:28.757Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T19:35:28.758Z","lvl":"info","evt":"gesture.skip","name":"no","why":"head has no power"}
+{"ts":"2026-11-09T19:35:28.779Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-09T19:35:28.852Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='events' coro=<LiveAgent._pump_events() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:252> exception=APIError('1000 None. ')>","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:277 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-09T19:35:28.865Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='mic-uplink' coro=<LiveAgent._pump_audio() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:214> exception=ConnectionClosedOK(Close(code=1000, reason=''), Close(code=<CloseCode.NORMAL_CLOSURE: 1000>, reason=''), False)>","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:229 in _pump_audio","tasks.py:507 in wait_for","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-09T19:35:29.230Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-09T19:35:29.231Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-09T19:36:02.407Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.84,"repeats":2}
+{"ts":"2026-11-09T19:36:05.045Z","lvl":"info","evt":"voice.heard","text":"Robin Robert shut down."}
+{"ts":"2026-11-09T19:36:05.051Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T19:36:05.360Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-09T19:36:05.361Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-09T19:36:23.403Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-09T19:36:24.093Z","lvl":"info","evt":"session.start","mode":"ros","pid":1680,"log":"logs.json"}
+{"ts":"2026-11-09T19:36:26.781Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-09T19:36:29.208Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-09T19:36:29.208Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-09T20:56:03.102Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.16}
+{"ts":"2026-11-09T20:56:05.335Z","lvl":"info","evt":"voice.heard","text":"Robin look up"}
+{"ts":"2026-11-09T20:56:05.414Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T20:56:05.418Z","lvl":"info","evt":"voice.tool","name":"look_up","args":{"degrees":30},"ok":true,"tilt":30.0,"clamped":false,"delta":30.0}
+{"ts":"2026-11-09T20:56:07.017Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T20:56:13.458Z","lvl":"info","evt":"voice.heard","text":"Robin Roberts at dawn"}
+{"ts":"2026-11-09T20:56:13.462Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-09T20:56:13.780Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-09T20:56:13.781Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-09T20:56:26.622Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-09T20:56:27.282Z","lvl":"info","evt":"session.start","mode":"ros","pid":1679,"log":"logs.json"}
+{"ts":"2026-11-09T20:56:30.002Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-09T20:56:32.447Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-09T20:56:32.448Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T00:31:35.781Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.67}
+{"ts":"2026-11-10T00:31:40.740Z","lvl":"info","evt":"voice.heard","text":"Robin, look right."}
+{"ts":"2026-11-10T00:31:40.852Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T00:31:40.857Z","lvl":"info","evt":"voice.tool","name":"look_right","args":{"degrees":30},"ok":true,"pan":-30.0,"clamped":false,"delta":-30.0}
+{"ts":"2026-11-10T00:31:42.216Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T00:31:50.809Z","lvl":"info","evt":"voice.heard","text":"Robin, robot shut down."}
+{"ts":"2026-11-10T00:31:51.116Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T00:31:51.439Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-10T00:31:51.441Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-10T00:31:58.679Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-10T00:31:59.536Z","lvl":"info","evt":"session.start","mode":"ros","pid":1685,"log":"logs.json"}
+{"ts":"2026-11-10T00:32:01.269Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T00:32:04.403Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-10T00:32:04.404Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T00:35:32.411Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.56}
+{"ts":"2026-11-10T00:35:37.102Z","lvl":"info","evt":"voice.heard","text":"Robin look right."}
+{"ts":"2026-11-10T00:35:37.190Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T00:35:37.194Z","lvl":"info","evt":"voice.tool","name":"look_right","args":{"degrees":30},"ok":true,"pan":-30.0,"clamped":false,"delta":-30.0}
+{"ts":"2026-11-10T00:35:39.053Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T00:35:49.605Z","lvl":"info","evt":"voice.heard","text":"Robot shut down"}
+{"ts":"2026-11-10T00:35:49.611Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T00:35:49.917Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-10T00:35:49.918Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-10T00:35:57.830Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-10T00:35:58.434Z","lvl":"info","evt":"session.start","mode":"ros","pid":1701,"log":"logs.json"}
+{"ts":"2026-11-10T00:36:01.887Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T01:27:16.519Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-10T01:27:16.519Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T01:27:23.172Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.68}
+{"ts":"2026-11-10T01:27:26.167Z","lvl":"info","evt":"voice.heard","text":"Robin, look up."}
+{"ts":"2026-11-10T01:27:26.254Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:27:26.258Z","lvl":"info","evt":"voice.tool","name":"look_up","args":{"degrees":30},"ok":true,"tilt":30.0,"clamped":false,"delta":30.0}
+{"ts":"2026-11-10T01:27:27.650Z","lvl":"info","evt":"voice.heard","text":"Ciao."}
+{"ts":"2026-11-10T01:27:27.652Z","lvl":"info","evt":"gesture","name":"unclear","head":true}
+{"ts":"2026-11-10T01:27:27.654Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"unclear"},"ok":true,"gestured":true,"value":"unclear","jobs":[]}
+{"ts":"2026-11-10T01:27:28.458Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:27:28.460Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:27:28.461Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:27:47.798Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:27:47.958Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:27:54.901Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.8,"repeats":3}
+{"ts":"2026-11-10T01:27:54.902Z","lvl":"info","evt":"voice.heard","text":"Robin Robert Shut Down"}
+{"ts":"2026-11-10T01:27:54.905Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:27:55.220Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-10T01:27:55.221Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-10T01:28:17.189Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-10T01:28:17.829Z","lvl":"info","evt":"session.start","mode":"ros","pid":1684,"log":"logs.json"}
+{"ts":"2026-11-10T01:28:20.778Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T01:28:23.298Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-10T01:28:23.299Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T01:29:07.549Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.6}
+{"ts":"2026-11-10T01:29:39.535Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.96,"repeats":2}
+{"ts":"2026-11-10T01:30:19.230Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.76,"repeats":4}
+{"ts":"2026-11-10T01:30:47.537Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-10T01:30:48.227Z","lvl":"info","evt":"session.start","mode":"ros","pid":2424,"log":"logs.json"}
+{"ts":"2026-11-10T01:30:52.807Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T01:30:54.956Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-10T01:30:54.956Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T01:31:01.216Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.43}
+{"ts":"2026-11-10T01:31:07.624Z","lvl":"info","evt":"voice.heard","text":"Robin Lookright"}
+{"ts":"2026-11-10T01:31:07.779Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:31:07.782Z","lvl":"info","evt":"voice.tool","name":"look_right","args":{"degrees":30},"ok":true,"pan":-30.0,"clamped":false,"delta":-30.0}
+{"ts":"2026-11-10T01:31:11.322Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:31:17.182Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:31:18.822Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:31:19.102Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:31:19.282Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:31:47.302Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.76,"repeats":2}
+{"ts":"2026-11-10T01:32:11.982Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:12.002Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:12.062Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:12.122Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:16.422Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:16.722Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:16.782Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:16.942Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:17.122Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:17.142Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:17.482Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:17.562Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:17.962Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:18.182Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:19.302Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:32:24.784Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.8,"repeats":3}
+{"ts":"2026-11-10T01:32:26.782Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
