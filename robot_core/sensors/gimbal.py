@@ -339,7 +339,10 @@ class Gimbal:
         self._starting = abs(self.pan.pos) > 1e-3 or abs(self.tilt.pos) > 1e-3
 
     def _save_state(self) -> None:
-        if not self._state_path:
+        # Supply off (or faulted): the servos are not following the pulses, so the
+        # commanded position is not where the horn is. Saving it would make the next
+        # start's first pulse dash there.
+        if not self._state_path or not self.powered():
             return
         try:
             with self._lock:
@@ -350,6 +353,14 @@ class Gimbal:
             os.replace(tmp, self._state_path)
         except OSError:
             log.exception("gimbal: could not save the head position")
+
+    def _forget_state(self) -> None:
+        """No saved position: the next start's first pulse is the centre."""
+        if self._state_path:
+            try:
+                self._state_path.unlink(missing_ok=True)
+            except OSError:
+                log.exception("gimbal: could not delete the saved head position")
 
     # ----------------------------------------------------------------- API
 
@@ -448,7 +459,10 @@ class Gimbal:
             finally:
                 self._stop.set()
                 self._thread.join(timeout=1.0)
-                self._save_state()
+                if self.powered():
+                    self._save_state()
+                else:
+                    self._forget_state()  # could not park: where the horn is is unknown
                 getattr(self._power_sense, "close", lambda: None)()
                 if self._lockfd is not None and self._lockfd >= 0:
                     os.close(self._lockfd)       # let the next Gimbal in

@@ -228,6 +228,40 @@ def test_gimbal_drops_a_move_in_flight_when_servo_supply_dies():
         g.close(release=True)
 
 
+def test_no_position_is_saved_while_the_servo_supply_is_off(tmp_path):
+    """The servos ignore pulses with the supply off, so the commanded pose is not the
+    real one: saving it would make the next start's first pulse dash there."""
+    import json
+    f = tmp_path / "head.json"
+    rail = {"on": True}
+    g = Gimbal(backend="fake", state_path=f, power_sense=lambda: rail["on"])
+    try:
+        g.move_to(-60, 30, speed_dps=60, wait=True, timeout=5)
+        time.sleep(0.1)                                   # the arrival save lands just after wait() returns
+        saved = json.loads(f.read_text())
+        rail["on"] = False
+        time.sleep(0.2)
+        g._save_state()
+        assert json.loads(f.read_text()) == saved
+    finally:
+        g.close(release=True)
+    assert not f.exists(), "could not park: the saved position is dropped, the next start sends the centre"
+    again = Gimbal(backend="fake", state_path=f)
+    try:
+        assert again.angles() == (0.0, 0.0) and again.pan.out.pulses[0] == again.pan.cfg.center_us
+    finally:
+        again.close(release=True)
+
+
+def test_a_parked_head_is_saved_at_centre(tmp_path):
+    import json
+    f = tmp_path / "head.json"
+    g = Gimbal(backend="fake", state_path=f, power_sense=lambda: True)
+    g.move_to(-40, 20, speed_dps=60, wait=True, timeout=5)
+    g.close(release=True)
+    assert json.loads(f.read_text()) == {"pan_us": g.pan.cfg.center_us, "tilt_us": g.tilt.cfg.center_us}
+
+
 def test_a_failing_power_sensor_reads_as_off():
     def broken():
         raise OSError("gpio gone")
