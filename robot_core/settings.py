@@ -151,7 +151,8 @@ FACE_SEARCH_PANS = (-90.0, -60.0, -30.0, 0.0, 30.0, 60.0, 90.0)   # match scan, 
 FACE_SEARCH_TILTS = (0.0, 30.0, 50.0)                            # never below level
 FACE_MIN_QUALITY = 0.6
 FOLLOW_SECONDS = _env("ROBOT_FOLLOW_S", "300", float)            # follow mode ends after this
-FOLLOW_TILT_DEG = _env("ROBOT_FOLLOW_TILT", "20", float)         # head tilt while following
+FOLLOW_TILT_DEG = _env("ROBOT_FOLLOW_TILT", "20", float)         # head tilt while finding them: the face
+FOLLOW_TRACK_TILT_DEG = _env("ROBOT_FOLLOW_TRACK_TILT", "10", float)  # once locked on: body and feet
 FACE_MIN_SHOTS = 5
 # Long edge of frames sent for faces and follow. Faces need the pixels: with the
 # wide USB HD lens a 640 px frame leaves a face at 2 m ~18 px wide (useless), the

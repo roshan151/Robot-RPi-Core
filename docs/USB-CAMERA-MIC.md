@@ -304,3 +304,28 @@ ffplay -f v4l2 -input_format mjpeg -video_size 1280x720 /dev/video0
 
 # Copy to the Mac to look at (run on the Mac)
 scp roshan151@<pi>:~/snap.jpg ~/Desktop/
+
+## Setting field of view
+
+Step 1: measure the camera’s field of view
+
+Do this before trusting any of the new behaviour, because every angle and every distance in follow depends on it.
+
+Free the camera and centre the head. On the Pi:
+bash
+   sudo systemctl stop robot-voice
+   cd ~/Robot-RPi-Core && python -m robot_core.sensors.gimbal home
+Set up: the robot facing a flat wall, camera square to it, with the lens exactly 1.50 m from the wall (measure from the lens). Tape a tape measure across the wall, level, at camera height.
+Take a photo at the size follow uses (1920×1080):
+bash
+   v4l2-ctl -d /dev/video0 --set-fmt-video=width=1920,height=1080,pixelformat=MJPG \
+     --stream-mmap --stream-count=1 --stream-to=fov.jpg
+
+Copy fov.jpg to your Mac with scp and open it.
+4. Read the tape measure at the left and right edges of the photo. The difference is the visible width V in metres.
+5. Field of view = 2 × atan(V ÷ 3.0), because the wall is 1.5 m away, so twice the distance is 3.0. Examples:
+
+V = 2.10 m → 70°
+V = 3.00 m → 90°
+V = 3.91 m → 105°
+Put the result in robot.yaml: under /explorer, set hfov_deg: <your number>. The Pi sends it to the Mac with every follow step, so there’s nothing to change on the Mac. Then sudo systemctl start robot-voice.

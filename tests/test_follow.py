@@ -103,6 +103,22 @@ def test_head_is_held_ahead_and_its_range_and_geometry_are_sent():
     assert (geo["range_m"], geo["hfov_deg"], geo["camera_height_m"]) == (1.8, 60.0, 0.3)
 
 
+def test_finds_them_looking_up_then_tracks_looking_lower_and_searches_looking_up_again():
+    S = follow.settings
+    h = Head()
+    v = Vision([dict(step("searching", followed=False), head=[0, 0], locked=False),
+                dict(step("tracking"), head=[0, 0], locked=True),
+                dict(step("holding"), head=[0, 0], locked=True),
+                dict(step("searching"), head=[30, 0], locked=True),
+                step("gone")])
+    follow.follow(Camera(), v, Motion(), "Sam", head=h, seconds=60, clock=Clock())
+    assert h.moves == [(0.0, S.FOLLOW_TILT_DEG),               # start: the face
+                       (0, S.FOLLOW_TILT_DEG),                 # still confirming who it is
+                       (0, S.FOLLOW_TRACK_TILT_DEG),           # locked on: body and feet
+                       (0, S.FOLLOW_TRACK_TILT_DEG),
+                       (30, S.FOLLOW_TILT_DEG)]                # lost: search looks up again
+
+
 def test_cancel_during_a_turn_brakes_drives_no_further_and_ends():
     from robot_core import task_cancel
     task_cancel.reset()

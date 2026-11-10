@@ -9,9 +9,12 @@ While searching the robot stays put and only the head sweeps (`head` in the
 answer: pan, tilt above FOLLOW_TILT_DEG).
 
 The robot stands still while the Mac decides; the person is expected to walk
-slowly. The head is held straight ahead at FOLLOW_TILT_DEG, high enough to see
-a standing person's face from ~1.3 m and low enough for the TF-Luna to hit
-their body. Plain functions over injected parts — no ROS, no audio.
+slowly. The head looks straight ahead at FOLLOW_TILT_DEG while it finds them,
+high enough to see a standing person's face from ~1.3 m (the face is what
+locks on). Once locked on it drops to FOLLOW_TRACK_TILT_DEG: from then on they
+are tracked by their clothes, and a lower view keeps their feet on the floor in
+frame for the distance. A search (they were lost) looks from FOLLOW_TILT_DEG
+again. Plain functions over injected parts — no ROS, no audio.
 
 Ends when the Mac says the person is gone (lost, then a full head sweep),
 after `seconds`, or when the task is cancelled (`task_cancel`: "stop" to the
@@ -86,7 +89,9 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                 break
             look = res.get("head")
             if head and look:
-                head.gimbal.move_to(look[0], settings.FOLLOW_TILT_DEG + look[1], wait=True)
+                tracking = res.get("locked") and res["state"] in ("tracking", "holding")
+                base = settings.FOLLOW_TRACK_TILT_DEG if tracking else settings.FOLLOW_TILT_DEG
+                head.gimbal.move_to(look[0], base + look[1], wait=True)
                 head.gimbal.wait_settled()
             if res["turn_deg"]:
                 _move(motion, motion.turn, res["turn_deg"])
