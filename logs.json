@@ -1480,3 +1480,298 @@
 {"ts":"2026-11-10T01:32:19.302Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
 {"ts":"2026-11-10T01:32:24.784Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.8,"repeats":3}
 {"ts":"2026-11-10T01:32:26.782Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:33:03.545Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":2.4,"repeats":1}
+{"ts":"2026-11-10T01:33:03.547Z","lvl":"info","evt":"voice.heard","text":"Robin, robot shut down."}
+{"ts":"2026-11-10T01:33:03.556Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:33:03.864Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-10T01:33:03.866Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-10T01:31:06.936Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-10T01:31:07.783Z","lvl":"info","evt":"session.start","mode":"ros","pid":1710,"log":"logs.json"}
+{"ts":"2026-11-10T01:31:10.484Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T01:31:13.076Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-10T01:31:13.076Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T01:40:34.985Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.62}
+{"ts":"2026-11-10T01:40:37.272Z","lvl":"info","evt":"voice.heard","text":"Why are you doing come?"}
+{"ts":"2026-11-10T01:40:37.283Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:40:39.507Z","lvl":"info","evt":"voice.heard","text":"\u306b\u3093\u304e\u3087 \u308f\u304b \u3086\u304f \u3093 \u3068 \u306f"}
+{"ts":"2026-11-10T01:40:39.717Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:40:45.316Z","lvl":"info","evt":"voice.heard","text":"Not prep for office tomorrow, prep for dinner tomorrow, prep for gym."}
+{"ts":"2026-11-10T01:40:45.319Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:40:48.648Z","lvl":"info","evt":"voice.heard","text":"Are we going to gym?"}
+{"ts":"2026-11-10T01:40:48.652Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:41:07.305Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.77,"repeats":5}
+{"ts":"2026-11-10T01:41:12.690Z","lvl":"info","evt":"voice.heard","text":"\u0924\u094b \u091a\u0932\u094b \u0932\u0947\u0915\u0947 \u091a\u0932\u0947 \u0915\u094d\u092f\u093e?"}
+{"ts":"2026-11-10T01:41:12.693Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:41:15.847Z","lvl":"info","evt":"voice.heard","text":"\u0926\u0947\u0916\u093e \u0928\u0939\u0940\u0902, \u0926\u0947\u0916\u0924\u093e \u0939\u0942\u0902\u0964"}
+{"ts":"2026-11-10T01:41:15.853Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:41:45.309Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":8.08,"repeats":3}
+{"ts":"2026-11-10T01:41:45.312Z","lvl":"info","evt":"voice.heard","text":"\u00bfTodo bien? Ah, yo haciendo a todos los super stars en este juego y no me daba nada nada nada. Blue Brick Hill de nada."}
+{"ts":"2026-11-10T01:41:45.630Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:41:47.863Z","lvl":"info","evt":"voice.heard","text":"\ube44\uc698\uc138"}
+{"ts":"2026-11-10T01:41:47.866Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:41:58.553Z","lvl":"info","evt":"voice.heard","text":"Ja, ich bin da. Wir sind mit dem Kram und dem Zug da."}
+{"ts":"2026-11-10T01:41:58.874Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:42:10.216Z","lvl":"info","evt":"voice.heard","text":"Check my leg ka message tha. Agar kam hai to saaf kar dungi yaar. I am not interested in kamdhenu."}
+{"ts":"2026-11-10T01:42:10.529Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:42:20.482Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.88,"repeats":3}
+{"ts":"2026-11-10T01:42:20.483Z","lvl":"info","evt":"voice.heard","text":"\u0905\u091a\u094d\u091b\u093e, \u0925\u094b\u0921\u093c\u093e \u0926\u0947\u0916\u0924\u093e \u0939\u0942\u0902\u0964"}
+{"ts":"2026-11-10T01:42:20.485Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:42:26.005Z","lvl":"info","evt":"voice.heard","text":"beau gosse, Nikhil ka dabba band hai, dekho khula hoga."}
+{"ts":"2026-11-10T01:42:26.010Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:42:52.443Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":4.55,"repeats":3}
+{"ts":"2026-11-10T01:42:52.446Z","lvl":"info","evt":"voice.heard","text":"\ub124, \uadf8\ub798\uc694? \ub124, \ub124. \uc544, \ub410\ub124\uc694."}
+{"ts":"2026-11-10T01:42:52.779Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:42:57.721Z","lvl":"info","evt":"voice.heard","text":"Chupia la goma. \u00bfCallar un qu\u00e9?"}
+{"ts":"2026-11-10T01:42:57.725Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:43:00.530Z","lvl":"info","evt":"voice.heard","text":"Call karun kyon? Abhi band ho gaya hoga."}
+{"ts":"2026-11-10T01:43:00.859Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:43:04.031Z","lvl":"info","evt":"voice.heard","text":"Ja."}
+{"ts":"2026-11-10T01:43:04.034Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:43:15.674Z","lvl":"info","evt":"voice.heard","text":"\uc800\ub9ac \uac00 \ubd10. \uc2eb\uc5b4. \uc640\uc694."}
+{"ts":"2026-11-10T01:43:15.711Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:43:31.781Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.78,"repeats":6}
+{"ts":"2026-11-10T01:44:29.369Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-10T01:44:30.039Z","lvl":"info","evt":"session.start","mode":"ros","pid":1691,"log":"logs.json"}
+{"ts":"2026-11-10T01:44:33.505Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T01:44:50.802Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-10T01:44:50.802Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T01:44:57.259Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.63}
+{"ts":"2026-11-10T01:44:59.673Z","lvl":"info","evt":"voice.heard","text":"Robin, look right."}
+{"ts":"2026-11-10T01:44:59.787Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:44:59.790Z","lvl":"info","evt":"voice.tool","name":"look_right","args":{"degrees":30},"ok":true,"pan":-30.0,"clamped":false,"delta":-30.0}
+{"ts":"2026-11-10T01:45:05.439Z","lvl":"info","evt":"voice.heard","text":"Robin Roberts shut down."}
+{"ts":"2026-11-10T01:45:06.894Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-10T01:45:06.895Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-10T01:45:09.775Z","lvl":"info","evt":"voice.heard","text":"Why can't get the information?"}
+{"ts":"2026-11-10T01:45:10.006Z","lvl":"warn","evt":"power.shutdown","state":"cancelled"}
+{"ts":"2026-11-10T01:45:10.007Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:45:14.456Z","lvl":"info","evt":"voice.heard","text":"\u0915\u094d\u092f\u093e \u0939\u094b \u0930\u0939\u093e \u0939\u0948 \u0909\u0938\u0915\u094b \u092c\u094b\u0932\u0947\u0902\u0917\u0947?"}
+{"ts":"2026-11-10T01:45:14.460Z","lvl":"info","evt":"voice.say","text":"Ignore background speech.","spoken":false}
+{"ts":"2026-11-10T01:45:18.047Z","lvl":"info","evt":"voice.heard","text":"Robot shut down."}
+{"ts":"2026-11-10T01:45:18.059Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T01:45:29.389Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":2.7,"repeats":6}
+{"ts":"2026-11-10T01:45:29.391Z","lvl":"info","evt":"voice.heard","text":"Robin robot shut down"}
+{"ts":"2026-11-10T01:45:29.435Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T01:45:29.781Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-10T01:45:29.782Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-10T01:45:47.674Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-10T01:45:48.332Z","lvl":"info","evt":"session.start","mode":"ros","pid":1680,"log":"logs.json"}
+{"ts":"2026-11-10T01:45:51.281Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T01:45:53.835Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-10T01:45:53.836Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T16:05:48.108Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.61}
+{"ts":"2026-11-10T16:05:52.741Z","lvl":"info","evt":"voice.heard","text":"Hey Robin, do you recognize me?"}
+{"ts":"2026-11-10T16:05:52.752Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"match_face"},"ok":true,"starting":"match_face","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-10T16:05:52.881Z","lvl":"info","evt":"task.start","task":"match_face","name":"","_unregistered":true}
+{"ts":"2026-11-10T16:05:53.067Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T16:05:58.017Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"cancel","modality":"AUDIO"}
+{"ts":"2026-11-10T16:06:06.343Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T16:06:12.816Z","lvl":"warn","evt":"log","msg":"match failed: POST /v1/faces/embed: HTTPConnectionPool(host='10.0.0.55', port=8080): Max retries exceeded with url: /v1/faces/embed (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f77c08050>: Failed to establish a new connection: [Errno 113] No route to host'))","src":"robot_core.face_tasks"}
+{"ts":"2026-11-10T16:06:16.170Z","lvl":"info","evt":"task.end","task":"match_face","ok":false,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-10T16:06:16.171Z","lvl":"info","evt":"gesture","name":"no","head":true}
+{"ts":"2026-11-10T16:06:16.172Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-11-10T16:06:16.200Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T16:06:16.221Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T16:06:16.292Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='events' coro=<LiveAgent._pump_events() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:252> exception=APIError('1000 None. ')>","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:277 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-10T16:06:16.306Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='mic-uplink' coro=<LiveAgent._pump_audio() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:214> exception=ConnectionClosedOK(Close(code=1000, reason=''), Close(code=<CloseCode.NORMAL_CLOSURE: 1000>, reason=''), False)>","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:229 in _pump_audio","tasks.py:507 in wait_for","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-10T16:06:16.687Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-10T16:06:16.688Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T16:06:22.851Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.54,"repeats":3}
+{"ts":"2026-11-10T16:06:29.788Z","lvl":"info","evt":"voice.heard","text":"Hey, Robin. Do you recognize me?"}
+{"ts":"2026-11-10T16:06:29.793Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"match_face"},"ok":true,"starting":"match_face","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-10T16:06:29.988Z","lvl":"info","evt":"task.start","task":"match_face","name":"","_unregistered":true}
+{"ts":"2026-11-10T16:06:30.028Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T16:06:30.428Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"cancel","modality":"AUDIO"}
+{"ts":"2026-11-10T16:06:37.497Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T16:06:43.412Z","lvl":"warn","evt":"log","msg":"match failed: POST /v1/faces/embed: HTTPConnectionPool(host='10.0.0.55', port=8080): Max retries exceeded with url: /v1/faces/embed (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f7436c7d0>: Failed to establish a new connection: [Errno 113] No route to host'))","src":"robot_core.face_tasks"}
+{"ts":"2026-11-10T16:06:46.856Z","lvl":"info","evt":"task.end","task":"match_face","ok":false,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-10T16:06:46.858Z","lvl":"info","evt":"gesture","name":"no","head":true}
+{"ts":"2026-11-10T16:06:46.860Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-11-10T16:06:46.895Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T16:06:46.911Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T16:06:46.976Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='events' coro=<LiveAgent._pump_events() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:252> exception=APIError('1000 None. ')>","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:277 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-10T16:06:46.982Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='mic-uplink' coro=<LiveAgent._pump_audio() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:214> exception=ConnectionClosedOK(Close(code=1000, reason=''), Close(code=<CloseCode.NORMAL_CLOSURE: 1000>, reason=''), False)>","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:229 in _pump_audio","tasks.py:507 in wait_for","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-10T16:06:47.353Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-10T16:06:47.354Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T16:06:53.441Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.47,"repeats":3}
+{"ts":"2026-11-10T16:06:57.206Z","lvl":"info","evt":"voice.heard","text":"Is your name Michael?"}
+{"ts":"2026-11-10T16:06:57.210Z","lvl":"info","evt":"gesture","name":"no","head":true}
+{"ts":"2026-11-10T16:06:57.212Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-11-10T16:07:08.447Z","lvl":"info","evt":"voice.heard","text":"Is your name Robin?"}
+{"ts":"2026-11-10T16:07:08.452Z","lvl":"info","evt":"gesture","name":"yes","head":true}
+{"ts":"2026-11-10T16:07:08.454Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-10T16:07:23.693Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":3.04,"repeats":2}
+{"ts":"2026-11-10T16:07:23.695Z","lvl":"info","evt":"voice.heard","text":"Robin, go straight."}
+{"ts":"2026-11-10T16:07:23.705Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
+{"ts":"2026-11-10T16:07:35.362Z","lvl":"info","evt":"voice.heard","text":"Not all right."}
+{"ts":"2026-11-10T16:07:35.370Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T16:07:35.813Z","lvl":"info","evt":"gesture","name":"unclear","head":true}
+{"ts":"2026-11-10T16:07:35.814Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"unclear"},"ok":true,"gestured":true,"value":"unclear","jobs":[]}
+{"ts":"2026-11-10T16:07:45.799Z","lvl":"info","evt":"voice.heard","text":"Robin Tunney"}
+{"ts":"2026-11-10T16:07:46.169Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":90},"ok":true,"queued":true,"op":"turn","value":90.0}
+{"ts":"2026-11-10T16:07:52.173Z","lvl":"info","evt":"voice.heard","text":"Robin turned left by 30\u00b0."}
+{"ts":"2026-11-10T16:07:52.177Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-30},"ok":true,"queued":true,"op":"turn","value":-30.0}
+{"ts":"2026-11-10T16:07:57.991Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":2.47,"repeats":4}
+{"ts":"2026-11-10T16:07:57.992Z","lvl":"info","evt":"voice.heard","text":"Robin, go straight for 2 meters."}
+{"ts":"2026-11-10T16:07:58.001Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":2},"ok":true,"queued":true,"op":"drive","value":2.0}
+{"ts":"2026-11-10T16:08:15.658Z","lvl":"info","evt":"voice.heard","text":"Robert, turn left by 60\u00b0."}
+{"ts":"2026-11-10T16:08:15.665Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-60},"ok":true,"queued":true,"op":"turn","value":-60.0}
+{"ts":"2026-11-10T16:08:52.739Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.77,"repeats":3}
+{"ts":"2026-11-10T16:09:03.203Z","lvl":"info","evt":"voice.heard","text":"Hello."}
+{"ts":"2026-11-10T16:09:06.043Z","lvl":"info","evt":"voice.heard","text":"Hello."}
+{"ts":"2026-11-10T16:09:06.051Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:09:06.261Z","lvl":"info","evt":"voice.say","text":"speech","spoken":false}
+{"ts":"2026-11-10T16:09:06.352Z","lvl":"info","evt":"voice.say","text":"- no","spoken":false}
+{"ts":"2026-11-10T16:09:06.540Z","lvl":"info","evt":"voice.say","text":"name Robin","spoken":false}
+{"ts":"2026-11-10T16:09:06.794Z","lvl":"info","evt":"voice.say","text":"mentioned.","spoken":false}
+{"ts":"2026-11-10T16:09:09.467Z","lvl":"info","evt":"voice.heard","text":"Claro, como no."}
+{"ts":"2026-11-10T16:09:09.474Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:09:09.523Z","lvl":"info","evt":"voice.say","text":"speech","spoken":false}
+{"ts":"2026-11-10T16:09:09.528Z","lvl":"info","evt":"voice.say","text":"- no","spoken":false}
+{"ts":"2026-11-10T16:09:09.639Z","lvl":"info","evt":"voice.say","text":"name","spoken":false}
+{"ts":"2026-11-10T16:09:09.706Z","lvl":"info","evt":"voice.say","text":"(or \"Rob\"\u2014not","spoken":false}
+{"ts":"2026-11-10T16:09:10.223Z","lvl":"info","evt":"voice.say","text":"Robin)","spoken":false}
+{"ts":"2026-11-10T16:09:10.265Z","lvl":"info","evt":"voice.say","text":"said.","spoken":false}
+{"ts":"2026-11-10T16:09:15.486Z","lvl":"info","evt":"voice.heard","text":"\u092c\u0922\u093c\u093f\u092f\u093e\u0964 \u091a\u0932\u094b \u091c\u093e\u0913 \u092b\u093f\u0930\u0964"}
+{"ts":"2026-11-10T16:09:16.066Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:09:16.279Z","lvl":"info","evt":"voice.say","text":"speech","spoken":false}
+{"ts":"2026-11-10T16:09:16.338Z","lvl":"info","evt":"voice.say","text":"- no","spoken":false}
+{"ts":"2026-11-10T16:09:16.425Z","lvl":"info","evt":"voice.say","text":"name","spoken":false}
+{"ts":"2026-11-10T16:09:16.568Z","lvl":"info","evt":"voice.say","text":"(\"Robin\")","spoken":false}
+{"ts":"2026-11-10T16:09:16.618Z","lvl":"info","evt":"voice.say","text":"said.","spoken":false}
+{"ts":"2026-11-10T16:09:28.038Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":2.39,"repeats":4}
+{"ts":"2026-11-10T16:09:28.040Z","lvl":"info","evt":"voice.heard","text":"Yo tengo la bolsa."}
+{"ts":"2026-11-10T16:09:28.043Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:09:28.239Z","lvl":"info","evt":"voice.say","text":"speech","spoken":false}
+{"ts":"2026-11-10T16:09:29.565Z","lvl":"info","evt":"voice.heard","text":"cute"}
+{"ts":"2026-11-10T16:09:29.574Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:09:29.599Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:09:32.283Z","lvl":"info","evt":"voice.heard","text":"saben el problema"}
+{"ts":"2026-11-10T16:09:32.285Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:09:32.301Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:09:58.624Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.37,"repeats":4}
+{"ts":"2026-11-10T16:09:58.626Z","lvl":"info","evt":"voice.heard","text":"das Fahrrad"}
+{"ts":"2026-11-10T16:09:58.639Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:09:58.656Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:10:12.678Z","lvl":"info","evt":"voice.heard","text":"\uc0c8\ub07c \uc5bc\uad74 \uc880 \uc77d\uc5b4 \ubd10."}
+{"ts":"2026-11-10T16:10:12.685Z","lvl":"info","evt":"voice.say","text":"(model speech discarded \u2014 robot answers by moving)","bytes_dropped":687460,"repeats":88}
+{"ts":"2026-11-10T16:10:12.686Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:10:12.764Z","lvl":"info","evt":"voice.say","text":"speech","spoken":false}
+{"ts":"2026-11-10T16:10:12.823Z","lvl":"info","evt":"voice.say","text":"- no","spoken":false}
+{"ts":"2026-11-10T16:10:12.882Z","lvl":"info","evt":"voice.say","text":"name","spoken":false}
+{"ts":"2026-11-10T16:10:12.937Z","lvl":"info","evt":"voice.say","text":"(\"Robin\")","spoken":false}
+{"ts":"2026-11-10T16:10:13.178Z","lvl":"info","evt":"voice.say","text":"said.","spoken":false}
+{"ts":"2026-11-10T16:10:33.566Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.81,"repeats":1}
+{"ts":"2026-11-10T16:11:05.696Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":4.1,"repeats":4}
+{"ts":"2026-11-10T16:11:18.129Z","lvl":"info","evt":"voice.heard","text":"Hello, how are you?"}
+{"ts":"2026-11-10T16:11:18.134Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:11:18.151Z","lvl":"info","evt":"voice.say","text":"speech","spoken":false}
+{"ts":"2026-11-10T16:11:18.159Z","lvl":"info","evt":"voice.say","text":"- no","spoken":false}
+{"ts":"2026-11-10T16:11:18.161Z","lvl":"info","evt":"voice.say","text":"name","spoken":false}
+{"ts":"2026-11-10T16:11:18.164Z","lvl":"info","evt":"voice.say","text":"(\"Robin\")","spoken":false}
+{"ts":"2026-11-10T16:11:18.170Z","lvl":"info","evt":"voice.say","text":"said.","spoken":false}
+{"ts":"2026-11-10T16:11:20.127Z","lvl":"info","evt":"voice.heard","text":"cushion"}
+{"ts":"2026-11-10T16:11:20.134Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:11:20.149Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:11:23.924Z","lvl":"info","evt":"voice.heard","text":"\u0915\u094d\u092f\u093e \u091a\u0932 \u0930\u0939\u093e \u0939\u0948 \u0906\u091c\u0915\u0932?"}
+{"ts":"2026-11-10T16:11:23.929Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:11:23.940Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:11:27.089Z","lvl":"info","evt":"voice.heard","text":"\u0915\u094d\u092f\u093e \u0905\u092a\u0928\u0940 \u092c\u0939\u0928 \u0915\u093e \u0918\u0930"}
+{"ts":"2026-11-10T16:11:27.191Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:11:27.336Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:11:42.349Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":13.04,"repeats":6}
+{"ts":"2026-11-10T16:11:42.352Z","lvl":"info","evt":"voice.heard","text":"\u0915\u0947 \u0926\u094b\u0938\u094d\u0924 \u0915\u0947 \u0918\u0930 \u0906\u0908 \u0939\u0941\u0908 \u0925\u0940\u0964 \u0925\u094b\u0921\u093c\u093e \u0935\u094b \u092d\u0940 \u0905\u0915\u0947\u0932\u0940 \u0925\u0940 \u0924\u094b \u0939\u092e \u0932\u094b\u0917 \u0926\u093f\u0935\u093e\u0932\u0940 \u092e\u0947\u0902 \u0917\u090f \u0928\u0939\u0940\u0902 \u0925\u0947 \u0924\u094b \u092e\u0948\u0902\u0928\u0947 \u0938\u094b\u091a\u093e \u092c\u0939\u0941\u0924 \u0925\u094b\u0921\u093c\u093e \u0918\u0930 \u092e\u0947\u0902 \u092c\u0939\u0941\u0924 \u091c\u094d\u092f\u093e\u0926\u093e \u0939\u094b \u0917\u092f\u093e \u0925\u093e \u0924\u094b \u092e\u0947\u0930\u093e \u092e\u0928 \u0928\u0939\u0940\u0902 \u0915\u0930 \u0930\u0939\u093e \u0925\u093e \u092b\u093f\u0930 \u092e\u0948\u0902 \u092c\u0939\u0941\u0924 \u0907\u0938\u0940 \u092e\u0947\u0902 \u092e\u0948\u0902 \u0906 \u0917\u0908 \u0924\u094b"}
+{"ts":"2026-11-10T16:11:42.917Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:11:43.261Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:11:45.094Z","lvl":"info","evt":"voice.heard","text":"bestie"}
+{"ts":"2026-11-10T16:11:45.101Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:11:45.116Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:11:51.680Z","lvl":"info","evt":"voice.heard","text":"Aapki baat sahi kya mein samjha nahi?"}
+{"ts":"2026-11-10T16:11:51.803Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:11:52.049Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:11:58.026Z","lvl":"info","evt":"voice.heard","text":"\u0935\u0939 \u0926\u093f\u0935\u093e\u0932\u0940 3 \u0926\u093f\u0928 \u0932\u0917\u093e\u0924\u093e\u0930 \u0938\u0947 \u0930\u0916\u093e \u0939\u0941\u0906 \u0925\u093e\u0964"}
+{"ts":"2026-11-10T16:11:58.036Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:11:58.052Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:12:03.779Z","lvl":"info","evt":"voice.heard","text":"\u0915\u094d\u092f\u093e \u0905\u092d\u0940 \u092e\u0947\u0930\u0947 \u0938\u0947 \u092c\u093e\u0924 \u0939\u0941\u0908 \u0925\u0940 \u0909\u0938\u0915\u0947 \u092c\u093e\u0926 \u0938\u0947?"}
+{"ts":"2026-11-10T16:12:03.784Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:12:03.809Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:12:09.466Z","lvl":"info","evt":"voice.heard","text":"\u092c\u0939\u0941\u0924 \u0938\u093e\u0930\u0940 \u091a\u0940\u091c\u0947\u0902 \u0939\u0948\u0902\u0964"}
+{"ts":"2026-11-10T16:12:09.469Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:12:09.485Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:12:13.461Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":3.33,"repeats":4}
+{"ts":"2026-11-10T16:12:13.462Z","lvl":"info","evt":"voice.heard","text":"Main abhi nikal mein ghar jaake bataungi aaram se na."}
+{"ts":"2026-11-10T16:12:13.466Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:12:13.702Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:12:18.035Z","lvl":"info","evt":"voice.heard","text":"\u092c\u0939\u0941\u0924 \u092e\u0948\u0902 \u092d\u0940 \u092c\u0939\u0941\u0924 \u0925\u0915 \u0917\u092f\u093e \u0925\u093e\u0964 \u0915\u094c\u0928 \u0938\u0947 \u092d\u0940 \u0915\u094d\u0932\u0949\u0925\u094d\u0938 \u0915\u093e \u0939\u0941\u0906?"}
+{"ts":"2026-11-10T16:12:18.040Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:12:22.500Z","lvl":"info","evt":"voice.heard","text":"\u0915\u094b\u0908 \u0928\u0939\u0940\u0902, \u091a\u0932\u094b\u0964 \u092e\u0948\u0902 \u092c\u0924\u093e\u0924\u093e \u0939\u0942\u0902\u0964"}
+{"ts":"2026-11-10T16:12:22.506Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:12:22.528Z","lvl":"info","evt":"voice.say","text":"sspeech.","spoken":false}
+{"ts":"2026-11-10T16:12:27.662Z","lvl":"info","evt":"voice.heard","text":"\u0914\u0930 \u0906\u092a \u0920\u0940\u0915 \u0939\u094b? \u0939\u092e\u094d\u092e\u0964"}
+{"ts":"2026-11-10T16:12:27.673Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:12:27.922Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:12:33.867Z","lvl":"info","evt":"voice.heard","text":"Chalo, aap khayal karo. Aap khayal rakho, take care."}
+{"ts":"2026-11-10T16:12:33.871Z","lvl":"info","evt":"voice.say","text":"Ignore background","spoken":false}
+{"ts":"2026-11-10T16:12:33.997Z","lvl":"info","evt":"voice.say","text":"speech.","spoken":false}
+{"ts":"2026-11-10T16:12:54.801Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.95,"repeats":5}
+{"ts":"2026-11-10T16:13:44.731Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.81,"repeats":2}
+{"ts":"2026-11-10T16:14:14.786Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.8,"repeats":2}
+{"ts":"2026-11-10T16:14:54.793Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.97,"repeats":2}
+{"ts":"2026-11-10T16:15:39.046Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.84,"repeats":2}
+{"ts":"2026-11-10T16:16:09.049Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.77,"repeats":3}
+{"ts":"2026-11-10T16:16:37.548Z","lvl":"error","evt":"voice.drop","err":"ConnectionClosedError: received 1008 (policy violation) Connection aborted because the client failed to close the connection after receiving a GoAway signal once the session durat; then sent 1008 (policy violation) Connection aborted because the client failed to close the connection after receiving a GoAway signal once the session durat"}
+{"ts":"2026-11-10T16:16:37.550Z","lvl":"info","evt":"voice.error","text":"Voice session failed. connection closed error. Check the log.","detail":"connection closed error"}
+{"ts":"2026-11-10T16:16:46.148Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T16:16:46.592Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-10T16:16:46.592Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T16:16:52.704Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.48,"repeats":3}
+{"ts":"2026-11-10T16:17:02.108Z","lvl":"info","evt":"voice.heard","text":"Robin, go straight."}
+{"ts":"2026-11-10T16:17:02.114Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
+{"ts":"2026-11-10T16:17:13.680Z","lvl":"info","evt":"voice.heard","text":"Roman, turn right."}
+{"ts":"2026-11-10T16:17:13.684Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":90},"ok":true,"queued":true,"op":"turn","value":90.0}
+{"ts":"2026-11-10T16:17:24.717Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":2.36,"repeats":2}
+{"ts":"2026-11-10T16:17:24.719Z","lvl":"info","evt":"voice.heard","text":"Robin, look right."}
+{"ts":"2026-11-10T16:17:24.723Z","lvl":"info","evt":"voice.tool","name":"look_right","args":{"degrees":30},"ok":true,"pan":-30.0,"clamped":false,"delta":-30.0}
+{"ts":"2026-11-10T16:17:30.754Z","lvl":"info","evt":"voice.heard","text":"Look right by another 60\u00b0."}
+{"ts":"2026-11-10T16:17:30.760Z","lvl":"info","evt":"voice.tool","name":"look_right","args":{"degrees":60},"ok":true,"pan":-90.0,"clamped":false,"delta":-60.0}
+{"ts":"2026-11-10T16:17:39.743Z","lvl":"info","evt":"voice.heard","text":"Now look straight."}
+{"ts":"2026-11-10T16:17:39.746Z","lvl":"info","evt":"voice.tool","name":"look_straight","args":{},"ok":true,"pan":0.0,"tilt":0.0,"deltas":{"tilt":0.0,"pan":90.0}}
+{"ts":"2026-11-10T16:17:47.194Z","lvl":"info","evt":"voice.heard","text":"Robin, turn right."}
+{"ts":"2026-11-10T16:17:47.198Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":90},"ok":true,"queued":true,"op":"turn","value":90.0}
+{"ts":"2026-11-10T16:18:00.888Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.91,"repeats":5}
+{"ts":"2026-11-10T16:18:07.410Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1}
+{"ts":"2026-11-10T16:25:00.460Z","lvl":"error","evt":"voice.drop","err":"LiveAgentError: uplink stuck: send took >5.0s"}
+{"ts":"2026-11-10T16:25:00.462Z","lvl":"info","evt":"voice.error","text":"Voice session failed. live agent error. Check the log.","detail":"live agent error"}
+{"ts":"2026-11-10T16:25:10.685Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T16:25:11.173Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-10T16:25:11.173Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T16:25:17.250Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.47}
+{"ts":"2026-11-10T16:25:55.440Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.8,"repeats":3}
+{"ts":"2026-11-10T16:26:25.879Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.77}
+{"ts":"2026-11-10T16:27:16.957Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.78,"repeats":1}
+{"ts":"2026-11-10T16:27:53.711Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.75,"repeats":2}
+{"ts":"2026-11-10T16:28:37.586Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.97,"repeats":1}
+{"ts":"2026-11-10T16:29:16.550Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":2.5,"repeats":4}
+{"ts":"2026-11-10T16:29:16.560Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T16:29:56.724Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.76,"repeats":1}
+{"ts":"2026-11-10T16:30:57.602Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":7.67,"repeats":2}
+{"ts":"2026-11-10T16:30:57.603Z","lvl":"info","evt":"voice.heard","text":"Break the ice. I heard you. Hey, weird question. How much is a polar bear worth? Uh, 1,0"}
+{"ts":"2026-11-10T16:30:57.962Z","lvl":"info","evt":"gesture","name":"dance","head":true,"body":true}
+{"ts":"2026-11-10T16:30:57.964Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"dance"},"ok":true,"gestured":true,"value":"dance","jobs":[]}
+{"ts":"2026-11-10T16:31:04.118Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T16:31:04.121Z","lvl":"info","evt":"voice.heard","text":"Robin stop."}
+{"ts":"2026-11-10T16:31:28.339Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T16:31:28.420Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T16:31:28.440Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T16:31:28.480Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply back on - resuming from the held pulse","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T16:31:40.229Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.81,"repeats":2}
+{"ts":"2026-11-10T16:31:46.805Z","lvl":"info","evt":"voice.heard","text":"No."}
+{"ts":"2026-11-10T16:31:46.814Z","lvl":"info","evt":"gesture","name":"no","head":true}
+{"ts":"2026-11-10T16:31:46.815Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-11-10T16:32:02.342Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1,"repeats":60}
+{"ts":"2026-11-10T16:32:14.793Z","lvl":"error","evt":"voice.drop","err":"LiveAgentError: uplink stuck: send took >5.0s"}
+{"ts":"2026-11-10T16:32:14.795Z","lvl":"info","evt":"voice.error","text":"Voice session failed. live agent error. Check the log.","detail":"live agent error"}
+{"ts":"2026-11-10T16:32:29.033Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T16:32:29.116Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='events' coro=<LiveAgent._pump_events() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:252> exception=APIError('1008 None. Connection aborted because the client failed to close the connection after receiving a GoAway signal once the session durat')>","src":"asyncio","err":"APIError: 1008 None. Connection aborted because the client failed to close the connection after receiving a GoAway signal once the session durat","tb":["agent.py:277 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-10T16:32:29.501Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.1-flash-live-preview","role":"main","modality":"AUDIO"}
+{"ts":"2026-11-10T16:32:29.501Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
