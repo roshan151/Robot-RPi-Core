@@ -2080,3 +2080,104 @@
 {"ts":"2026-11-10T21:17:46.225Z","lvl":"info","evt":"voice.heard","text":"Okay. Yeah. Yeah. Um it's probably because I published it to my own account."}
 {"ts":"2026-11-10T21:18:06.482Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":7.3,"repeats":6}
 {"ts":"2026-11-10T21:18:06.483Z","lvl":"info","evt":"voice.heard","text":"You know. Sorry."}
+{"ts":"2026-11-10T21:18:17.231Z","lvl":"info","evt":"voice.heard","text":"Yeah, it's um targeting this week."}
+{"ts":"2026-11-10T21:18:19.623Z","lvl":"info","evt":"voice.heard","text":"I haven't touched it since Friday."}
+{"ts":"2026-11-10T21:18:23.411Z","lvl":"info","evt":"voice.heard","text":"So, yeah."}
+{"ts":"2026-11-10T21:18:31.703Z","lvl":"info","evt":"voice.heard","text":"And uh I actually talked to the other"}
+{"ts":"2026-11-10T21:18:37.333Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":2.22,"repeats":9}
+{"ts":"2026-11-10T21:18:57.193Z","lvl":"info","evt":"voice.heard","text":"team that we have, right? I also asked like when you put that request right, do you have any background for that or were you asking casually"}
+{"ts":"2026-11-10T21:19:07.030Z","lvl":"info","evt":"voice.heard","text":"? I was just looking for guidance. I wasn't I figured we would just adhere to whatever guidance was already established."}
+{"ts":"2026-11-10T21:19:12.577Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":5.13,"repeats":5}
+{"ts":"2026-11-10T21:19:12.578Z","lvl":"info","evt":"voice.heard","text":"Um"}
+{"ts":"2026-11-10T21:19:27.572Z","lvl":"info","evt":"voice.heard","text":"So what's what's the retention period? Document retention period? That's all we need to know."}
+{"ts":"2026-11-10T21:19:43.571Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.4,"repeats":10}
+{"ts":"2026-11-10T21:19:51.501Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1,"repeats":61}
+{"ts":"2026-11-10T21:19:53.993Z","lvl":"error","evt":"voice.drop","err":"LiveAgentError: uplink stuck: send took >5.0s"}
+{"ts":"2026-11-10T21:19:53.995Z","lvl":"info","evt":"voice.error","text":"Voice session failed. live agent error. Check the log.","detail":"live agent error"}
+{"ts":"2026-11-10T21:20:00.220Z","lvl":"info","evt":"voice.diag","wifi_dbm":-60,"wifi_power_save":"on","load":["0.24","0.32","0.19"],"throttled":"0x0"}
+{"ts":"2026-11-10T21:20:08.282Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T21:20:08.897Z","lvl":"error","evt":"voice.drop","err":"APIError: 1008 None. BidiGenerateContent session is already connected to an existing client"}
+{"ts":"2026-11-10T21:20:08.899Z","lvl":"info","evt":"voice.error","text":"Voice session failed. api error. Check the log.","detail":"api error"}
+{"ts":"2026-11-10T21:20:16.010Z","lvl":"info","evt":"voice.diag","wifi_dbm":-60,"wifi_power_save":"on","load":["0.18","0.30","0.19"],"throttled":"0x0"}
+{"ts":"2026-11-10T21:20:32.060Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T21:20:32.666Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-10T21:20:32.667Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T21:20:39.640Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":2.32}
+{"ts":"2026-11-10T21:20:42.575Z","lvl":"info","evt":"voice.heard","text":"I guess I don't know."}
+{"ts":"2026-11-10T21:21:13.195Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":4.5,"repeats":8}
+{"ts":"2026-11-10T21:21:13.198Z","lvl":"info","evt":"voice.heard","text":"Any other questions"}
+{"ts":"2026-11-10T21:21:31.465Z","lvl":"info","evt":"voice.heard","text":"?"}
+{"ts":"2026-11-10T21:21:44.145Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":4.52,"repeats":9}
+{"ts":"2026-11-10T21:22:09.166Z","lvl":"info","evt":"voice.heard","text":"Do we need anything from me on this"}
+{"ts":"2026-11-10T21:22:18.957Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":5.75,"repeats":9}
+{"ts":"2026-11-10T21:22:18.959Z","lvl":"info","evt":"voice.heard","text":"scan PDF pages?"}
+{"ts":"2026-11-10T21:22:29.972Z","lvl":"info","evt":"voice.heard","text":"We're looking at it now."}
+{"ts":"2026-11-10T21:22:34.157Z","lvl":"info","evt":"voice.heard","text":"That's what we do for abstraction. Any other questions for us?"}
+{"ts":"2026-11-10T21:22:49.682Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.05,"repeats":11}
+{"ts":"2026-11-10T21:23:06.706Z","lvl":"info","evt":"voice.heard","text":"If you have any questions, let's come back."}
+{"ts":"2026-11-10T21:23:10.255Z","lvl":"info","evt":"voice.heard","text":"Thank you for your time. Thank you, guys."}
+{"ts":"2026-11-10T21:23:28.777Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":18.52,"repeats":6}
+{"ts":"2026-11-10T21:33:40.356Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1,"repeats":61}
+{"ts":"2026-11-10T21:33:42.805Z","lvl":"error","evt":"voice.drop","err":"LiveAgentError: uplink stuck: send took >5.0s"}
+{"ts":"2026-11-10T21:33:42.809Z","lvl":"info","evt":"voice.error","text":"Voice session failed. live agent error. Check the log.","detail":"live agent error"}
+{"ts":"2026-11-10T21:33:49.019Z","lvl":"info","evt":"voice.diag","wifi_dbm":-61,"wifi_power_save":"off","load":["0.38","0.33","0.26"],"throttled":"0x0"}
+{"ts":"2026-11-10T21:34:05.058Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T21:34:05.671Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-10T21:34:05.671Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T21:35:16.027Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-10T21:35:16.706Z","lvl":"info","evt":"session.start","mode":"ros","pid":10191,"log":"logs.json"}
+{"ts":"2026-11-10T21:35:19.285Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T21:35:21.402Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-10T21:35:21.402Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T21:35:31.450Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":5.29}
+{"ts":"2026-11-10T21:35:34.324Z","lvl":"info","evt":"voice.heard","text":"Robin, go straight for half a meter."}
+{"ts":"2026-11-10T21:35:34.339Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":0.5},"ok":true,"queued":true,"op":"drive","value":0.5}
+{"ts":"2026-11-10T21:35:46.165Z","lvl":"info","evt":"voice.heard","text":"Robin stop."}
+{"ts":"2026-11-10T21:35:46.169Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-10T21:36:07.861Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":21.43,"repeats":3}
+{"ts":"2026-11-10T21:36:10.482Z","lvl":"info","evt":"voice.heard","text":"Robin go straight for 1/2 m."}
+{"ts":"2026-11-10T21:36:10.485Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":0.5},"ok":true,"queued":true,"op":"drive","value":0.5}
+{"ts":"2026-11-10T21:36:22.819Z","lvl":"info","evt":"voice.heard","text":"Robin, detect my face."}
+{"ts":"2026-11-10T21:36:22.822Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"match_face"},"ok":true,"starting":"match_face","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-10T21:36:22.976Z","lvl":"info","evt":"task.start","task":"match_face","name":"","_unregistered":true}
+{"ts":"2026-11-10T21:36:23.108Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T21:36:25.519Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-10T21:36:32.468Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T21:36:35.287Z","lvl":"info","evt":"face.look","pan":-90.0,"tilt":0.0,"faces":0}
+{"ts":"2026-11-10T21:36:36.521Z","lvl":"info","evt":"face.look","pan":-60.0,"tilt":0.0,"faces":1}
+{"ts":"2026-11-10T21:36:37.927Z","lvl":"info","evt":"face.check","pan":-28,"tilt":10,"quality":0.678,"best":"Roshan","similarity":0.794,"threshold":0.45}
+{"ts":"2026-11-10T21:36:39.370Z","lvl":"info","evt":"task.end","task":"match_face","ok":true,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-10T21:36:39.371Z","lvl":"info","evt":"gesture","name":"yes","text_only":true}
+{"ts":"2026-11-10T21:36:39.371Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-10T21:36:39.412Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T21:36:39.481Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='events' coro=<LiveAgent._pump_events() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:274> exception=APIError('1000 None. ')>","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:299 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-10T21:36:39.489Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='mic-uplink' coro=<LiveAgent._pump_audio() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:234> exception=ConnectionClosedOK(Close(code=1000, reason=''), Close(code=<CloseCode.NORMAL_CLOSURE: 1000>, reason=''), False)>","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:259 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-10T21:36:39.940Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-10T21:36:39.940Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T21:36:45.400Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.83,"repeats":3}
+{"ts":"2026-11-10T21:36:46.815Z","lvl":"info","evt":"voice.heard","text":"flaschen"}
+{"ts":"2026-11-10T21:36:46.818Z","lvl":"info","evt":"voice.say","text":"(model speech discarded \u2014 robot answers by moving)","bytes_dropped":2}
+{"ts":"2026-11-10T21:36:46.818Z","lvl":"info","evt":"voice.say","text":"<no speech","spoken":false}
+{"ts":"2026-11-10T21:36:46.920Z","lvl":"info","evt":"voice.say","text":"detected>","spoken":false}
+{"ts":"2026-11-10T21:36:57.130Z","lvl":"info","evt":"voice.heard","text":"Rabin follow Roshan."}
+{"ts":"2026-11-10T21:36:57.133Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"name":"Roshan","task":"follow"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-10T21:36:57.302Z","lvl":"info","evt":"task.start","task":"follow","name":"Roshan","_unregistered":true}
+{"ts":"2026-11-10T21:36:57.366Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T21:36:57.840Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-10T21:37:04.486Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T21:38:34.128Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":96.23,"repeats":3}
+{"ts":"2026-11-10T21:38:37.192Z","lvl":"info","evt":"voice.heard","text":"Robinsdorf"}
+{"ts":"2026-11-10T21:38:37.194Z","lvl":"info","evt":"task.cancel","by":"voice","_unregistered":true}
+{"ts":"2026-11-10T21:38:37.667Z","lvl":"info","evt":"voice.say","text":"I've stopped","spoken":false}
+{"ts":"2026-11-10T21:38:37.792Z","lvl":"info","evt":"voice.say","text":"the robot.","spoken":false}
+{"ts":"2026-11-10T21:38:38.697Z","lvl":"info","evt":"task.end","task":"follow","ok":true,"cancelled":true,"_unregistered":true}
+{"ts":"2026-11-10T21:38:38.698Z","lvl":"info","evt":"gesture","name":"yes","text_only":true}
+{"ts":"2026-11-10T21:38:38.699Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-10T21:38:38.737Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T21:38:38.846Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='events' coro=<LiveAgent._pump_events() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:274> exception=APIError('1000 None. ')>","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:299 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-10T21:38:38.857Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='mic-uplink' coro=<LiveAgent._pump_audio() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:234> exception=ConnectionClosedOK(Close(code=1000, reason=''), Close(code=<CloseCode.NORMAL_CLOSURE: 1000>, reason=''), False)>","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:259 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-10T21:38:39.623Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-10T21:38:39.624Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T21:39:09.645Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":25.41,"repeats":1}
+{"ts":"2026-11-10T21:39:11.738Z","lvl":"info","evt":"voice.heard","text":"Robin go straight."}
+{"ts":"2026-11-10T21:39:11.741Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
