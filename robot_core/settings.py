@@ -93,6 +93,9 @@ LIVE_SEND_TIMEOUT_S = _env("ROBOT_LIVE_SEND_TIMEOUT_S", "5.0", float)
 # /voice live_resume turns it off): the conversation survives the ~10 min connection
 # resets, and the oldest turns are dropped instead of the session ending at its limit.
 LIVE_RESUME = _flag("ROBOT_LIVE_RESUME")
+# Gestures as text only (robot.yaml /voice gesture_text_only): nothing moves, the OLED
+# shows "Robot Gesture: <name>", so a nod or shake is never mistaken for a move.
+GESTURE_TEXT_ONLY = _flag("ROBOT_GESTURE_TEXT_ONLY", "0")
 LIVE_RECONNECT_BACKOFF_S = _env("ROBOT_LIVE_BACKOFF_S", "2.0", float)
 LIVE_RECONNECT_MAX_S = _env("ROBOT_LIVE_BACKOFF_MAX_S", "60.0", float)
 # While a task runs (main session closed) a cancel-only Live session listens for

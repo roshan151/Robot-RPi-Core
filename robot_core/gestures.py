@@ -46,7 +46,7 @@ import threading
 import time
 from typing import List, Optional, Tuple
 
-from robot_core import robot_log
+from robot_core import robot_log, settings, status
 from robot_core.motion import MotionBackend
 
 logger = logging.getLogger(__name__)
@@ -124,6 +124,10 @@ class Gesturer:
             raise ValueError(
                 f"unknown gesture {name!r}; expected one of {sorted(VOCABULARY)}"
             )
+        if settings.GESTURE_TEXT_ONLY:
+            status.note(f"Robot Gesture: {key}", 6.0)
+            robot_log.event("gesture", name=key, text_only=True)
+            return []
 
         head_busy = self._head_thread is not None and self._head_thread.is_alive()
         if self._motion.busy() or head_busy:

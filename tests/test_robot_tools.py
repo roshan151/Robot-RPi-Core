@@ -241,6 +241,22 @@ def test_gesture_yields_to_real_motion() -> None:
         motion.close()
 
 
+def test_gesture_text_only_shows_the_name_and_moves_nothing(monkeypatch) -> None:
+    from robot_core import status
+    shown = []
+    monkeypatch.setattr(settings, "GESTURE_TEXT_ONLY", True)
+    status.set_sink(shown.append)
+    move, motion, t = tools(seconds=0.5)
+    try:
+        r = run(t.dispatch("answer", {"value": "dance"}))
+        assert r["gestured"] is True and r["jobs"] == []
+        assert not motion.busy(), "a text-only gesture moved the robot"
+        assert {"k": "note", "v": "Robot Gesture: dance", "n": 6.0} in shown
+    finally:
+        status.set_sink(None)
+        motion.close()
+
+
 # --------------------------------------------------------------------------- #
 # Wiring
 # --------------------------------------------------------------------------- #
