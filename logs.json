@@ -2181,3 +2181,16 @@
 {"ts":"2026-11-10T21:39:09.645Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":25.41,"repeats":1}
 {"ts":"2026-11-10T21:39:11.738Z","lvl":"info","evt":"voice.heard","text":"Robin go straight."}
 {"ts":"2026-11-10T21:39:11.741Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
+{"ts":"2026-11-10T21:42:35.520Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":203.51,"repeats":1}
+{"ts":"2026-11-10T21:42:37.786Z","lvl":"info","evt":"voice.heard","text":"Robben robot shutdown."}
+{"ts":"2026-11-10T21:42:37.832Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+72 deg (wanted -90..+90) by the 500-2400 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-10T21:42:38.178Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-10T21:42:38.179Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-10T21:39:10.596Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-10T21:39:11.352Z","lvl":"info","evt":"session.start","mode":"ros","pid":1686,"log":"logs.json"}
+{"ts":"2026-11-10T21:39:14.065Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-10T21:39:16.607Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-10T21:39:16.608Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-10T23:59:00.833Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":68.27}
+{"ts":"2026-11-10T23:59:01.832Z","lvl":"info","evt":"voice.heard","text":"\u00bfQu\u00e9?"}
+{"ts":"2026-11-10T23:59:01.834Z","lvl":"info","evt":"voice.say","text":"<no speech detected>","spoken":false}
