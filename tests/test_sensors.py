@@ -155,14 +155,15 @@ def test_camera_restarts_once_when_frames_stop_and_gives_up_after():
 
 
 
-def test_usb_camera_asks_for_mjpeg_one_buffer_and_drops_the_stale_frame(monkeypatch):
+def test_usb_camera_opens_v4l2_with_mjpeg_one_buffer_and_drops_the_stale_frame(monkeypatch):
     import cv2
     import numpy as np
     from robot_core.sensors import camera as cam_mod
 
     class FakeCap:
-        def __init__(self, index):
-            self.props, self.n, self.grabbed = {}, 0, 0
+        def __init__(self, index, api=None, params=()):
+            self.api, self.n, self.grabbed = api, 0, 0
+            self.props = dict(zip(params[::2], params[1::2]))     # given at open, not set() one by one
         def set(self, prop, value): self.props[prop] = value
         def isOpened(self): return True
         def grab(self):
@@ -177,6 +178,7 @@ def test_usb_camera_asks_for_mjpeg_one_buffer_and_drops_the_stale_frame(monkeypa
     monkeypatch.setattr(cv2, "VideoCapture", FakeCap)
     cam = cam_mod.Camera(main_size=(1920, 1080), inverted=False, backend="opencv")
     cap = cam._cap
+    assert cap.api == cv2.CAP_V4L2, "V4L2 by name: left to choose, OpenCV took GStreamer (~9 s to open)"
     assert cap.props[cv2.CAP_PROP_FOURCC] == cv2.VideoWriter_fourcc(*"MJPG")
     assert cap.props[cv2.CAP_PROP_BUFFERSIZE] == 1
     f = cam.capture()

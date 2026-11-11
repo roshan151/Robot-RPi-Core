@@ -41,7 +41,7 @@
 
 /voice:
   ros__parameters:
-  
+
     # if true, Look for the Bluetooth buds and prefer them when their mic is up
     buds_check: false
 
@@ -90,7 +90,8 @@
     camera_inverted: true      # mounted upside down: rotated 180 deg (ISP on the ribbon camera, software on USB)
     head_height_m: 0.25        # MEASURE: TF-Luna height above the floor
     pan_axis_x_m: 0.05         # MEASURE: pan axis ahead of the wheel-axle centre
-    hfov_deg: 105.0            # USB HD (PS5268): ~105, MEASURE (docs/USB-CAMERA-MIC.md step 6). V2 was 66
+    hfov_deg: 80.0             # USB HD: measured 2026-11-10 (1 m of tape = 764 px at 1.5 m). The lens bends
+                               # (fisheye-like): ~105 at the edges, but the angle maths uses the centre. V2 was 66
     pwm_chip: 0                # Pi 4: 0. Pi 5: 2
     pan_channel: 1             # GPIO13
     tilt_channel: 0            # GPIO12
