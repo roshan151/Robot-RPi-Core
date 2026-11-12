@@ -41,15 +41,20 @@
 
 /voice:
   ros__parameters:
-    # Placeholder: the Live session still reads model, prompt and audio device
-    # from robot_core/settings.py and the environment. Moving those here is a
-    # later tidy-up, not a Phase 3 requirement.
-    {}
+
+    # if true, Look for the Bluetooth buds and prefer them when their mic is up
+    buds_check: false
+
+    # if true, Gemini session resumption + context-window compression: the conversation carries
+    live_resume: true
+
+    # if true, gestures are not played: the OLED shows "Robot Gesture: <name>" instead,
+    gesture_text_only: true
 
 /explorer:
   ros__parameters:
     # Mac vision service. Empty = VISION_SERVICE_BASE_URL from /etc/robot.env.
-    vision_url: ""
+    vision_url: "http://roshans-mac-mini.local:8080"
 
     # Maps are saved on the Mac under this name. To re-scan later on the same
     # map (growth tracking), set continue_map: true and start_pose to where the
@@ -74,25 +79,33 @@
     # Head. Pan is limited to +-90 and tilt to +-45 in the driver, and both
     # park at their start position (the *_center_us pulse) on shutdown.
     tfluna_port: "/dev/serial0"
-    camera_main_size: [1920, 1080]
-    camera_inverted: true      # mounted upside down: rotated 180 deg in the ISP
+    tfluna_fitted: false        # false = TF-Luna removed: follow runs without it, explore is refused
+    # Head camera: the USB U20CAM-1080P-WDR (PS5268, 1080p HDR) on the gimbal,
+    # the only camera (docs/USB-CAMERA-MIC.md). Its built-in mic is the voice
+    # fallback when the buds are off.
+    camera_backend: "opencv"   # auto | picamera2 (ribbon) | opencv (USB)
+    camera_index: 0            # USB camera: /dev/videoN (v4l2-ctl --list-devices)
+    camera_main_size: [1920, 1080]   # explore photos
+    face_camera_size: [1920, 1080]   # enroll / match / follow (was [640, 480] for the V2)
+    camera_inverted: true      # mounted upside down: rotated 180 deg (ISP on the ribbon camera, software on USB)
     head_height_m: 0.25        # MEASURE: TF-Luna height above the floor
     pan_axis_x_m: 0.05         # MEASURE: pan axis ahead of the wheel-axle centre
-    hfov_deg: 66.0             # Camera Module 3: 66; Module 3 Wide: 102
+    hfov_deg: 80.0             # USB HD: measured 2026-11-10 (1 m of tape = 764 px at 1.5 m). The lens bends
+                               # (fisheye-like): ~105 at the edges, but the angle maths uses the centre. V2 was 66
     pwm_chip: 0                # Pi 4: 0. Pi 5: 2
     pan_channel: 1             # GPIO13
     tilt_channel: 0            # GPIO12
-    pan_center_us: 1500.0      # measured (check_servo_pulse.py trim): head points straight ahead
-    tilt_center_us: 1500.0     # measured (check_servo_pulse.py trim): head is level
+    pan_center_us: 1600.0      # measured (check_servo_pulse.py trim): head points straight ahead
+    tilt_center_us: 1400.0     # measured (check_servo_pulse.py trim): head is level
     pan_us_per_deg: 11.111     # pulse change per degree (2000/180); MEASURE with tests/hardware/check_servo_pulse.py
     tilt_us_per_deg: 11.111
     pan_invert: false          # +pan must turn the head LEFT
     tilt_invert: true          # +tilt must look UP (flipped: this servo was mounted the other way up)
-    servo_speed_dps: 30.0      # head speed, deg/s; lower = slower, below ~10 gets steppy
+    servo_speed_dps: 60.0      # head speed, deg/s; lower = slower, below ~10 gets steppy
     servo_min_us: 500.0        # hard pulse window: no angle or trim can send a pulse outside it. The driver
     servo_max_us: 2400.0       # shrinks the reachable angles to fit (pan at 2300 us has only ~9 deg to the left):
                                # re-fit the horn nearer the middle, or widen this if the servo really goes further
     hold_on_close: true        # on shutdown park at centre and KEEP holding it (false: release the PWM, servos go limp)
-    servo_power_gpio: 21       # BCM pin that reads the servo +5 V through a 10k/20k divider (high = on); 0 = none fitted.
+    servo_power_gpio: 4        # BCM pin that reads the servo +5 V through a 10k/20k divider (high = on); 0 = none fitted.
                                # While it reads low the head is frozen and moves are refused, so switching the servos on
                                # can never snap them to a stale position

@@ -8,15 +8,16 @@ say, it says by moving.
 
 Vocabulary
 ----------
-    YES      forward 0.1 m, back 0.1 m          (a nod)
-    NO       left 30°, right 60°, left 30°      (a head shake, net zero)
+    YES      head tilts up, down past level, then back   (a nod - gimbal only, wheels still)
+    NO       head pans left, right past centre, then back (a shake - gimbal only, wheels still)
     UNCLEAR  same as NO — "no" and "I didn't understand you" are deliberately
              the same gesture
     DANCE    a ~20 s celebration ending in a full spin. Net zero on paper:
              the four 0.1 m reverses are undone by the closing 0.4 m forward,
              and the turns sum to exactly -360°. It is the one gesture that
              outlasts the sentence that prompted it, which is why `play()`
-             refuses to start a second one on top of it.
+             refuses to start a second one on top of it. With a head fitted,
+             the head counter-pans every turn so it keeps facing the same way.
 
 Steps are **signed**, in the same units the model's tools use: positive metres
 drive forward, positive degrees turn right.  That means a gesture is literally a
@@ -41,32 +42,31 @@ not depend on odometry.
 from __future__ import annotations
 
 import logging
+import threading
+import time
 from typing import List, Optional, Tuple
 
-from robot_core import robot_log
+from robot_core import robot_log, settings, status
 from robot_core.motion import MotionBackend
 
 logger = logging.getLogger(__name__)
 
-# ("drive", signed metres) or ("turn", signed degrees)
-Step = Tuple[str, float]
+# ("drive", signed metres), ("turn", signed degrees) or ("tilt"/"pan", degrees, degrees, ...)
+Step = Tuple
 
 GESTURE_YES_METERS = 0.1
 GESTURE_NO_DEGREES = 30.0
+GESTURE_NOD_DEGREES = 30.0      # head tilt for YES
+GESTURE_SHAKE_DEGREES = 45.0    # head pan for NO
 
 DRIVE = "drive"
 TURN = "turn"
+TILT = "tilt"                   # head steps: (axis, move, move, ...), each move relative to the last, then back to the start; + tilt up, + pan left
+PAN = "pan"
 
-YES: List[Step] = [
-    (DRIVE, +GESTURE_YES_METERS),
-    (DRIVE, -GESTURE_YES_METERS),
-]
+YES: List[Step] = [(TILT, +GESTURE_NOD_DEGREES, -2 * GESTURE_NOD_DEGREES)]        # up 30, down 60, back
 
-NO: List[Step] = [
-    (TURN, -GESTURE_NO_DEGREES),
-    (TURN, +GESTURE_NO_DEGREES * 2),
-    (TURN, -GESTURE_NO_DEGREES),
-]
+NO: List[Step] = [(PAN, +GESTURE_SHAKE_DEGREES, -2 * GESTURE_SHAKE_DEGREES)]      # left 45, right 90, back
 
 DANCE: List[Step] = [
     (TURN,  -GESTURE_NO_DEGREES),
@@ -94,10 +94,18 @@ VOCABULARY = {
 class Gesturer:
     """Plays gestures without ever blocking the caller."""
 
-    def __init__(self, motion: MotionBackend) -> None:
+    def __init__(self, motion: MotionBackend, head=None) -> None:
         self._motion = motion
+        self._head = head                       # HeadLook for the yes/no gestures; None = no head
+        self._head_thread: Optional[threading.Thread] = None
+        self._cancel = threading.Event()        # set by stop(): a running gesture sends no further step
 
-    def play(self, name: str) -> Optional[List[int]]:
+    def cancel(self) -> None:
+        """Stop a gesture that sends its steps one at a time (dance with a head, nods).
+        The caller still brakes the move in progress."""
+        self._cancel.set()
+
+    def play(self, name: str, wait: bool = False) -> Optional[List[int]]:
         """Queue a gesture. Returns job ids, or None if it was suppressed.
 
         Suppressed whenever the robot is already moving or has work queued, for
@@ -116,10 +124,21 @@ class Gesturer:
             raise ValueError(
                 f"unknown gesture {name!r}; expected one of {sorted(VOCABULARY)}"
             )
+        if settings.GESTURE_TEXT_ONLY:
+            status.note(f"Robot Gesture: {key}", 6.0)
+            robot_log.event("gesture", name=key, text_only=True)
+            return []
 
-        if self._motion.busy():
+        head_busy = self._head_thread is not None and self._head_thread.is_alive()
+        if self._motion.busy() or head_busy:
             robot_log.event("gesture.skip", name=key, why="busy")
             return None
+
+        self._cancel.clear()
+        if all(op in (TILT, PAN) for op, *_ in steps):
+            return self._play_head(key, steps, wait)
+        if self._head is not None:
+            return self._play_body_with_head(key, steps, wait)
 
         jobs: List[int] = []
         for op, value in steps:
@@ -133,3 +152,68 @@ class Gesturer:
 
         robot_log.event("gesture", name=key, jobs=jobs)
         return jobs
+
+    def _play_body_with_head(self, key: str, steps: List[Step], wait: bool) -> Optional[List[int]]:
+        """Body steps one at a time, the head counter-panning each turn in sync so it keeps
+        facing the same way (+turn is right, +pan is left: the same sign is the opposite
+        direction). Drives leave the head where it is; the full spin brings it back to centre."""
+        def run() -> None:
+            heading = 0.0
+            try:
+                for op, value in steps:
+                    if self._cancel.is_set():
+                        break
+                    if op == TURN:
+                        heading += value
+                        self._head.pan_to(((heading + 180) % 360) - 180)    # starts now, doesn't wait
+                        result = self._motion.turn(value, gesture=True)
+                    else:
+                        result = self._motion.drive(value, gesture=True)
+                    if not result.get("ok"):
+                        robot_log.event("gesture.skip", name=key, why="backend refused",
+                                        detail=result.get("error", ""))
+                        break
+                    while self._motion.busy() and not self._cancel.is_set():  # this step done...
+                        time.sleep(0.02)
+                    if op == TURN and not self._cancel.is_set():
+                        self._head.pan_to(((heading + 180) % 360) - 180, wait=True)  # ...and the head too
+            except Exception as e:                       # noqa: BLE001 - a gesture must never take the session down
+                robot_log.event("gesture.skip", logging.WARNING, name=key, why=f"{type(e).__name__}: {e}")
+            finally:
+                try:
+                    self._head.pan_to(0.0, wait=True)    # always end facing forward
+                except Exception:                        # noqa: BLE001
+                    pass
+
+        robot_log.event("gesture", name=key, head=True, body=True)
+        if wait:
+            run()
+        else:
+            self._head_thread = threading.Thread(target=run, name=f"gesture-{key}", daemon=True)
+            self._head_thread.start()
+        return []
+
+    def _play_head(self, key: str, steps: List[Step], wait: bool) -> Optional[List[int]]:
+        """Run a head gesture on the gimbal, in the background unless `wait`."""
+        if self._head is None:
+            robot_log.event("gesture.skip", name=key, why="no head")
+            return None
+
+        def run() -> None:
+            try:
+                for axis, *degrees in steps:
+                    if self._cancel.is_set():
+                        return
+                    if not self._head.gesture(axis, *degrees):
+                        robot_log.event("gesture.skip", name=key, why="head has no power")
+                        return
+            except Exception as e:                       # noqa: BLE001 - a gesture must never take the session down
+                robot_log.event("gesture.skip", logging.WARNING, name=key, why=f"{type(e).__name__}: {e}")
+
+        robot_log.event("gesture", name=key, head=True)
+        if wait:
+            run()
+        else:
+            self._head_thread = threading.Thread(target=run, name=f"gesture-{key}", daemon=True)
+            self._head_thread.start()
+        return []

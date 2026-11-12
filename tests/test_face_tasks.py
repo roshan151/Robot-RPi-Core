@@ -10,7 +10,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from robot_core import face_tasks  # noqa: E402
+from robot_core import face_tasks, settings  # noqa: E402
 
 
 class Clock:
@@ -75,6 +75,8 @@ class Head:
 
     def wait_settled(self): return True
     def aim_at_pixel(self, frame, u, v): self.aimed += 1
+    def pixel_angles(self, frame, u, v):                # the face is a little left of / above centre
+        return (self.pose[0] + 2.0, self.pose[1] + 1.0)
 
 
 class HeadCamera(Camera):
@@ -92,23 +94,108 @@ class SeesFaceAt(Vision):
         pan, tilt = self.head.pose
         return super().face_embed(jpeg, seq) if pan >= 15 and tilt >= 20 else None
 
+    def face_match(self, emb):
+        self.checks.append(self.head.pose)
+        return super().face_match(emb)
 
-def test_head_searches_upward_only_then_locks_on_the_face_and_holds():
+    checks: list
+
+
+def sees(head, **kw):
+    v = SeesFaceAt(head, **kw)
+    v.checks = []
+    return v
+
+
+def test_enroll_frames_the_face_but_never_sweeps():
     head = Head()
-    v = SeesFaceAt(head)
+    assert face_tasks.enroll(HeadCamera(head), Vision(), "sam", seconds=30, clock=Clock(), head=head)
+    assert head.moves == [(0.0, settings.FACE_ENROLL_TILT_DEG)], "enroll must not sweep"
+    assert head.aimed > 0, "an off-centre face should be re-aimed at"
+
+
+def test_enroll_holds_still_on_a_centred_face():
+    head = Head()
+    v = Vision()
+    v.face_embed = lambda jpeg, seq=0: {"embedding": [1.0], "face_count": 1, "quality": 0.9,
+                                        "face_bbox": [24, 14, 40, 34]}       # centre of the 64x48 frame
     assert face_tasks.enroll(HeadCamera(head), v, "sam", seconds=30, clock=Clock(), head=head)
+    assert head.aimed == 0
+
+
+class CutFace(Vision):
+    def face_embed(self, jpeg, seq=0):
+        out = super().face_embed(jpeg, seq)
+        out["face_bbox"] = [10, -12, 30, 20]         # top of the face above the frame
+        return out
+
+
+def test_enroll_keeps_no_shot_with_the_face_cut_off():
+    v = CutFace()
+    assert not face_tasks.enroll(Camera(), v, "sam", seconds=30, clock=Clock())
+    assert v.enrolled is None
+
+
+def test_full_face_scales_wire_boxes_back_to_the_frame():
+    big = SimpleNamespace(main=np.zeros((1080, 1920, 3), np.uint8))
+    assert face_tasks.full_face(big, [800, 300, 1000, 560])
+    assert not face_tasks.full_face(big, [800, -40, 1000, 560])
+
+
+def test_match_scans_right_to_left_upward_only_centring_and_checking_each_face():
+    head = Head()
+    v = sees(head, sim=0.0)                                      # never matches: the scan runs to the end
+    assert face_tasks.match(HeadCamera(head), v, seconds=1000, clock=Clock(), head=head) is None
     assert all(tilt >= 0 for _, tilt in head.moves), "looked below the base position"
-    assert head.aimed == 1, "should centre on the face once, then hold"
-    last_search = head.moves[-1]
-    assert last_search[0] >= 15 and last_search[1] >= 20       # stopped searching where it found it
+    assert head.moves[:7] == [(p, 0.0) for p in (-90.0, -60.0, -30.0, 0.0, 30.0, 60.0, 90.0)]
+    scan = [m for m in head.moves if m[0] in settings.FACE_SEARCH_PANS and m[1] in settings.FACE_SEARCH_TILTS]
+    assert len(scan) == 21, "one full scan, no repeats"
+    seen_at = [m for m in scan if m[0] >= 15 and m[1] >= 20]
+    assert len(v.checks) == len(seen_at), "each face matched once"
+    assert all(c[0] % 30 == 2 and c[1] % 10 == 1 for c in v.checks), "matched only after centring on it"
+
+
+def test_the_same_face_seen_from_two_positions_is_matched_once():
+    head = Head()
+    head.pixel_angles = lambda frame, u, v: (70.0, 35.0)        # one person, wherever the head looks
+    v = sees(head, sim=0.0)
+    face_tasks.match(HeadCamera(head), v, seconds=1000, clock=Clock(), head=head)
+    assert len(v.checks) == 1
+
+
+def test_an_unreachable_mac_says_so_instead_of_no_face(monkeypatch):
+    from robot_core import status
+    from robot_core.vision_client import VisionError
+    shown = []
+    status.set_sink(shown.append)
+    v = Vision()
+    v.face_embed = lambda jpeg, seq=0: (_ for _ in ()).throw(VisionError("POST /v1/faces/embed: No route to host"))
+    try:
+        assert face_tasks.match(Camera(), v, seconds=5, clock=Clock()) is None
+    finally:
+        status.set_sink(None)
+    codes = [m["v"] for m in shown if m["k"] == "error"]
+    assert codes == ["V01"]
 
 
 def test_head_match_reports_unknown_when_nobody_is_found():
     head = Head()
-    v = SeesFaceAt(head, sim=0.9)
+    v = sees(head, sim=0.9)
     head.pose = (0.0, 0.0)
     assert face_tasks.match(HeadCamera(head), v, seconds=30, clock=Clock(), head=head) == "sam"
-    nobody = SeesFaceAt(Head(), faces=0)
+    nobody = sees(Head(), faces=0)
     h2 = nobody.head
     assert face_tasks.match(HeadCamera(h2), nobody, seconds=30, clock=Clock(), head=h2) is None
     assert all(t >= 0 for _, t in h2.moves) and len(h2.moves) > 4      # it did sweep
+
+
+def test_a_cancelled_enroll_saves_nothing_and_a_cancelled_match_finds_nobody():
+    from robot_core import task_cancel
+    task_cancel.request("service")
+    try:
+        v = Vision()
+        assert not face_tasks.enroll(Camera(), v, "sam", seconds=30, clock=Clock())
+        assert v.enrolled is None
+        assert face_tasks.match(Camera(), Vision(sim=0.9), seconds=5, clock=Clock()) is None
+    finally:
+        task_cancel.reset()

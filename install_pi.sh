@@ -24,7 +24,7 @@ ROS_PACKAGES=(   # the rospian repo has no ros-base bundle, so list what the rob
 OTHER_PACKAGES=(
   curl gnupg git ca-certificates python3-venv
   python3-picamera2 python3-libcamera python3-opencv python3-numpy python3-yaml   # camera + vision
-  libportaudio2 alsa-utils pulseaudio-utils bluez pipewire pipewire-pulse pipewire-alsa wireplumber libspa-0.2-bluetooth  # audio, buds (pipewire-alsa routes PortAudio to the buds)
+  libportaudio2 alsa-utils pulseaudio-utils v4l-utils bluez pipewire pipewire-pulse pipewire-alsa wireplumber libspa-0.2-bluetooth  # audio, buds (pipewire-alsa routes PortAudio to the buds)
 )
 PIP_EXTRAS="voice,explore,oled"
 
@@ -118,6 +118,10 @@ sudo loginctl enable-linger "$USER"
 say "Head servos (PWM overlay) and TF-Luna serial port"
 OVERLAY="dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4"
 grep -qxF "$OVERLAY" /boot/firmware/config.txt || echo "$OVERLAY" | sudo tee -a /boot/firmware/config.txt >/dev/null
+# The 3.5 mm audio jack shares that PWM block: any sound played there corrupts the servo pulses
+# and the head slams to its ends. No speaker is on the jack, so switch analog audio off.
+sudo sed -i 's/^dtparam=audio=on/dtparam=audio=off/' /boot/firmware/config.txt
+grep -qxF "dtparam=audio=off" /boot/firmware/config.txt || echo "dtparam=audio=off" | sudo tee -a /boot/firmware/config.txt >/dev/null
 sudo raspi-config nonint do_serial_cons 1     # 1 = no login shell on the serial port
 sudo raspi-config nonint do_serial_hw 0       # 0 = serial hardware on
 sudo raspi-config nonint do_spi 0              # 0 = SPI on (status OLED)

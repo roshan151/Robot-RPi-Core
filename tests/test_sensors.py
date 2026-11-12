@@ -154,6 +154,38 @@ def test_camera_restarts_once_when_frames_stop_and_gives_up_after():
 
 
 
+
+def test_usb_camera_opens_v4l2_with_mjpeg_one_buffer_and_drops_the_stale_frame(monkeypatch):
+    import cv2
+    import numpy as np
+    from robot_core.sensors import camera as cam_mod
+
+    class FakeCap:
+        def __init__(self, index, api=None, params=()):
+            self.api, self.n, self.grabbed = api, 0, 0
+            self.props = dict(zip(params[::2], params[1::2]))     # given at open, not set() one by one
+        def set(self, prop, value): self.props[prop] = value
+        def isOpened(self): return True
+        def grab(self):
+            self.n += 1
+            self.grabbed += 1
+            return True
+        def read(self):
+            self.n += 1
+            return True, np.full((1080, 1920, 3), self.n, np.uint8)
+        def release(self): pass
+
+    monkeypatch.setattr(cv2, "VideoCapture", FakeCap)
+    cam = cam_mod.Camera(main_size=(1920, 1080), inverted=False, backend="opencv")
+    cap = cam._cap
+    assert cap.api == cv2.CAP_V4L2, "V4L2 by name: left to choose, OpenCV took GStreamer (~9 s to open)"
+    assert cap.props[cv2.CAP_PROP_FOURCC] == cv2.VideoWriter_fourcc(*"MJPG")
+    assert cap.props[cv2.CAP_PROP_BUFFERSIZE] == 1
+    f = cam.capture()
+    assert cap.grabbed == 1 and int(f.main[0, 0, 0]) == 2, "the queued frame is dropped first"
+    assert f.main.shape == (1080, 1920, 3) and f.lores.shape == (240, 320)
+
+
 # --- servo supply: a head that cannot move must never be "moved" -----------------------
 
 def test_gimbal_freezes_while_servo_supply_is_off_and_resumes_without_a_jump():
@@ -198,6 +230,40 @@ def test_gimbal_drops_a_move_in_flight_when_servo_supply_dies():
         g.close(release=True)
 
 
+def test_no_position_is_saved_while_the_servo_supply_is_off(tmp_path):
+    """The servos ignore pulses with the supply off, so the commanded pose is not the
+    real one: saving it would make the next start's first pulse dash there."""
+    import json
+    f = tmp_path / "head.json"
+    rail = {"on": True}
+    g = Gimbal(backend="fake", state_path=f, power_sense=lambda: rail["on"])
+    try:
+        g.move_to(-60, 30, speed_dps=60, wait=True, timeout=5)
+        time.sleep(0.1)                                   # the arrival save lands just after wait() returns
+        saved = json.loads(f.read_text())
+        rail["on"] = False
+        time.sleep(0.2)
+        g._save_state()
+        assert json.loads(f.read_text()) == saved
+    finally:
+        g.close(release=True)
+    assert not f.exists(), "could not park: the saved position is dropped, the next start sends the centre"
+    again = Gimbal(backend="fake", state_path=f)
+    try:
+        assert again.angles() == (0.0, 0.0) and again.pan.out.pulses[0] == again.pan.cfg.center_us
+    finally:
+        again.close(release=True)
+
+
+def test_a_parked_head_is_saved_at_centre(tmp_path):
+    import json
+    f = tmp_path / "head.json"
+    g = Gimbal(backend="fake", state_path=f, power_sense=lambda: True)
+    g.move_to(-40, 20, speed_dps=60, wait=True, timeout=5)
+    g.close(release=True)
+    assert json.loads(f.read_text()) == {"pan_us": g.pan.cfg.center_us, "tilt_us": g.tilt.cfg.center_us}
+
+
 def test_a_failing_power_sensor_reads_as_off():
     def broken():
         raise OSError("gpio gone")
@@ -231,3 +297,173 @@ def test_servo_speed_is_a_hard_ceiling_whatever_a_caller_asks_for():
             assert np.abs(np.diff(out.pulses)).max() < 30 / 50 * (2000 / 180) + 1      # never faster than 30 deg/s
     finally:
         g.close(release=True)
+
+
+# --- fail-safe: anything off stops the head instead of letting it snap -------------------
+
+def _gimbal_status(monkeypatch):
+    """Capture what the gimbal puts on the OLED."""
+    from robot_core import status
+    seen = []
+    monkeypatch.setattr(status, "error", lambda code, text="", hold=0: seen.append(code))
+    return seen
+
+
+def test_pwm_overwritten_behind_our_back_stops_the_head_and_latches(tmp_path, monkeypatch):
+    """Another process / driver reprogramming the channel: stop, say so, stay stopped after a restart."""
+    seen = _gimbal_status(monkeypatch)
+    f = tmp_path / "head.json"
+    g = Gimbal(backend="fake", state_path=f)
+    try:
+        g.pan.out.verify = lambda: "enable=1 period=20000000 duty=0 ns, but wrote 1600 us"
+        deadline = time.monotonic() + 2
+        while not g.fault and time.monotonic() < deadline:
+            time.sleep(0.02)
+        assert g.fault.startswith("pwm:") and "G04" in seen
+        assert not g.pan.out.enabled and not g.tilt.out.enabled           # both outputs stopped
+        assert g.move_to(30, 30, wait=True, timeout=1) == g.angles() == (0.0, 0.0)
+        assert "needs a reset" in g.refuse() and not g.powered()
+    finally:
+        g.close()
+    again = Gimbal(backend="fake", state_path=f)                          # a restart does not quietly try again
+    try:
+        assert again.fault.startswith("latched:") and "G07" in seen and not again.powered()
+    finally:
+        again.close()
+
+
+def test_first_pulse_is_checked_before_anything_can_move(tmp_path, monkeypatch):
+    from robot_core.sensors import gimbal as gm
+    seen = _gimbal_status(monkeypatch)
+
+    class Bad(gm.FakePwm):
+        def verify(self):
+            return "never reached the line"
+    monkeypatch.setattr(gm, "HardwarePwm", lambda ch, chip=0: Bad())
+    monkeypatch.setattr(gm, "LOCK_PATH", str(tmp_path / "lock"))
+    g = Gimbal(backend="hardware", state_path=tmp_path / "head.json")
+    try:
+        assert g.fault.startswith("pwm:") and "G04" in seen and not g.pan.out.enabled
+        assert g.move_to(10, 10, wait=True, timeout=1) == (0.0, 0.0)
+    finally:
+        g.close()
+
+
+def test_a_pulse_that_jumps_in_one_frame_trips_it(monkeypatch):
+    seen = _gimbal_status(monkeypatch)
+    g = Gimbal(backend="fake")
+    try:
+        g.move_to(10, 0, wait=True, timeout=5)
+        with g._lock:
+            g.pan.pos, g.pan.target = 80.0, 10.0                          # the angle jumps behind the planner's back
+            g._moving = True
+        deadline = time.monotonic() + 2
+        while not g.fault and time.monotonic() < deadline:
+            time.sleep(0.02)
+        assert g.fault.startswith("pulse:") and "G05" in seen and not g.pan.out.enabled
+    finally:
+        g.close()
+
+
+def test_a_crashed_loop_stops_the_head_instead_of_leaving_a_pulse_running(monkeypatch):
+    seen = _gimbal_status(monkeypatch)
+    g = Gimbal(backend="fake")
+    try:
+        def boom(dt):
+            raise OSError("sysfs write failed")
+        g.pan.step = boom
+        g.move_to(20, 0, wait=True, timeout=2)                            # wait() must not hang for the full timeout
+        deadline = time.monotonic() + 2
+        while not g.fault and time.monotonic() < deadline:
+            time.sleep(0.02)
+        assert g.fault.startswith("loop:") and "G06" in seen and not g.pan.out.enabled and not g.tilt.out.enabled
+    finally:
+        g.close()
+
+
+def test_non_numbers_and_negative_speeds_are_refused_not_clamped_to_the_limit():
+    g = Gimbal(backend="fake")
+    try:
+        for bad in ((float("nan"), None, None), (None, float("inf"), None), (10, 10, float("nan")), (10, 10, -30)):
+            assert g.move_to(*bad, wait=False) == (0.0, 0.0)
+        time.sleep(0.2)
+        assert g.angles() == (0.0, 0.0) and not g.fault                   # refused, not a fault: the next order works
+        assert g.move_to(10, 10, wait=True, timeout=5) == (10, 10)
+    finally:
+        g.close(release=True)
+
+
+def test_only_one_gimbal_drives_the_pwm_at_a_time(tmp_path, monkeypatch):
+    from robot_core.sensors import gimbal as gm
+    seen = _gimbal_status(monkeypatch)
+    made = []
+    monkeypatch.setattr(gm, "HardwarePwm", lambda ch, chip=0: made.append(ch) or gm.FakePwm())
+    monkeypatch.setattr(gm, "LOCK_PATH", str(tmp_path / "lock"))
+    first = Gimbal(backend="hardware", state_path=tmp_path / "head.json")
+    second = Gimbal(backend="hardware", state_path=tmp_path / "head.json")
+    try:
+        assert not first.fault and len(made) == 2
+        assert second.fault.startswith("busy:") and "G08" in seen and len(made) == 2     # never touched the hardware
+        assert not second.powered() and not (tmp_path / "head.fault").exists()           # busy is not latched
+    finally:
+        second.close()
+        first.close()
+    third = Gimbal(backend="hardware", state_path=tmp_path / "head.json")                # the lock was handed on
+    try:
+        assert not third.fault
+    finally:
+        third.close()
+
+
+def test_reset_clears_a_latched_fault(tmp_path, monkeypatch):
+    from robot_core.sensors import gimbal as gm
+    f = tmp_path / "head.json"
+    f.with_suffix(".fault").write_text("pwm: ch1 something")
+    monkeypatch.setattr(gm, "params_from_robot_yaml", lambda: {"head_state_file": str(f)})
+    monkeypatch.setattr("sys.argv", ["gimbal", "reset"])
+    gm.main()
+    assert not f.with_suffix(".fault").exists()
+    g = Gimbal(backend="fake", state_path=f)
+    try:
+        assert not g.fault and g.powered()
+    finally:
+        g.close()
+
+
+def test_hardware_verify_reads_the_kernel_channel_back(tmp_path):
+    from robot_core.sensors.gimbal import HardwarePwm
+    pwm = HardwarePwm.__new__(HardwarePwm)                                # no sysfs here: point it at a fake channel dir
+    pwm._dir, pwm._started, pwm._us = tmp_path, True, 1600.0
+
+    def chan(enable, period, duty):
+        for name, v in (("enable", enable), ("period", period), ("duty_cycle", duty)):
+            (tmp_path / name).write_text(f"{v}\n")
+    chan(1, 20_000_000, 1_600_000)
+    assert pwm.verify() is None
+    chan(1, 20_000_000, 0)
+    assert "duty=0" in pwm.verify()
+    chan(0, 20_000_000, 1_600_000)
+    assert "enable=0" in pwm.verify()
+    chan(1, 10_000_000, 1_600_000)
+    assert "period=10000000" in pwm.verify()
+    (tmp_path / "duty_cycle").unlink()
+    assert "unreadable" in pwm.verify()
+    pwm._started = False
+    assert pwm.verify() is None                                           # stopped on purpose: nothing to check
+
+
+def test_head_look_reports_a_fault_and_lets_go_of_the_dead_gimbal(tmp_path):
+    from robot_core.head_look import HeadLook
+    f = tmp_path / "head.json"
+    g = Gimbal(backend="fake", state_path=f)
+    made = []
+    head = HeadLook(lambda: made.append(1) or (g if len(made) == 1 else Gimbal(backend="fake", state_path=f)))
+    try:
+        assert head.look(20)["ok"]
+        g._trip("pwm", "ch1 test")
+        r = head.look(20)
+        assert not r["ok"] and "fault" in r["error"] and head._gimbal is None
+        r = head.look(20)                                                 # re-opens: the latch keeps it dead
+        assert not r["ok"] and "needs a reset" in r["error"]
+    finally:
+        head.release()

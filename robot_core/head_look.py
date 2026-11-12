@@ -29,12 +29,57 @@ class HeadLook:
                 self._gimbal = self._open()
                 self._pos = {"pan": 0.0, "tilt": 0.0}
             g = self._gimbal
-            if not g.powered():
-                return {"ok": False, "error": "head servos have no power - switch the servo supply on"}
+            why = g.refuse()
+            if why:
+                if g.fault:                      # tripped: let go of it, so the next look re-checks (a latched fault stays dead)
+                    g.close()
+                    self._gimbal = None
+                return {"ok": False, "error": why}
             lo, hi = (g.tilt_limits if axis == "tilt" else g.pan_limits)()
-            wanted = self._pos[axis] + degrees
+            before, wanted = self._pos[axis], self._pos[axis] + degrees
             self._pos[axis] = g.move_to(**{axis: wanted}, wait=False)[1 if axis == "tilt" else 0]
-            return {"ok": True, axis: round(self._pos[axis], 1), "clamped": not lo <= wanted <= hi}
+            return {"ok": True, axis: round(self._pos[axis], 1), "clamped": not lo <= wanted <= hi,
+                    "delta": self._pos[axis] - before}      # what actually moved (after clamping): used to retrace
+
+    def center(self) -> Dict[str, Any]:
+        """Back to straight ahead: both axes to the position the head started from."""
+        deltas = {}
+        for axis in ("tilt", "pan"):
+            r = self.look(-self._pos[axis], axis)
+            if not r.get("ok"):
+                return r
+            deltas[axis] = r["delta"]
+        return {"ok": True, "pan": 0.0, "tilt": 0.0, "deltas": deltas}
+
+    def gesture(self, axis: str, *degrees: float) -> bool:
+        """Blocking: move `axis` by each of `degrees` in turn (each relative to the last),
+        then back to where it started (a nod or a head shake). False if the head has no power."""
+        with self._lock:
+            if self._gimbal is None:
+                self._gimbal = self._open()
+                self._pos = {"pan": 0.0, "tilt": 0.0}
+            g, start = self._gimbal, self._pos[axis]
+        if not g.powered():
+            return False
+        pos = start
+        for d in degrees:
+            pos += d
+            g.move_to(**{axis: pos}, wait=True)
+        g.move_to(**{axis: start}, wait=True)
+        return True
+
+    def pan_to(self, degrees: float, wait: bool = False) -> bool:
+        """Pan to `degrees` from where the head started (+ left), without changing the
+        remembered position; `wait=False` returns at once. False if the head has no power."""
+        with self._lock:
+            if self._gimbal is None:
+                self._gimbal = self._open()
+                self._pos = {"pan": 0.0, "tilt": 0.0}
+            g, start = self._gimbal, self._pos["pan"]
+        if not g.powered():
+            return False
+        g.move_to(pan=start + degrees, wait=wait)
+        return True
 
     def release(self, hold: bool = True) -> None:
         """Park the head. `hold=False` also stops the servo pulses afterwards (servos go limp):

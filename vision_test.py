@@ -7,13 +7,14 @@
 """
 import argparse, os, time
 import cv2, requests
-from picamera2 import Picamera2
+from robot_core.sensors.camera import Camera
+from robot_core.sensors.gimbal import params_from_robot_yaml
 
 
 p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 p.add_argument("mode", choices=["detect", "enroll", "match"])
-p.add_argument("--url", default=os.getenv("VISION_SERVICE_BASE_URL", "http://127.0.0.1:8080"))
-p.add_argument("--camera", type=int, default=0)
+p.add_argument("--url", default=os.getenv("VISION_SERVICE_BASE_URL", "http://roshans-mac-mini.local:8080"))
+p.add_argument("--camera", type=int, default=0, help="USB camera /dev/videoN (default: robot.yaml camera_index)")
 p.add_argument("--seconds", type=float, default=60, help="enroll capture length")
 a = p.parse_args()
 a.url = a.url.rstrip("/")
@@ -40,12 +41,14 @@ def label(frame, text, xy=(10, 30), color=YELLOW, bbox=None):
 
 
 def frames():
-    cam = Picamera2()
-    cam.configure(cam.create_preview_configuration(main={"size": (640, 480), "format": "RGB888"}))
-    cam.start()
+    # The robot's head camera, set up as robot.yaml says (USB, flipped if mounted upside down).
+    cfg = params_from_robot_yaml()
+    cam = Camera(main_size=(1280, 720), backend=cfg.get("camera_backend", "auto"),
+                 index=a.camera if a.camera is not None else int(cfg.get("camera_index", 0)),
+                 inverted=bool(cfg.get("camera_inverted", True)))
     seq = 0
     while cv2.waitKey(1) & 0xFF != ord("q"):
-        yield (seq := seq + 1), cam.capture_array()
+        yield (seq := seq + 1), cam.capture().main
 
 
 if a.mode == "detect":

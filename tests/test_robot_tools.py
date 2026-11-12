@@ -88,6 +88,17 @@ def tools(seconds=0.2):
     return move, motion, RobotTools(motion)
 
 
+class FakeHead:
+    """Stand-in for HeadLook's gesture(): records nods and shakes."""
+
+    def __init__(self) -> None:
+        self.calls: list = []
+
+    def gesture(self, axis: str, *degrees: float) -> bool:
+        self.calls.append((axis, *degrees))
+        return True
+
+
 # --------------------------------------------------------------------------- #
 # The property that matters
 # --------------------------------------------------------------------------- #
@@ -230,6 +241,22 @@ def test_gesture_yields_to_real_motion() -> None:
         motion.close()
 
 
+def test_gesture_text_only_shows_the_name_and_moves_nothing(monkeypatch) -> None:
+    from robot_core import status
+    shown = []
+    monkeypatch.setattr(settings, "GESTURE_TEXT_ONLY", True)
+    status.set_sink(shown.append)
+    move, motion, t = tools(seconds=0.5)
+    try:
+        r = run(t.dispatch("answer", {"value": "dance"}))
+        assert r["gestured"] is True and r["jobs"] == []
+        assert not motion.busy(), "a text-only gesture moved the robot"
+        assert {"k": "note", "v": "Robot Gesture: dance", "n": 6.0} in shown
+    finally:
+        status.set_sink(None)
+        motion.close()
+
+
 # --------------------------------------------------------------------------- #
 # Wiring
 # --------------------------------------------------------------------------- #
@@ -238,32 +265,36 @@ def test_run_task_hands_the_job_to_the_agent_and_answers_by_gesture() -> None:
     """run_task only queues; the agent runs it with the session closed, then nods
     (yes) or shakes (no) according to whether the job worked."""
     from robot_core.live import agent as agent_mod
-    for ok, expected in ((True, [("straight", 0.1), ("reverse", 0.1)]),
-                         (False, [("left", 30.0), ("right", 60.0), ("left", 30.0)])):
+    for ok, expected in ((True, [("tilt", 30.0, -60.0)]), (False, [("pan", 45.0, -90.0)])):
         move = FakeMove(0.01)
         motion = LocalMotion(move)
         ran = []
-        t = RobotTools(motion, lambda task, name: ran.append((task, name)) or ok)
+        head = FakeHead()
+        t = RobotTools(motion, lambda task, name: ran.append((task, name)) or ok, head=head)
         try:
             assert run(t.dispatch("run_task", {"task": "enroll_face", "name": "Sam Smith!"}))["ok"]
             assert t.pending == ("enroll_face", "Sam"), "name must be one clean word"
             assert run(t.dispatch("run_task", {"task": "explore"}))["ok"] is False   # one at a time
             run(agent_mod._run_task(t))
             assert ran == [("enroll_face", "Sam")] and t.pending is None
-            assert move.calls == expected, move.calls
+            time.sleep(0.2)
+            assert head.calls == expected and move.calls == [], (head.calls, move.calls)
         finally:
             motion.close()
 
 
 def test_run_task_refuses_what_it_cannot_do() -> None:
-    move, motion, t = tools()
+    move = FakeMove()
+    motion = LocalMotion(move)
+    head = FakeHead()
+    t = RobotTools(motion, head=head)
     try:
         assert run(t.dispatch("run_task", {"task": "explore"}))["ok"] is False   # no runner wired
         t.task_runner = lambda task, name: True
         r = run(t.dispatch("run_task", {"task": "enroll_face"}))                     # no name said
         assert r["ok"] is False and r["gestured"] is True and t.pending is None
         time.sleep(0.5)
-        assert [c[0] for c in move.calls] == ["left", "right", "left"], "should have shaken its head"
+        assert head.calls == [("pan", 45.0, -90.0)] and move.calls == [], "should have shaken its head"
         assert run(t.dispatch("run_task", {"task": "fly"}))["ok"] is False
         assert t.pending is None
     finally:
@@ -298,7 +329,7 @@ def test_head_look_tilts_from_where_it_is_and_clamps() -> None:
 
 def test_ten_tools_and_stop_takes_no_arguments() -> None:
     decls = {d.name: d for d in declarations()}
-    assert set(decls) == {"drive", "turn", "look_up", "look_down", "look_left", "look_right", "shutdown", "stop", "answer", "run_task"}
+    assert set(decls) == {"drive", "turn", "look_up", "look_down", "look_left", "look_right", "look_straight", "retrace", "shutdown", "stop", "answer", "run_task"}
     assert not getattr(decls["stop"].parameters, "required", []), \
         "a stop that can be malformed is a stop that can fail"
 
@@ -390,3 +421,284 @@ def test_head_look_refuses_while_servo_supply_is_off() -> None:
         assert head.look(20)["ok"]                                  # same call works once the switch is on
     finally:
         head.release()
+
+
+# --------------------------------------------------------------------------- #
+# Cancelling a task: the cancel-only listener and the shared flag
+# --------------------------------------------------------------------------- #
+
+def test_cancel_listener_only_cancels_and_brakes() -> None:
+    from robot_core import task_cancel
+    from robot_core.live.cancel_watch import CancelTools, declarations as cancel_decls
+    task_cancel.reset()
+    braked = []
+    t = CancelTools(lambda: braked.append(1))
+    try:
+        assert [d.name for d in cancel_decls()] == ["cancel_task"]
+        assert t.pending is None and t.motion is None, "no job hand-off, no move results"
+        assert run(t.dispatch("drive", {"meters": 1.0}))["ok"] is False
+        assert not task_cancel.requested() and braked == []
+        assert run(t.dispatch("cancel_task", {}))["ok"]
+        assert task_cancel.requested() and task_cancel.by() == "voice" and braked == [1]
+    finally:
+        task_cancel.reset()
+
+
+def test_a_task_runs_with_the_listener_beside_it_and_a_cancel_is_answered_yes() -> None:
+    """The listener starts with the job and is shut down when it ends (freeing the
+    microphone for the main session). A cancelled job gets a nod, not a shake."""
+    from robot_core import task_cancel
+    from robot_core.live import agent as agent_mod
+    from robot_core.live import cancel_watch
+    seen = {"started": 0, "cancelled": 0}
+
+    async def fake_watch(motion):
+        seen["started"] += 1
+        try:
+            await asyncio.sleep(3600)
+        except asyncio.CancelledError:
+            seen["cancelled"] += 1
+            raise
+
+    def runner(task, name):
+        time.sleep(0.1)
+        task_cancel.request("voice")        # "stop" while it runs
+        return False                         # the job itself did not finish
+
+    old = cancel_watch.watch
+    cancel_watch.watch = fake_watch
+    move = FakeMove(0.01)
+    motion = LocalMotion(move)
+    head = FakeHead()
+    t = RobotTools(motion, runner, head=head)
+    try:
+        assert run(t.dispatch("run_task", {"task": "follow"}))["ok"]
+        run(agent_mod._run_task(t))
+        assert seen == {"started": 1, "cancelled": 1}
+        time.sleep(0.2)
+        assert head.calls == [("tilt", 30.0, -60.0)], "a cancelled task is answered with a nod"
+    finally:
+        cancel_watch.watch = old
+        task_cancel.reset()
+        motion.close()
+
+
+def test_listener_failures_retry_and_never_brake() -> None:
+    from robot_core.live import agent as agent_mod
+    from robot_core.live import cancel_watch
+    attempts, braked = [], []
+
+    class Failing:
+        def __init__(self, *a, **kw): attempts.append(kw.get("role"))
+        async def run(self): raise RuntimeError("no network")
+
+    old_agent, old_backoff = agent_mod.LiveAgent, settings.LIVE_RECONNECT_BACKOFF_S
+    agent_mod.LiveAgent, settings.LIVE_RECONNECT_BACKOFF_S = Failing, 0.01
+
+    async def go():
+        w = asyncio.create_task(cancel_watch.watch(types.SimpleNamespace(stop=lambda: braked.append(1))))
+        await asyncio.sleep(0.1)
+        w.cancel()
+        await asyncio.gather(w, return_exceptions=True)
+
+    try:
+        run(go())
+        assert len(attempts) >= 2 and set(attempts) == {"cancel"}, attempts
+        assert braked == [], "the listener dropping must not brake the task"
+    finally:
+        agent_mod.LiveAgent, settings.LIVE_RECONNECT_BACKOFF_S = old_agent, old_backoff
+
+
+# --------------------------------------------------------------------------- #
+# Stop ends a dance; the uplink watchdog; the server's GoAway
+# --------------------------------------------------------------------------- #
+
+class PanHead(FakeHead):
+    def pan_to(self, degrees: float, wait: bool = False) -> bool:
+        self.calls.append(("pan_to", degrees))
+        return True
+
+
+def test_stop_ends_a_dance_instead_of_letting_it_send_its_next_step() -> None:
+    """With a head the dance sends one step at a time from a thread; stop must
+    end that thread, not just brake the step in flight."""
+    move = FakeMove(0.3)
+    motion = LocalMotion(move)
+    t = RobotTools(motion, head=PanHead())
+    try:
+        assert run(t.dispatch("answer", {"value": "dance"}))["ok"]
+        time.sleep(0.15)                                   # first step under way
+        run(t.dispatch("stop", {}))
+        time.sleep(1.0)                                    # long enough for several more steps
+        assert len(move.calls) == 1, move.calls
+    finally:
+        motion.close()
+
+
+class StuckSession:
+    """A websocket whose sends never complete (dead link)."""
+    def __init__(self) -> None:
+        self.aborted = False
+        self._ws = types.SimpleNamespace(transport=types.SimpleNamespace(abort=self._abort))
+
+    def _abort(self) -> None:
+        self.aborted = True
+
+    async def send_realtime_input(self, audio=None) -> None:
+        await asyncio.Event().wait()
+
+
+def test_a_stuck_uplink_aborts_the_socket_on_time() -> None:
+    from robot_core.live.agent import LiveAgent, LiveAgentError
+    old = settings.LIVE_SEND_TIMEOUT_S
+    settings.LIVE_SEND_TIMEOUT_S = 0.2
+    session = StuckSession()
+
+    async def go():
+        a = LiveAgent(types.SimpleNamespace(motion=None, pending=None))
+        a._audio_q.put_nowait(b"\0" * 64)
+        t0 = time.monotonic()
+        try:
+            await asyncio.wait_for(a._pump_audio(session), 3)
+        except LiveAgentError as e:
+            return time.monotonic() - t0, str(e)
+
+    try:
+        took, err = run(go())
+        assert took < 1.0 and "uplink stuck" in err and session.aborted
+    finally:
+        settings.LIVE_SEND_TIMEOUT_S = old
+
+
+def test_goaway_ends_the_session_and_it_reconnects_without_braking() -> None:
+    from robot_core.live import agent as agent_mod
+
+    class GoAwaySession:
+        async def receive(self):
+            yield types.SimpleNamespace(go_away=types.SimpleNamespace(time_left="10s"),
+                                        tool_call=None, server_content=None)
+
+    async def pump():
+        a = agent_mod.LiveAgent(types.SimpleNamespace(motion=None, pending=None))
+        await asyncio.wait_for(a._pump_events(GoAwaySession()), 2)
+        return a.go_away
+
+    assert run(pump())
+
+    braked, made = [], []
+
+    class Fake:
+        def __init__(self, tools, **kw):
+            self.rerouted, self.go_away = False, False
+            self.resume_handle = self.resumed_from = None
+            self.connected = True
+            made.append(self)
+
+        async def run(self):
+            if len(made) == 1:
+                self.go_away = True
+                return
+            raise asyncio.CancelledError
+
+    old = agent_mod.LiveAgent
+    agent_mod.LiveAgent = Fake
+    t = types.SimpleNamespace(pending=None, motion=types.SimpleNamespace(stop=lambda: braked.append(1)))
+    try:
+        try:
+            run(agent_mod._run_supervised(t))
+        except asyncio.CancelledError:
+            pass
+        assert len(made) == 2 and braked == []
+    finally:
+        agent_mod.LiveAgent = old
+
+
+# --------------------------------------------------------------------------- #
+# Session resumption, context-window compression, drop diagnostics
+# --------------------------------------------------------------------------- #
+
+def _config_types():
+    t = sys.modules["google.genai.types"]
+    class _S:
+        def __init__(self, **kw): self.__dict__.update(kw)
+    for n in ("SessionResumptionConfig", "ContextWindowCompressionConfig", "SlidingWindow",
+              "RealtimeInputConfig", "AutomaticActivityDetection", "AudioTranscriptionConfig"):
+        if not hasattr(t, n):
+            setattr(t, n, _S)
+
+
+def test_main_session_asks_for_resumption_and_compression_with_its_handle() -> None:
+    from robot_core.live.agent import LiveAgent
+    _config_types()
+    t = types.SimpleNamespace(motion=None, pending=None)
+    cfg = LiveAgent(t, resume=True, resume_handle="h1")._config()
+    assert cfg["session_resumption"].handle == "h1"
+    assert hasattr(cfg["context_window_compression"], "sliding_window")
+    off = LiveAgent(t)._config()                       # the cancel listener, or live_resume: false
+    assert "session_resumption" not in off and "context_window_compression" not in off
+
+
+def test_the_latest_resumption_handle_is_kept() -> None:
+    from robot_core.live import agent as agent_mod
+
+    class S:
+        async def receive(self):
+            yield types.SimpleNamespace(session_resumption_update=types.SimpleNamespace(
+                resumable=True, new_handle="h2"), go_away=None, tool_call=None, server_content=None)
+            yield types.SimpleNamespace(go_away=types.SimpleNamespace(time_left="5s"),
+                                        tool_call=None, server_content=None)
+
+    async def go():
+        a = agent_mod.LiveAgent(types.SimpleNamespace(motion=None, pending=None), resume=True)
+        await asyncio.wait_for(a._pump_events(S()), 2)
+        return a.resume_handle
+
+    assert run(go()) == "h2"
+
+
+def test_supervisor_resumes_after_goaway_and_drops_starts_fresh_when_a_resume_is_refused() -> None:
+    from robot_core.live import agent as agent_mod
+    seen, diags = [], []
+
+    class Fake:
+        def __init__(self, tools, resume=False, resume_handle=None, **kw):
+            self.rerouted = self.go_away = False
+            self.resumed_from = self.resume_handle = resume_handle
+            self.connected, self.model = False, "m"
+            seen.append(resume_handle)
+
+        async def run(self):
+            n = len(seen)
+            if n == 1:                                   # fresh session, then the server's GoAway
+                self.connected, self.resume_handle, self.go_away = True, "h1", True
+                return
+            if n == 2:                                   # resume refused before connecting (1007)
+                raise RuntimeError("1007 invalid argument: bad handle")
+            raise asyncio.CancelledError                 # third: fresh again; end the test
+
+    old = (agent_mod.LiveAgent, agent_mod._drop_diagnostics, agent_mod._on_failure,
+           settings.LIVE_RECONNECT_BACKOFF_S)
+    agent_mod.LiveAgent, agent_mod._drop_diagnostics = Fake, lambda: {"wifi_dbm": -71}
+    agent_mod._on_failure = lambda *a: None
+    settings.LIVE_RECONNECT_BACKOFF_S = 0.01
+    t = types.SimpleNamespace(pending=None, motion=types.SimpleNamespace(stop=lambda: None))
+    try:
+        try:
+            run(agent_mod._run_supervised(t))
+        except asyncio.CancelledError:
+            pass
+        assert seen == [None, "h1", None], "resume after GoAway; a refused resume is retried fresh, not fatal"
+    finally:
+        (agent_mod.LiveAgent, agent_mod._drop_diagnostics, agent_mod._on_failure,
+         settings.LIVE_RECONNECT_BACKOFF_S) = old
+
+
+def test_drop_diagnostics_read_wifi_power_save_load_and_throttling(monkeypatch) -> None:
+    from robot_core.live import agent as agent_mod
+    outs = {("iw", "dev", "wlan0", "link"): "Connected to aa:bb\n\tsignal: -67 dBm\n",
+            ("iw", "dev", "wlan0", "get", "power_save"): "Power save: on\n",
+            ("vcgencmd", "get_throttled"): "throttled=0x50005\n"}
+    monkeypatch.setattr(agent_mod.subprocess, "run",
+                        lambda cmd, **kw: types.SimpleNamespace(stdout=outs.get(tuple(cmd), "")))
+    d = agent_mod._drop_diagnostics()
+    assert d["wifi_dbm"] == -67 and d["wifi_power_save"] == "on" and d["throttled"] == "0x50005"

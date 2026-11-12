@@ -41,7 +41,7 @@ from robot_core.motion import MotionBackend
 
 logger = logging.getLogger(__name__)
 
-TASKS = ("enroll_face", "match_face", "explore")
+TASKS = ("enroll_face", "match_face", "explore", "follow")
 SHUTDOWN_DELAY_S = 4.0
 
 
@@ -131,6 +131,23 @@ def declarations() -> list:
             parameters=schema(degrees={"type": "NUMBER", "description": "Degrees right, default 30."}),
         ),
         types.FunctionDeclaration(
+            name="look_straight",
+            description=(
+                "Bring the head back to straight ahead (level, facing forward). "
+                "For 'look straight', 'look ahead', 'center your head'. Returns at once."
+            ),
+            parameters=schema(),
+        ),
+        types.FunctionDeclaration(
+            name="retrace",
+            description=(
+                "Undo the last `steps` drive / turn / look commands, newest first: "
+                "'go back', 'retrace your steps', 'undo the last 3 moves'. Default 1. "
+                "Returns as soon as the reverse moves are queued; 'stop' cancels them."
+            ),
+            parameters=schema(steps={"type": "INTEGER", "description": "How many commands to undo, default 1."}),
+        ),
+        types.FunctionDeclaration(
             name="shutdown",
             description=(
                 "Shut the whole robot down cleanly (power off the Pi). Call it ONLY when "
@@ -178,14 +195,17 @@ def declarations() -> list:
                 "gesture (yes = worked / face known, no = failed / face unknown). "
                 "'enroll_face' learns the face in front of the camera under "
                 "`name` (required). 'match_face' checks whether that face is "
-                "known. 'explore' maps the house and photographs every plant."
+                "known. 'explore' maps the house and photographs every plant. "
+                "'follow' follows an enrolled person: `name` if one was said, "
+                "empty for 'follow me'."
             ),
             parameters=schema(
                 task={"type": "STRING", "description": "One of: " + ", ".join(TASKS),
                       "_required": True},
                 name={"type": "STRING",
                       "description": "The name the operator said to enrol, e.g. 'register Roshan' "
-                                     "-> 'Roshan'. Required for enroll_face. Never guess or make "
+                                     "-> 'Roshan', or to follow, e.g. 'follow Roshan' -> 'Roshan'. "
+                                     "Required for enroll_face. Never guess or make "
                                      "one up: if none was said, leave it empty."},
             ),
         ),
@@ -208,7 +228,8 @@ class RobotTools:
         self._power_off = power_off or _system_poweroff
         self._shutdown_timer: Optional[threading.Timer] = None
         self._head = head                    # look_up / look_down; None = no head
-        self._gestures = Gesturer(motion)
+        self._gestures = Gesturer(motion, head)
+        self._history: list = []             # (kind, signed amount) of what was commanded: drive/turn/tilt/pan
         # (task, name) -> success; blocking, run by the agent with the session
         # closed. `pending` is how run_task hands a job to the agent.
         self.task_runner = task_runner
@@ -233,6 +254,8 @@ class RobotTools:
             "look_down": lambda degrees=DEFAULT_DEGREES: self._look(-float(degrees)),
             "look_left": lambda degrees=DEFAULT_DEGREES: self._look(degrees, "pan"),
             "look_right": lambda degrees=DEFAULT_DEGREES: self._look(-float(degrees), "pan"),
+            "look_straight": self._look_straight,
+            "retrace": self._retrace,
             "shutdown": self._shutdown,
             "stop": self._stop,
             "answer": self._answer,
@@ -271,20 +294,60 @@ class RobotTools:
                              f"{settings.MAX_DRIVE_METERS} m limit"}
         if abs(m) < 1e-3:
             return {"ok": True, "note": "zero distance, nothing to do"}
-        return self._motion.drive(m)
+        r = self._motion.drive(m)
+        if r.get("ok"):
+            self._record("drive", m)
+        return r
 
     def _turn(self, degrees: float) -> Dict[str, Any]:
         d = float(degrees)
         if abs(d) < 0.5:
             return {"ok": True, "note": "zero angle, nothing to do"}
-        return self._motion.turn(d)
+        r = self._motion.turn(d)
+        if r.get("ok"):
+            self._record("turn", d)
+        return r
 
     def _look(self, degrees: float, axis: str = "tilt") -> Dict[str, Any]:
         if self._head is None:
             return {"ok": False, "error": "no head fitted"}
         d = float(degrees)
         sign = 1.0 if d >= 0 else -1.0
-        return self._head.look(sign * min(abs(d), 90.0), axis)    # limits are enforced by the gimbal
+        r = self._head.look(sign * min(abs(d), 90.0), axis)    # limits are enforced by the gimbal
+        if r.get("ok"):
+            self._record(axis, r["delta"])
+        return r
+
+    def _look_straight(self) -> Dict[str, Any]:
+        if self._head is None:
+            return {"ok": False, "error": "no head fitted"}
+        r = self._head.center()
+        if r.get("ok"):
+            for axis, delta in r["deltas"].items():
+                self._record(axis, delta)
+        return r
+
+    def _record(self, kind: str, amount: float) -> None:
+        if abs(amount) > 1e-3:
+            self._history.append((kind, amount))
+            del self._history[:-50]                         # keep the last 50
+
+    def _retrace(self, steps: int = 1) -> Dict[str, Any]:
+        """Undo the newest `steps` commands, newest first, by commanding the opposite.
+        Open loop, like the original moves. Goes straight to the backend, so the undo
+        is not itself recorded: asking again goes one step further back."""
+        n = min(max(int(steps), 1), len(self._history))
+        if not n:
+            return {"ok": True, "retraced": 0, "note": "nothing to retrace"}
+        for _ in range(n):
+            kind, amount = self._history.pop()
+            if kind == "drive":
+                self._motion.drive(-amount)
+            elif kind == "turn":
+                self._motion.turn(-amount)
+            elif self._head is not None:
+                self._head.look(-amount, kind)
+        return {"ok": True, "retraced": n, "remaining": len(self._history)}
 
     def _stop(self) -> Dict[str, Any]:
         """Empty the queue and interrupt the move already running.
@@ -300,10 +363,19 @@ class RobotTools:
             self._shutdown_timer = None
             status.task("voice")
             robot_log.event("power.shutdown", logging.WARNING, state="cancelled")
-        return self._motion.stop()
+        self._gestures.cancel()                              # a dance sends its steps one by one: no more
+        r = self._motion.stop()
+        # Cancelled moves never ran, so they are not part of the path taken (approximate
+        # for the one in flight).
+        todo = len(r.get("cancelled") or [])
+        for i in range(len(self._history) - 1, -1, -1):
+            if todo and self._history[i][0] in ("drive", "turn"):
+                del self._history[i]
+                todo -= 1
+        return r
 
     def _shutdown(self) -> Dict[str, Any]:
-        """Brake, park the head, nod, then power the Pi off after a short delay so
+        """Brake, park the head, then power the Pi off after a short delay so
         the operator can still say "stop". The OS stops the services cleanly, so the
         SD card is closed properly instead of being cut off."""
         if self._shutdown_timer is not None:
@@ -311,7 +383,6 @@ class RobotTools:
         self._motion.stop()
         if self._head is not None:
             self._head.release(hold=False)       # park, then stop the servo pulses: the Pi is about to drop the pins
-        self._gestures.play("yes")
         status.task("shutting down")
         status.detail("say stop to cancel")
         robot_log.event("power.shutdown", logging.WARNING, state="requested")
@@ -337,6 +408,7 @@ class RobotTools:
             return {"ok": False, "gestured": jobs is not None,
                     "error": "enroll_face needs the person's name and none was given; task not started"}
         self.pending = (task, name)
+        self._history.clear()                # the task moves the robot: the old path no longer leads back
         return {"ok": True, "starting": task, "note": "session closing; it reopens when the task ends"}
 
     def _answer(self, value: str) -> Dict[str, Any]:

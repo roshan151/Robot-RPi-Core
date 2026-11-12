@@ -74,15 +74,46 @@ def _first_env(*names):
 
 
 GEMINI_API_KEY = _first_env("GEMINI_API_KEY", "GOOGLE_API_KEY")
-GEMINI_LIVE_MODEL = _env("GEMINI_LIVE_MODEL", "gemini-3.1-flash-live-preview")
+GEMINI_LIVE_MODEL = _env("GEMINI_LIVE_MODEL", "gemini-3.8-live")   # 3.1-flash-live-preview retires 2026-11-17; proactive audio is always on in 3.8
 LIVE_RESPONSE_MODALITY = _env("ROBOT_LIVE_MODALITY", "AUDIO").upper()   # native-audio models reject TEXT
 LIVE_PLAY_AUDIO = _env("ROBOT_LIVE_PLAY_AUDIO", "0") in ("1", "true", "yes")   # keep off: the mic would hear it
 AUDIO_INPUT_DEVICE = _env("ROBOT_AUDIO_INPUT_DEVICE", "")              # blank = system default
 BT_MAC = _env("BT_MAC", "")
+# Which mic (robot_core/audio_route.py): the buds when their mic is up, else the
+# camera's ("room"). Re-checked every 30 s for 5 min after start, then every 2 min.
+MIC_MODE = _env("ROBOT_MIC_MODE", "auto").lower()               # auto | buds | room
+ROOM_MIC = _env("ROBOT_ROOM_MIC", "alsa_input.usb-")            # piece of the camera mic's PipeWire name
+ROUTE_POLL_FAST_S = _env("ROBOT_ROUTE_POLL_FAST_S", "30", float)
+ROUTE_FAST_FOR_S = _env("ROBOT_ROUTE_FAST_FOR_S", "300", float)
+ROUTE_POLL_S = _env("ROBOT_ROUTE_POLL_S", "120", float)
 LIVE_STALL_WARN_S = _env("ROBOT_LIVE_STALL_WARN_S", "0.75", float)
 LIVE_SEND_WARN_S = _env("ROBOT_LIVE_SEND_WARN_S", "0.25", float)
+LIVE_SEND_TIMEOUT_S = _env("ROBOT_LIVE_SEND_TIMEOUT_S", "5.0", float)
+# Session resumption + context-window compression for the main session (robot.yaml
+# /voice live_resume turns it off): the conversation survives the ~10 min connection
+# resets, and the oldest turns are dropped instead of the session ending at its limit.
+LIVE_RESUME = _flag("ROBOT_LIVE_RESUME")
+# Gestures as text only (robot.yaml /voice gesture_text_only): nothing moves, the OLED
+# shows "Robot Gesture: <name>", so a nod or shake is never mistaken for a move.
+GESTURE_TEXT_ONLY = _flag("ROBOT_GESTURE_TEXT_ONLY", "0")
 LIVE_RECONNECT_BACKOFF_S = _env("ROBOT_LIVE_BACKOFF_S", "2.0", float)
 LIVE_RECONNECT_MAX_S = _env("ROBOT_LIVE_BACKOFF_MAX_S", "60.0", float)
+# While a task runs (main session closed) a cancel-only Live session listens for
+# "stop" (robot_core/live/cancel_watch.py). 0 = off; task/stop still works.
+CANCEL_LISTEN = _flag("ROBOT_CANCEL_LISTEN")
+CANCEL_PROMPT = os.environ.get("ROBOT_CANCEL_PROMPT", """\
+You are listening to the operator of a small robot while it carries out a task:
+following someone, learning a face, or exploring a room. You cannot move the
+robot and you cannot speak. Your only function is cancel_task.
+
+Call cancel_task as soon as the operator wants the robot to stop or give up
+what it is doing, for example "stop", "Robin stop", "cancel", "that's enough",
+"quit following me", "come back", "wait", "hold on". When in doubt, call it:
+stopping by mistake is harmless, not stopping is not.
+
+Do not call it for "don't stop" or "keep going", or for speech that is not
+addressed to the robot (a TV, people talking to each other). Otherwise do
+nothing and say nothing.""")
 
 # --- Speech (Gemini text-to-speech, cached on disk) ---------------------------
 TTS_ENABLED = _flag("ROBOT_TTS")
@@ -115,11 +146,21 @@ VISION_MAX_RESULT_AGE_S = _env("VISION_MAX_RESULT_AGE_S", "1.0", float)
 # --- Voice face tasks ---------------------------------------------------------
 FACE_ENROLL_SECONDS = _env("ROBOT_FACE_ENROLL_S", "30", float)   # capture time once a face is found
 FACE_SEARCH_SECONDS = _env("ROBOT_FACE_SEARCH_S", "30", float)   # enroll: time allowed to find one
-FACE_MATCH_SECONDS = _env("ROBOT_FACE_MATCH_S", "30", float)     # search + match
-FACE_SEARCH_PANS = (-75.0, -15.0, 15.0, 75.0)                    # head sweep, degrees
+FACE_MATCH_SECONDS = _env("ROBOT_FACE_MATCH_S", "60", float)     # one scan + a match per face, at most
+FACE_SEARCH_PANS = (-90.0, -60.0, -30.0, 0.0, 30.0, 60.0, 90.0)   # match scan, right to left (+ = left)
 FACE_SEARCH_TILTS = (0.0, 30.0, 50.0)                            # never below level
 FACE_MIN_QUALITY = 0.6
+FOLLOW_SECONDS = _env("ROBOT_FOLLOW_S", "300", float)            # follow mode ends after this
+FOLLOW_TILT_DEG = _env("ROBOT_FOLLOW_TILT", "20", float)         # head tilt while finding them: the face
+FOLLOW_TRACK_TILT_DEG = _env("ROBOT_FOLLOW_TRACK_TILT", "10", float)  # once locked on: body and feet
 FACE_MIN_SHOTS = 5
+# Long edge of frames sent for faces and follow. Faces need the pixels: with the
+# wide USB HD lens a 640 px frame leaves a face at 2 m ~18 px wide (useless), the
+# full 1920 px ~55 px. A smaller camera frame is sent as it is (never upscaled).
+FACE_WIRE_LONG_EDGE = _env("ROBOT_FACE_WIRE_PX", "1920", int)
+FACE_ENROLL_TILT_DEG = _env("ROBOT_FACE_ENROLL_TILT", "20", float)  # enroll starts here, then frames the face
+FACE_FRAME_DEADBAND = 0.12      # enroll re-aims when the face centre is this far (share of frame) off centre
+FACE_EDGE_MARGIN = 0.02         # a shot is kept only with the whole face this far inside the frame
 
 # --- Logging ------------------------------------------------------------------
 LOG_PATH = _env("ROBOT_LOG_PATH", "logs.json")
@@ -139,14 +180,17 @@ You have no voice and no screen. Your only reply is movement:
 
 If you want to do a happy movement just do a 360 degree spin.
 
-Long jobs: run_task() closes your session, so you cannot hear "stop" until the
-job is over. When it ends you answer by gesture: yes = it worked or the face is
-known, no = it failed or the face is unknown.
+Long jobs: run_task() closes your session until the job is over ("stop" during
+the job is heard by a separate listener, not you). When it ends you answer by
+gesture: yes = it worked, the face is known or it was stopped; no = it failed or
+the face is unknown.
   run_task("enroll_face", name)  "remember my face, I'm Sam" / "register Sam". The name
                                  must be in what was said; if it is not, pass none: the
                                  robot shakes its head and does nothing.
   run_task("match_face")         "do you know me?" / "who am I?"
   run_task("explore")            "go explore" / "map the house and find the plants"
+  run_task("follow", name)       "follow Sam" -> name "Sam"; "follow me" -> no name
+                                 (follows whichever enrolled person it sees)
 
 Rules that matter:
   - Call stop() the instant you hear "stop", and whenever you are unsure
@@ -157,12 +201,33 @@ Rules that matter:
   - look_up() / look_down() / look_left() / look_right() move the head from where
     it is now; the default is 30 degrees and the head stops at its own limit if
     asked for more.
+  - look_straight() brings the head back to straight ahead. retrace(steps) undoes
+    the last `steps` drive / turn / look commands, newest first (default 1):
+    "go back", "retrace your steps", "undo the last 3 moves".
   - shutdown() powers the robot off. Call it only when the operator clearly says
     to shut down, power off or turn off; if unsure, answer("unclear") instead.
   - Defaults when no number is given: 1 metre, 90 degrees.
   - turn() takes positive degrees for RIGHT, negative for LEFT.
     drive() takes positive metres for FORWARD, negative for BACKWARD.
 """)
+
+# Added to the prompt above in room mode: no buds, so the mic on the robot's
+# head hears everyone in the room, and the TV.
+ROOM_MIC_RULE = os.environ.get("ROBOT_ROOM_MIC_PROMPT", """\
+Room microphone (this overrides the rules above): you are listening through a
+microphone on your own head and will hear people who are not talking to you,
+and the TV. Act only on a request that addresses you by name: "Robin, go
+forward", "follow me, Robin"; the name can be anywhere in the sentence.
+Without your name, do nothing at all: no move, no gesture, no task, not even
+answer("unclear"). The one exception is stop: call stop() for any "stop",
+"wait" or "hold on", with or without your name.
+""")
+
+
+def live_prompt(mic_mode: str) -> str:
+    """The main session's prompt: LIVE_SYSTEM_PROMPT, plus ROOM_MIC_RULE when
+    listening through the camera's mic instead of the buds."""
+    return LIVE_SYSTEM_PROMPT + ("\n" + ROOM_MIC_RULE if mic_mode == "room" else "")
 
 
 # --- Secrets ------------------------------------------------------------------
