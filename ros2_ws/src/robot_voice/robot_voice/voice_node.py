@@ -146,6 +146,9 @@ def _run_task(task: str, name: str) -> bool:
 def main(args=None) -> None:
     rclpy.init(args=args)
     node = Node("voice")
+    # OpenCV takes ~4.5 s to import on the Pi: do it now, in the background, so the
+    # first face task doesn't wait for it.
+    threading.Thread(target=lambda: __import__("cv2"), name="cv2-import", daemon=True).start()
     if not node.declare_parameter("buds_check", True).value:   # robot.yaml /voice
         settings.MIC_MODE = "room"                            # camera mic only, no buds checks
     if not node.declare_parameter("live_resume", True).value:  # robot.yaml /voice
