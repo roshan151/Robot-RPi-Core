@@ -24,12 +24,25 @@ log = logging.getLogger(__name__)
 CELL_W, CELL_H = 6, 8
 SMALL_W, SMALL_H = 4, 6
 ANIM_HZ = 8.0
+REINIT_S = 5.0                # re-send the controller setup this often (see _reinit)
 
 
-def open_device(dc: int = 25, rst: int = 17, bus: int = 0, cs: int = 0, speed_hz: int = 8_000_000):
+def open_device(dc: int = 25, rst: int = 17, bus: int = 0, cs: int = 0, speed_hz: int = 1_000_000):
     from luma.core.interface.serial import spi
     from luma.oled.device import ssd1309
     return ssd1309(spi(port=bus, device=cs, gpio_DC=dc, gpio_RST=rst, bus_speed_hz=speed_hz))
+
+
+def _reinit(device) -> None:
+    """luma sets the controller up once, at open. Electrical noise read as a command
+    changes a setting and the picture stays garbled, so send the setup again (128x64
+    values, as luma's ssd1306 init; no reset and no display-off, so nothing flickers)."""
+    c = device._const
+    device.command(0x2E,                                                       # scrolling off
+                   c.SETDISPLAYCLOCKDIV, 0x80, c.SETMULTIPLEX, 0x3F, c.SETDISPLAYOFFSET, 0x00,
+                   c.SETSTARTLINE, c.MEMORYMODE, 0x00, c.SETSEGMENTREMAP, c.COMSCANDEC,
+                   c.SETCOMPINS, 0x12, c.SETPRECHARGE, 0xF1, c.SETVCOMDETECT, 0x40,
+                   c.SETCONTRAST, 0xCF, c.DISPLAYALLON_RESUME, c.NORMALDISPLAY, c.DISPLAYON)
 
 
 def _text(d, x0: int, y0: int, line: str, font, cell_w: int) -> None:
@@ -158,7 +171,15 @@ class Oled:
     def _loop(self) -> None:
         last: Optional[tuple] = None
         failing = False
+        reinit_at = 0.0
         while not self._stop.is_set():
+            if time.monotonic() >= reinit_at and hasattr(self.device, "_const"):
+                reinit_at = time.monotonic() + REINIT_S
+                try:
+                    _reinit(self.device)
+                    last = None                             # and repaint the whole screen
+                except Exception:                           # noqa: BLE001 — the draw below reports it
+                    pass
             frame = self.board.frame()
             view = (frame, pose(frame.anim, time.monotonic()))
             if view != last:                                # SPI traffic only when something changed

@@ -156,6 +156,9 @@ def main(args=None) -> None:
     if node.declare_parameter("gesture_text_only", False).value:  # robot.yaml /voice
         settings.GESTURE_TEXT_ONLY = True
 
+    if not node.declare_parameter("tts", True).value:          # robot.yaml /voice
+        settings.TTS_ENABLED = False
+
     log_path = robot_log.setup(None)
     robot_log.event("session.start", mode="ros", pid=os.getpid(),
                     log=str(log_path))
