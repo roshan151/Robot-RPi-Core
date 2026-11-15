@@ -309,8 +309,6 @@ scp roshan151@<pi>:~/snap.jpg ~/Desktop/
 
 Step 1: measure the camera’s field of view
 
-Do this before trusting any of the new behaviour, because every angle and every distance in follow depends on it.
-
 Free the camera and centre the head. On the Pi:
 bash
    sudo systemctl stop robot-voice
@@ -329,3 +327,8 @@ V = 2.10 m → 70°
 V = 3.00 m → 90°
 V = 3.91 m → 105°
 Put the result in robot.yaml: under /explorer, set hfov_deg: <your number>. The Pi sends it to the Mac with every follow step, so there’s nothing to change on the Mac. Then sudo systemctl start robot-voice.
+
+## Re trim floor height 
+To correct it, re-trim tilt_center_us in robot.yaml with tests/hardware/check_servo_pulse.py. Put a mark on a wall at camera height (25 cm) and adjust until it sits on the middle row of the picture at tilt 0. If the bracket holds the camera pitched up, that will leave the head visibly tilted down at “level”, which is fine for the maths.
+
+After a re-trim the robot will see lower than it does now, so your face may drop out of view at close range. If lock-on suffers, raise FOLLOW_TILT_DEG.
