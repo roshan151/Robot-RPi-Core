@@ -51,6 +51,10 @@
     # if true, gestures are not played: the OLED shows "Robot Gesture: <name>" instead,
     gesture_text_only: true
 
+    # false = no spoken announcements ("Robot online", "Voice session failed"). With no
+    # speaker fitted they only delay the microphone: ~6 s on every dropped session.
+    tts: false
+
 /explorer:
   ros__parameters:
     # Mac vision service. Empty = VISION_SERVICE_BASE_URL from /etc/robot.env.

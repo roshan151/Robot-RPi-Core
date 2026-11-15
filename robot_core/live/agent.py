@@ -138,6 +138,7 @@ class LiveAgent:
             "realtime_input_config": types.RealtimeInputConfig(
                 automatic_activity_detection=types.AutomaticActivityDetection(
                     disabled=False,
+                    silence_duration_ms=800,     # a pause after "Robin" stays in the same turn
                 ),
                 turn_coverage="TURN_INCLUDES_ONLY_ACTIVITY",
             ),
@@ -592,6 +593,8 @@ async def _run_supervised(tools: RobotTools) -> None:
             # Resume after a drop; but a resume that never connected (handle expired or
             # refused) is retried as a fresh session, not treated as a bad configuration.
             handle = agent.resume_handle if agent.connected else None
+            if agent.connected:              # it was a healthy session: do not carry old backoff into this drop
+                backoff = settings.LIVE_RECONNECT_BACKOFF_S
             if agent.resumed_from is not None and not agent.connected:
                 await asyncio.sleep(backoff)
                 continue
@@ -673,6 +676,8 @@ def _drop_diagnostics() -> Dict[str, Any]:
     out["wifi_dbm"] = int(m.group(1)) if m else None
     m = re.search(r"Power save:\s*(\w+)", run("iw", "dev", "wlan0", "get", "power_save"))
     out["wifi_power_save"] = m.group(1) if m else None
+    m = re.search(r"default via (\S+)", run("ip", "route"))      # router answers = Wi-Fi is up, look upstream
+    out["gateway_ping"] = bool(m and "1 received" in run("ping", "-c1", "-W1", m.group(1)))
     try:
         with open("/proc/loadavg") as f:
             out["load"] = f.read().split()[:3]

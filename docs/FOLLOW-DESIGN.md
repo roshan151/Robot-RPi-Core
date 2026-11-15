@@ -54,5 +54,10 @@ uses the head's (+ = left).
 * Two people in similar colours: the one nearer where the target should be wins, and a
   person whose face is seen to be someone else is never taken. A faceless lookalike who
   steps in where the target was can still be taken until their face is seen.
-* Feet out of frame and no TF-Luna hit means the distance is unknown, so the robot
-  turns but doesn't drive.
+* Feet out of frame and no TF-Luna hit: the distance is guessed from the face's size,
+  else the box's width, but never further than where the floor comes into view
+  (~0.9 m with the head up 10°). At that limit the robot turns but doesn't drive, so
+  it stops while the person is still visible from the waist down.
+* While searching, the only person in view is taken back on a weak clothes match (0.35)
+  unless their face is someone else's. A stranger in similar clothes, alone in view with
+  no face showing, can be followed.
