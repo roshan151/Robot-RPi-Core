@@ -141,52 +141,153 @@ def test_cancel_during_a_turn_brakes_drives_no_further_and_ends():
 # With the 8x8 ToF on the head
 # --------------------------------------------------------------------------- #
 
+def floor(start=0.2, until=1.5, box=None, drop=None):
+    """Floor-scan points (x, y, h) every 5 cm across the path: flat, with a 10 cm box from
+    `box` (x, height) for 0.3 m, and no floor at all from `drop`."""
+    pts, x = [], start
+    while x <= until + 1e-9:
+        h = 0.0
+        if box and box[0] <= x <= box[0] + 0.3:
+            h = box[1]
+        if drop is not None and x >= drop:
+            h = None
+        pts += [(round(x, 3), y, h) for y in (-0.1, 0.0, 0.1)]
+        x += 0.05
+    return pts
+
+
+def zones(pts, d=None):
+    """Tracking-view zones (row, col, x, y, h, distance) from points; distance = x unless given."""
+    return [(0, 0, x, y, h, d if d is not None else x) for x, y, h in pts]
+
+
 class TofHead(Head):
-    """A head whose range sensor has a grid, and whose floor check says `kinds` in turn."""
-    def __init__(self, kinds=("flat",), grid_range=1.6):
+    """A head whose range sensor has a grid. `scans`: what each glance down sees, in turn;
+    `view`: the zones of the tracking view."""
+    def __init__(self, scans=(floor(),), view=(), grid_range=1.6):
         super().__init__()
         from robot_core import terrain
         from robot_core.sensors import tof8x8
         g = tof8x8.Grid(0.0, tuple(tuple([grid_range] * 8) for _ in range(8)))
         self.lidar = SimpleNamespace(grid=lambda *a, **k: g)
-        self.has_grid, self.reaches = True, []
-        self._kinds, self._terrain = list(kinds), terrain
+        self.has_grid, self.glances = True, 0
+        self._scans, self.view = list(scans), list(view)
         self.terrain = terrain.Params()
 
     def angles(self): return (0.0, 10.0)
+    def zones(self): return list(self.view)
 
-    def terrain_ahead(self, reach_m):
-        self.reaches.append(reach_m)
+    def floor_scan(self):
+        self.glances += 1
         self.moves.append("down")
-        kind = self._kinds.pop(0) if len(self._kinds) > 1 else self._kinds[0]
-        return self._terrain.Terrain(kind, 0.35, 0.1)
+        return self._scans.pop(0) if len(self._scans) > 1 else self._scans[0]
 
 
-def test_tof_range_on_the_person_is_sent_once_their_box_is_known():
+class Moving(Motion):
+    """Motion that moves a pose: x, y, heading (turns + right, as the tools)."""
+    def __init__(self, bump_on=None):
+        super().__init__()
+        self.pose, self.bump_on, self.bump_t = [0.0, 0.0, 0.0], bump_on, 0.0
+
+    def turn(self, d):
+        self.pose[2] -= np.radians(d)
+        return super().turn(d)
+
+    def drive(self, m):
+        import time
+        self.pose[0] += m * np.cos(self.pose[2])
+        self.pose[1] += m * np.sin(self.pose[2])
+        if self.bump_on is not None and len([1 for k, _ in self.moves if k == "drive"]) == self.bump_on - 1:
+            self.bump_t = time.monotonic() + 0.001
+        return super().drive(m)
+
+
+def test_tof_range_on_the_person_is_sent_once_their_box_is_known_and_the_grid_every_frame():
     boxed = dict(step("tracking"), bbox=[20, 10, 44, 48], head=[0, 0], locked=True)
     h, v = TofHead(), Vision([boxed, boxed, step("gone")])
     follow.follow(Camera(), v, Motion(), "Sam", head=h, seconds=60, clock=Clock())
     assert v.calls[0][1]["range_m"] is None                  # no box yet
     assert v.calls[1][1]["range_m"] == 1.6
+    assert len(v.calls[0][1]["tof_grid"]) == 8 and v.calls[0][1]["tof_grid"][0][0] == 1.6
 
 
-def test_the_floor_is_checked_before_every_drive_and_a_blocked_path_is_not_driven():
+def test_the_floor_is_checked_before_a_drive_and_the_robot_drives_up_to_what_is_in_the_way():
     drive = dict(step("tracking", turn=-10.0, drive=0.5), head=[0, 0], locked=True)
-    h, v, m = TofHead(kinds=("blocked", "flat")), Vision([drive, drive, step("gone")]), Motion()
+    h, v, m = TofHead(scans=(floor(box=(0.6, 0.1)), floor())), Vision([drive, drive, step("gone")]), Motion()
     follow.follow(Camera(), v, m, "Sam", head=h, seconds=60, clock=Clock())
-    assert m.moves == [("turn", -10.0), ("turn", -10.0), ("drive", 0.5)], "it still turns to face them"
-    assert h.reaches == [0.7, 0.7]
+    assert m.moves == [("turn", -10.0), ("drive", 0.35), ("turn", -10.0), ("drive", 0.5)], \
+        "a box at 0.6 m: stop 0.25 m short of it, not skip the drive"
     i = h.moves.index("down")
     assert h.moves[i + 1] == (0.0, 10.0), "the head goes back to where it was for the next frame"
 
 
-def test_only_flat_floor_is_driven_a_drop_a_step_or_an_unreadable_floor_is_not():
+def test_too_close_to_a_drop_a_step_or_a_box_or_an_unreadable_floor_is_not_driven():
     drive = dict(step("tracking", drive=0.3), head=[0, 0], locked=True)
-    for kind, drives in (("drop", 0), ("climbable", 0), ("blocked", 0), ("unknown", 0), ("flat", 1)):
-        h, m = TofHead(kinds=(kind,)), Motion()
+    for scan, drives in ((floor(drop=0.3), 0), (floor(box=(0.3, 0.02)), 0), (floor(box=(0.3, 0.1)), 0),
+                         ([], 0), (floor(), 1)):
+        h, m = TofHead(scans=(scan,)), Motion()
         follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
-        assert len(m.moves) == drives, kind
-    h, m = TofHead(kinds=("unknown",)), Motion()
+        assert len(m.moves) == drives, scan[:3]
+    h, m = TofHead(scans=([],)), Motion()
     h.terrain.drive_unknown = True                               # robot.yaml drive_on_unknown_floor: true
     follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
     assert len(m.moves) == 1
+
+
+def test_stairs_down_ahead_stop_the_drive_short_of_the_edge():
+    drive = dict(step("tracking", drive=0.5), head=[0, 0], locked=True)
+    h, m = TofHead(scans=(floor(drop=0.7),)), Motion()
+    follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
+    assert m.moves == [("drive", 0.45)]
+
+
+def test_floor_seen_clear_is_not_looked_at_again_while_it_is_still_ahead():
+    drive = dict(step("tracking", drive=0.3), head=[0, 0], locked=True)
+    h, m = TofHead(), Moving()
+    follow.follow(Camera(), Vision([drive, drive, drive, step("gone")]), m, "Sam", head=h, seconds=60,
+                  clock=Clock(), pose=lambda: tuple(m.pose))
+    assert [k for k, _ in m.moves] == ["drive"] * 3
+    assert h.glances == 2, "clear to 1 m: the second drive needs no look, the third does"
+
+
+def test_the_tracking_view_is_used_when_it_sees_the_floor_right_in_front():
+    drive = dict(step("tracking", drive=0.4), head=[0, 0], locked=True)
+    h, m = TofHead(view=zones(floor(start=0.2))), Motion()
+    follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
+    assert m.moves == [("drive", 0.4)] and h.glances == 0
+    h, m = TofHead(view=zones(floor(start=0.6))), Motion()          # the near floor not in view: look down
+    follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
+    assert m.moves == [("drive", 0.4)] and h.glances == 1
+
+
+def test_something_in_the_way_at_any_height_shortens_the_drive_but_the_person_does_not():
+    drive = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=1.6)
+    chair = zones([(0.65, 0.05, 0.25)]) + zones(floor())             # a chair seat edge at 25 cm, 0.65 m ahead
+    h, m = TofHead(view=chair), Motion()
+    follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
+    assert m.moves == [("drive", 0.4)]
+    legs = zones([(1.5, 0.0, 0.25)]) + zones(floor())                # the person themselves
+    table = zones([(0.5, 0.0, 0.7)]) + zones(floor())                # above the robot: it passes under
+    for view in (legs, table):
+        h, m = TofHead(view=view), Motion()
+        follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
+        assert m.moves == [("drive", 0.5)]
+
+
+def test_a_bump_stops_the_drive_and_no_drive_is_tried_until_the_robot_has_turned_away():
+    drive = dict(step("tracking", drive=0.5), head=[0, 0], locked=True)
+    turn_and_drive = dict(step("tracking", turn=25.0, drive=0.5), head=[0, 0], locked=True)
+    h, m = TofHead(), Moving(bump_on=1)
+    follow.follow(Camera(), Vision([drive, drive, turn_and_drive, step("gone")]), m, "Sam", head=h,
+                  seconds=60, clock=Clock(), bumped=lambda: m.bump_t)
+    assert m.moves == [("drive", 0.5), ("turn", 25.0), ("drive", 0.5)]
+    assert m.stopped >= 1
+
+
+def test_once_lost_the_mac_is_told_where_they_were_last_seen():
+    seen = dict(step("tracking", turn=10.0), head=[0, 0], locked=True, bearing_deg=-40.0)
+    lost = dict(step("searching"), head=[0, 0], locked=True)
+    m, v = Moving(), Vision([seen, lost, step("gone")])
+    follow.follow(Camera(), v, m, "Sam", head=Head(), seconds=60, clock=Clock(), pose=lambda: tuple(m.pose))
+    assert v.calls[0][1]["hint_deg"] is None
+    assert abs(v.calls[1][1]["hint_deg"] - (-30.0)) < 0.2, "40 right, then the robot turned 10 right"

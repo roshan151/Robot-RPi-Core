@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 import os
 import subprocess
 import threading
@@ -82,6 +83,8 @@ def _open_head():
 head_look = HeadLook(_open_head)
 _motion = None                               # RosMotion, set in main(); follow drives with it
 _pitch = [None]                              # the robot's nose-up angle from /motion_health; None = no IMU
+_pose = [None]                               # (x, y, heading) from /odom; None until the first message
+_bump_t = [0.0]                              # time.monotonic() of the last "bumped" in /motion_health
 _explore_stop = None                         # explore/stop client, set in main()
 
 
@@ -149,7 +152,8 @@ def _run_task(task: str, name: str) -> bool:
             return face_tasks.enroll(camera, vision, name, head=head)
         if task == "follow":
             from robot_core import follow
-            return follow.follow(camera, vision, _motion, name, head=head)
+            return follow.follow(camera, vision, _motion, name, head=head,
+                                 pose=lambda: _pose[0], bumped=lambda: _bump_t[0])
         return face_tasks.match(camera, vision, head=head) is not None
     finally:
         if gimbal:
@@ -213,8 +217,19 @@ def main(args=None) -> None:
 
     def _on_health(m) -> None:
         _pitch[0] = m.pitch_deg if m.imu_known else None
+        if m.state == "bumped":
+            _bump_t[0] = time.monotonic()
 
     node.create_subscription(MotionHealth, "motion_health", _on_health, 10)
+
+    # Where the robot is (encoders, gyro heading with the IMU): follow's floor memory and search hint.
+    from nav_msgs.msg import Odometry
+
+    def _on_odom(m) -> None:
+        q = m.pose.pose.orientation
+        _pose[0] = (m.pose.pose.position.x, m.pose.pose.position.y, 2.0 * math.atan2(q.z, q.w))
+
+    node.create_subscription(Odometry, "odom", _on_odom, 10)
     _explore_stop = node.create_client(Trigger, "explore/stop")
 
     try:

@@ -36,7 +36,7 @@ The Mac service lives in its own repo, **Vision-Microservice**.
 - **Raspberry Pi 4B** (64-bit OS): voice, camera, head, serial to the Arduino
 - **Arduino** (Uno-class): 2× DRV8871 motor drivers, quadrature encoders, serial watchdog; separate motor battery, common ground
 - **Head:** Pi camera (mounted inverted), TF-Luna range sensor (UART) and two hobby servos: pan on GPIO13 (±90°), tilt on GPIO12 (±45°)
-- **IMU** (Fermion 10 DOF, BMI323) on the base, on I2C, and **8x8 ToF** (Gravity SEN0628) on the head, on USB: see "IMU and ToF sensors"
+- **IMU** (Fermion 10 DOF, BMI323) on the base, on I2C, and **8x8 ToF** (Gravity SEN0628) on the head, also on I2C: see "IMU and ToF sensors"
 - **Bluetooth buds** for microphone and speaker
 - **Mac mini** on the LAN running Vision-Microservice
 
@@ -320,7 +320,7 @@ Check it with `python tests/hardware/check_buzzer.py` (stop `robot-voice` first)
 
 ## IMU and ToF sensors
 
-The IMU goes on the Pi's I2C bus (four wires to the GPIO header); the ToF plugs into a USB port. Neither needs the Arduino.
+Both go on the Pi's I2C bus (four wires each to the GPIO header, sharing the same four pins). Neither needs the Arduino.
 
 | Sensor | What it is for | Where it goes | Code |
 |---|---|---|---|
@@ -351,25 +351,49 @@ Power the Pi off first. The board has two ways in carrying the same four signals
 
 The plug takes the SH1.0 5-pin cable that comes with the board; cut its far end or crimp Dupont pins on it. Leave the three solder pads for the I2C addresses open, as shipped: the BMI323 is then at `0x69`, which nothing else on the robot uses.
 
-INT1 to INT4 are the chips' interrupt outputs (data ready, motion, tap, free-fall); the robot polls the chip instead, so they stay unconnected. Mount the board flat and screwed down, not on foam: it measures the plate's angle, and anything that wobbles reads as tilt. The robot's `robot.yaml` assumes **chips facing up and the printed X arrow pointing to the robot's front** (`imu_axes: ["x", "-y", "-z"]`: the printed Z points into the board). Mounted another way, `check_imu.py` tells you what to change.
+INT1 to INT4 are the chips' interrupt outputs (data ready, motion, tap, free-fall); the robot polls the chip instead, so they stay unconnected. Mount the board flat and screwed down, not on foam: it measures the plate's angle, and anything that wobbles reads as tilt. The robot's `robot.yaml` has it mounted **chips facing up, the printed Y arrow pointing to the robot's front and X to its left** (`imu_axes: ["y", "x", "-z"]`: the printed Z points into the board). Mounted another way, `check_imu.py` tells you what to change.
 
 ### Wiring the ToF
 
-**USB (what the robot uses).** A USB-C cable from the ToF to any free USB port on the Pi, and nothing else: no GPIO wires, and the Gravity plug stays empty. The cable powers the board too. The mode and address switches do not matter on USB.
+**I2C (what the robot uses).** The ToF's 4-pin Gravity cable (PH2.0) goes to the same four header pins as the IMU. Power the Pi off first.
 
-1. Plug it in and find its name: `ls /dev/serial/by-id/` shows something like `usb-Raspberry_Pi_..._E6614...-if00`. Put that whole path (`/dev/serial/by-id/usb-...`) in `tof_port` under `/explorer` in `robot.yaml`. The file ships with `/dev/ttyACM0`, which works until another USB serial device (the arm controller) takes that number first.
-2. Update its firmware to V1.3 first if it is older (DFRobot's wiki: hold BOOT while plugging it into a computer, copy the `.uf2` file onto the drive that appears). V1.3 reports a zone it cannot measure as 4000 instead of repeating a stale value.
-3. Look at what it sends: `python -m serial.tools.miniterm /dev/ttyACM0 115200` (Ctrl-] to quit) should scroll rows of numbers in millimetres. DFRobot does not document the layout. The reader takes 8 numbers on a line as a row and 8 such rows as a grid (a leading row number is ignored), or 64 numbers on one line as a grid. If `check_tof.py` then shows nothing, send a few lines of that output for the reader to be adjusted.
+1. On the board, slide the mode switch to **I2C** and leave both address switches as shipped (`0x33`). The board reads the switches only when it powers up, so power-cycle it after changing either.
+2. Wire the Gravity cable by the labels next to its socket:
+
+| ToF plug | Pi GPIO (BCM) | Pi physical pin | What it does |
+|----------|---------------|-----------------|--------------|
+| `+` | 3.3 V | 17 (with the IMU's `3V3`) | Power. Use 3.3 V, not 5 V: it keeps the data lines at the Pi's level |
+| `-` | GND | 14 | Ground |
+| `D/T` | GPIO2 (I2C1 SDA) | 3 (with the IMU's `SDA`) | Data |
+| `C/R` | GPIO3 (I2C1 SCL) | 5 (with the IMU's `SCL`) | Clock |
+
+```
+ ToF (Gravity plug)    green protoboard          Pi header
+ +    ──────────┐
+ IMU 3V3  ──────┴───── 3.3 V row  ─────────────  pin 17  (3.3 V)
+ D/T  ──────────┐
+ IMU SDA  ──────┴───── SDA row    ─────────────  pin 3   (GPIO2)
+ C/R  ──────────┐
+ IMU SCL  ──────┴───── SCL row    ─────────────  pin 5   (GPIO3)
+ -    ─────────────────────────────────────────  pin 14  (GND)
+ IMU GND  ─────────────────────────────────────  pin 9   (GND)
+```
+
+   Pins 3, 5 and 17 each take one wire from the protoboard; the IMU and ToF wires meet on its rows. The ToF's ground has its own pin (14).
+3. `robot.yaml`, `/explorer`: `tof_port: ""` (I2C), `tof_bus: 1`, `tof_addr: 51` (0x33). The robot's file has these.
+4. Pi on: `i2cdetect -y 1` shows `33` (see "Check the wiring" below). Over I2C the grid comes about 5 times a second.
+
+Firmware: updating to V1.3 needs the USB-C port once, with a cable that carries data (not a charge-only one): hold BOOT while plugging it into a computer (the Mac is fine), and copy the `.uf2` file from DFRobot's wiki onto the drive that appears. V1.3 reports a zone it cannot measure as 4000 instead of repeating a stale value; older firmware works on I2C too, but a stale zone can look like floor that is not there.
 
 On the head:
 
 - Mount the board next to the camera, facing the same way, its face square to the camera's. On its side is fine: set `tof_tilt` (see below).
-- **The USB cable moves with the head.** It is stiffer than a ribbon or the thin Gravity cable: use a short, thin, flexible one, ideally with a right-angle USB-C plug. Leave a loop long enough for the full pan (±90°) and tilt, and tie it down at both ends so the plug never takes the pull and the servos never have to drag it. This is the lesson of the torn camera ribbons.
-- Route it away from the motor leads and the motor driver.
+- **The cable moves with the head.** Leave a loop long enough for the full pan (±90°) and tilt, and tie it down at both ends so the plug never takes the pull and the servos never have to drag it. This is the lesson of the torn camera ribbons.
+- **Keep it short and away from the motors.** I2C is meant for short runs: keep the cable from the head to the protoboard under about 50 cm and route it away from the motor leads and the motor driver. If `i2cdetect` sometimes misses `33`, or `check_tof.py` logs read failures, shorten it or twist SDA and SCL each with a ground wire.
 
-**I2C instead (if no USB port is free).** Slide the mode switch to **I2C**, leave the address switches at `0x33`, power-cycle it, and wire the 4-pin Gravity plug by the labels next to the socket: `+` to pin 17 (3.3 V), `-` to GND (pin 14), `D/T` to pin 3, `C/R` to pin 5. Pins 3, 5 and 17 are the IMU's too: join the two on the green protoboard, one row each for 3.3 V, GND, SDA and SCL. Then set `tof_port: ""`. Over I2C the grid comes about 5 times a second.
+**USB instead.** A USB-C *data* cable from the ToF to a free USB port on the Pi, nothing on the GPIO pins; the mode and address switches do not matter. `ls /dev/serial/by-id/` shows something like `usb-Raspberry_Pi_..._E6614...-if00`: put that whole path in `tof_port`. `python -m serial.tools.miniterm <that path> 115200` (Ctrl-] to quit) should scroll rows of millimetres. The reader takes 8 numbers on a line as a row and 8 such rows as a grid (a leading row number is ignored), or 64 numbers on one line as a grid. If `check_tof.py` then shows nothing, send a few lines of that output for the reader to be adjusted.
 
-None of this clashes with what is already wired: the OLED (pins 1, 11, 19, 22, 23, 24, 25), the servos (GPIO12, 13), the servo power sense (pin 7), the buzzer (pin 37) and the Arduino (USB). On USB the ToF takes one of the Pi's four USB ports (with the Arduino and the camera, three are used).
+None of this clashes with what is already wired: the OLED (pins 1, 11, 19, 22, 23, 24, 25), the servos (GPIO12, 13), the servo power sense (pin 7), the buzzer (pin 37) and the Arduino (USB). On I2C the ToF adds only a ground pin (14) and shares the IMU's pins 3, 5 and 17.
 
 ### Check the wiring
 
@@ -385,9 +409,9 @@ You should now see, besides the PiSugar's own addresses:
 |---------|------|
 | `69` | IMU accelerometer + gyro (BMI323) |
 | `15` and `47` | IMU magnetometer and barometer (not used by the robot; they show the board is alive) |
-| `33` | ToF, only if it is on I2C instead of USB |
+| `33` | ToF (on USB instead, it shows in `ls /dev/serial/by-id/`, not here) |
 
-Nothing new in the table: check power and ground first, then whether SDA and SCL are swapped. `68` instead of `69`: the BMI323's address pad is closed; set `imu_gyro_addr: 104`. The ToF on USB shows in `ls /dev/serial/by-id/`, not here.
+Nothing new in the table: check power and ground first, then whether SDA and SCL are swapped. `68` instead of `69`: the BMI323's address pad is closed; set `imu_gyro_addr: 104`. `33` missing: the ToF's mode switch is not on I2C, or it was not power-cycled after switching.
 
 Then the two check scripts, which also tell you what to put in `robot.yaml`:
 
@@ -427,7 +451,7 @@ sudo systemctl restart robot-voice
 
 ### Power the sensors use
 
-The ToF draws under 80 mA from its USB port; the IMU a few mA from the Pi's 3.3 V pin, which also feeds the OLED. Both are well inside what the Pi supplies.
+The ToF draws under 80 mA and the IMU a few mA, both from the Pi's 3.3 V pin 17; the OLED is on the same 3.3 V rail (pin 1). Together that is well inside what the Pi 4's 3.3 V rail supplies.
 
 ## Audio
 

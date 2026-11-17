@@ -48,8 +48,13 @@ and is not read; nor is the barometer.
   says nothing is moving. A steady mean far from the last zero is taken for a slow turn,
   not drift. This is what holds yaw to about a degree a minute.
 * **Tilt**: past `max_pitch_deg` / `max_roll_deg` for 0.3 s is `tilted`, which stops the
-  move like a stall does. **Bump**: a jolt over 0.8 g during a move is `bumped`, reported
-  on `/motion_health` and in the log, and does not stop anything (tracks jolt on sills).
+  move like a stall does. **Nose dip**: on a drive, the front falling more than
+  `max_dip_deg` (8°) below the pitch the drive started at, at least half of it in the last
+  0.5 s, is `tilted` too, at once (reversing: the tail). That is going over an edge the ToF
+  missed; a sill crossed and left behind comes back to the start pitch, and a gentle ramp
+  is not fast, so neither trips it. **Bump**: a jolt over 0.8 g during a move is `bumped`,
+  reported on `/motion_health` and in the log. The drivetrain does not stop on it (tracks
+  jolt on sills); follow does (FOLLOW-DESIGN Part 3).
 
 ## Part 3 — The ToF and the floor
 
@@ -78,12 +83,19 @@ Nothing climbs yet, so today `climbable` is treated as an obstacle by both follo
 
 ## Part 4 — Follow
 
-Before each drive the head looks down, the floor is judged for the drive plus 0.2 m, and
-the head goes back to where it was for the next frame. Anything but `flat` skips the
-drive (an obstacle, a step, a drop, or a floor that could not be read: `unknown`); the
-turn toward the person still happens. `drive_on_unknown_floor: true` lets `unknown` through.
-Explore applies the same rule before every step of its path (EXPLORE-DESIGN Part 4b). The range sent to the Mac is
-the median of the ToF zones inside the person's last box.
+Only flat floor is driven: the floor must be flat for the drive plus 0.2 m. Something in
+the way (an obstacle, a step, a drop) ends the drive `stop_short_m` (0.25 m, robot.yaml)
+before it, measured from the middle of the tracks; a floor that could not be read
+(`unknown`) stops it altogether unless `drive_on_unknown_floor: true`. The turn toward the
+person always happens. Explore applies the same rule before every step of its path
+(EXPLORE-DESIGN Part 4b). The details of what follow looks at and when are in
+FOLLOW-DESIGN Part 3; in short:
+
+* the tracking view (the head on the person) is checked for anything in the path nearer
+  than the person, up to the robot's height, and its lower rows for the floor;
+* the head glances down only when neither the tracking view nor floor seen clear in the
+  last 10 s (still ahead, on the same line) covers the drive;
+* the whole grid goes to the Mac, which ranges every person in view.
 
 ## Part 5 — Known limits
 

@@ -675,12 +675,13 @@ def test_bmi323_is_set_up_and_read_with_its_dummy_bytes(monkeypatch):
         imu.Chips(1, 0x69)
 
 
-def test_board_flat_chips_up_x_forward_reads_level():
-    """robot.yaml's imu_axes for this board: Z printed into the board, so at rest it reads -1 g."""
+def test_board_as_mounted_reads_level_and_tilts_the_right_way():
+    """robot.yaml's imu_axes: chips up, Y arrow forward, X arrow left; Z printed into the board, so at rest -1 g."""
     from robot_core.sensors.imu import axis_map
-    up = axis_map(["x", "-y", "-z"])
-    assert up((0.0, 0.0, -1.0)) == (0.0, 0.0, 1.0)                        # level: gravity on robot up
-    assert up((0.0, -0.5, 0.0)) == (0.0, 0.5, 0.0)                        # board -y is the robot's left
+    m = axis_map(["y", "x", "-z"])
+    assert m((0.0, 0.0, -1.0)) == (0.0, 0.0, 1.0)                         # level: gravity on robot up
+    assert m((0.0, 0.5, 0.0)) == (0.5, 0.0, 0.0)                          # board y is the robot's front
+    assert m((0.5, 0.0, 0.0)) == (0.0, 0.5, 0.0)                          # board x is the robot's left
 
 
 def test_tof_over_usb_reads_text_grids():

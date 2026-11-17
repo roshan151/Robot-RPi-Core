@@ -128,6 +128,28 @@ def test_tilted_stops_the_move_and_bumped_only_reports():
     assert h.update(_odom(v=0.1), "straight", 5.0, imu=_imu(pitch=5, roll=-3)).state == MOVING
 
 
+def test_the_nose_dropping_on_a_drive_stops_it_at_once_but_a_sill_or_a_ramp_does_not():
+    from robot_core.odometry import TILTED
+
+    def run(pitches, op="straight"):
+        h, out = MotionHealth(max_dip_deg=8.0), []
+        for i, p in enumerate(pitches):
+            out.append(h.update(_odom(v=0.1 if op == "straight" else -0.1), op, i * 0.1, imu=_imu(pitch=p)))
+        return out
+
+    edge = run([0, 0, 0, -1, -4, -9, -14])                       # over an edge: the front falls fast
+    assert edge[-2].state == TILTED and edge[-2].stuck and "nose" in edge[-2].reason
+    assert all(r.state != TILTED for r in edge[:4])
+    sill = run([0, 3, 6, 9, 6, 2, 0, 0])                         # up over a sill and back down to level
+    assert all(r.state != TILTED for r in sill)
+    ramp = run([-0.6 * i for i in range(30)])                    # a slow ramp down to -17: not fast
+    assert all(r.state != TILTED for r in ramp)
+    back = run([0, 0, 1, 5, 10, 15], op="reverse")               # reversing off an edge: the tail falls
+    assert back[-1].state == TILTED and "tail" in back[-1].reason
+    nose_up = run([0, 0, 1, 5, 10, 15])                          # nose up going forward is not a fall
+    assert all(r.state != TILTED for r in nose_up)
+
+
 def test_tracks_turning_but_gyro_still_is_slipping():
     h = MotionHealth()
     rep = None

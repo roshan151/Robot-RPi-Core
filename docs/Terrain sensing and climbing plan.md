@@ -11,7 +11,7 @@ The plan is in build order. Each step leaves a working robot, and nothing before
 - **Source:** the Pi repo (Robot-RPi-Core) was read for this plan. Mac-side file names come from the design docs; Vision-Microservice was not opened.
 - **TF-Luna:** `robot.yaml` has `tfluna_fitted: false`, so the TF-Luna is off the robot and explore is currently refused. The ToF becomes the range sensor, and step 2 is what re-enables explore.
 - **Chassis:** tank tracks 3 in tall and 11 in long, 1.5 in sprockets, 2.8 lb, TS-25GA370 12 V 130 RPM motors.
-- **Sensors:** Fermion 10 DOF IMU (BMI323, BMM350, BMP581; SEN0697) on I2C and Gravity 8×8 ToF (60° field of view, 3.5 m) on USB, with the ToF on the gimbal.
+- **Sensors:** Fermion 10 DOF IMU (BMI323, BMM350, BMP581; SEN0697) on I2C and Gravity 8×8 ToF (60° field of view, 3.5 m) also on I2C, with the ToF on the gimbal.
 
 ## Step 0: Measure and wire (no code)
 

@@ -170,6 +170,7 @@ class ExplorerNode(Node):
         p("path_width_m", 0.30)
         p("drive_on_unknown_floor", False)
         p("robot_height_m", 0.30)
+        p("stop_short_m", 0.25)
         p("camera_main_size", [1920, 1080])
         p("camera_inverted", True)
         p("camera_backend", "auto")
@@ -213,7 +214,7 @@ class ExplorerNode(Node):
             tof_perpendicular=bool(v("tof_perpendicular"))),
             pitch=lambda: self._pitch(),
             terrain_params=terrain.params_from({n: v(n) for n in ("h_max_m", "min_landing_m", "max_drop_m", "path_width_m",
-                                                             "drive_on_unknown_floor", "robot_height_m")}))
+                                                             "drive_on_unknown_floor", "robot_height_m", "stop_short_m")}))
         self.vision = VisionClient(v("vision_url")) if v("vision_url") else VisionClient()
 
         self.base = RosBase(self)

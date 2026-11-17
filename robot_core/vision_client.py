@@ -104,12 +104,21 @@ class VisionClient:
 
     def follow_step(self, jpeg: bytes, seq: int, pan_deg: float = 0.0, tilt_deg: float = 0.0,
                     hfov_deg: float = 66.0, camera_height_m: float = 0.25,
-                    range_m: Optional[float] = None) -> dict:
-        """Where the person is and how to move: turn `turn_deg` (+ right), then drive `drive_m`."""
+                    range_m: Optional[float] = None, tof_grid=None, tof_fov_deg: float = 60.0,
+                    hint_deg: Optional[float] = None) -> dict:
+        """Where the person is and how to move: turn `turn_deg` (+ right), then drive `drive_m`.
+        tof_grid: the 8x8 ToF's rows (metres, None = no range; row 0 the top, column 0 the
+        left, as the camera sees), for the Mac to range every person in view. hint_deg:
+        where the person was last seen, from the robot's present heading (+ left)."""
         data = {"seq": seq, "pan_deg": pan_deg, "tilt_deg": tilt_deg, "hfov_deg": hfov_deg,
                 "camera_height_m": camera_height_m}
         if range_m is not None:
             data["range_m"] = range_m
+        if tof_grid is not None:
+            data["tof_grid"] = json.dumps([[None if v is None else round(v, 3) for v in row] for row in tof_grid])
+            data["tof_fov_deg"] = tof_fov_deg
+        if hint_deg is not None:
+            data["hint_deg"] = hint_deg
         return self._call("POST", "/v1/follow/step", timeout=20.0, data=data,
                           files={"image": ("f.jpg", jpeg, "image/jpeg")})
 

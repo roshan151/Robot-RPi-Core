@@ -46,16 +46,41 @@ uses the head's (+ = left).
 
 ## Part 3 — Known limits / next
 
-* **Floor check before a drive (needs the 8x8 ToF, `tof_fitted: true`).** The head
-  glances down (`Head.terrain_ahead`, two looks) and the drive is skipped unless the floor
-  is flat for the length of the drive plus 0.2 m: a box, a drop and, until the climb
-  controller exists, a low step all stop it. The robot keeps turning to face the person
-  and checks again next step; the OLED shows `path blocked at 0.35 m`. A floor the sensor
-  cannot read (dark, shiny) is driven as before. Without the ToF there is no check.
-  See `TERRAIN-DESIGN.md`.
-* **Range**: with the ToF, `range_m` is the median of the zones inside the person's box
-  from the previous frame (none on the first frame, or when the box is off to the side
-  of the ToF's 60° view).
+* **The path before a drive (needs the 8x8 ToF, `tof_fitted: true`).** In order:
+  1. *Anything in the way, at any height up to the robot's own* (`robot_height_m`): the
+     zones of the frame just taken (the head on the person, turned by the turn the robot
+     makes first) that lie in the robot's path, higher than a climbable step, and nearer
+     than the person by 0.3 m. A table top above the robot does not count; the person
+     does not either. Needs the person's distance.
+  2. *The floor*, looked at as little as possible: floor seen clear in the last 10 s that
+     is still ahead on the same line (odometry; turned more than 8° or moved 8 cm aside
+     and it no longer counts) is not looked at again; else the same frame's lower rows,
+     if they reach the floor right in front of the robot; else the head glances down
+     (`Head.floor_scan`, two looks) and back up. A glance records how far the floor is
+     clear (up to 1 m), so the next drives usually need no look.
+
+  Only flat floor is driven, for the drive plus 0.2 m. Something in the way, a step or a
+  drop ends the drive `stop_short_m` (0.25 m) before it: the robot drives **part of the
+  way** instead of not at all, and anything shorter than 8 cm is not driven. A floor the
+  sensor cannot read is not driven (`drive_on_unknown_floor: true` allows it). The robot
+  keeps turning to face the person either way; the OLED shows `path in the way at 0.62 m`.
+  Without the ToF there is no check. See `TERRAIN-DESIGN.md`.
+* **Bumps**: a jolt during a drive (the drivetrain's `/motion_health` says `bumped`) is
+  something the ToF did not see: glass, a thin chair leg. The drive is braked, the floor
+  memory dropped, and no drive is tried until the robot has turned 20° away
+  (`FOLLOW_BUMP_TURN_DEG`). Straight ahead behind it, the robot turns but does not drive.
+* **Edges**: with the IMU, the nose falling fast on a drive stops it at once
+  (TERRAIN-DESIGN Part 2, `max_dip_deg`): the backstop for a drop the ToF missed.
+* **Range and identity**: with the ToF, the whole grid goes to the Mac with every frame
+  (`tof_grid`). The Mac ranges each person by the zones on their box: that is their
+  distance (`distance_from: tof`), and a check on who is who. Once the target's ToF range
+  is known, a person further than 1.2 m (plus 0.5 m per missed frame) from where the
+  target should be is not taken by their clothes. A face match always wins. `range_m`
+  (the zones on the previous frame's box) is still sent, for a Mac without this.
+* **Searching where they went**: the Pi keeps the person's last bearing in the odometry
+  frame (gyro heading with the IMU) and sends it, from its present heading, as
+  `hint_deg`. When a search starts, the head looks there first; behind the robot, past
+  ±90°, the robot turns that way instead. Once per loss.
 * **Cancelling**: say "stop" (the cancel-only voice session, needs internet) or call
   `ros2 service call /task/stop std_srvs/srv/Trigger` — see `TASK-CANCEL.md`. Otherwise
   it ends when the person is gone or after `FOLLOW_SECONDS` (300 s).

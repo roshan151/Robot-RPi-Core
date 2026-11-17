@@ -26,7 +26,7 @@ from robot_core.sensors.imu import Imu
 
 def main() -> None:
     p = yaml.safe_load(ROBOT_YAML.read_text())["/drivetrain"]["ros__parameters"]
-    axes = p.get("imu_axes", ["x", "-y", "-z"])
+    axes = p.get("imu_axes", ["y", "x", "-z"])
     print(f"bus {p.get('imu_bus', 1)}, BMI323 0x{int(p.get('imu_gyro_addr', 0x69)):02x}, axes {axes}")
     imu = Imu(bus=int(p.get("imu_bus", 1)), axes=axes, gyro_addr=int(p.get("imu_gyro_addr", 0x69)))
     try:

@@ -44,6 +44,8 @@ class Params:
     cell_m: float = 0.05           # the path is judged in slices this long
     drive_unknown: bool = False    # drive onto a floor the sensor cannot read
     body_m: float = 0.30           # the robot's height: anything lower than this is in its way
+    stop_short_m: float = 0.25     # a drive cut short by something ends with the robot's middle this far
+                                   # before it (half the track length plus a gap; at least 0.25)
 
 
 @dataclass(frozen=True)
@@ -183,4 +185,5 @@ def params_from(p: dict) -> Params:
                   max_drop_m=float(p.get("max_drop_m", d.max_drop_m)),
                   corridor_m=float(p.get("path_width_m", d.corridor_m)),
                   drive_unknown=bool(p.get("drive_on_unknown_floor", d.drive_unknown)),
-                  body_m=float(p.get("robot_height_m", d.body_m)))
+                  body_m=float(p.get("robot_height_m", d.body_m)),
+                  stop_short_m=max(0.25, float(p.get("stop_short_m", d.stop_short_m))))

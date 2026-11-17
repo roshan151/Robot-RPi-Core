@@ -174,6 +174,10 @@ class Head:
                         out.append((r, c, ox + depth * fwd, depth * left, None, depth * along))
         return out
 
+    def zones(self):
+        """`_zones()`, for callers outside: every ToF zone from where the head points now."""
+        return self._zones()
+
     def floor_profile(self) -> List[terrain.Point]:
         """The zones as (x ahead, y left, height above the floor); height None is a
         ray that should have met the floor there and did not. Empty without a grid."""

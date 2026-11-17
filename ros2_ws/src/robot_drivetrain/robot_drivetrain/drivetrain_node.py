@@ -82,10 +82,11 @@ class DrivetrainNode(Node):
         self.declare_parameter("imu_fitted", False)
         self.declare_parameter("imu_bus", 1)
         self.declare_parameter("imu_gyro_addr", 0x69)           # the BMI323
-        self.declare_parameter("imu_axes", ["x", "-y", "-z"])   # board axis along robot forward, left, up
+        self.declare_parameter("imu_axes", ["y", "x", "-z"])   # board axis along robot forward, left, up
         self.declare_parameter("turn_tolerance_deg", 2.0)
         self.declare_parameter("max_pitch_deg", 25.0)
         self.declare_parameter("max_roll_deg", 20.0)
+        self.declare_parameter("max_dip_deg", 8.0)                # nose falling this far on a drive: stop
 
         self._apply_calibration()
         self.add_on_set_parameters_callback(self._on_set_parameters)
@@ -103,7 +104,8 @@ class DrivetrainNode(Node):
         )
         self._health = MotionHealth(
             max_pitch_deg=float(self.get_parameter("max_pitch_deg").value),
-            max_roll_deg=float(self.get_parameter("max_roll_deg").value))
+            max_roll_deg=float(self.get_parameter("max_roll_deg").value),
+            max_dip_deg=float(self.get_parameter("max_dip_deg").value))
         self._imu = None
         if self.get_parameter("imu_fitted").value:
             try:
