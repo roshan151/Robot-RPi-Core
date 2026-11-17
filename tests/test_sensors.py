@@ -467,3 +467,249 @@ def test_head_look_reports_a_fault_and_lets_go_of_the_dead_gimbal(tmp_path):
         assert not r["ok"] and "needs a reset" in r["error"]
     finally:
         head.release()
+
+
+# --------------------------------------------------------------------------- #
+# IMU (Fermion 10 DOF) and 8x8 ToF
+# --------------------------------------------------------------------------- #
+
+def _fusion_run(fusion, accel, gyro, seconds, hz=100):
+    for _ in range(int(seconds * hz)):
+        fusion.update(accel, gyro, 1.0 / hz)
+
+
+def test_imu_pitch_and_roll_from_gravity_with_the_documented_signs():
+    import math
+    from robot_core.sensors.imu import Fusion
+    s, c = math.sin(math.radians(20)), math.cos(math.radians(20))
+    f = Fusion()
+    _fusion_run(f, (s, 0.0, c), (0, 0, 0), 2)              # nose up 20 deg: gravity shows on the forward axis
+    assert f.pitch == pytest.approx(20, abs=0.5) and f.roll == pytest.approx(0, abs=0.5)
+    f = Fusion()
+    _fusion_run(f, (0.0, s, c), (0, 0, 0), 2)              # right side down 20 deg
+    assert f.roll == pytest.approx(20, abs=0.5) and f.pitch == pytest.approx(0, abs=0.5)
+
+
+def test_imu_zeroes_the_gyro_at_rest_and_yaw_then_follows_a_turn():
+    from robot_core.sensors.imu import Fusion
+    f = Fusion()
+    _fusion_run(f, (0, 0, 1), (0.4, -0.7, 1.3), 2)         # standing still: all of this is the gyro's offset
+    assert f.calibrated and f.bias == pytest.approx([0.4, -0.7, 1.3])
+    yaw0 = f.yaw
+    f.moving = True
+    _fusion_run(f, (0, 0, 1), (0.4, -0.7, 1.3 + 45.0), 2)  # 45 deg/s to the left for 2 s
+    assert f.yaw - yaw0 == pytest.approx(90, abs=0.5) and f.yaw_rate == pytest.approx(45)
+    f.moving = False
+    _fusion_run(f, (0, 0, 1), (0.4, -0.7, 1.3), 60)        # a minute at rest
+    assert abs(f.yaw - yaw0 - 90) < 1.0, "yaw holds to within a degree a minute"
+
+
+def test_imu_does_not_take_a_slow_steady_turn_for_its_zero():
+    from robot_core.sensors.imu import Fusion
+    f = Fusion()
+    _fusion_run(f, (0, 0, 1), (0, 0, 0), 2)
+    _fusion_run(f, (0, 0, 1), (0, 0, 10.0), 3)             # steady 10 deg/s, nobody said "moving"
+    assert f.bias[2] == pytest.approx(0.0) and f.yaw == pytest.approx(30, abs=0.5)
+
+
+def test_imu_gyro_carries_pitch_through_acceleration_and_reports_the_jolt():
+    from robot_core.sensors.imu import Fusion
+    f = Fusion()
+    _fusion_run(f, (0, 0, 1), (0, 0, 0), 2)
+    _fusion_run(f, (0.9, 0, 1.6), (0, -20.0, 0), 0.5)      # hard shove while pitching up at 20 deg/s
+    assert f.pitch == pytest.approx(10, abs=0.5), "the accelerometer is ignored while it reads more than gravity"
+    assert f.state(0.0).jolt_g > 0.8
+
+
+def test_imu_axis_map_and_the_reader_thread():
+    from robot_core.sensors.imu import Imu, axis_map
+    assert axis_map(("y", "-x", "z"))((1.0, 2.0, 3.0)) == (2.0, -1.0, 3.0)
+    with pytest.raises(ValueError):
+        axis_map(("x", "x", "z"))
+    # Board mounted with its Y forward and X to the right: nose up shows on the board's Y.
+    imu = Imu(axes=("y", "-x", "z"), hz=200, source=lambda: (0.0, 0.342, 0.940, 0.0, 0.0, 0.0))
+    try:
+        assert imu.wait_calibrated(3.0)
+        st = imu.state()
+        assert st.pitch_deg == pytest.approx(20, abs=1.0) and st.roll_deg == pytest.approx(0, abs=1.0)
+    finally:
+        imu.close()
+
+
+class _TofLink:
+    """The module's side of the I2C conversation: answers "all data" with `mm`."""
+    def __init__(self, mm, mode8=True):
+        self.mm, self.mode8, self.out, self.writes = mm, mode8, [], []
+
+    def write(self, pkt):
+        from robot_core.sensors import tof8x8 as t
+        self.writes.append(list(pkt))
+        cmd = pkt[2]
+        if cmd == t.CMD_SET_MODE:
+            self.mode8 = True
+            return
+        vals = self.mm if self.mode8 else self.mm[:16]
+        data = b"".join(int(v).to_bytes(2, "little") for v in vals)
+        self.out = [0xFF, 0xFF, t.OK, cmd, len(data) & 0xFF, len(data) >> 8, *data]
+
+    def read_byte(self):
+        return self.out.pop(0) if self.out else 0xFF
+
+    def close(self): pass
+
+
+def test_tof_protocol_bytes_and_decoding():
+    from robot_core.sensors import tof8x8 as t
+    assert t.request(t.CMD_ALL_DATA) == [0, 1, 2]
+    assert t.request(t.CMD_SET_MODE, [0, 0, 0, 8]) == [0, 5, 1, 0, 0, 0, 8]
+    mm = [1000 + i for i in range(64)]
+    mm[0], mm[1], mm[2] = 0, 5, 4000                        # nothing, too near, too far
+    rows = t.decode(b"".join(v.to_bytes(2, "little") for v in mm))
+    assert rows[0][:4] == (None, None, None, pytest.approx(1.003)) and rows[7][7] == pytest.approx(1.063)
+    assert t.decode(b"\x00" * 32) is None                   # a 4x4 frame is not a grid
+    flipped = t.decode(b"".join(v.to_bytes(2, "little") for v in mm), flip_rows=True, flip_cols=True)
+    assert flipped[0][0] == pytest.approx(1.063)
+    assert t.zone_angles(0, 0) == (26.25, 26.25) and t.zone_angles(7, 7) == (-26.25, -26.25)
+
+
+def test_tof_on_its_side_is_turned_back_upright():
+    """Board a quarter-turn clockwise (seen from behind): what is above shows in its LEFT
+    columns, what is to the right in its TOP rows. tof_tilt: 90 turns the grid back."""
+    from robot_core.sensors import tof8x8 as t
+    world = [[r * 10 + c for c in range(8)] for r in range(8)]                 # what an upright board would read
+    raw = [[world[c][7 - r] for c in range(8)] for r in range(8)]              # what the turned board reads
+    pack = lambda g: b"".join((100 + v).to_bytes(2, "little") for row in g for v in row)
+    want = tuple(tuple((100 + v) / 1000 for v in row) for row in world)
+    assert t.decode(pack(raw), tilt_deg=90) == want
+    assert t.decode(pack(world), tilt_deg=90 * 4) == want
+    assert t.decode(pack(raw), tilt_deg=-270) == want                          # -270 is the same as 90
+    back = [[world[7 - c][r] for c in range(8)] for r in range(8)]             # turned anticlockwise instead
+    assert t.decode(pack(back), tilt_deg=-90) == want
+    with pytest.raises(ValueError):
+        t.Tof8x8(tilt_deg=45, link=object())
+
+
+def test_tof_reader_gives_a_grid_and_stands_in_for_the_tfluna():
+    from robot_core.sensors import tof8x8 as t
+    mm = [2000] * 64
+    for r, c in t.CENTRE:
+        mm[r * 8 + c] = 1500
+    tof = t.Tof8x8(hz=50, link=_TofLink(mm))
+    try:
+        g = tof.grid(newer_than=time.monotonic(), timeout=2.0)
+        assert g is not None and g.rows[0][0] == pytest.approx(2.0) and g.centre() == pytest.approx(1.5)
+        assert tof.read(n=5, timeout=1.0) == pytest.approx(1.5)        # what Head.range_at() calls
+        assert tof.latest().range_m == pytest.approx(1.5)
+        assert tof.since(0.0) and all(r.range_m == pytest.approx(1.5) for r in tof.since(0.0))
+    finally:
+        tof.close()
+
+
+def test_tof_switches_a_module_left_in_4x4_back_to_8x8(monkeypatch):
+    from robot_core.sensors import tof8x8 as t
+    link = _TofLink([1200] * 64, mode8=False)
+    tof = t.Tof8x8(hz=50, link=link)
+    monkeypatch.setattr(tof._stop, "wait", lambda s=None: time.sleep(min(s or 0, 0.02)) or False)
+    try:
+        assert tof.grid(newer_than=time.monotonic(), timeout=3.0) is not None
+        assert [0, 5, t.CMD_SET_MODE, 0, 0, 0, 8] in link.writes
+    finally:
+        tof._stop.set()
+        tof.close()
+
+
+def test_tof_range_inside_a_camera_box():
+    from robot_core.sensors import tof8x8 as t
+    rows = [[3.0] * 8 for _ in range(8)]
+    for r in range(2, 7):
+        for c in (3, 4):
+            rows[r][c] = 1.4                                 # a person in the middle, wall behind
+    g = t.Grid(0.0, tuple(tuple(r) for r in rows))
+    W, H = 1920, 1080
+    assert t.range_in_box(g, (800, 300, 1120, 1080), W, H, 80.0) == pytest.approx(1.4)
+    assert t.range_in_box(g, (300, 0, 700, 1080), W, H, 80.0) == pytest.approx(3.0)  # off to the left: the wall
+    assert t.range_in_box(g, (0, 0, 250, 1080), W, H, 80.0) is None                  # the camera sees wider than the ToF
+    assert t.range_in_box(g, (950, 530, 970, 550), W, H, 80.0) == pytest.approx(1.4)  # tiny box: the nearest zone it touches
+    assert t.range_in_box(None, (800, 300, 1120, 1080), W, H, 80.0) is None
+    assert t.range_in_box(g, None, W, H, 80.0) is None
+
+
+def test_bmi323_is_set_up_and_read_with_its_dummy_bytes(monkeypatch):
+    """The BMI323's 16-bit registers: writes low byte first, reads start with two dummy bytes."""
+    import struct
+    import sys
+    import types
+    from robot_core.sensors import imu
+
+    class Bus:
+        chip = 0x0043
+
+        def __init__(self, n):
+            self.writes, self.regs = [], {0x00: Bus.chip, 0x01: 0x0000}
+
+        def write_i2c_block_data(self, addr, reg, data):
+            self.writes.append((addr, reg, data))
+
+        def read_i2c_block_data(self, addr, reg, n):
+            if reg == 0x03:
+                words = [2048, 0, -2048, 655, 0, -655]           # +1 g x, -1 g z; +10, -10 deg/s
+                return list(b"\xff\xff" + struct.pack("<6h", *words))
+            return list(b"\xff\xff" + struct.pack("<H", self.regs[reg]))
+
+        def close(self):
+            pass
+
+    monkeypatch.setitem(sys.modules, "smbus2", types.SimpleNamespace(SMBus=Bus))
+    monkeypatch.setattr(imu.time, "sleep", lambda s: None)
+    c = imu.Chips(1, 0x69)
+    assert c._bus.writes == [(0x69, 0x7E, [0xAF, 0xDE]),                 # soft reset
+                             (0x69, 0x20, [0x38, 0x40]),                 # accel: normal, +-16 g, 100 Hz
+                             (0x69, 0x21, [0x28, 0x40])]                 # gyro: normal, +-500 deg/s, 100 Hz
+    ax, ay, az, gx, gy, gz = c.read()
+    assert (ax, ay, az) == pytest.approx((1.0, 0.0, -1.0))
+    assert (gx, gz) == pytest.approx((10.0, -10.0), abs=0.01)
+    Bus.chip = 0x0241                                                   # some parts report 0x41
+    imu.Chips(1, 0x69)
+    Bus.chip = 0x0011                                                   # something else at 0x69
+    with pytest.raises(RuntimeError, match="not a BMI323"):
+        imu.Chips(1, 0x69)
+
+
+def test_board_flat_chips_up_x_forward_reads_level():
+    """robot.yaml's imu_axes for this board: Z printed into the board, so at rest it reads -1 g."""
+    from robot_core.sensors.imu import axis_map
+    up = axis_map(["x", "-y", "-z"])
+    assert up((0.0, 0.0, -1.0)) == (0.0, 0.0, 1.0)                        # level: gravity on robot up
+    assert up((0.0, -0.5, 0.0)) == (0.0, 0.5, 0.0)                        # board -y is the robot's left
+
+
+def test_tof_over_usb_reads_text_grids():
+    from robot_core.sensors import tof8x8 as t
+    f = t.TextFrames()
+    rows = [" ".join(str(1000 + r * 8 + c) for c in range(8)) for r in range(8)]
+    out = [f.feed(line, i * 0.001) for i, line in enumerate(rows)]
+    assert out[:7] == [None] * 7 and out[7] == list(range(1000, 1064))
+    # A header resets a half-read grid; a leading row number is dropped; a pause starts again.
+    assert f.feed(rows[0], 1.0) is None and f.feed("--- frame ---", 1.001) is None
+    got = [f.feed(f"{r}: {line}", 1.002 + r * 0.001) for r, line in enumerate(rows)]
+    assert got[7] == list(range(1000, 1064))
+    assert f.feed(rows[0], 2.0) is None and f.feed(rows[1], 2.5) is None    # 0.5 s apart: not one grid
+    assert f.feed(",".join(["4000"] * 64), 3.0) == [4000] * 64              # one line of 64
+
+    class Port:
+        def __init__(self):
+            self.lines = [b"begin\r\n"] + [(l + "\r\n").encode() for l in rows] + [b""] * 1000
+        def readline(self):
+            import time
+            time.sleep(0.0005)
+            return self.lines.pop(0) if self.lines else b""
+        def close(self):
+            pass
+
+    tof = t.Tof8x8(port="test", link=Port(), tilt_deg=90)
+    try:
+        g = tof.grid(newer_than=0.0, timeout=2.0)
+        assert g is not None
+        assert g.rows[0][0] == pytest.approx(1.056)                         # turned upright: was row 7, col 0
+    finally:
+        tof.close()

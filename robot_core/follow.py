@@ -8,6 +8,13 @@ A stop-and-go loop with all the thinking on the Mac (Vision-Microservice
 While searching the robot stays put and only the head sweeps (`head` in the
 answer: pan, tilt above FOLLOW_TILT_DEG).
 
+With the 8x8 ToF on the head (docs/TERRAIN-DESIGN.md): the range sent with each
+frame is the median of the zones on the person, and before every drive the head
+glances down at the floor (`Head.terrain_ahead`). Anything but flat floor and the
+drive is skipped: the robot keeps turning to face them and tries again next step.
+That covers a box, a step, a fall (stairs down, a table edge) and a floor the
+sensor cannot read (unless robot.yaml drive_on_unknown_floor allows that one).
+
 The robot stands still while the Mac decides; the person is expected to walk
 slowly. The head looks straight ahead at FOLLOW_TILT_DEG while it finds them,
 high enough to see a standing person's face from ~1.3 m (the face is what
@@ -28,8 +35,9 @@ import logging
 import time
 from typing import Callable, Optional
 
-from robot_core import settings, status, task_cancel
+from robot_core import settings, status, task_cancel, terrain
 from robot_core.sensors.camera import jpeg
+from robot_core.sensors.tof8x8 import range_in_box
 from robot_core.vision_client import VisionClient, VisionError
 
 log = logging.getLogger(__name__)
@@ -52,6 +60,18 @@ def _move(motion, fn, value: float) -> None:
         if time.monotonic() > deadline:
             raise RuntimeError("move timed out")
         time.sleep(0.1)
+
+
+def _path(head, drive_m: float) -> Optional[str]:
+    """Why the next `drive_m` should not be driven, or None. Looks down, judges
+    the floor, and puts the head back where it was for the next frame."""
+    if not head or not getattr(head, "has_grid", False) or task_cancel.requested():
+        return None
+    back = head.gimbal.angles()
+    t = head.terrain_ahead(drive_m + 0.2)
+    head.gimbal.move_to(back[0], back[1], wait=True)
+    head.gimbal.wait_settled()
+    return None if terrain.may_drive(t, head.terrain) else terrain.why_not(t)
 
 
 def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
@@ -77,7 +97,11 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
         while clock() - t0 < seconds and not task_cancel.requested():
             frame = camera.capture(head.gimbal) if head else camera.capture()
             seq += 1
-            rng: Optional[float] = lidar.read(n=5, timeout=0.5) if lidar else None
+            if lidar is not None and hasattr(lidar, "grid"):     # 8x8 ToF: the zones on the person
+                h, w = frame.main.shape[:2]
+                rng: Optional[float] = range_in_box(lidar.grid(), res.get("bbox"), w, h, head.geom.hfov_deg)
+            else:
+                rng = lidar.read(n=5, timeout=0.5) if lidar else None
             res = vision.follow_step(
                 jpeg(frame.main, settings.FACE_WIRE_LONG_EDGE), seq,
                 pan_deg=frame.pan_deg, tilt_deg=frame.tilt_deg,
@@ -96,7 +120,12 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
             if res["turn_deg"]:
                 _move(motion, motion.turn, res["turn_deg"])
             if res["drive_m"]:
-                _move(motion, motion.drive, res["drive_m"])
+                blocked = _path(head, res["drive_m"])
+                if blocked:
+                    log.info("follow %d: drive skipped, path %s", seq, blocked)
+                    status.detail(f"path {blocked}")
+                else:
+                    _move(motion, motion.drive, res["drive_m"])
     except (VisionError, RuntimeError) as exc:       # RuntimeError: camera or drivetrain gave up
         log.warning("follow ended: %s", exc)
         why = f"vision error: {exc}" if isinstance(exc, VisionError) else str(exc)

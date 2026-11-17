@@ -42,7 +42,7 @@ def generate_launch_description():
                         "for `ros2 action send_goal` testing without a "
                         "microphone or an API key."),
 
-        Node(package="robot_display", executable="display_node", name="display",
+        Node(package="robot_display", executable="display_node", name="display", parameters=[params],
              output="screen", emulate_tty=True, respawn=True, respawn_delay=5.0),
         Node(
             package="robot_bringup",

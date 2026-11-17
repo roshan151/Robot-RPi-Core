@@ -17,6 +17,8 @@ see Part 0.
 | Frontier explorer on the Pi from `/map` | Frontiers and paths come back from the Mac with every keyframe; the Pi follows them with the existing `/drive` and `/turn` actions | Keeps the Pi thin; paths are computed on the same map the scan was matched into |
 | Camera upright | Mounted **inverted**; rotated 180° in the ISP (`Transform(hflip, vflip)`) so every consumer sees an upright image for free | — |
 
+| One level beam; one range per plant; plants placed in 2-D | With the 8x8 ToF fitted (`tof_fitted`): each keyframe carries wall rays, **free-space rays**, **low obstacles**, **drops** and **every reading as a 3-D point**; plants are placed in **3-D** (map x, y and pot height), so a plant stand holds several plants at one spot. See Part 4b | The ToF sees 64 directions at once, floor to above head height |
+
 Unchanged: `robot_core` imports no ROS; the drivetrain is the only thing
 talking to the Arduino; enforcement stays with the actuator; one request in
 flight to the Mac.
@@ -133,7 +135,59 @@ Used today for: same-plant disambiguation, and optionally (`ask_before_drive`)
 "is the way ahead clear?" before each step. Every caller has a non-VLM
 fallback, so the robot never depends on a VLM answering.
 
+## Part 4b — With the ToF grid: the whole room, and plants in 3-D
+
+**Safety first, in both follow and explore.** Before every drive the head looks
+down and the ToF judges the floor for the length of the drive plus a margin
+(`terrain.classify`, see TERRAIN-DESIGN). The robot drives only over floor it has
+*seen* and found flat. An obstacle, a step, a drop (stairs down) or a floor that
+gives no reading (`unknown`) all stop the drive; `drive_on_unknown_floor: true`
+allows the last one only. Explore also writes what it found onto the map so the
+planner routes around it from then on.
+
+**One keyframe** = two half-turns of the base x nine pan stops. At each stop:
+
+| Sent to the Mac | From | On the map |
+|---|---|---|
+| `rays` | nearest thing at robot height, per grid column | walls (black); what the pose is matched against |
+| `clear` | furthest floor seen with nothing standing on it | free space (white) with no wall at the end; fills the room where walls are beyond the ToF's ~3.5 m |
+| `low` | things under the level beam (a step, a box, a pot on the floor) | orange; never planned through, with the robot's radius around them |
+| `drops` | floor missing or lower than `max_drop_m` | magenta; never planned near |
+| `cloud` | every valid zone of every look, as (x, y, height) | saved in `maps/<name>.npz` (`cloud`, N x 3, map frame, one point per 5 cm cube): the room in 3-D |
+
+`low` and `drops` are sticky on the Mac: later rays passing over a step do not
+erase it.
+
+**Plants.** At five of the nine pan stops the camera looks twice: level, then
+tilted up 30 deg (`camera_tilts`), so the upper shelves of a plant stand are in
+the picture. For each detection the ToF zones on the box give the range, and
+the box's lower and upper edges, the head tilt and that range give the
+**height of the pot's base** and of the plant's top above the floor. A box edge
+on the picture's border is not the plant's edge: that height is then taken from
+another look, or left unknown.
+
+* Two sightings are the same plant only if they are within `same_place_m`
+  (0.6 m) on the map **and** their pot bases are within `same_level_m` (0.15 m).
+  Same spot, different height = two plants on a stand.
+* The record on the Mac holds `position: [x, y, z]`, `height_m`, `top_m`,
+  `size_m`, `level` (0 = lowest at that spot) and `on_stand`.
+* Recognising a known plant uses the same rule: among look-alikes, the one
+  known to stand at this spot *and* this height wins.
+* For the photos the head tilts to the plant's own shelf and, of the plants in
+  view, takes the one whose pot is at the expected height.
+* `map.png` writes plants at one spot one under the other, each with its height.
+
 ## Part 6 — Known limits
+
+* **Stacked plants: not run on the robot yet.** Heights depend on the camera's
+  real pitch. If `tilt_center_us` is off by 5 deg, a pot 1 m away reads ~9 cm too
+  high or low: trim the tilt before trusting `height_m`, or raise `same_level_m`.
+* Shelves above what a 30 deg upward look shows from where the robot scanned
+  (roughly above 1.2 m at 1 m range) are not seen. Add a steeper tilt to
+  `camera_tilts` if the stand is taller.
+* A plant directly behind another at the same height and spot is one plant.
+* The orbit path around a stand is planned once per plant, so a three-shelf
+  stand is circled three times.
 
 * One scan height. Anything below the head's level beam is seen only by the
   floor probe, and only straight ahead (±12°) of each step.

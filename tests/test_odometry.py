@@ -82,3 +82,68 @@ def test_health_states():
 
 def test_no_stall_during_start_grace():
     assert _health_run("straight", 0.0, 0, seconds=0.7).state == MOVING
+
+
+# --------------------------------------------------------------------------- #
+# With the IMU: gyro heading, tilt, bump, gyro slip, turn trim
+# --------------------------------------------------------------------------- #
+
+def test_gyro_heading_wins_when_the_tracks_slip():
+    odo = DiffDriveOdometry(TPM, WB)
+    arc = WB / 2 * math.pi / 2 * TPM                       # encoders say 90 degrees...
+    st = None
+    for k in range(11):
+        st = odo.update(int(arc * k / 10), int(-arc * k / 10), k * 100, k * 0.1,
+                        yaw=math.radians(70.0) * k / 10)   # ...the gyro says 70
+    assert st.pose.theta == pytest.approx(math.radians(70), abs=1e-6)
+    assert st.w == pytest.approx(math.radians(70), abs=1e-3)
+    assert st.w_wheels == pytest.approx(math.radians(90), abs=0.02)
+    plain = DiffDriveOdometry(TPM, WB)
+    for k in range(11):
+        last = plain.update(int(arc * k / 10), int(-arc * k / 10), k * 100, k * 0.1)
+    assert st.sigma_theta < last.sigma_theta, "a gyro heading is trusted more than an encoder one"
+
+
+def _imu(pitch=0.0, roll=0.0, rate=0.0, jolt=0.0):
+    from robot_core.sensors.imu import ImuState
+    return ImuState(0.0, pitch, roll, 0.0, rate, jolt, True)
+
+
+def _odom(v=0.0, w=0.0, w_wheels=None):
+    from robot_core.odometry import OdomState
+    return OdomState(Pose2D(), v, w, 0.0, 0.0, 0.0, 0.0, 1, w if w_wheels is None else w_wheels)
+
+
+def test_tilted_stops_the_move_and_bumped_only_reports():
+    from robot_core.odometry import BUMPED, TILTED
+    h = MotionHealth(max_pitch_deg=25, max_roll_deg=20)
+    rep = None
+    for i in range(20):
+        rep = h.update(_odom(v=0.1), "straight", 2.0 + i * 0.1, imu=_imu(pitch=30))
+    assert rep.state == TILTED and rep.stuck and rep.pitch_deg == 30
+    h = MotionHealth()
+    for i in range(15):
+        rep = h.update(_odom(v=0.1), "straight", i * 0.1, imu=_imu(jolt=1.2))
+    assert rep.state == BUMPED and not rep.stuck
+    assert h.update(_odom(v=0.1), "straight", 5.0, imu=_imu(pitch=5, roll=-3)).state == MOVING
+
+
+def test_tracks_turning_but_gyro_still_is_slipping():
+    h = MotionHealth()
+    rep = None
+    for i in range(40):                                    # encoders: 60 deg/s; gyro: barely moving
+        rep = h.update(_odom(w=math.radians(3), w_wheels=math.radians(60)), "left", i * 0.1, imu=_imu(rate=3))
+    assert rep.state == SLIPPING and "gyro" in rep.reason
+    h = MotionHealth()
+    for i in range(40):
+        rep = h.update(_odom(w=math.radians(55), w_wheels=math.radians(60)), "left", i * 0.1, imu=_imu(rate=55))
+    assert rep.state == MOVING
+
+
+def test_turn_correction_makes_up_what_the_slip_cost():
+    from robot_core.odometry import turn_correction
+    assert turn_correction(-90, -84) == ("right", pytest.approx(6))     # asked 90 right, turned 84
+    assert turn_correction(90, 97) == ("right", pytest.approx(7))       # overshot a left turn
+    assert turn_correction(90, 82) == ("left", pytest.approx(8))
+    assert turn_correction(90, 89) is None                               # inside the tolerance
+    assert turn_correction(90, 20) is None                               # that is not slip: do not chase it

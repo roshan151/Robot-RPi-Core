@@ -12,7 +12,7 @@ records the simple first version. **It amends `VISION-DESIGN.md`** (§4.6
 | Distance from the LD14P scan at the person's bearing | TF-Luna on the head, when its beam (the image centre column) lands on the person. Otherwise the floor point under the box's bottom edge, using the camera height | There is no 2-D lidar (EXPLORE-DESIGN Part 0) |
 | Gimbal tracks the person | Head held at **pan 0, tilt `FOLLOW_TILT_DEG` (20°)**. The base turns to face the person | Simplest. At 20° a standing face is visible from ~1.3 m and the beam hits the torso at 1–3 m |
 | Identity: 2 consecutive face matches, sticky for the track (VISION-DESIGN Part 6) | Unchanged. After that, identity is carried by **continuity** — where they should be next frame, and a bank of **clothes looks** (torso + legs histograms, up to 8, learned while tracking, back included). A face that is someone else's rules a person out. Details: `CAMERA-PLAN.md` Phase 1 | The face is rarely visible from behind |
-| Obstacle veto at `MIN_OBSTACLE_M` | **None yet.** It never reverses, closes only to `standoff_m` (1.2 m) and drives at most 0.5 m per step | The voice node limits tilt to 0..45°, so `Head.floor_probe` can't look down. See Part 3 |
+| Obstacle veto at `MIN_OBSTACLE_M` | **With the 8x8 ToF: a floor check before every drive** (`TERRAIN-DESIGN.md`). Without it, none: it never reverses and drives at most 0.5 m per step | The ToF sees the whole path in one glance; follow may tilt down to the drive pose for it. See Part 3 |
 
 Unchanged: `robot_core` imports no ROS, one request in flight to the Mac, and
 follow is a `run_task` job like enroll/match/explore (the Live session is
@@ -46,8 +46,16 @@ uses the head's (+ = left).
 
 ## Part 3 — Known limits / next
 
-* **No obstacle check before a drive.** Next: allow tilt below 0 during follow
-  and run `Head.floor_probe` before each step, as explore does.
+* **Floor check before a drive (needs the 8x8 ToF, `tof_fitted: true`).** The head
+  glances down (`Head.terrain_ahead`, two looks) and the drive is skipped unless the floor
+  is flat for the length of the drive plus 0.2 m: a box, a drop and, until the climb
+  controller exists, a low step all stop it. The robot keeps turning to face the person
+  and checks again next step; the OLED shows `path blocked at 0.35 m`. A floor the sensor
+  cannot read (dark, shiny) is driven as before. Without the ToF there is no check.
+  See `TERRAIN-DESIGN.md`.
+* **Range**: with the ToF, `range_m` is the median of the zones inside the person's box
+  from the previous frame (none on the first frame, or when the box is off to the side
+  of the ToF's 60° view).
 * **Cancelling**: say "stop" (the cancel-only voice session, needs internet) or call
   `ros2 service call /task/stop std_srvs/srv/Trigger` — see `TASK-CANCEL.md`. Otherwise
   it ends when the person is gone or after `FOLLOW_SECONDS` (300 s).

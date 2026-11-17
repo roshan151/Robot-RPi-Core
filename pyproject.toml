@@ -35,6 +35,10 @@ oled = [
     "spidev>=3.6",
     "rpi-lgpio>=0.6",
 ]
+# IMU and 8x8 ToF on I2C (robot_core/sensors/imu.py, tof8x8.py). Pure Python.
+sensors = [
+    "smbus2>=0.4",
+]
 dev = ["pytest>=7.0", "numpy>=1.24", "opencv-python-headless>=4.8"]
 
 [project.scripts]

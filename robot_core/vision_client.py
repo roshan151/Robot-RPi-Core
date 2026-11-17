@@ -39,6 +39,14 @@ PATH_CLEAR_Q = (
     '{{"clear": true|false, "reason": "<short>"}}')
 
 
+DESCRIBE_PLANT_Q = (
+    "This photo was taken by a small home robot of a plant it found. What plant "
+    "is it? Answer JSON: "
+    '{"name": "<common name, or unknown>", "species": "<botanical name, or unknown>", '
+    '"condition": "<healthy | dry | wilting | yellowing | other, in a few words>", '
+    '"pot": "<the pot or stand in a few words>", "confidence": 0..1}')
+
+
 class VisionClient:
     def __init__(self, base_url: str = settings.VISION_SERVICE_BASE_URL,
                  timeout_s: float = 10.0, vlm_timeout_s: float = 60.0) -> None:
@@ -118,7 +126,7 @@ class VisionClient:
                     top_k: int = 3) -> dict:
         body = {"embedding": embedding, "top_k": top_k}
         if position is not None:
-            body["position"] = list(position[:2])
+            body["position"] = list(position[:3])       # x, y on the map and, when known, height above the floor
         return self._call("POST", "/v1/plants/match", json=body)
 
     def plant_enroll(self, jpegs: Sequence[bytes], label: str = "", meta: Optional[dict] = None) -> dict:
@@ -163,6 +171,13 @@ class VisionClient:
         log.info("VLM same-plant: %s (%s)", parsed.get("same"), parsed.get("reason"))
         return bool(parsed["same"]) if float(parsed.get("confidence", 1.0)) >= 0.6 else None
 
+    def describe_plant(self, jpeg: bytes) -> Optional[dict]:
+        """What the image+text model says the plant is: {name, species, condition,
+        pot, confidence}. None when no model answered; the plant is saved without it."""
+        res = self.ask(DESCRIBE_PLANT_Q, [jpeg], as_json=True)
+        parsed = (res or {}).get("parsed")
+        return parsed if isinstance(parsed, dict) and parsed.get("name") else None
+
     def path_clear(self, forward_jpeg: bytes, distance_m: float) -> Optional[bool]:
         res = self.ask(PATH_CLEAR_Q.format(d=distance_m), [forward_jpeg], as_json=True)
         parsed = (res or {}).get("parsed") or {}
@@ -180,10 +195,17 @@ class VisionClient:
                           json={"name": name, "initial_pose": list(initial_pose), "load": load,
                                 "explore_radius_m": explore_radius_m, "no_behind": no_behind})
 
-    def slam_keyframe(self, odom, rays, sensor_xy=(0.0, 0.0), obstacles=(), plan: bool = True) -> dict:
+    def slam_keyframe(self, odom, rays, sensor_xy=(0.0, 0.0), obstacles=(), plan: bool = True,
+                      low=(), drops=(), clear=(), cloud=()) -> dict:
+        """Everything in base_link at `odom`. obstacles, low, drops: [[x, y]], floor-probe
+        obstacles, low obstacles the ToF saw, places where the floor falls away. clear:
+        [[bearing, range]] rays along which the floor was seen that far and nothing was in
+        the way (free space, no wall at the end). cloud: [[x, y, height]], every ToF reading."""
         return self._call("POST", "/v1/slam/keyframe", timeout=30.0, json={
             "odom": list(odom), "rays": [[b, r] for b, r in rays],
-            "sensor_xy": list(sensor_xy), "obstacles": [list(p) for p in obstacles], "plan": plan})
+            "sensor_xy": list(sensor_xy), "obstacles": [list(p) for p in obstacles],
+            "low": [list(p) for p in low], "drops": [list(p) for p in drops],
+            "clear": [[b, r] for b, r in clear], "cloud": [list(p) for p in cloud], "plan": plan})
 
     def slam_plan(self, start, goal) -> Optional[list]:
         res = self._call("POST", "/v1/slam/plan", ok_422=True, timeout=30.0,

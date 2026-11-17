@@ -68,12 +68,13 @@ def effective_wheelbase_m(ticks_per_cm: float, ticks_per_degree: float) -> float
 class OdomState:
     pose: Pose2D
     v: float                 # m/s, forward
-    w: float                 # rad/s, CCW
+    w: float                 # rad/s, CCW (from the gyro when one is fitted)
     distance_m: float        # total path length since start
     sigma_xy: float          # 1-sigma position uncertainty, metres
     sigma_theta: float       # 1-sigma heading uncertainty, radians
     t: float                 # host monotonic time of the last sample
     samples: int
+    w_wheels: float = 0.0    # rad/s the encoders alone say; differs from w when the tracks slip
 
 
 class DiffDriveOdometry:
@@ -95,11 +96,14 @@ class DiffDriveOdometry:
         k_distance: float = 0.03,          # 3 % of distance, 1-sigma
         k_turn: float = 0.04,              # 4 % of every turn
         k_heading_per_m: float = math.radians(1.5),
+        k_gyro: float = 0.01,              # with a gyro: 1 % of every turn
     ) -> None:
         self.ticks_per_m = ticks_per_m
         self.wheelbase_m = wheelbase_m
         self.swap_sides = swap_sides
-        self._kd, self._kt, self._kh = k_distance, k_turn, k_heading_per_m
+        self._kd, self._kt, self._kh, self._kg = k_distance, k_turn, k_heading_per_m, k_gyro
+        self._last_yaw: Optional[float] = None
+        self._w_wheels = 0.0
         self._lock = threading.Lock()
         self._last: Optional[tuple] = None          # (left, right, fw_ms)
         self._pose = Pose2D()
@@ -110,8 +114,12 @@ class DiffDriveOdometry:
         self._t = 0.0
         self._n = 0
 
-    def update(self, total_left: int, total_right: int, fw_ms: int, t_host: float) -> OdomState:
-        """Feed one telemetry sample (firmware channel order)."""
+    def update(self, total_left: int, total_right: int, fw_ms: int, t_host: float,
+               yaw: Optional[float] = None) -> OdomState:
+        """Feed one telemetry sample (firmware channel order). `yaw` is the gyro's
+        heading in radians (unwrapped, CCW +) when an IMU is fitted: the heading
+        then follows the gyro, which a slipping track cannot fool, and the
+        encoders only say how far."""
         if self.swap_sides:
             total_left, total_right = total_right, total_left
         with self._lock:
@@ -121,7 +129,8 @@ class DiffDriveOdometry:
                 # First sample, or the Arduino rebooted (millis went back):
                 # re-baseline rather than integrate a jump from/to zero.
                 self._last = (total_left, total_right, fw_ms)
-                self._v = self._w = 0.0
+                self._last_yaw = yaw
+                self._v = self._w = self._w_wheels = 0.0
                 return self._state()
             dl = (total_left - self._last[0]) / self.ticks_per_m
             dr = (total_right - self._last[1]) / self.ticks_per_m
@@ -130,13 +139,18 @@ class DiffDriveOdometry:
 
             d = (dl + dr) / 2.0
             dth = (dr - dl) / self.wheelbase_m
+            self._w_wheels = dth / dt
+            k_turn = self._kt
+            if yaw is not None and self._last_yaw is not None:
+                dth, k_turn = yaw - self._last_yaw, self._kg
+            self._last_yaw = yaw
             mid = self._pose.theta + dth / 2.0
             self._pose = Pose2D(self._pose.x + d * math.cos(mid),
                                 self._pose.y + d * math.sin(mid),
                                 wrap(self._pose.theta + dth))
             self._v, self._w = d / dt, dth / dt
             self._dist += abs(d)
-            self._var_th += (self._kt * dth) ** 2 + (self._kh * abs(d)) ** 2
+            self._var_th += (k_turn * dth) ** 2 + (self._kh * abs(d)) ** 2
             self._var_xy += (self._kd * d) ** 2 + (abs(d) ** 2) * self._var_th
             return self._state()
 
@@ -146,7 +160,8 @@ class DiffDriveOdometry:
 
     def _state(self) -> OdomState:
         return OdomState(self._pose, self._v, self._w, self._dist,
-                         math.sqrt(self._var_xy), math.sqrt(self._var_th), self._t, self._n)
+                         math.sqrt(self._var_xy), math.sqrt(self._var_th), self._t, self._n,
+                         self._w_wheels)
 
     def correct(self, sigma_xy: float = 0.05, sigma_theta: float = math.radians(2)) -> None:
         """SLAM has re-localised us: the odom pose itself is left alone (map→odom
@@ -161,8 +176,8 @@ class DiffDriveOdometry:
 # Motion health
 # --------------------------------------------------------------------------
 
-IDLE, MOVING, STALLED, SLIPPING, PUSHED, WRONG_DIRECTION = (
-    "idle", "moving", "stalled", "slipping", "pushed", "wrong_direction")
+IDLE, MOVING, STALLED, SLIPPING, PUSHED, WRONG_DIRECTION, TILTED, BUMPED = (
+    "idle", "moving", "stalled", "slipping", "pushed", "wrong_direction", "tilted", "bumped")
 
 # What a commanded op should do: (forward sign, turn sign). Turn sign is CCW+,
 # so a commanded RIGHT turn must measure w < 0.
@@ -180,10 +195,13 @@ class HealthReport:
     drift_deg_per_m: float      # heading change per metre on straight moves (EWMA)
     visual_moving: Optional[bool]
     since_s: float              # how long the current state has held
+    pitch_deg: float = 0.0      # from the IMU; 0 without one
+    roll_deg: float = 0.0
 
     @property
     def stuck(self) -> bool:
-        return self.state in (STALLED, SLIPPING)
+        """The move should stop: the robot is not going anywhere, or is tipping."""
+        return self.state in (STALLED, SLIPPING, TILTED)
 
 
 class MotionHealth:
@@ -198,6 +216,12 @@ class MotionHealth:
     No command + wheels          → PUSHED    (picked up, bumped, rolling)
     Turn measured the wrong way  → WRONG_DIRECTION (swap_sides is wrong)
 
+    With an IMU (`update(..., imu=state)`), two more, and a better slip check:
+
+    Pitch or roll past the limit → TILTED    (climbing something too steep, tipping)
+    A jolt while moving          → BUMPED    (hit something; reported, not stopped on)
+    Tracks turning, gyro still   → SLIPPING  (on a turn the gyro sees what the camera may not)
+
     Every threshold needs to hold for a while before it fires — a move spends
     its first ~0.5 s in brake dead-time and ramp, which must not read as a stall.
     """
@@ -211,11 +235,15 @@ class MotionHealth:
         min_speed: float = 0.015,          # m/s
         min_turn: float = math.radians(5),  # rad/s
         visual_max_age_s: float = 1.0,
+        max_pitch_deg: float = 25.0,
+        max_roll_deg: float = 20.0,
+        bump_g: float = 0.8,
     ) -> None:
         self.start_grace_s, self.stall_s, self.slip_s, self.pushed_s = (
             start_grace_s, stall_s, slip_s, pushed_s)
         self.min_speed, self.min_turn = min_speed, min_turn
         self.visual_max_age_s = visual_max_age_s
+        self.max_pitch_deg, self.max_roll_deg, self.bump_g = max_pitch_deg, max_roll_deg, bump_g
         self._op: Optional[str] = None
         self._op_since = 0.0
         self._cond_since: dict = {}
@@ -235,7 +263,8 @@ class MotionHealth:
         start = self._cond_since.setdefault(name, now)
         return now - start >= need_s
 
-    def update(self, odom: OdomState, op: Optional[str], now: float) -> HealthReport:
+    def update(self, odom: OdomState, op: Optional[str], now: float, imu=None) -> HealthReport:
+        """`imu` is an ImuState (robot_core/sensors/imu.py) or None."""
         # Track the command, and drift over each straight move as it ends.
         if op != self._op:
             if self._op in ("straight", "reverse") and self._straight_start is not None:
@@ -247,7 +276,10 @@ class MotionHealth:
         visual = None
         if self._visual and now - self._visual[1] <= self.visual_max_age_s:
             visual = self._visual[0]
-        wheels = abs(odom.v) >= self.min_speed or abs(odom.w) >= self.min_turn
+        w_wheels = odom.w_wheels if imu is not None else odom.w
+        wheels = abs(odom.v) >= self.min_speed or abs(w_wheels) >= self.min_turn
+        pitch = imu.pitch_deg if imu is not None else 0.0
+        roll = imu.roll_deg if imu is not None else 0.0
         in_grace = op is not None and now - self._op_since < self.start_grace_s
 
         state, reason = (MOVING, "") if op else (IDLE, "")
@@ -257,6 +289,11 @@ class MotionHealth:
                 state, reason = STALLED, f"{op} commanded but the wheels are not turning"
             elif self._held("slip", wheels and visual is False, now, self.slip_s):
                 state, reason = SLIPPING, f"wheels turning during {op} but the camera sees no motion"
+            elif self._held("gyro-slip", imu is not None and turn != 0
+                            and abs(w_wheels) >= self.min_turn
+                            and abs(math.radians(imu.yaw_rate_dps)) < 0.3 * abs(w_wheels),
+                            now, self.slip_s):
+                state, reason = SLIPPING, f"tracks turning during {op} but the gyro says the robot is not"
             elif self._held("wrong", turn != 0 and odom.w * turn < -self.min_turn, now, 0.5):
                 state, reason = WRONG_DIRECTION, (
                     f"commanded {op} but measured the opposite rotation — "
@@ -265,10 +302,16 @@ class MotionHealth:
             if self._held("pushed", wheels, now, self.pushed_s):
                 state, reason = PUSHED, "wheels turning with no command (bumped or lifted?)"
 
+        if imu is not None:
+            if self._held("tilt", abs(pitch) > self.max_pitch_deg or abs(roll) > self.max_roll_deg, now, 0.3):
+                state, reason = TILTED, f"tilted: pitch {pitch:.0f} deg, roll {roll:.0f} deg"
+            elif op and not in_grace and state == MOVING and imu.jolt_g > self.bump_g:
+                state, reason = BUMPED, f"jolt of {imu.jolt_g:.1f} g during {op}"
+
         if state != self._state:
             self._state, self._state_since = state, now
         return HealthReport(state, reason, odom.v, odom.w, odom.sigma_xy, odom.sigma_theta,
-                            self._drift, visual, now - self._state_since)
+                            self._drift, visual, now - self._state_since, pitch, roll)
 
     def _fold_drift(self, start: OdomState, end: OdomState) -> None:
         dist = end.distance_m - start.distance_m
@@ -276,3 +319,18 @@ class MotionHealth:
             return                       # too short to say anything
         dth = math.degrees(wrap(end.pose.theta - start.pose.theta))
         self._drift = 0.7 * self._drift + 0.3 * (dth / dist)
+
+
+# --------------------------------------------------------------------------
+# Turn correction (needs the gyro)
+# --------------------------------------------------------------------------
+
+def turn_correction(goal_ccw_deg: float, turned_ccw_deg: float, tolerance_deg: float = 2.0,
+                    max_deg: float = 30.0) -> Optional[tuple]:
+    """After a turn: what is still owed, as ("left" | "right", degrees), or None
+    when it landed within tolerance. An error larger than `max_deg` is not a slip
+    to trim off (a blocked turn, a robot picked up): None, and the caller reports it."""
+    err = goal_ccw_deg - turned_ccw_deg
+    if abs(err) <= tolerance_deg or abs(err) > max_deg:
+        return None
+    return ("left" if err > 0 else "right", abs(err))

@@ -45,7 +45,8 @@ from tf2_ros import TransformBroadcaster
 from robot_core import settings, status
 from robot_core.drivetrain import SerialDrivetrain
 from robot_core.motion_executor import CANCELLED, DONE, MotionExecutor
-from robot_core.odometry import DiffDriveOdometry, MotionHealth, effective_wheelbase_m
+from robot_core.odometry import DiffDriveOdometry, MotionHealth, effective_wheelbase_m, turn_correction
+from sensor_msgs.msg import Imu as ImuMsg
 from robot_interfaces.action import Drive, Turn
 from robot_interfaces.msg import Encoders, MotionHealth as MotionHealthMsg, VisualMotion
 
@@ -75,6 +76,16 @@ class DrivetrainNode(Node):
         # Brake as soon as motion health says stalled/slipping, instead of
         # letting the firmware push a blocked wheel for its full 15 s timeout.
         self.declare_parameter("stop_on_stuck", True)
+        # IMU (robot_core/sensors/imu.py; wiring in the README). With it the heading
+        # comes from the gyro, turns are trimmed to the asked angle, and a tilt past
+        # max_pitch_deg / max_roll_deg stops the move (stop_on_stuck).
+        self.declare_parameter("imu_fitted", False)
+        self.declare_parameter("imu_bus", 1)
+        self.declare_parameter("imu_gyro_addr", 0x69)           # the BMI323
+        self.declare_parameter("imu_axes", ["x", "-y", "-z"])   # board axis along robot forward, left, up
+        self.declare_parameter("turn_tolerance_deg", 2.0)
+        self.declare_parameter("max_pitch_deg", 25.0)
+        self.declare_parameter("max_roll_deg", 20.0)
 
         self._apply_calibration()
         self.add_on_set_parameters_callback(self._on_set_parameters)
@@ -90,9 +101,25 @@ class DrivetrainNode(Node):
             wheelbase_m=self._wheelbase(),
             swap_sides=bool(self.get_parameter("odom_swap_sides").value),
         )
-        self._health = MotionHealth()
+        self._health = MotionHealth(
+            max_pitch_deg=float(self.get_parameter("max_pitch_deg").value),
+            max_roll_deg=float(self.get_parameter("max_roll_deg").value))
+        self._imu = None
+        if self.get_parameter("imu_fitted").value:
+            try:
+                from robot_core.sensors.imu import Imu
+                self._imu = Imu(bus=int(self.get_parameter("imu_bus").value),
+                                axes=list(self.get_parameter("imu_axes").value),
+                                gyro_addr=int(self.get_parameter("imu_gyro_addr").value))
+                if not self._imu.wait_calibrated(5.0):
+                    self.get_logger().warn("imu: gyro not zeroed yet (was the robot moving?); "
+                                           "it zeroes itself the next time it stands still")
+            except Exception as e:                          # noqa: BLE001 — drive without it
+                self.get_logger().error(f"imu unavailable ({type(e).__name__}: {e}); "
+                                        "heading from the encoders, no turn trim, no tilt stop")
+                self._imu = None
         self._drivetrain.add_odometry_listener(
-            lambda l, r, ms: self._odo.update(l, r, ms, time.monotonic()))
+            lambda l, r, ms: self._odo.update(l, r, ms, time.monotonic(), yaw=self._yaw_rad()))
 
         moves = MutuallyExclusiveCallbackGroup()
         safety = ReentrantCallbackGroup()
@@ -117,6 +144,7 @@ class DrivetrainNode(Node):
         self._encoders = self.create_publisher(Encoders, "encoders", 10)
         self._odom_pub = self.create_publisher(Odometry, "odom", 10)
         self._health_pub = self.create_publisher(MotionHealthMsg, "motion_health", 10)
+        self._imu_pub = self.create_publisher(ImuMsg, "imu", 10)
         self._tf = TransformBroadcaster(self)
         self.create_subscription(
             VisualMotion, "visual_motion",
@@ -176,6 +204,14 @@ class DrivetrainNode(Node):
         self._odo.wheelbase_m = wb if wb > 0 else effective_wheelbase_m(
             settings.TICKS_PER_CM, settings.TICKS_PER_DEGREE)
         return SetParametersResult(successful=True)
+
+    def _yaw_deg(self) -> Optional[float]:
+        st = self._imu.state() if self._imu is not None else None
+        return st.yaw_deg if st is not None else None
+
+    def _yaw_rad(self) -> Optional[float]:
+        yaw = self._yaw_deg()
+        return None if yaw is None else math.radians(yaw)
 
     # ------------------------------------------------------------------ #
     # Goal acceptance — where the limits are actually enforced
@@ -248,20 +284,17 @@ class DrivetrainNode(Node):
         duration of the move — which is fine, and precisely why /estop lives on
         a different callback group.
         """
+        yaw0 = self._yaw_deg()
         job_id = self._exec.submit(op, value, gesture=goal_handle.request.gesture)
         timeout = float(self.get_parameter("move_timeout_s").value)
         deadline = self.get_clock().now().nanoseconds / 1e9 + timeout + 1.0
         status.anim("tank", timeout + 2.0)        # OLED: the tank runs while the wheels do
 
-        event = None
-        while event is None:
-            if goal_handle.is_cancel_requested:
-                self._exec.cancel_all("action cancel")
-            event = self._exec.wait_for(job_id, timeout=_POLL_S)
-            if event is None:
-                self._publish_feedback(goal_handle, action_type)
-                if self.get_clock().now().nanoseconds / 1e9 > deadline:
-                    break
+        event = self._wait(goal_handle, job_id, action_type, deadline)
+        if (event is not None and event.status == DONE and yaw0 is not None
+                and op in ("left", "right") and not goal_handle.request.gesture):
+            event = self._trim_turn(goal_handle, action_type, value if op == "left" else -value,
+                                    yaw0, deadline, event)
 
         status.anim("")
         result = action_type.Result()
@@ -293,6 +326,36 @@ class DrivetrainNode(Node):
             result.status = event.detail or "failed"
             goal_handle.abort()
         return result
+
+    def _wait(self, goal_handle, job_id, action_type, deadline: float):
+        """The job's final event, or None if it is still running at `deadline`."""
+        while True:
+            if goal_handle.is_cancel_requested:
+                self._exec.cancel_all("action cancel")
+            event = self._exec.wait_for(job_id, timeout=_POLL_S)
+            if event is not None:
+                return event
+            self._publish_feedback(goal_handle, action_type)
+            if self.get_clock().now().nanoseconds / 1e9 > deadline:
+                return None
+
+    def _trim_turn(self, goal_handle, action_type, goal_ccw_deg: float, yaw0: float,
+                   deadline: float, event):
+        """Tracks slip, so a turn of N encoder-degrees is not N degrees. The gyro
+        knows how far the robot really turned: make up the difference with a short
+        move, twice at most. Returns the event to report (the turn's own if all
+        went well, else the failed trim's)."""
+        tol = float(self.get_parameter("turn_tolerance_deg").value)
+        for _ in range(2):
+            time.sleep(0.3)                                  # let it stop rocking before reading
+            fix = turn_correction(goal_ccw_deg, self._yaw_deg() - yaw0, tol)
+            if fix is None:
+                break
+            self.get_logger().info(f"turn trim: {fix[0]} {fix[1]:.1f} deg (asked {goal_ccw_deg:+.0f} ccw)")
+            trim = self._wait(goal_handle, self._exec.submit(fix[0], fix[1]), action_type, deadline)
+            if trim is None or trim.status != DONE:
+                return trim
+        return event
 
     def _publish_feedback(self, goal_handle, action_type) -> None:
         counts = self._drivetrain.get_encoder_status()
@@ -371,19 +434,43 @@ class DrivetrainNode(Node):
 
         status = self._exec.status()
         op = status["current"]["op"] if status["current"] else None
-        rep = self._health.update(st, op, now)
+        ims = self._imu.state() if self._imu is not None else None
+        if self._imu is not None:
+            self._imu.set_moving(op is not None)             # the gyro zeroes itself only at rest
+        if ims is not None:
+            self._publish_imu(ims, stamp, base_frame)
+        rep = self._health.update(st, op, now, imu=ims)
         self._health_pub.publish(MotionHealthMsg(
             state=rep.state, reason=rep.reason, v=rep.v, w=rep.w,
             sigma_xy=rep.sigma_xy, sigma_theta=rep.sigma_theta,
             drift_deg_per_m=rep.drift_deg_per_m,
             visual_known=rep.visual_moving is not None,
-            visual_moving=bool(rep.visual_moving), since_s=rep.since_s))
+            visual_moving=bool(rep.visual_moving), since_s=rep.since_s,
+            imu_known=ims is not None, pitch_deg=rep.pitch_deg, roll_deg=rep.roll_deg))
         if rep.state != getattr(self, "_last_health", None):
             self._last_health = rep.state
             if rep.stuck:
                 self.get_logger().warn(f"motion health: {rep.state} — {rep.reason}")
                 if self.get_parameter("stop_on_stuck").value:
                     self._exec.cancel_all(f"motion health: {rep.state}")
+
+    def _publish_imu(self, ims, stamp, frame: str) -> None:
+        """/imu in REP-103 axes: roll about forward, pitch about left (nose DOWN is
+        positive there, the opposite of ImuState), yaw about up."""
+        r, p, y = math.radians(ims.roll_deg), math.radians(-ims.pitch_deg), math.radians(ims.yaw_deg)
+        cr, sr, cp, sp, cy, sy = (math.cos(r / 2), math.sin(r / 2), math.cos(p / 2), math.sin(p / 2),
+                                  math.cos(y / 2), math.sin(y / 2))
+        msg = ImuMsg()
+        msg.header.stamp = stamp
+        msg.header.frame_id = frame
+        msg.orientation.w = cr * cp * cy + sr * sp * sy
+        msg.orientation.x = sr * cp * cy - cr * sp * sy
+        msg.orientation.y = cr * sp * cy + sr * cp * sy
+        msg.orientation.z = cr * cp * sy - sr * sp * cy
+        msg.angular_velocity.z = math.radians(ims.yaw_rate_dps)
+        msg.angular_velocity_covariance[0] = -1.0            # roll and pitch rates are not published
+        msg.linear_acceleration_covariance[0] = -1.0         # nor is acceleration
+        self._imu_pub.publish(msg)
 
     def _on_relocalized(self, _request, response):
         """SLAM fixed our pose: restart the drift budget."""
@@ -396,6 +483,8 @@ class DrivetrainNode(Node):
         try:
             self._exec.close()
             self._drivetrain.close()
+            if self._imu is not None:
+                self._imu.close()
         except Exception as e:                              # noqa: BLE001
             self.get_logger().error(f"shutdown: {type(e).__name__}: {e}")
         return super().destroy_node()

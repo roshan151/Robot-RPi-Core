@@ -33,7 +33,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument("params", default_value=default_params,
                               description="Parameter file (robot.yaml)."),
-        Node(package="robot_display", executable="display_node", name="display",
+        Node(package="robot_display", executable="display_node", name="display", parameters=[params],
              output="screen", emulate_tty=True, respawn=True, respawn_delay=5.0),
         Node(package="robot_bringup", executable="bringup", name="robot",
              parameters=[params], output="screen", emulate_tty=True),

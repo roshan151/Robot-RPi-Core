@@ -170,6 +170,7 @@ def anim(name: str, seconds: float = 30.0) -> None: _post(k="anim", v=name, n=se
 def power(state: str, dips: int = 0) -> None: _post(k="power", v=state, n=dips)
 def battery(percent=None, volts=None, amps=None) -> None: _post(k="battery", n=percent, volts=volts, amps=amps)
 def note(text: str, seconds: float = 30.0) -> None: _post(k="note", v=text, n=seconds)
+def sound(name: str) -> None: _post(k="sound", v=name)       # "online" / "connecting": robot_core/buzzer.py
 
 
 # ---------------------------------------------------------------- log -> code

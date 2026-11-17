@@ -47,6 +47,8 @@ from robot_core.odometry import Pose2D
 from robot_core.sensors.camera import Camera
 from robot_core.sensors.gimbal import from_params
 from robot_core.sensors.head import Head, HeadGeometry
+from robot_core import terrain
+from robot_core.sensors import tof8x8
 from robot_core.sensors.tfluna import TFLuna
 from robot_core.sensors.visual_motion import VisualMotionEstimator
 from robot_core.vision_client import VisionClient
@@ -54,7 +56,7 @@ from robot_display.link import connect
 from robot_interfaces.action import Drive, Turn
 from robot_interfaces.msg import MotionHealth, VisualMotion
 
-STUCK_STATES = ("stalled", "slipping")
+STUCK_STATES = ("stalled", "slipping", "tilted")
 
 
 def _wait(future, timeout: float):
@@ -151,6 +153,23 @@ class ExplorerNode(Node):
         p("autostart", True)
         p("tfluna_port", "/dev/serial0")
         p("tfluna_fitted", True)
+        # 8x8 ToF on the head (robot_core/sensors/tof8x8.py): replaces the TF-Luna as the
+        # range sensor and gives the floor check its grid. Wiring: README.
+        p("tof_fitted", False)
+        p("tof_port", "")
+        p("tof_bus", 1)
+        p("tof_addr", 0x33)
+        p("tof_tilt", 0)
+        p("tof_flip_rows", False)
+        p("tof_flip_cols", False)
+        p("tof_perpendicular", True)
+        p("drive_tilt_deg", -30.0)
+        p("h_max_m", 0.03)
+        p("min_landing_m", 0.20)
+        p("max_drop_m", 0.03)
+        p("path_width_m", 0.30)
+        p("drive_on_unknown_floor", False)
+        p("robot_height_m", 0.30)
         p("camera_main_size", [1920, 1080])
         p("camera_inverted", True)
         p("camera_backend", "auto")
@@ -174,20 +193,27 @@ class ExplorerNode(Node):
         p("servo_power_gpio", 0)
         v = lambda name: self.get_parameter(name).value
 
-        if not v("tfluna_fitted"):
+        if not (v("tof_fitted") or v("tfluna_fitted")):
             # The map, plant ranging and the floor check before every step all
-            # come from the TF-Luna; without it the robot would drive blind.
-            raise SystemExit("explore needs the TF-Luna (robot.yaml tfluna_fitted: false)")
+            # come from the range sensor; without one the robot would drive blind.
+            raise SystemExit("explore needs a range sensor (robot.yaml tof_fitted / tfluna_fitted are both false)")
         self.gimbal = from_params({n: v(n) for n in (
             "pwm_chip", "pan_channel", "tilt_channel", "pan_center_us", "tilt_center_us",
             "pan_us_per_deg", "tilt_us_per_deg", "pan_invert", "tilt_invert", "servo_speed_dps",
             "servo_min_us", "servo_max_us", "hold_on_close", "servo_power_gpio")})
-        self.lidar = TFLuna(v("tfluna_port"))
+        if v("tof_fitted"):
+            self.lidar = tof8x8.from_params({n: v(n) for n in ("tof_port", "tof_bus", "tof_addr", "tof_tilt", "tof_flip_rows", "tof_flip_cols")})
+        else:
+            self.lidar = TFLuna(v("tfluna_port"))
         self.camera = Camera(main_size=tuple(v("camera_main_size")), inverted=bool(v("camera_inverted")),
                              backend=v("camera_backend"), index=int(v("camera_index")))
         self.head = Head(self.gimbal, self.lidar, self.camera, HeadGeometry(
             height_m=float(v("head_height_m")), pan_axis_x_m=float(v("pan_axis_x_m")),
-            hfov_deg=float(v("hfov_deg"))))
+            hfov_deg=float(v("hfov_deg")), drive_tilt_deg=float(v("drive_tilt_deg")),
+            tof_perpendicular=bool(v("tof_perpendicular"))),
+            pitch=lambda: self._pitch(),
+            terrain_params=terrain.params_from({n: v(n) for n in ("h_max_m", "min_landing_m", "max_drop_m", "path_width_m",
+                                                             "drive_on_unknown_floor", "robot_height_m")}))
         self.vision = VisionClient(v("vision_url")) if v("vision_url") else VisionClient()
 
         self.base = RosBase(self)
@@ -282,6 +308,11 @@ class ExplorerNode(Node):
         resp.success = True
         resp.message = "stopping after the current step; the map will be saved"
         return resp
+
+    def _pitch(self) -> Optional[float]:
+        """The robot's nose-up angle from the IMU (via /motion_health), None without one."""
+        m = getattr(getattr(self, "base", None), "_health", None)
+        return m.pitch_deg if m is not None and m.imu_known else None
 
     def destroy_node(self) -> bool:
         self._stop.set()

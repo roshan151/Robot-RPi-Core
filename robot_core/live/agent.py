@@ -509,6 +509,7 @@ class LiveAgent:
                             modality=settings.LIVE_RESPONSE_MODALITY,
                             resumed=self.resumed_from is not None)
             self.connected = True
+            status.sound("online")           # buzzer: listening, waiting for a command
 
             # Spoken BEFORE the microphone opens, so it cannot be streamed to
             # the model as if the operator had said it. Blocking, and the guard

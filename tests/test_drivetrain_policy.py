@@ -60,6 +60,8 @@ def _stub_ros() -> None:
     module("geometry_msgs.msg", TransformStamped=object)
     module("nav_msgs")
     module("nav_msgs.msg", Odometry=object)
+    module("sensor_msgs")
+    module("sensor_msgs.msg", Imu=object)
     module("tf2_ros", TransformBroadcaster=object)
 
 
@@ -199,3 +201,71 @@ def test_bridge_never_blocks_the_asyncio_loop(forbidden: str) -> None:
     assert forbidden not in called, (
         f"{forbidden}() in the bridge blocks the event loop; the microphone "
         "uplink stalls and the session dies")
+
+
+# --------------------------------------------------------------------------- #
+# Turn trim: the gyro says how far the robot really turned
+# --------------------------------------------------------------------------- #
+
+class TrimNode:
+    """A turn already ran; the gyro reads `yaws` (degrees, CCW +) at each check."""
+
+    def __init__(self, yaws, trim_status="done"):
+        self._yaws, self.submitted, self._trim_status = list(yaws), [], trim_status
+        self._exec = self
+
+    def _yaw_deg(self):
+        return self._yaws.pop(0) if len(self._yaws) > 1 else self._yaws[0]
+
+    def submit(self, op, value, gesture=False):
+        self.submitted.append((op, round(value, 1)))
+        return len(self.submitted)
+
+    def wait_for(self, job_id, timeout=None):
+        return types.SimpleNamespace(status=self._trim_status, duration_s=0.2, detail="")
+
+    def cancel_all(self, why):
+        pass
+
+    def get_parameter(self, name):
+        assert name == "turn_tolerance_deg", name
+        return types.SimpleNamespace(value=2.0)
+
+    def get_logger(self):
+        return types.SimpleNamespace(info=lambda *_a, **_k: None, warn=lambda *_a, **_k: None)
+
+    _wait = DrivetrainNode._wait
+    _trim_turn = DrivetrainNode._trim_turn
+
+
+def _trim(node, goal_ccw, monkeypatch):
+    import robot_drivetrain.drivetrain_node as mod
+    monkeypatch.setattr(mod.time, "sleep", lambda s: None)
+    handle = types.SimpleNamespace(is_cancel_requested=False)
+    turn = types.SimpleNamespace(status="done", duration_s=1.5, detail="")
+    return node._trim_turn(handle, object, goal_ccw, 0.0, 1e12, turn), turn
+
+
+def test_a_turn_that_slipped_short_is_made_up(monkeypatch) -> None:
+    node = TrimNode([-83.0, -89.5])                     # asked 90 right; turned 83, then 89.5 after the trim
+    event, turn = _trim(node, -90.0, monkeypatch)
+    assert node.submitted == [("right", 7.0)] and event is turn
+
+
+def test_an_overshoot_is_taken_back_and_it_gives_up_after_two_tries(monkeypatch) -> None:
+    node = TrimNode([96.0, 86.0, 95.0])                 # never lands inside the tolerance
+    _trim(node, 90.0, monkeypatch)
+    assert node.submitted == [("right", 6.0), ("left", 4.0)]
+
+
+def test_a_turn_within_tolerance_or_wildly_off_is_left_alone(monkeypatch) -> None:
+    for yaw in (-89.0, -20.0):                          # close enough; or blocked, which a trim would not fix
+        node = TrimNode([yaw])
+        _trim(node, -90.0, monkeypatch)
+        assert node.submitted == []
+
+
+def test_a_failed_trim_is_what_gets_reported(monkeypatch) -> None:
+    node = TrimNode([-80.0], trim_status="failed")
+    event, turn = _trim(node, -90.0, monkeypatch)
+    assert event is not turn and event.status == "failed"

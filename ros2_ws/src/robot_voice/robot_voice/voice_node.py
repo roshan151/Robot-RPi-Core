@@ -47,10 +47,12 @@ def _explore() -> bool:
     params = os.path.join(get_package_share_directory("robot_bringup"), "config", "robot.yaml")
     import yaml
     with open(params) as f:
-        if not yaml.safe_load(f)["/explorer"]["ros__parameters"].get("tfluna_fitted", True):
-            # No TF-Luna: no map, no plant ranging, no floor checks (it would drive blind).
-            robot_log.event("task.error", logging.WARNING, err="explore needs the TF-Luna (robot.yaml tfluna_fitted: false)")
-            status.result("explore needs TF-Luna")
+        ex = yaml.safe_load(f)["/explorer"]["ros__parameters"]
+        if not (ex.get("tof_fitted", False) or ex.get("tfluna_fitted", True)):
+            # No range sensor: no map, no plant ranging, no floor checks (it would drive blind).
+            robot_log.event("task.error", logging.WARNING,
+                            err="explore needs a range sensor (robot.yaml tof_fitted / tfluna_fitted are both false)")
+            status.result("explore needs ToF")
             return False
     proc = subprocess.Popen(["ros2", "run", "robot_explore", "explorer_node",
                              "--ros-args", "--params-file", params])
@@ -79,6 +81,7 @@ def _open_head():
 
 head_look = HeadLook(_open_head)
 _motion = None                               # RosMotion, set in main(); follow drives with it
+_pitch = [None]                              # the robot's nose-up angle from /motion_health; None = no IMU
 _explore_stop = None                         # explore/stop client, set in main()
 
 
@@ -114,17 +117,30 @@ def _run_task(task: str, name: str) -> bool:
     gimbal = head = lidar = None
     try:
         # Tilt is limited to 0..+45 here, so it only ever looks up from its base
-        # position. No PWM (overlay missing)? Carry on with a fixed camera.
+        # position; follow with the ToF may also look down to the drive pose, to
+        # check the floor. No PWM (overlay missing)? Carry on with a fixed camera.
+        tof = task == "follow" and bool(p.get("tof_fitted", False))
+        drive_tilt = float(p.get("drive_tilt_deg", -30.0))
         try:
-            gimbal = from_params(p, tilt_min=0.0)
-            if task == "follow" and p.get("tfluna_fitted", True):   # gives follow a range; works without
+            gimbal = from_params(p, tilt_min=min(0.0, drive_tilt) if tof else 0.0)
+            if tof:
+                try:
+                    from robot_core.sensors import tof8x8
+                    lidar = tof8x8.from_params(p)
+                except Exception as e:                          # noqa: BLE001
+                    robot_log.event("task.error", logging.WARNING, err=f"tof unavailable: {type(e).__name__}: {e}")
+            elif task == "follow" and p.get("tfluna_fitted", True):   # gives follow a range; works without
                 try:
                     from robot_core.sensors.tfluna import TFLuna
                     lidar = TFLuna(p["tfluna_port"])
                 except Exception as e:                          # noqa: BLE001
                     robot_log.event("task.error", logging.WARNING, err=f"tfluna unavailable: {e}")
+            from robot_core import terrain
             head = Head(gimbal, lidar, camera, HeadGeometry(
-                height_m=float(p.get("head_height_m", 0.25)), hfov_deg=float(p.get("hfov_deg", 66.0))))
+                height_m=float(p.get("head_height_m", 0.25)), hfov_deg=float(p.get("hfov_deg", 66.0)),
+                pan_axis_x_m=float(p.get("pan_axis_x_m", 0.05)), drive_tilt_deg=drive_tilt,
+                tof_perpendicular=bool(p.get("tof_perpendicular", True))),
+                pitch=lambda: _pitch[0], terrain_params=terrain.params_from(p))
         except Exception as e:                                  # noqa: BLE001
             robot_log.event("task.error", logging.WARNING, err=f"head unavailable: {type(e).__name__}: {e}")
         # The same Mac as the explorer's (robot.yaml /explorer vision_url), else /etc/robot.env.
@@ -191,6 +207,14 @@ def main(args=None) -> None:
         return resp
 
     node.create_service(Trigger, "task/stop", _on_task_stop)
+
+    # The robot's pitch (IMU, via the drivetrain node), for the floor check in follow.
+    from robot_interfaces.msg import MotionHealth
+
+    def _on_health(m) -> None:
+        _pitch[0] = m.pitch_deg if m.imu_known else None
+
+    node.create_subscription(MotionHealth, "motion_health", _on_health, 10)
     _explore_stop = node.create_client(Trigger, "explore/stop")
 
     try:

@@ -135,3 +135,58 @@ def test_cancel_during_a_turn_brakes_drives_no_further_and_ends():
         assert v.stopped and len(v.calls) == 1
     finally:
         task_cancel.reset()
+
+
+# --------------------------------------------------------------------------- #
+# With the 8x8 ToF on the head
+# --------------------------------------------------------------------------- #
+
+class TofHead(Head):
+    """A head whose range sensor has a grid, and whose floor check says `kinds` in turn."""
+    def __init__(self, kinds=("flat",), grid_range=1.6):
+        super().__init__()
+        from robot_core import terrain
+        from robot_core.sensors import tof8x8
+        g = tof8x8.Grid(0.0, tuple(tuple([grid_range] * 8) for _ in range(8)))
+        self.lidar = SimpleNamespace(grid=lambda *a, **k: g)
+        self.has_grid, self.reaches = True, []
+        self._kinds, self._terrain = list(kinds), terrain
+        self.terrain = terrain.Params()
+
+    def angles(self): return (0.0, 10.0)
+
+    def terrain_ahead(self, reach_m):
+        self.reaches.append(reach_m)
+        self.moves.append("down")
+        kind = self._kinds.pop(0) if len(self._kinds) > 1 else self._kinds[0]
+        return self._terrain.Terrain(kind, 0.35, 0.1)
+
+
+def test_tof_range_on_the_person_is_sent_once_their_box_is_known():
+    boxed = dict(step("tracking"), bbox=[20, 10, 44, 48], head=[0, 0], locked=True)
+    h, v = TofHead(), Vision([boxed, boxed, step("gone")])
+    follow.follow(Camera(), v, Motion(), "Sam", head=h, seconds=60, clock=Clock())
+    assert v.calls[0][1]["range_m"] is None                  # no box yet
+    assert v.calls[1][1]["range_m"] == 1.6
+
+
+def test_the_floor_is_checked_before_every_drive_and_a_blocked_path_is_not_driven():
+    drive = dict(step("tracking", turn=-10.0, drive=0.5), head=[0, 0], locked=True)
+    h, v, m = TofHead(kinds=("blocked", "flat")), Vision([drive, drive, step("gone")]), Motion()
+    follow.follow(Camera(), v, m, "Sam", head=h, seconds=60, clock=Clock())
+    assert m.moves == [("turn", -10.0), ("turn", -10.0), ("drive", 0.5)], "it still turns to face them"
+    assert h.reaches == [0.7, 0.7]
+    i = h.moves.index("down")
+    assert h.moves[i + 1] == (0.0, 10.0), "the head goes back to where it was for the next frame"
+
+
+def test_only_flat_floor_is_driven_a_drop_a_step_or_an_unreadable_floor_is_not():
+    drive = dict(step("tracking", drive=0.3), head=[0, 0], locked=True)
+    for kind, drives in (("drop", 0), ("climbable", 0), ("blocked", 0), ("unknown", 0), ("flat", 1)):
+        h, m = TofHead(kinds=(kind,)), Motion()
+        follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
+        assert len(m.moves) == drives, kind
+    h, m = TofHead(kinds=("unknown",)), Motion()
+    h.terrain.drive_unknown = True                               # robot.yaml drive_on_unknown_floor: true
+    follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
+    assert len(m.moves) == 1
