@@ -4295,3 +4295,309 @@
 {"ts":"2026-11-18T17:41:42.040Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='mic-uplink' coro=<LiveAgent._pump_audio() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:235> exception=ConnectionClosedOK(Close(code=1000, reason=''), Close(code=<CloseCode.NORMAL_CLOSURE: 1000>, reason=''), False)>","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:260 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
 {"ts":"2026-11-18T17:41:42.681Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
 {"ts":"2026-11-18T17:41:42.682Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-18T17:43:05.644Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":82.89,"repeats":1}
+{"ts":"2026-11-18T17:43:08.032Z","lvl":"info","evt":"voice.heard","text":"Rabin Robert shutdown"}
+{"ts":"2026-11-18T17:43:08.038Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 243)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:43:08.039Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T17:43:08.093Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-18T17:43:08.439Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-18T17:43:08.440Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-18T17:43:08.441Z","lvl":"info","evt":"log","msg":"tool shutdown({}) -> {'ok': True, 'note': 'powering off in 4 seconds; stop cancels'} in 0.41s","src":"robot_core.live.agent"}
+{"ts":"2026-11-18T17:43:12.710Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 244)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:43:12.781Z","lvl":"warn","evt":"estop","reason":"shutdown","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T17:43:12.782Z","lvl":"info","evt":"log","msg":"motion executor stopped","src":"robot_core.motion_executor"}
+{"ts":"2026-11-18T17:42:58.627Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-18T17:42:59.576Z","lvl":"info","evt":"session.start","mode":"ros","pid":1709,"log":"logs.json"}
+{"ts":"2026-11-18T17:43:00.277Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:43:02.196Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v6-vel built Nov 18 2026 09:32:04","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:43:02.197Z","lvl":"info","evt":"log","msg":"Connected on /dev/ttyUSB0 (boot frame received)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:43:02.249Z","lvl":"info","evt":"log","msg":"motion executor started","src":"robot_core.motion_executor"}
+{"ts":"2026-11-18T17:43:03.799Z","lvl":"error","evt":"log","msg":"odometry listener failed","src":"robot_core.drivetrain.client","err":"AttributeError: 'DrivetrainNode' object has no attribute '_last_totals'","tb":["client.py:134 in on_odo","drivetrain_node.py:533 in _on_wheel_totals"]}
+{"ts":"2026-11-18T17:43:03.911Z","lvl":"info","evt":"log","msg":"drivetrain ready on /dev/ttyUSB0 (limit 5.0 m, velocity on)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:43:05.562Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:43:05.563Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T17:43:05.609Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-18T17:55:50.930Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-18T17:55:50.933Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-18T17:55:55.111Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 241)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:55:55.120Z","lvl":"warn","evt":"estop","reason":"shutdown","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T17:55:55.121Z","lvl":"info","evt":"log","msg":"motion executor stopped","src":"robot_core.motion_executor"}
+{"ts":"2026-11-18T17:56:19.161Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-18T17:56:19.918Z","lvl":"info","evt":"session.start","mode":"ros","pid":2017,"log":"logs.json"}
+{"ts":"2026-11-18T17:56:20.204Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:56:22.118Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v6-vel built Nov 18 2026 09:32:04","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:56:22.119Z","lvl":"info","evt":"log","msg":"Connected on /dev/ttyUSB0 (boot frame received)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:56:22.171Z","lvl":"info","evt":"log","msg":"motion executor started","src":"robot_core.motion_executor"}
+{"ts":"2026-11-18T17:56:23.532Z","lvl":"info","evt":"log","msg":"drivetrain ready on /dev/ttyUSB0 (limit 5.0 m, velocity on)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:56:23.564Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:56:23.565Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T17:56:23.606Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-18T17:56:25.933Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-18T17:56:25.937Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-18T17:56:27.089Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.87}
+{"ts":"2026-11-18T17:56:29.096Z","lvl":"info","evt":"voice.heard","text":"left by 30\u00b0"}
+{"ts":"2026-11-18T17:56:29.151Z","lvl":"info","evt":"voice.say","text":"To turn left","spoken":false}
+{"ts":"2026-11-18T17:56:29.277Z","lvl":"info","evt":"voice.say","text":"or right, please","spoken":false}
+{"ts":"2026-11-18T17:56:29.355Z","lvl":"info","evt":"voice.say","text":"address me by name.","spoken":false}
+{"ts":"2026-11-18T17:56:37.975Z","lvl":"info","evt":"voice.heard","text":"Rabin turn left by 30\u00b0."}
+{"ts":"2026-11-18T17:56:37.992Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-30},"ok":true,"queued":true,"op":"turn","value":-30.0}
+{"ts":"2026-11-18T17:56:37.993Z","lvl":"info","evt":"log","msg":"tool turn({'degrees': -30}) -> {'ok': True, 'queued': True, 'op': 'turn', 'value': -30.0} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-18T17:56:38.000Z","lvl":"debug","evt":"move.start","job":1,"op":"left","val":30.0}
+{"ts":"2026-11-18T17:56:38.728Z","lvl":"warn","evt":"log","msg":"left(30.0\u00b0): high left-right sync error \u2014 \u0394L=162 \u0394R=191 diff=29 (15.2%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:56:38.729Z","lvl":"warn","evt":"log","msg":"left(30.0\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:56:38.730Z","lvl":"info","evt":"move.done","job":1,"op":"left","val":30.0,"dur":0.729}
+{"ts":"2026-11-18T17:56:42.830Z","lvl":"info","evt":"voice.heard","text":"Robin, follow me."}
+{"ts":"2026-11-18T17:56:42.836Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-18T17:56:42.841Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'follow'}) -> {'ok': True, 'starting': 'follow', 'note': 'session closing; it reopens when the task ends'} in 0.01s","src":"robot_core.live.agent"}
+{"ts":"2026-11-18T17:56:42.895Z","lvl":"info","evt":"task.start","task":"follow","name":"","_unregistered":true}
+{"ts":"2026-11-18T17:56:42.901Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 241)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:56:42.903Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T17:56:43.084Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-18T17:56:43.452Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-18T17:56:43.500Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-18T17:56:45.117Z","lvl":"info","evt":"log","msg":"follow: gliding (velocity mode)","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:56:49.283Z","lvl":"info","evt":"log","msg":"follow 1: {'seq': 1, 'persons': 1, 'state': 'searching', 'target': None, 'locked': False, 'followed': False, 'bbox': [54.4, 0.0, 826.2, 1072.8], 'bearing_deg': None, 'distance_m': None, 'distance_from': None, 'turn_deg': 0.0, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:56:49.945Z","lvl":"info","evt":"log","msg":"follow 2: {'seq': 2, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [31.8, 96.1, 549.5, 1074.0], 'bearing_deg': 30.3, 'distance_m': 1.21, 'distance_from': 'tof', 'turn_deg': -18.2, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:56:51.039Z","lvl":"info","evt":"log","msg":"follow 2: glide turn -18 deg on the spot","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:56:51.049Z","lvl":"debug","evt":"move.start","job":2,"op":"left","val":18.2}
+{"ts":"2026-11-18T17:56:51.661Z","lvl":"warn","evt":"log","msg":"left(18.2\u00b0): high left-right sync error \u2014 \u0394L=98 \u0394R=118 diff=20 (16.9%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:56:51.662Z","lvl":"warn","evt":"log","msg":"left(18.2\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:56:51.662Z","lvl":"info","evt":"move.done","job":2,"op":"left","val":18.2,"dur":0.613}
+{"ts":"2026-11-18T17:56:52.516Z","lvl":"info","evt":"log","msg":"follow 3: {'seq': 3, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [381.1, 0.8, 850.4, 816.0], 'bearing_deg': 16.7, 'distance_m': 0.56, 'distance_from': 'tof', 'turn_deg': -10.0, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:56:52.537Z","lvl":"info","evt":"log","msg":"follow 3: glide turn -10 deg on the spot","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:56:52.550Z","lvl":"debug","evt":"move.start","job":3,"op":"left","val":10.0}
+{"ts":"2026-11-18T17:56:53.069Z","lvl":"warn","evt":"log","msg":"left(10.0\u00b0): high left-right sync error \u2014 \u0394L=54 \u0394R=84 diff=30 (35.7%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:56:53.070Z","lvl":"warn","evt":"log","msg":"left(10.0\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:56:53.071Z","lvl":"info","evt":"move.done","job":3,"op":"left","val":10.0,"dur":0.52}
+{"ts":"2026-11-18T17:56:53.371Z","lvl":"info","evt":"log","msg":"turn trim: right 6.8 deg (asked +10 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:56:53.372Z","lvl":"debug","evt":"move.start","job":4,"op":"right","val":6.7569789887178615}
+{"ts":"2026-11-18T17:56:53.974Z","lvl":"info","evt":"move.done","job":4,"op":"right","val":6.7569789887178615,"dur":0.602}
+{"ts":"2026-11-18T17:56:55.017Z","lvl":"info","evt":"log","msg":"follow 4: {'seq': 4, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [560.7, 0.0, 985.4, 814.3], 'bearing_deg': 9.3, 'distance_m': 1.28, 'distance_from': 'tof', 'turn_deg': -5.6, 'drive_m': 0.48, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:56:56.280Z","lvl":"info","evt":"log","msg":"floor seen at tilt -30.0, pitch 3.50595361303463, levelled by +0.021 m, pitch +1.2, roll +5.6 deg (x m, y m, height m): [(0.33, 0.12, 0.006), (0.34, 0.08, 0.002), (0.35, 0.04, 0.003), (0.37, -0.01, -0.009), (0.37, -0.05, -0.004), (0.37, -0.14, 0.007), (0.38, -0.1, -0.003), (0.44, 0.11, 0.003), (0.48, 0.06, -0.009), (0.48, 0.0, -0.007), (0.51, -0.06, -0.013), (0.52, -0.12, -0.011), (0.6, -0.06, 0.028), (0.62, 0.09, 0.005), (0.76, 0.02, -0.031), (1.4, 0.06, None), (1.4, -0.12, None), (1.41, -0.12, 0.139), (1.46, -0.12, 0.511), (1.47, -0.12, 0.322)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:56:56.329Z","lvl":"info","evt":"log","msg":"follow 4: glide stopped, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:56:56.345Z","lvl":"debug","evt":"move.start","job":5,"op":"left","val":5.6}
+{"ts":"2026-11-18T17:56:56.951Z","lvl":"warn","evt":"log","msg":"left(5.6\u00b0): high left-right sync error \u2014 \u0394L=30 \u0394R=35 diff=5 (14.3%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:56:56.952Z","lvl":"warn","evt":"log","msg":"left(5.6\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:56:56.953Z","lvl":"info","evt":"move.done","job":5,"op":"left","val":5.6,"dur":0.608}
+{"ts":"2026-11-18T17:56:59.458Z","lvl":"info","evt":"log","msg":"floor seen at tilt -30.0, pitch 3.5143342406926728, levelled by None (x m, y m, height m): []","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:56:59.459Z","lvl":"info","evt":"log","msg":"follow 4: drive 0.00 of 0.78 m, path floor not seen","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:56:59.489Z","lvl":"info","evt":"log","msg":"follow 4: detour, 1 legs via [(0.31, 0.7)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:00.798Z","lvl":"info","evt":"log","msg":"floor seen at tilt -30.0, pitch 3.4438684921633858, levelled by +0.023 m, pitch +1.5, roll +5.8 deg (x m, y m, height m): [(0.33, 0.12, 0.004), (0.34, 0.08, 0.003), (0.35, 0.04, -0.003), (0.37, -0.05, -0.004), (0.37, -0.09, -0.002), (0.37, -0.14, 0.002), (0.4, -0.0, None), (0.44, 0.11, -0.001), (0.45, 0.06, -0.003), (0.48, 0.0, -0.009), (0.49, -0.06, -0.011), (0.5, -0.12, -0.009), (0.61, 0.09, 0.002), (0.61, 0.01, 0.012), (0.69, -0.07, -0.009), (1.39, 0.06, None), (1.39, -0.12, None)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:00.799Z","lvl":"info","evt":"log","msg":"follow 4: detour leg 0.45 of 0.78 m, path floor not seen at 0.70 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:01.366Z","lvl":"debug","evt":"move.start","job":6,"op":"straight","val":0.45}
+{"ts":"2026-11-18T17:57:02.441Z","lvl":"info","evt":"log","msg":"follow 4: braked mid-drive, drop at 0.40 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:02.447Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 242)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:57:02.448Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[6],"interrupted":6}
+{"ts":"2026-11-18T17:57:02.480Z","lvl":"warn","evt":"move.cancelled","job":6,"op":"straight","val":0.45,"dur":1.114,"detail":"interrupted by stop"}
+{"ts":"2026-11-18T17:57:03.527Z","lvl":"info","evt":"log","msg":"follow 5: {'seq': 5, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [718.3, 2.6, 1040.3, 699.2], 'bearing_deg': 4.0, 'distance_m': 1.83, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.5, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:04.799Z","lvl":"info","evt":"log","msg":"floor seen at tilt -30.0, pitch 3.4265517780818127, levelled by -0.013 m, pitch +4.2, roll +4.7 deg (x m, y m, height m): [(0.35, 0.13, 0.012), (0.36, 0.04, 0.008), (0.37, 0.09, 0.0), (0.38, -0.05, 0.001), (0.39, -0.15, 0.007), (0.4, -0.0, -0.013), (0.41, -0.1, -0.01), (0.47, 0.12, -0.0), (0.51, 0.0, -0.016), (0.53, 0.07, -0.031), (0.55, -0.13, -0.021), (0.57, -0.06, -0.04), (0.61, 0.09, 0.01), (0.68, -0.15, 0.257), (0.77, 0.02, None), (0.77, -0.08, None), (1.38, 0.06, None), (1.38, -0.12, None)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:04.845Z","lvl":"info","evt":"log","msg":"follow 5: glide 0.16 m/s, turn +3 deg/s (clear 0.40 m)","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:05.532Z","lvl":"info","evt":"log","msg":"follow 6: {'seq': 6, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [718.7, 2.4, 1041.3, 704.0], 'bearing_deg': 4.0, 'distance_m': 0.39, 'distance_from': 'floor', 'turn_deg': 0.0, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:06.199Z","lvl":"info","evt":"log","msg":"follow 7: {'seq': 7, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [696.2, 1.7, 1024.4, 721.2], 'bearing_deg': 5.0, 'distance_m': 0.38, 'distance_from': 'floor', 'turn_deg': 0.0, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:06.897Z","lvl":"info","evt":"log","msg":"follow 8: {'seq': 8, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [675.4, 1.9, 1014.5, 715.1], 'bearing_deg': 5.7, 'distance_m': 1.2, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.4, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:07.056Z","lvl":"info","evt":"log","msg":"follow 8: drive 0.00 of 0.70 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:07.079Z","lvl":"info","evt":"log","msg":"follow 8: detour, 2 legs via [(0.24, 0.7), (0.39, 0.85)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:07.090Z","lvl":"debug","evt":"move.start","job":7,"op":"left","val":11.4}
+{"ts":"2026-11-18T17:57:07.617Z","lvl":"warn","evt":"log","msg":"left(11.4\u00b0): high left-right sync error \u2014 \u0394L=62 \u0394R=110 diff=48 (43.6%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:07.618Z","lvl":"warn","evt":"log","msg":"left(11.4\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:07.618Z","lvl":"info","evt":"move.done","job":7,"op":"left","val":11.4,"dur":0.529}
+{"ts":"2026-11-18T17:57:07.919Z","lvl":"info","evt":"log","msg":"turn trim: right 7.4 deg (asked +11 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:07.920Z","lvl":"debug","evt":"move.start","job":8,"op":"right","val":7.436225240191687}
+{"ts":"2026-11-18T17:57:08.522Z","lvl":"warn","evt":"log","msg":"right(7.4\u00b0): high left-right sync error \u2014 \u0394L=49 \u0394R=40 diff=9 (18.4%), LEFT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:08.522Z","lvl":"warn","evt":"log","msg":"right(7.4\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:08.523Z","lvl":"info","evt":"move.done","job":8,"op":"right","val":7.436225240191687,"dur":0.602}
+{"ts":"2026-11-18T17:57:09.999Z","lvl":"info","evt":"log","msg":"floor seen at tilt -30.0, pitch 3.4165580865973575, levelled by -0.020 m, pitch +6.1, roll +5.7 deg (x m, y m, height m): [(0.34, 0.12, 0.01), (0.35, 0.08, 0.006), (0.36, 0.04, 0.003), (0.38, -0.0, -0.005), (0.38, -0.05, -0.002), (0.38, -0.15, 0.007), (0.39, -0.1, -0.006), (0.46, 0.12, -0.006), (0.47, 0.06, -0.008), (0.49, 0.0, -0.012), (0.51, -0.12, -0.012), (0.52, -0.06, -0.021), (0.54, -0.13, 0.047), (0.78, 0.12, None), (0.78, 0.02, None), (0.78, -0.08, None), (1.39, 0.06, None), (1.39, -0.12, None)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:10.000Z","lvl":"info","evt":"log","msg":"follow 8: detour leg 0.25 of 0.52 m, path blocked at 0.50 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:10.573Z","lvl":"debug","evt":"move.start","job":9,"op":"straight","val":0.25}
+{"ts":"2026-11-18T17:57:12.650Z","lvl":"info","evt":"log","msg":"follow 8: braked mid-drive, floor not seen at 0.40 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:12.654Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 243)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:57:12.655Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[9],"interrupted":9}
+{"ts":"2026-11-18T17:57:12.658Z","lvl":"warn","evt":"move.cancelled","job":9,"op":"straight","val":0.25,"dur":2.086,"detail":"interrupted by stop"}
+{"ts":"2026-11-18T17:57:13.714Z","lvl":"info","evt":"log","msg":"follow 9: {'seq': 9, 'persons': 1, 'state': 'holding', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': None, 'bearing_deg': None, 'distance_m': None, 'distance_from': None, 'turn_deg': 0.0, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:14.439Z","lvl":"info","evt":"log","msg":"follow 10: {'seq': 10, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [742.3, 1.0, 1118.8, 732.5], 'bearing_deg': 1.5, 'distance_m': 0.93, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.13, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:14.456Z","lvl":"info","evt":"log","msg":"follow 10: drive 0.00 of 0.43 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:14.484Z","lvl":"info","evt":"log","msg":"follow 10: detour, 2 legs via [(0.29, 0.79), (0.34, 0.84)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:14.496Z","lvl":"debug","evt":"move.start","job":10,"op":"left","val":8.1}
+{"ts":"2026-11-18T17:57:15.272Z","lvl":"warn","evt":"log","msg":"left(8.1\u00b0): high left-right sync error \u2014 \u0394L=44 \u0394R=91 diff=47 (51.6%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:15.273Z","lvl":"warn","evt":"log","msg":"left(8.1\u00b0): lead alternates over the last 4 moves \u2014 genuine drift. This is what SYNC_KP is for (drivetrain.ino; note the loop is P-only, there is no KI). Raise it in small steps and watch for the ILIM latch described beside the #define.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:15.273Z","lvl":"info","evt":"move.done","job":10,"op":"left","val":8.1,"dur":0.777}
+{"ts":"2026-11-18T17:57:15.574Z","lvl":"info","evt":"log","msg":"turn trim: right 7.2 deg (asked +8 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:15.575Z","lvl":"debug","evt":"move.start","job":11,"op":"right","val":7.204941592950599}
+{"ts":"2026-11-18T17:57:16.179Z","lvl":"warn","evt":"log","msg":"right(7.2\u00b0): high left-right sync error \u2014 \u0394L=39 \u0394R=44 diff=5 (11.4%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:16.179Z","lvl":"error","evt":"log","msg":"right(7.2\u00b0): RIGHT wheel has led 4 of the last 5 moves \u2014 this is a fixed bias, not drift, and SYNC_KP cannot correct it. Check, in order: (1) motor channel swap \u2014 if straights track true but turns go the WRONG WAY, the L/R driver outputs are crossed, which makes the sync loop positive feedback that saturates at SYNC_AUTHORITY_PCT (20%); (2) per-side tick scale \u2014 hand-roll each wheel 10 turns and compare totals; unequal means encoder PPR or mounting, equal means tyre diameter or traction.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:16.180Z","lvl":"info","evt":"move.done","job":11,"op":"right","val":7.204941592950599,"dur":0.606}
+{"ts":"2026-11-18T17:57:18.165Z","lvl":"debug","evt":"move.start","job":12,"op":"straight","val":0.36}
+{"ts":"2026-11-18T17:57:20.960Z","lvl":"info","evt":"move.done","job":12,"op":"straight","val":0.36,"dur":2.795}
+{"ts":"2026-11-18T17:57:21.688Z","lvl":"debug","evt":"move.start","job":13,"op":"left","val":11.7}
+{"ts":"2026-11-18T17:57:22.468Z","lvl":"warn","evt":"log","msg":"left(11.7\u00b0): high left-right sync error \u2014 \u0394L=81 \u0394R=63 diff=18 (22.2%), LEFT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:22.468Z","lvl":"warn","evt":"log","msg":"left(11.7\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:22.469Z","lvl":"info","evt":"move.done","job":13,"op":"left","val":11.7,"dur":0.781}
+{"ts":"2026-11-18T17:57:22.789Z","lvl":"debug","evt":"move.start","job":14,"op":"right","val":15.4}
+{"ts":"2026-11-18T17:57:23.473Z","lvl":"warn","evt":"log","msg":"right(15.4\u00b0): high left-right sync error \u2014 \u0394L=83 \u0394R=94 diff=11 (11.7%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:23.473Z","lvl":"warn","evt":"log","msg":"right(15.4\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:23.474Z","lvl":"info","evt":"move.done","job":14,"op":"right","val":15.4,"dur":0.686}
+{"ts":"2026-11-18T17:57:23.775Z","lvl":"info","evt":"log","msg":"turn trim: left 5.2 deg (asked -15 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:23.776Z","lvl":"debug","evt":"move.start","job":15,"op":"left","val":5.1667844456725955}
+{"ts":"2026-11-18T17:57:24.378Z","lvl":"warn","evt":"log","msg":"left(5.2\u00b0): high left-right sync error \u2014 \u0394L=34 \u0394R=28 diff=6 (17.6%), LEFT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:24.378Z","lvl":"warn","evt":"log","msg":"left(5.2\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:24.379Z","lvl":"info","evt":"move.done","job":15,"op":"left","val":5.1667844456725955,"dur":0.602}
+{"ts":"2026-11-18T17:57:24.679Z","lvl":"info","evt":"log","msg":"turn trim: right 6.6 deg (asked -15 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:24.680Z","lvl":"debug","evt":"move.start","job":16,"op":"right","val":6.621508806091663}
+{"ts":"2026-11-18T17:57:25.288Z","lvl":"info","evt":"move.done","job":16,"op":"right","val":6.621508806091663,"dur":0.608}
+{"ts":"2026-11-18T17:57:26.015Z","lvl":"info","evt":"log","msg":"follow 11: {'seq': 11, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [618.4, 1.0, 1142.0, 737.0], 'bearing_deg': 4.0, 'distance_m': 1.84, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.5, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:27.340Z","lvl":"info","evt":"log","msg":"floor seen at tilt -30.0, pitch 1.3472980251740931, levelled by +0.010 m, pitch +2.1, roll +8.2 deg (x m, y m, height m): [(0.31, 0.11, 0.006), (0.33, 0.08, -0.001), (0.33, 0.03, 0.004), (0.35, -0.01, -0.003), (0.35, -0.05, 0.0), (0.36, -0.14, 0.008), (0.37, -0.1, -0.004), (0.41, 0.05, 0.01), (0.43, 0.11, -0.008), (0.45, 0.0, -0.004), (0.48, -0.06, -0.013), (0.5, -0.12, -0.014), (0.65, -0.15, 0.005), (0.69, 0.11, None), (0.69, 0.02, None), (0.69, -0.07, None), (1.14, 0.05, None), (1.14, -0.1, None), (1.35, 0.05, 0.592), (1.97, -0.15, 0.537)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:27.388Z","lvl":"info","evt":"log","msg":"follow 11: glide 0.20 m/s, turn +3 deg/s (clear 0.95 m)","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:28.106Z","lvl":"info","evt":"log","msg":"follow 12: {'seq': 12, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [623.8, 1.0, 1150.3, 726.0], 'bearing_deg': 3.6, 'distance_m': 1.79, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.5, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:28.379Z","lvl":"info","evt":"log","msg":"follow 12: glide 0.10 m/s, turn +3 deg/s (clear 0.25 m)","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:28.918Z","lvl":"info","evt":"log","msg":"follow 13: {'seq': 13, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [631.1, 0.9, 1214.4, 822.7], 'bearing_deg': 1.9, 'distance_m': 1.73, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.5, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:28.976Z","lvl":"warn","evt":"log","msg":"follow 13: bumped while gliding; stopped","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:28.977Z","lvl":"info","evt":"log","msg":"follow 13: drive skipped, bumped here: turn 20 deg more first","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:29.686Z","lvl":"info","evt":"log","msg":"follow 14: {'seq': 14, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [610.1, 4.3, 1228.2, 818.4], 'bearing_deg': 2.0, 'distance_m': 1.61, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.5, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:29.795Z","lvl":"info","evt":"log","msg":"follow 14: drive skipped, bumped here: turn 20 deg more first","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:30.278Z","lvl":"info","evt":"log","msg":"follow 15: {'seq': 15, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [596.0, 1.9, 1240.9, 816.3], 'bearing_deg': 2.1, 'distance_m': 1.58, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.5, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:30.395Z","lvl":"info","evt":"log","msg":"follow 15: drive skipped, bumped here: turn 20 deg more first","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:30.905Z","lvl":"info","evt":"log","msg":"follow 16: {'seq': 16, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [597.1, 2.3, 1241.1, 817.1], 'bearing_deg': 2.0, 'distance_m': 1.57, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.5, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:31.555Z","lvl":"info","evt":"log","msg":"follow 16: drive skipped, bumped here: turn 20 deg more first","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:32.256Z","lvl":"info","evt":"log","msg":"follow 17: {'seq': 17, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [596.8, 1.9, 1241.5, 817.1], 'bearing_deg': 2.0, 'distance_m': 1.59, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.5, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:32.355Z","lvl":"info","evt":"log","msg":"follow 17: drive skipped, bumped here: turn 20 deg more first","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:32.958Z","lvl":"info","evt":"log","msg":"follow 18: {'seq': 18, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [596.6, 2.2, 1241.1, 817.8], 'bearing_deg': 2.1, 'distance_m': 1.58, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.5, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:33.875Z","lvl":"info","evt":"log","msg":"follow 18: drive skipped, bumped here: turn 20 deg more first","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:34.686Z","lvl":"info","evt":"log","msg":"follow 19: {'seq': 19, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [1250.0, 0.4, 1637.6, 813.1], 'bearing_deg': -22.9, 'distance_m': 0.47, 'distance_from': 'tof', 'turn_deg': 13.8, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:34.706Z","lvl":"debug","evt":"move.start","job":17,"op":"right","val":13.8}
+{"ts":"2026-11-18T17:57:35.161Z","lvl":"info","evt":"move.done","job":17,"op":"right","val":13.8,"dur":0.454}
+{"ts":"2026-11-18T17:57:35.462Z","lvl":"info","evt":"log","msg":"turn trim: left 14.1 deg (asked -14 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:35.462Z","lvl":"debug","evt":"move.start","job":18,"op":"left","val":14.114921998400295}
+{"ts":"2026-11-18T17:57:36.267Z","lvl":"warn","evt":"log","msg":"left(14.1\u00b0): high left-right sync error \u2014 \u0394L=76 \u0394R=119 diff=43 (36.1%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:36.267Z","lvl":"warn","evt":"log","msg":"left(14.1\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:36.268Z","lvl":"info","evt":"move.done","job":18,"op":"left","val":14.114921998400295,"dur":0.806}
+{"ts":"2026-11-18T17:57:36.569Z","lvl":"info","evt":"log","msg":"turn trim: right 20.3 deg (asked -14 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:36.569Z","lvl":"debug","evt":"move.start","job":19,"op":"right","val":20.27563332503046}
+{"ts":"2026-11-18T17:57:37.373Z","lvl":"warn","evt":"log","msg":"right(20.3\u00b0): high left-right sync error \u2014 \u0394L=133 \u0394R=109 diff=24 (18.0%), LEFT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:37.375Z","lvl":"warn","evt":"log","msg":"right(20.3\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:37.376Z","lvl":"info","evt":"move.done","job":19,"op":"right","val":20.27563332503046,"dur":0.806}
+{"ts":"2026-11-18T17:57:38.103Z","lvl":"info","evt":"log","msg":"follow 20: {'seq': 20, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [760.6, 0.9, 1052.4, 720.5], 'bearing_deg': 2.7, 'distance_m': 1.03, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.23, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:38.175Z","lvl":"info","evt":"log","msg":"follow 20: drive skipped, bumped here: turn 6 deg more first","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:38.879Z","lvl":"info","evt":"log","msg":"follow 21: {'seq': 21, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [758.3, 0.0, 999.1, 695.9], 'bearing_deg': 4.1, 'distance_m': 0.49, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:39.593Z","lvl":"info","evt":"log","msg":"follow 22: {'seq': 22, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [758.9, 0.0, 999.3, 696.1], 'bearing_deg': 4.0, 'distance_m': 0.49, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:40.094Z","lvl":"info","evt":"log","msg":"follow 23: {'seq': 23, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [758.6, 0.0, 999.3, 695.9], 'bearing_deg': 4.1, 'distance_m': 0.49, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:40.713Z","lvl":"info","evt":"log","msg":"follow 24: {'seq': 24, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [754.2, 0.4, 1000.3, 696.1], 'bearing_deg': 4.1, 'distance_m': 0.49, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:41.341Z","lvl":"info","evt":"log","msg":"follow 25: {'seq': 25, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [748.1, 0.4, 999.5, 696.3], 'bearing_deg': 4.3, 'distance_m': 0.49, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:42.025Z","lvl":"info","evt":"log","msg":"follow 26: {'seq': 26, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [736.3, 0.8, 998.9, 695.0], 'bearing_deg': 4.6, 'distance_m': 0.49, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:42.661Z","lvl":"info","evt":"log","msg":"follow 27: {'seq': 27, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [723.0, 0.9, 1001.7, 707.5], 'bearing_deg': 4.9, 'distance_m': 0.5, 'distance_from': 'tof', 'turn_deg': 0.0, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:43.357Z","lvl":"info","evt":"log","msg":"follow 28: {'seq': 28, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [533.3, 1.8, 964.9, 725.8], 'bearing_deg': 10.4, 'distance_m': 0.49, 'distance_from': 'tof', 'turn_deg': -6.3, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:43.384Z","lvl":"debug","evt":"move.start","job":20,"op":"left","val":6.3}
+{"ts":"2026-11-18T17:57:44.069Z","lvl":"warn","evt":"log","msg":"left(6.3\u00b0): high left-right sync error \u2014 \u0394L=34 \u0394R=54 diff=20 (37.0%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:44.069Z","lvl":"warn","evt":"log","msg":"left(6.3\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:44.070Z","lvl":"info","evt":"move.done","job":20,"op":"left","val":6.3,"dur":0.686}
+{"ts":"2026-11-18T17:57:44.371Z","lvl":"info","evt":"log","msg":"turn trim: right 11.7 deg (asked +6 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:44.372Z","lvl":"debug","evt":"move.start","job":21,"op":"right","val":11.665807617523736}
+{"ts":"2026-11-18T17:57:45.073Z","lvl":"warn","evt":"log","msg":"right(11.7\u00b0): high left-right sync error \u2014 \u0394L=63 \u0394R=78 diff=15 (19.2%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:45.074Z","lvl":"warn","evt":"log","msg":"right(11.7\u00b0): lead alternates over the last 4 moves \u2014 genuine drift. This is what SYNC_KP is for (drivetrain.ino; note the loop is P-only, there is no KI). Raise it in small steps and watch for the ILIM latch described beside the #define.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:45.075Z","lvl":"info","evt":"move.done","job":21,"op":"right","val":11.665807617523736,"dur":0.703}
+{"ts":"2026-11-18T17:57:45.376Z","lvl":"info","evt":"log","msg":"turn trim: left 15.6 deg (asked +6 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:45.377Z","lvl":"debug","evt":"move.start","job":22,"op":"left","val":15.589228434932377}
+{"ts":"2026-11-18T17:57:46.132Z","lvl":"info","evt":"move.done","job":22,"op":"left","val":15.589228434932377,"dur":0.755}
+{"ts":"2026-11-18T17:57:46.877Z","lvl":"info","evt":"log","msg":"follow 29: {'seq': 29, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [1081.8, 1.2, 1439.6, 726.6], 'bearing_deg': -14.7, 'distance_m': 0.39, 'distance_from': 'tof', 'turn_deg': 8.8, 'drive_m': 0.0, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:46.896Z","lvl":"info","evt":"log","msg":"follow 29: glide turn +9 deg on the spot","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:46.908Z","lvl":"debug","evt":"move.start","job":23,"op":"right","val":8.8}
+{"ts":"2026-11-18T17:57:47.596Z","lvl":"warn","evt":"log","msg":"right(8.8\u00b0): high left-right sync error \u2014 \u0394L=48 \u0394R=55 diff=7 (12.7%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:47.597Z","lvl":"warn","evt":"log","msg":"right(8.8\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:47.598Z","lvl":"info","evt":"move.done","job":23,"op":"right","val":8.8,"dur":0.69}
+{"ts":"2026-11-18T17:57:47.899Z","lvl":"info","evt":"log","msg":"turn trim: left 13.6 deg (asked -9 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:47.900Z","lvl":"debug","evt":"move.start","job":24,"op":"left","val":13.590221176546319}
+{"ts":"2026-11-18T17:57:48.653Z","lvl":"warn","evt":"log","msg":"left(13.6\u00b0): high left-right sync error \u2014 \u0394L=73 \u0394R=91 diff=18 (19.8%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:48.653Z","lvl":"warn","evt":"log","msg":"left(13.6\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:48.654Z","lvl":"info","evt":"move.done","job":24,"op":"left","val":13.590221176546319,"dur":0.754}
+{"ts":"2026-11-18T17:57:48.954Z","lvl":"info","evt":"log","msg":"turn trim: right 15.5 deg (asked -9 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:48.955Z","lvl":"debug","evt":"move.start","job":25,"op":"right","val":15.510866773076753}
+{"ts":"2026-11-18T17:57:49.710Z","lvl":"info","evt":"move.done","job":25,"op":"right","val":15.510866773076753,"dur":0.755}
+{"ts":"2026-11-18T17:57:50.413Z","lvl":"info","evt":"log","msg":"follow 30: {'seq': 30, 'persons': 1, 'state': 'tracking', 'target': 'Roshan', 'locked': True, 'followed': True, 'bbox': [573.1, 0.7, 899.9, 700.6], 'bearing_deg': 11.1, 'distance_m': 1.02, 'distance_from': 'tof', 'turn_deg': -6.6, 'drive_m': 0.22, 'head': [0, 0]}","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:50.587Z","lvl":"debug","evt":"move.start","job":26,"op":"left","val":6.6}
+{"ts":"2026-11-18T17:57:51.221Z","lvl":"warn","evt":"log","msg":"left(6.6\u00b0): high left-right sync error \u2014 \u0394L=36 \u0394R=41 diff=5 (12.2%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:51.222Z","lvl":"warn","evt":"log","msg":"left(6.6\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:51.222Z","lvl":"info","evt":"move.done","job":26,"op":"left","val":6.6,"dur":0.636}
+{"ts":"2026-11-18T17:57:51.523Z","lvl":"info","evt":"log","msg":"turn trim: right 11.1 deg (asked +7 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:51.524Z","lvl":"debug","evt":"move.start","job":27,"op":"right","val":11.139303789826991}
+{"ts":"2026-11-18T17:57:52.177Z","lvl":"warn","evt":"log","msg":"right(11.1\u00b0): high left-right sync error \u2014 \u0394L=73 \u0394R=60 diff=13 (17.8%), LEFT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:52.178Z","lvl":"warn","evt":"log","msg":"right(11.1\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:52.180Z","lvl":"info","evt":"move.done","job":27,"op":"right","val":11.139303789826991,"dur":0.655}
+{"ts":"2026-11-18T17:57:52.481Z","lvl":"info","evt":"log","msg":"turn trim: left 14.2 deg (asked +7 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:52.482Z","lvl":"debug","evt":"move.start","job":28,"op":"left","val":14.239069705191701}
+{"ts":"2026-11-18T17:57:53.241Z","lvl":"warn","evt":"log","msg":"left(14.2\u00b0): high left-right sync error \u2014 \u0394L=77 \u0394R=121 diff=44 (36.4%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:53.241Z","lvl":"warn","evt":"log","msg":"left(14.2\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:53.242Z","lvl":"info","evt":"move.done","job":28,"op":"left","val":14.239069705191701,"dur":0.76}
+{"ts":"2026-11-18T17:57:53.281Z","lvl":"info","evt":"log","msg":"follow 30: drive 0.00 of 0.52 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:53.335Z","lvl":"info","evt":"log","msg":"follow 30: detour, 5 legs via [(0.32, 1.24), (0.32, 1.39), (0.42, 1.49), (0.57, 1.54), (0.67, 1.49)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:57:53.351Z","lvl":"debug","evt":"move.start","job":29,"op":"left","val":76.0}
+{"ts":"2026-11-18T17:57:54.549Z","lvl":"info","evt":"move.done","job":29,"op":"left","val":76.0,"dur":1.197}
+{"ts":"2026-11-18T17:57:54.849Z","lvl":"info","evt":"log","msg":"turn trim: right 13.1 deg (asked +76 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:54.852Z","lvl":"debug","evt":"move.start","job":30,"op":"right","val":13.099828302186097}
+{"ts":"2026-11-18T17:57:55.556Z","lvl":"info","evt":"move.done","job":30,"op":"right","val":13.099828302186097,"dur":0.704}
+{"ts":"2026-11-18T17:57:55.857Z","lvl":"info","evt":"log","msg":"turn trim: left 13.3 deg (asked +76 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:57:55.859Z","lvl":"debug","evt":"move.start","job":31,"op":"left","val":13.294825467514734}
+{"ts":"2026-11-18T17:57:56.613Z","lvl":"warn","evt":"log","msg":"left(13.3\u00b0): high left-right sync error \u2014 \u0394L=72 \u0394R=99 diff=27 (27.3%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:56.614Z","lvl":"warn","evt":"log","msg":"left(13.3\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:57:56.615Z","lvl":"info","evt":"move.done","job":31,"op":"left","val":13.294825467514734,"dur":0.756}
+{"ts":"2026-11-18T17:57:58.411Z","lvl":"debug","evt":"move.start","job":32,"op":"straight","val":0.22}
+{"ts":"2026-11-18T17:58:00.197Z","lvl":"info","evt":"log","msg":"follow 30: braked mid-drive, blocked at 0.35 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:58:00.201Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 244)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:58:00.202Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[32],"interrupted":32}
+{"ts":"2026-11-18T17:58:00.243Z","lvl":"warn","evt":"move.cancelled","job":32,"op":"straight","val":0.22,"dur":1.831,"detail":"interrupted by stop"}
+{"ts":"2026-11-18T17:58:00.626Z","lvl":"debug","evt":"move.start","job":33,"op":"right","val":72.2}
+{"ts":"2026-11-18T17:58:01.800Z","lvl":"info","evt":"move.done","job":33,"op":"right","val":72.2,"dur":1.174}
+{"ts":"2026-11-18T17:58:02.101Z","lvl":"info","evt":"log","msg":"turn trim: left 7.5 deg (asked -72 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:58:02.101Z","lvl":"debug","evt":"move.start","job":34,"op":"left","val":7.549769669021472}
+{"ts":"2026-11-18T17:58:02.806Z","lvl":"warn","evt":"log","msg":"left(7.5\u00b0): high left-right sync error \u2014 \u0394L=41 \u0394R=66 diff=25 (37.9%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:58:02.808Z","lvl":"warn","evt":"log","msg":"left(7.5\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:58:02.809Z","lvl":"info","evt":"move.done","job":34,"op":"left","val":7.549769669021472,"dur":0.707}
+{"ts":"2026-11-18T17:58:03.110Z","lvl":"info","evt":"log","msg":"turn trim: right 16.4 deg (asked -72 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:58:03.111Z","lvl":"debug","evt":"move.start","job":35,"op":"right","val":16.411200542658534}
+{"ts":"2026-11-18T17:58:03.864Z","lvl":"info","evt":"move.done","job":35,"op":"right","val":16.411200542658534,"dur":0.752}
+{"ts":"2026-11-18T17:58:05.632Z","lvl":"debug","evt":"move.start","job":36,"op":"straight","val":0.22}
+{"ts":"2026-11-18T17:58:08.933Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 straight commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:58:08.940Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 245)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:58:08.941Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[36],"interrupted":36}
+{"ts":"2026-11-18T17:58:09.303Z","lvl":"info","evt":"log","msg":"follow 30: braked mid-drive, drop at 0.45 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:58:09.310Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 246)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:58:09.310Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[36],"interrupted":36}
+{"ts":"2026-11-18T17:58:25.679Z","lvl":"warn","evt":"move.cancelled","job":36,"op":"straight","val":0.22,"dur":20.047,"detail":"interrupted by stop"}
+{"ts":"2026-11-18T17:58:25.682Z","lvl":"debug","evt":"move.start","job":37,"op":"left","val":27.5}
+{"ts":"2026-11-18T17:58:26.550Z","lvl":"warn","evt":"log","msg":"left(27.5\u00b0): high left-right sync error \u2014 \u0394L=148 \u0394R=172 diff=24 (14.0%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:58:26.551Z","lvl":"warn","evt":"log","msg":"left(27.5\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:58:26.552Z","lvl":"info","evt":"move.done","job":37,"op":"left","val":27.5,"dur":0.87}
+{"ts":"2026-11-18T17:58:26.853Z","lvl":"info","evt":"log","msg":"turn trim: right 14.1 deg (asked +28 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:58:26.854Z","lvl":"debug","evt":"move.start","job":38,"op":"right","val":14.07734668594194}
+{"ts":"2026-11-18T17:58:27.608Z","lvl":"warn","evt":"log","msg":"right(14.1\u00b0): high left-right sync error \u2014 \u0394L=102 \u0394R=76 diff=26 (25.5%), LEFT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:58:27.608Z","lvl":"warn","evt":"log","msg":"right(14.1\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:58:27.609Z","lvl":"info","evt":"move.done","job":38,"op":"right","val":14.07734668594194,"dur":0.755}
+{"ts":"2026-11-18T17:58:27.909Z","lvl":"info","evt":"log","msg":"turn trim: left 16.7 deg (asked +28 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:58:27.910Z","lvl":"debug","evt":"move.start","job":39,"op":"left","val":16.675224087896822}
+{"ts":"2026-11-18T17:58:28.713Z","lvl":"warn","evt":"log","msg":"left(16.7\u00b0): high left-right sync error \u2014 \u0394L=90 \u0394R=141 diff=51 (36.2%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:58:28.714Z","lvl":"warn","evt":"log","msg":"left(16.7\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:58:28.715Z","lvl":"info","evt":"move.done","job":39,"op":"left","val":16.675224087896822,"dur":0.805}
+{"ts":"2026-11-18T17:58:30.492Z","lvl":"debug","evt":"move.start","job":40,"op":"straight","val":0.11}
+{"ts":"2026-11-18T17:58:31.787Z","lvl":"info","evt":"move.done","job":40,"op":"straight","val":0.11,"dur":1.295}
+{"ts":"2026-11-18T17:58:32.408Z","lvl":"debug","evt":"move.start","job":41,"op":"right","val":78.5}
+{"ts":"2026-11-18T17:58:32.917Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":109.34,"repeats":6}
+{"ts":"2026-11-18T17:58:33.652Z","lvl":"info","evt":"move.done","job":41,"op":"right","val":78.5,"dur":1.244}
+{"ts":"2026-11-18T17:58:33.952Z","lvl":"info","evt":"log","msg":"turn trim: left 6.3 deg (asked -78 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:58:33.954Z","lvl":"debug","evt":"move.start","job":42,"op":"left","val":6.342920353640125}
+{"ts":"2026-11-18T17:58:34.658Z","lvl":"warn","evt":"log","msg":"left(6.3\u00b0): high left-right sync error \u2014 \u0394L=34 \u0394R=66 diff=32 (48.5%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:58:34.658Z","lvl":"warn","evt":"log","msg":"left(6.3\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T17:58:34.659Z","lvl":"info","evt":"move.done","job":42,"op":"left","val":6.342920353640125,"dur":0.705}
+{"ts":"2026-11-18T17:58:34.960Z","lvl":"info","evt":"log","msg":"turn trim: right 14.2 deg (asked -78 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:58:34.961Z","lvl":"debug","evt":"move.start","job":43,"op":"right","val":14.189623919303031}
+{"ts":"2026-11-18T17:58:35.007Z","lvl":"info","evt":"voice.heard","text":"Robin cancel follow up."}
+{"ts":"2026-11-18T17:58:35.009Z","lvl":"info","evt":"task.cancel","by":"voice","_unregistered":true}
+{"ts":"2026-11-18T17:58:35.009Z","lvl":"info","evt":"log","msg":"tool cancel_task({}) -> {'ok': True, 'note': 'task cancelled'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-18T17:58:35.013Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 247)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:58:35.014Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[43],"interrupted":43}
+{"ts":"2026-11-18T17:58:35.108Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 248)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:58:35.109Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[43],"interrupted":43}
+{"ts":"2026-11-18T17:58:35.384Z","lvl":"info","evt":"log","msg":"follow cancelled (voice)","src":"robot_core.follow"}
+{"ts":"2026-11-18T17:58:36.775Z","lvl":"info","evt":"task.end","task":"follow","ok":true,"cancelled":true,"_unregistered":true}
+{"ts":"2026-11-18T17:58:36.776Z","lvl":"info","evt":"gesture","name":"yes","text_only":true}
+{"ts":"2026-11-18T17:58:36.776Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-18T17:58:36.934Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 right commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-18T17:58:36.939Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 249)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T17:58:36.940Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[43],"interrupted":43}
