@@ -34,7 +34,7 @@ import time
 from typing import Optional
 
 import rclpy
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import TransformStamped, Twist
 from nav_msgs.msg import Odometry
 from rcl_interfaces.msg import SetParametersResult
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
@@ -43,7 +43,7 @@ from rclpy.node import Node
 from std_srvs.srv import Trigger
 from tf2_ros import TransformBroadcaster
 
-from robot_core import settings, status
+from robot_core import settings, status, velocity
 from robot_core.drivetrain import SerialDrivetrain
 from robot_core.motion_executor import CANCELLED, DONE, MotionExecutor
 from robot_core.odometry import DiffDriveOdometry, MotionHealth, effective_wheelbase_m, turn_correction
@@ -107,6 +107,10 @@ class DrivetrainNode(Node):
         self.declare_parameter("max_pitch_deg", 25.0)
         self.declare_parameter("max_roll_deg", 20.0)
         self.declare_parameter("max_dip_deg", 8.0)                # nose falling this far on a drive: stop
+        # Velocity driving (/cmd_vel), firmware v6 only: robot_core/velocity.py.
+        self.declare_parameter("velocity_timeout_s", 0.6)         # no /cmd_vel for this long: stop
+        for k, v in vars(velocity.VelocityParams()).items():
+            self.declare_parameter(f"velocity_{k}", float(v))
 
         self._apply_calibration()
         self.add_on_set_parameters_callback(self._on_set_parameters)
@@ -142,6 +146,7 @@ class DrivetrainNode(Node):
                 self._imu = None
         self._drivetrain.add_odometry_listener(
             lambda l, r, ms: self._odo.update(l, r, ms, time.monotonic(), yaw=self._yaw_rad()))
+        self._drivetrain.add_odometry_listener(self._on_wheel_totals)
 
         moves = MutuallyExclusiveCallbackGroup()
         safety = ReentrantCallbackGroup()
@@ -178,9 +183,26 @@ class DrivetrainNode(Node):
         self.create_timer(1.0 / hz, self._publish_encoders,
                           callback_group=safety)
 
+        # Velocity driving: only with firmware that has the T frame.
+        self._wheel_mps = None                       # (left, right, host time) measured
+        self._last_totals = None
+        self._vel_cmd = (0.0, 0.0, 0.0)              # (v, w, host time)
+        self._vel_on = False                         # the speed loop has the wheels
+        self._vel_hold = False                       # stopped by /estop or motion health: wait for a 0 command
+        self._vel_ctrl = None
+        if getattr(self._drivetrain, "supports_velocity", False):
+            p = {n: self.get_parameter(f"velocity_{n}").value for n in vars(velocity.VelocityParams())}
+            self._vel_ctrl = velocity.WheelSpeedController(
+                self._wheelbase(), velocity.params_from({f"velocity_{k}": v for k, v in p.items()}))
+            self.create_subscription(Twist, "cmd_vel", self._on_cmd_vel, 10, callback_group=safety)
+            self.create_timer(0.1, self._vel_tick, callback_group=MutuallyExclusiveCallbackGroup())
+        else:
+            self.get_logger().info("firmware has no velocity mode (needs drv8871-v6-vel): /cmd_vel off")
+
         self.get_logger().info(
             f"drivetrain ready on {self.get_parameter('serial_port').value} "
-            f"(limit {self.get_parameter('max_drive_m').value} m)")
+            f"(limit {self.get_parameter('max_drive_m').value} m, "
+            f"velocity {'on' if self._vel_ctrl else 'off'})")
 
     # ------------------------------------------------------------------ #
     # Calibration
@@ -397,6 +419,7 @@ class DrivetrainNode(Node):
         the command lock the running move holds. This is the only stop that
         interrupts a move rather than following it.
         """
+        self._vel_hold = self._vel_on or self._vel_hold   # a stop overrides /cmd_vel until it says 0
         dropped = self._exec.cancel_all("estop service")
         response.success = True
         response.message = f"stopped; cancelled {len(dropped)} job(s)"
@@ -456,6 +479,10 @@ class DrivetrainNode(Node):
 
         status = self._exec.status()
         op = status["current"]["op"] if status["current"] else None
+        if op is None and self._vel_on and self._vel_ctrl is not None:   # the speed loop is driving
+            v, w = self._vel_ctrl.v, self._vel_ctrl.w
+            op = ("straight" if v > 0.02 else "reverse" if v < -0.02 else
+                  "left" if w > 0.05 else "right" if w < -0.05 else None)
         ims = self._imu.state() if self._imu is not None else None
         if self._imu is not None:
             self._imu.set_moving(op is not None)             # the gyro zeroes itself only at rest
@@ -474,6 +501,7 @@ class DrivetrainNode(Node):
             if rep.stuck:
                 self.get_logger().warn(f"motion health: {rep.state} — {rep.reason}")
                 if self.get_parameter("stop_on_stuck").value:
+                    self._vel_hold = self._vel_on or self._vel_hold
                     self._exec.cancel_all(f"motion health: {rep.state}")
 
     def _publish_imu(self, ims, stamp, frame: str) -> None:
@@ -493,6 +521,53 @@ class DrivetrainNode(Node):
         msg.angular_velocity_covariance[0] = -1.0            # roll and pitch rates are not published
         msg.linear_acceleration_covariance[0] = -1.0         # nor is acceleration
         self._imu_pub.publish(msg)
+
+    # ------------------------------------------------------------------ #
+    # Velocity driving (/cmd_vel -> T frames)
+    # ------------------------------------------------------------------ #
+
+    def _on_wheel_totals(self, total_left: int, total_right: int, fw_ms: int) -> None:
+        """Each track's speed (m/s, physical left/right) from the never-reset totals."""
+        if self.get_parameter("odom_swap_sides").value:
+            total_left, total_right = total_right, total_left
+        last, self._last_totals = self._last_totals, (total_left, total_right, fw_ms)
+        if last is None or fw_ms <= last[2]:
+            return
+        dt, tpm = (fw_ms - last[2]) / 1000.0, settings.TICKS_PER_CM * 100.0
+        self._wheel_mps = ((total_left - last[0]) / tpm / dt, (total_right - last[1]) / tpm / dt,
+                           time.monotonic())
+
+    def _on_cmd_vel(self, msg: Twist) -> None:
+        v, w = float(msg.linear.x), float(msg.angular.z)
+        if v == 0.0 and w == 0.0:
+            self._vel_hold = False                   # a zero command clears a stop
+        self._vel_cmd = (v, w, time.monotonic())
+
+    def _vel_tick(self) -> None:
+        """10 Hz: drive the tracks at the latest /cmd_vel, held by the speed loop. Not
+        while a Drive/Turn goal runs, after a stop until /cmd_vel says 0, nor once
+        /cmd_vel has gone quiet for velocity_timeout_s."""
+        ctrl, now = self._vel_ctrl, time.monotonic()
+        v, w, t = self._vel_cmd
+        if self._busy() or self._vel_hold:           # a goal has the wheels, or a stop braked them:
+            ctrl.reset()                             # never ramp back out of it
+            self._vel_on = False
+            return
+        if now - t > float(self.get_parameter("velocity_timeout_s").value):
+            v = w = 0.0                              # gone quiet: ramp down and stop
+        meas = self._wheel_mps
+        meas = meas[:2] if meas is not None and now - meas[2] < 0.3 else None
+        pl, pr = ctrl.step(v, w, meas, 0.1)
+        if pl == 0 and pr == 0 and not self._vel_on:
+            return
+        try:
+            self._drivetrain.set_wheels(pl, pr)
+        except Exception as e:                       # noqa: BLE001 — refused (a move started) or link down
+            self.get_logger().warn(f"velocity: T refused ({type(e).__name__}: {e})")
+            ctrl.reset()
+            self._vel_on = False
+            return
+        self._vel_on = not (pl == 0 and pr == 0)
 
     def _on_relocalized(self, _request, response):
         """SLAM fixed our pose: restart the drift budget."""

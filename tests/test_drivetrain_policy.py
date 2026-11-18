@@ -57,7 +57,7 @@ def _stub_ros() -> None:
     module("robot_interfaces.action", Drive=object, Turn=object)
     module("robot_interfaces.msg", Encoders=object, MotionHealth=object, VisualMotion=object)
     module("geometry_msgs")
-    module("geometry_msgs.msg", TransformStamped=object)
+    module("geometry_msgs.msg", TransformStamped=object, Twist=object)
     module("nav_msgs")
     module("nav_msgs.msg", Odometry=object)
     module("sensor_msgs")

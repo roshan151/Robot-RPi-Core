@@ -83,6 +83,22 @@ uses the head's (+ = left).
   fitted to the floor right in front, because the SG90 tilt servo stops a few degrees off and the
   chassis rocks: the same flat floor read 7 deg sloped one way, then the other. Corrections over
   7 cm or 12 deg are not believed (a ramp, a box filling the view) and the scan is left as it was.
+* **Watched drives** (A): with the 8x8 ToF the head looks down at the floor for the whole drive
+  and every new grid (5 a second) is judged out to 0.8 m; the robot brakes once something is
+  within `stop_short_m` + 0.2 m (`follow N: braked mid-drive, ...`), or after three grids in a row
+  too thin to judge. So a drive may run past the floor seen before it, up to
+  `FOLLOW_MAX_DRIVE_M` (3 m), and the glance needs no extra far look.
+* **Gliding** (B, `settings.FOLLOW_GLIDE`, needs firmware `drv8871-v6-vel`): the drivetrain then
+  takes `/cmd_vel` (forward m/s, turn rad/s) and holds each track's speed with encoder feedback
+  (`robot_core/velocity.py`, robot.yaml `velocity_*`; it stops when `/cmd_vel` goes quiet for
+  `velocity_timeout_s`, during a Drive/Turn goal, and after an e-stop or a motion-health stop
+  until a zero command). Follow, once locked on, holds the head level (`FOLLOW_GLIDE_TILT_DEG`
+  above the real horizon) so the camera sees the person and the ToF the floor 0.5-1.3 m ahead,
+  and on every frame: turns at 0.8 rad/s per radian of bearing (none within 3°, in place beyond
+  30°), drives at 0.4 m/s per metre of clear path (top `FOLLOW_GLIDE_MAX_MPS`, 0.2), judged on
+  that frame's grid against the floor, things in the way and known hazards. From standing it
+  glances at the floor right in front once. Blocked (under 8 cm clear): it stops and that frame
+  is a step, with a way round. Lost, or a bump: it stops. Without v6 firmware, steps as before.
 * **Bumps**: a jolt during a drive (the drivetrain's `/motion_health` says `bumped`) is
   something the ToF did not see: glass, a thin chair leg. The drive is braked, the floor
   memory dropped, and no drive is tried until the robot has turned 20° away

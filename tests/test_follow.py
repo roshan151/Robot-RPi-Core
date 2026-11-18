@@ -306,7 +306,7 @@ def test_once_lost_the_mac_is_told_where_they_were_last_seen():
 
 def test_a_far_person_gets_a_long_step_but_never_past_the_floor_seen():
     far = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=3.0, bearing_deg=0.0)
-    for until, drive in ((2.0, 1.5), (1.5, 1.3)):
+    for until, drive in ((2.5, 1.8), (1.5, 1.3)):        # 3.0 - 1.2 m; no live watch: floor seen - 0.2
         h, m = TofHead(scans=(floor(until=until),)), Moving()
         follow.follow(Camera(), Vision([far, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock(),
                       pose=lambda: tuple(m.pose))
@@ -348,3 +348,123 @@ def test_with_no_way_round_it_stops_and_does_not_keep_looking():
     follow.follow(Camera(), Vision([drive, drive, drive, step("gone")]), m, "Sam", head=h, seconds=60,
                   clock=Clock(), pose=lambda: tuple(m.pose))
     assert m.moves == [("drive", 0.15)] and h.glances == 1
+
+
+class WatchingHead(TofHead):
+    """A TofHead that can watch the floor while driving: `profiles` are what each grid
+    during the drive shows (floor_profile), in turn."""
+    def __init__(self, profiles, **kw):
+        super().__init__(**kw)
+        self._profiles, self.geom = list(profiles), SimpleNamespace(
+            hfov_deg=66.0, height_m=0.25, pan_axis_x_m=0.05, drive_tilt_deg=-30.0)
+        self.watched = 0
+
+    def drive_pose(self): self.moves.append("drive pose")
+    def floor_profile(self):
+        self.watched += 1
+        return self._profiles.pop(0) if len(self._profiles) > 1 else self._profiles[0]
+
+
+class SlowDrive(Moving):
+    """A drive that stays busy for `polls` checks of busy(), unless stopped first."""
+    def __init__(self, polls=4):
+        super().__init__()
+        self.polls, self._left = polls, 0
+    def drive(self, m):
+        self._left = self.polls
+        return super().drive(m)
+    def busy(self):
+        self._left -= 1
+        return self._left >= 0
+    def stop(self):
+        self._left = 0
+        return super().stop()
+
+
+def test_a_long_drive_is_watched_as_it_goes_and_brakes_when_something_comes_near():
+    far = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=4.2, bearing_deg=0.0)
+    clear, box_far, box_near = floor(until=0.9), floor(until=0.9, box=(0.7, 0.1)), floor(until=0.9, box=(0.4, 0.1))
+    h, m = WatchingHead([clear, box_far, box_near], scans=(floor(until=1.4),)), SlowDrive(polls=6)
+    follow.follow(Camera(), Vision([far, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock(),
+                  pose=lambda: tuple(m.pose))
+    assert m.moves[0] == ("drive", 3.0), "a 3 m drive although the glance saw floor only to 1.4 m"
+    assert m.stopped == 1 and h.watched == 3, "clear, a box still far, then the box near: brake"
+    assert "drive pose" in h.moves and h.moves[-1] == (0.0, 10.0), "head down for the drive, back up after"
+
+
+def test_one_thin_grid_does_not_brake_but_several_in_a_row_do():
+    far = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=3.2, bearing_deg=0.0)
+    h, m = WatchingHead([[], floor(until=0.9), [], [], []], scans=(floor(until=2.5),)), SlowDrive(polls=8)
+    follow.follow(Camera(), Vision([far, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock(),
+                  pose=lambda: tuple(m.pose))
+    assert m.stopped == 1 and h.watched == 5
+
+
+# --------------------------------------------------------------------------- #
+# Gliding: following by steering (motion.velocity, firmware v6)
+# --------------------------------------------------------------------------- #
+
+class Glider(Moving):
+    """Motion with the velocity mode: records every (v, w)."""
+    def __init__(self):
+        super().__init__()
+        self.vel = []
+    def can_glide(self): return True
+    def velocity(self, v, w): self.vel.append((round(v, 3), round(w, 3)))
+
+
+def glide_head(view=None, scans=None):
+    h = WatchingHead([floor(until=0.9)], scans=scans or (floor(until=1.5),),
+                     view=zones(floor(start=0.45, until=1.5)) if view is None else view)
+    h.geom.tilt_offset_deg = 21.0
+    return h
+
+
+def seen_at(bearing, distance=3.0):
+    return dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=distance, bearing_deg=bearing)
+
+
+def test_gliding_steers_toward_the_person_and_drives_without_stopping():
+    h, m = glide_head(), Glider()
+    follow.follow(Camera(), Vision([seen_at(0.0), seen_at(0.0), step("gone")]), m, "Sam", head=h, seconds=60,
+                  clock=Clock(), pose=lambda: tuple(m.pose))
+    assert m.vel[:2] == [(0.2, 0.0), (0.2, 0.0)] and m.vel[-1] == (0.0, 0.0), m.vel
+    assert m.moves == [], "no stop-and-go moves at all"
+    assert h.glances == 1, "the floor right in front is looked at once, when it sets off"
+    assert (0.0, -21.0) in h.moves, "head held level (21 deg below its straight position)"
+
+
+def test_gliding_turns_in_proportion_and_turns_in_place_when_far_to_the_side():
+    h, m = glide_head(), Glider()
+    follow.follow(Camera(), Vision([seen_at(20.0), seen_at(-45.0), step("gone")]), m, "Sam", head=h, seconds=60,
+                  clock=Clock(), pose=lambda: tuple(m.pose))
+    (v1, w1), (v2, w2) = m.vel[:2]
+    assert v1 > 0 and w1 > 0.25, "20 deg left: on the move, turning left"
+    assert v2 == 0.0 and w2 < -0.6, "45 deg right: turn in place first"
+
+
+def test_close_enough_it_only_turns_to_keep_facing_them():
+    h, m = glide_head(), Glider()
+    follow.follow(Camera(), Vision([seen_at(10.0, distance=1.1), step("gone")]), m, "Sam", head=h, seconds=60,
+                  clock=Clock(), pose=lambda: tuple(m.pose))
+    assert m.vel[0][0] == 0.0 and m.vel[0][1] > 0 and h.glances == 0
+
+
+def test_a_box_ahead_slows_the_glide_and_close_up_it_stops_and_falls_back_to_a_step():
+    h, m = glide_head(view=zones(floor(start=0.45, until=1.5, box=(0.6, 0.1)))), Glider()
+    follow.follow(Camera(), Vision([seen_at(0.0), step("gone")]), m, "Sam", head=h, seconds=60,
+                  clock=Clock(), pose=lambda: tuple(m.pose))
+    assert 0.1 < m.vel[0][0] < 0.2, "0.35 m clear: slower than the top speed"
+    boxed = floor(start=0.2, until=1.5, box=(0.3, 0.1))
+    h, m = glide_head(view=zones(boxed), scans=(boxed,)), Glider()
+    follow.follow(Camera(), Vision([seen_at(0.0), step("gone")]), m, "Sam", head=h, seconds=60,
+                  clock=Clock(), pose=lambda: tuple(m.pose))
+    assert all(v == 0.0 for v, _ in m.vel), "too close: never driven on"
+    assert sum(d for k, d in m.moves if k == "drive") < 0.1
+
+
+def test_without_the_velocity_mode_it_follows_in_steps_as_before():
+    h, m = glide_head(), Moving()                      # no can_glide: firmware v5
+    follow.follow(Camera(), Vision([seen_at(0.0), step("gone")]), m, "Sam", head=h, seconds=60,
+                  clock=Clock(), pose=lambda: tuple(m.pose))
+    assert [k for k, _ in m.moves] == ["drive"]

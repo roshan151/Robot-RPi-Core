@@ -55,6 +55,19 @@
     max_dip_deg: 8.0           # the nose falling this far below where a drive started, fast, stops it at once
                                # (going over an edge the ToF missed). Raise it if a bumpy floor trips it
 
+    # Velocity driving (/cmd_vel -> firmware v6 T frames; robot_core/velocity.py). Only with
+    # drv8871-v6-vel flashed: follow then steers continuously instead of stop-and-go.
+    velocity_timeout_s: 1.0    # no /cmd_vel for this long: ramp down and stop (follow sends ~2 a second)
+    velocity_max_mps: 0.25     # forward speed limit (130 RPM motors, 1.5 in sprockets: ~0.26 at full PWM)
+    velocity_max_radps: 1.0    # turn rate limit
+    velocity_accel_mps2: 0.4   # smooth starts and stops
+    velocity_accel_radps2: 2.0
+    velocity_pwm_min: 60.0     # MEASURE: the PWM at which a track just starts to move (dead band)
+    velocity_pwm_per_mps: 750.0   # MEASURE: extra PWM per m/s; the speed loop corrects what is left
+    velocity_kp: 300.0
+    velocity_ki: 600.0
+    velocity_i_max: 60.0
+
 /voice:
   ros__parameters:
 

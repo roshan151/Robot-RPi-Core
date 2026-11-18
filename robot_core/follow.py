@@ -69,6 +69,13 @@ FAR_LOOK_DEG = 12.0             # a long drive: one more floor look this much hi
 PERSON_CLEAR_M = 0.35           # the person's own legs are not a hazard to remember
 DETOUR_LEGS = 3                 # legs of a way round driven per step before looking for the person
 DETOUR_MAX_TURN_DEG = 100.0     # a way round that starts by turning further (behind it, unseen) is not taken
+WATCH_REACH_M = 0.8             # driving: the floor judged on every new grid, this far ahead
+WATCH_UNSEEN_GRIDS = 3          # ...and this many grids in a row too thin to judge also brake
+GLIDE_TURN_GAIN = 0.8           # gliding: turn rate (rad/s) per radian the person is off to the side
+GLIDE_MAX_TURN = 0.8            # rad/s
+GLIDE_DEADBAND_DEG = 3.0        # nearer ahead than this: no turning
+GLIDE_MAX_BEARING_DEG = 30.0    # further to the side: turn in place first
+GLIDE_SPEED_GAIN = 0.4          # forward speed (m/s) per metre of clear path: slows as it closes in
 
 Pose = Tuple[float, float, float]   # x, y (m), heading (rad, CCW) in the odometry frame
 
@@ -189,12 +196,14 @@ def _remember(hazards, pose: Optional[Pose], pts_base, person_xy) -> None:
 
 def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Optional[_Seen],
                 pose: Optional[Pose], now: float, hazards=None, person_xy=None,
-                check_known: bool = True) -> Tuple[float, Optional[str], Optional[_Seen]]:
+                check_known: bool = True, watched: bool = False) -> Tuple[float, Optional[str], Optional[_Seen]]:
     """How far to drive of `want_m`: (metres, why short or None, floor now known clear).
     `zones` is the tracking view, already turned to the heading the drive starts from.
     `hazards` (local_plan.Hazards): what made earlier drives unsafe; a drive into one is
     refused without looking again (unless `check_known` is False: a leg of a way round
     that was planned round them), and what this check finds is added to it.
+    `watched`: the drive will be watched as it goes (_drive): it may run past the floor
+    seen now, and the far look is not needed.
     Without the 8x8 ToF: all of it, unchecked, as before."""
     if not head or not getattr(head, "has_grid", False) or task_cancel.requested():
         return want_m, None, seen
@@ -228,7 +237,7 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
     back = head.gimbal.angles()
     pts = head.floor_scan()
     geom = getattr(head, "geom", None)
-    if _seen_to(pts, p) < limit + MARGIN_M and hasattr(head, "floor_look"):
+    if not watched and _seen_to(pts, p) < limit + MARGIN_M and hasattr(head, "floor_look"):
         pts = pts + head.floor_look(head.geom.drive_tilt_deg + FAR_LOOK_DEG)    # a long drive: look further out
     head.gimbal.move_to(back[0], back[1], wait=True)
     head.gimbal.wait_settled()
@@ -236,7 +245,7 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
         pts, p, (geom.pan_axis_x_m, geom.height_m) if hasattr(geom, "pan_axis_x_m") else None), person_xy)
     got, short = _shorten(pts, p, limit)
     reach = round(_seen_to(pts, p) - MARGIN_M, 2)    # never drive onto floor it did not measure
-    if got > reach and not p.drive_unknown:
+    if got > reach and not p.drive_unknown and not watched:
         got, short = (reach if reach >= MIN_DRIVE_M else 0.0), short or f"floor seen only to {reach + MARGIN_M:.2f} m"
     if short:                                        # what it judged by: the floor's height under each zone
         lv = getattr(head, "last_level", None)
@@ -253,6 +262,122 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
         clear = next((far for far in (1.7, 1.5, 1.2, 1.0, 0.8, 0.6) if clear < far <= _seen_to(pts, p)
                       and terrain.may_drive(terrain.classify(pts, p, far), p)), clear)
     return got, short or why, (_Seen(pose, clear, now) if pose else None)
+
+
+def _watching(head) -> bool:
+    """Can the floor be watched while driving (the 8x8 ToF on a real Head)?"""
+    return bool(head) and getattr(head, "has_grid", False) and hasattr(head, "floor_profile") \
+        and hasattr(head, "drive_pose")
+
+
+def _drive(head, motion, go_m: float, bumped, hazards, pose, person_xy, seq: int) -> bool:
+    """Drive `go_m`; True if bumped (as _move). With the 8x8 ToF the head looks down at
+    the floor for the whole drive and every new grid (5 a second) is judged out to
+    WATCH_REACH_M: the robot brakes once something is within stop_short_m + MARGIN_M,
+    so a drive can run on past the floor that was seen before it started."""
+    if not _watching(head):
+        return _move(motion, motion.drive, go_m, bumped)
+    if task_cancel.requested():
+        return False
+    p, geom = head.terrain, head.geom
+    back = head.gimbal.angles()
+    head.drive_pose()
+    t0 = time.monotonic()
+    hit = lambda: bool(bumped) and (bumped() or 0.0) >= t0       # noqa: E731
+    try:
+        res = motion.drive(go_m)
+        if not res.get("ok"):
+            raise RuntimeError(f"move refused: {res.get('error')}")
+        unseen = 0
+        while motion.busy():
+            if task_cancel.requested():
+                return False
+            if hit():
+                motion.stop()
+                return True
+            if time.monotonic() > t0 + MOVE_TIMEOUT_S:
+                raise RuntimeError("move timed out")
+            pts = head.floor_profile()               # waits for the next grid
+            if p.auto_level:
+                pts, _ = terrain.level(pts)
+            t = terrain.classify(pts, p, WATCH_REACH_M)
+            if terrain.may_drive(t, p):
+                unseen = 0
+                continue
+            thin = t.kind == terrain.UNKNOWN and t.distance_m is None
+            unseen = unseen + 1 if thin else 0
+            near = t.distance_m is not None and t.distance_m <= p.stop_short_m + MARGIN_M
+            if (near or unseen >= WATCH_UNSEEN_GRIDS) and motion.busy():
+                motion.stop()
+                log.info("follow %d: braked mid-drive, %s", seq, terrain.why_not(t))
+                status.detail(f"braked: {terrain.why_not(t)}")
+                _remember(hazards, pose(), local_plan.hazards_from_floor(
+                    pts, p, (geom.pan_axis_x_m, geom.height_m)), person_xy)
+                break
+        if hit():
+            motion.stop()
+            return True
+        return False
+    finally:
+        head.gimbal.move_to(back[0], back[1], wait=True)
+
+
+def _glide_tilt(head) -> float:
+    """The head angle while gliding: level (plus FOLLOW_GLIDE_TILT_DEG) in reality, i.e.
+    after the head's own upward tilt at its straight position."""
+    return settings.FOLLOW_GLIDE_TILT_DEG - getattr(head.geom, "tilt_offset_deg", 0.0)
+
+
+def _glide_step(head, motion, res: dict, rng, here, pose, hazards, seen, gliding: bool, seq: int):
+    """B: one frame of following by steering (motion.velocity). Turn toward the person
+    in proportion to their bearing; drive at a speed set by the clear path ahead, judged
+    on this frame's grid (the head held level sees the floor 0.5-1.3 m ahead and the
+    person both); nothing to drive and only a turn left: turn in place. Returns (gliding,
+    seen), or None when the way ahead is blocked: the caller stops and falls back to a
+    step (and a way round) this frame."""
+    p = head.terrain
+    person = res.get("distance_m") or rng
+    bearing = res["bearing_deg"]                      # + left, as the head
+    w = 0.0 if abs(bearing) < GLIDE_DEADBAND_DEG else \
+        max(-GLIDE_MAX_TURN, min(GLIDE_MAX_TURN, GLIDE_TURN_GAIN * math.radians(bearing)))
+    v, clear = 0.0, 0.0
+    want = min(person - settings.FOLLOW_KEEP_M, settings.FOLLOW_MAX_DRIVE_M) if person else 0.0
+    person_xy = None
+    if here and person:
+        a = here[2] + math.radians(bearing)
+        person_xy = (here[0] + person * math.cos(a), here[1] + person * math.sin(a))
+    if want >= MIN_DRIVE_M and abs(bearing) <= GLIDE_MAX_BEARING_DEG:
+        if not gliding:                               # from standing: the floor right in front first
+            go, _, seen = _plan_drive(head, want, [], person, seen, pose(), time.monotonic(), hazards,
+                                      person_xy, watched=True)
+            if go < MIN_DRIVE_M:
+                motion.velocity(0.0, 0.0)
+                return None
+        zones = head.zones()
+        pts = [(x, y, h) for _, _, x, y, h, _ in zones]
+        if p.auto_level:
+            pts, _ = terrain.level(pts)
+        _remember(hazards, pose(), local_plan.hazards_from_floor(
+            pts, p, (head.geom.pan_axis_x_m, head.geom.height_m)), person_xy)
+        clear, why = _shorten(pts, p, want)
+        near = _in_the_way(zones, p, person)
+        if near is not None:
+            clear, why = min(clear, near - p.stop_short_m), f"in the way at {near:.2f} m"
+        at = pose()
+        if at is not None and hazards is not None and not local_plan.line_clear(
+                at[:2], (at[0] + clear * math.cos(at[2]), at[1] + clear * math.sin(at[2])),
+                hazards.points(), _radius(p)):
+            clear, why = 0.0, "known hazard"
+        if clear < MIN_DRIVE_M:
+            motion.velocity(0.0, 0.0)
+            log.info("follow %d: glide stopped, path %s", seq, why)
+            status.detail(f"path {why}")
+            return None
+        v = min(settings.FOLLOW_GLIDE_MAX_MPS, GLIDE_SPEED_GAIN * clear)
+    motion.velocity(v, w)
+    log.info("follow %d: glide %.2f m/s, turn %+.0f deg/s (clear %.2f m)", seq, v, math.degrees(w), clear)
+    status.detail(f"following {person or 0:.1f} m")
+    return (v > 0.0 or w != 0.0), seen
 
 
 def _detour(head, motion, hazards, want_m: float, person_xy, pose, bumped, seq: int) -> Optional[_Seen]:
@@ -285,10 +410,10 @@ def _detour(head, motion, hazards, want_m: float, person_xy, pose, bumped, seq: 
             _move(motion, motion.turn, round(turn, 1))
         want = round(min(dist, settings.FOLLOW_MAX_DRIVE_M), 2)
         go, short, _ = _plan_drive(head, want, [], None, None, pose(), time.monotonic(), hazards, person_xy,
-                                   check_known=False)
+                                   check_known=False, watched=_watching(head))
         if short:
             log.info("follow %d: detour leg %.2f of %.2f m, path %s", seq, go, want, short)
-        if go > 0.0 and _move(motion, motion.drive, go, bumped):
+        if go > 0.0 and _drive(head, motion, go, bumped, hazards, pose, person_xy, seq):
             _remember(hazards, pose(), [(0.3, 0.0)], None)
             break
         if go < want - 0.02:                          # something new on the way round: re-plan next step
@@ -328,6 +453,10 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
     last_seen: Optional[Tuple[float, float]] = None   # (heading of the person in the odom frame, when) (#5)
     owed_turn = 0.0                                   # degrees still to turn away after a bump (#7)
     hazards = local_plan.Hazards() if head and getattr(head, "has_grid", False) else None   # what blocked drives
+    glide = settings.FOLLOW_GLIDE and _watching(head) and getattr(motion, "can_glide", lambda: False)()
+    gliding, glide_t = False, 0.0                     # moving under motion.velocity right now, since
+    if glide:
+        log.info("follow: gliding (velocity mode)")
     t0, seq = clock(), 0
     try:
         while clock() - t0 < seconds and not task_cancel.requested():
@@ -363,9 +492,29 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
             if head and look:
                 tracking = res.get("locked") and res["state"] in ("tracking", "holding")
                 base = settings.FOLLOW_TILT_DEG if not tracking else settings.FOLLOW_TRACK_TILT_DEG
+                if glide and tracking:
+                    base = _glide_tilt(head)
                 fast = getattr(head.gimbal, "fast_dps", None) if res["state"] == "searching" else None
                 head.gimbal.move_to(look[0], base + look[1], speed_dps=fast, wait=True)   # search: quicker, still ramped
                 head.gimbal.wait_settled()
+            if glide and gliding and bumped and (bumped() or 0.0) >= glide_t:
+                motion.velocity(0.0, 0.0)             # hit something the ToF did not see (#7)
+                log.warning("follow %d: bumped while gliding; stopped", seq)
+                status.detail("bumped: something unseen")
+                _remember(hazards, pose(), [(0.3, 0.0)], None)
+                gliding, seen, owed_turn = False, None, FOLLOW_BUMP_TURN_DEG
+            if glide and res["state"] == "tracking" and res.get("locked") and res.get("bearing_deg") is not None \
+                    and owed_turn <= 0.0:
+                done = _glide_step(head, motion, res, rng, here, pose, hazards, seen, gliding, seq)
+                if done is not None:
+                    if done[0] and not gliding:
+                        glide_t = time.monotonic()
+                    gliding, seen = done
+                    continue
+                gliding = False                       # blocked: a step (and a way round) this frame
+            elif glide and gliding:
+                motion.velocity(0.0, 0.0)             # lost them, or turning away after a bump: stop
+                gliding = False
             if res["turn_deg"]:
                 _move(motion, motion.turn, res["turn_deg"])
                 owed_turn = max(0.0, owed_turn - abs(res["turn_deg"]))
@@ -382,11 +531,12 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                     a = here[2] + math.radians(res["bearing_deg"])
                     person_xy = (here[0] + person * math.cos(a), here[1] + person * math.sin(a))
                 go, short, seen = _plan_drive(head, want, _turned(zones, res["turn_deg"]),
-                                              person, seen, pose(), time.monotonic(), hazards, person_xy)
+                                              person, seen, pose(), time.monotonic(), hazards, person_xy,
+                                              watched=_watching(head))
                 if short:
                     log.info("follow %d: drive %.2f of %.2f m, path %s", seq, go, want, short)
                     status.detail(f"path {short}")
-                if go > 0.0 and _move(motion, motion.drive, go, bumped):
+                if go > 0.0 and _drive(head, motion, go, bumped, hazards, pose, person_xy, seq):
                     log.warning("follow %d: bumped into something the ToF did not see; stopped", seq)
                     status.detail("bumped: something unseen")
                     seen, owed_turn = None, FOLLOW_BUMP_TURN_DEG
@@ -397,6 +547,8 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
         log.warning("follow ended: %s", exc)
         why = f"vision error: {exc}" if isinstance(exc, VisionError) else str(exc)
     finally:
+        if glide:
+            motion.velocity(0.0, 0.0)
         if motion.busy():
             motion.stop()
         try:

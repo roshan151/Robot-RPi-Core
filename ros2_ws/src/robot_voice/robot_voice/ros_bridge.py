@@ -31,6 +31,7 @@ import asyncio
 import threading
 from typing import Any, Dict, Optional
 
+from geometry_msgs.msg import Twist
 from rclpy.action import ActionClient
 from rclpy.node import Node
 from std_srvs.srv import Trigger
@@ -46,6 +47,7 @@ class RosMotion:
         self._drive = ActionClient(node, Drive, "drive")
         self._turn = ActionClient(node, Turn, "turn")
         self._estop = node.create_client(Trigger, "estop")
+        self._cmd_vel = node.create_publisher(Twist, "cmd_vel", 10)
 
         # Completed goals, for the agent to relay to the model.
         self.results: asyncio.Queue = asyncio.Queue()
@@ -91,6 +93,17 @@ class RosMotion:
     def turn(self, degrees: float, *, gesture: bool = False) -> Dict[str, Any]:
         goal = Turn.Goal(degrees=float(degrees), gesture=gesture)
         return self._send(self._turn, goal, "turn", float(degrees))
+
+    def can_glide(self) -> bool:
+        """The drivetrain listens on /cmd_vel: its firmware has the velocity mode (v6)."""
+        return self._cmd_vel.get_subscription_count() > 0
+
+    def velocity(self, v: float, w: float) -> None:
+        """Drive at v m/s forward and w rad/s (CCW, + left) until the next call. The
+        drivetrain stops on its own if none comes for velocity_timeout_s (0.6 s)."""
+        msg = Twist()
+        msg.linear.x, msg.angular.z = float(v), float(w)
+        self._cmd_vel.publish(msg)
 
     def stop(self) -> Dict[str, Any]:
         """Fire the e-stop and return. Deliberately does not await the reply.

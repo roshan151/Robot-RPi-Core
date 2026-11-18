@@ -47,7 +47,8 @@ def generate_launch_description():
         Node(
             package="robot_bringup",
             executable="bringup",
-            name="robot",
+            # No name=: it would rename every node in the process, and the drivetrain must stay
+            # /drivetrain for its section of robot.yaml (imu_fitted, ticks_per_cm, ...) to reach it.
             parameters=[params],
             output="screen",
             emulate_tty=True,

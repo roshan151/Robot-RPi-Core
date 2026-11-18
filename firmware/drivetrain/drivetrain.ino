@@ -40,6 +40,12 @@
  *   S,<seq>                  stop (active brake)         -> A,<seq> (+D if move active)
  *   M,<seq>,<dir>,<pwm>,<ticks>  encoder-counted move    -> A,<seq> now,
  *                                                           D,<seq>,... when done
+ *   T,<seq>,<pl>,<pr>        v6: stream signed PWM per PHYSICAL wheel,
+ *                            -255..255 (left, right) -> A,<seq>
+ *                            The host's speed loop sends one every ~100 ms;
+ *                            the ramp smooths each change.  No T for
+ *                            VEL_TIMEOUT_MS = soft-stop.  T,<seq>,0,0 stops.
+ *                            Refused (N BUSY) during a counted move.
  *
  * Robot -> host:
  *   A,<seq>                  command accepted (re-sent verbatim if the
@@ -50,7 +56,7 @@
  *                            OK | TIMEOUT | NOISE | STOP | LINK
  *   E,<el>,<er>,<ol>,<or>,<ms>  telemetry every 100 ms: per-move counts,
  *                            then never-reset odometry totals and millis()
- *   W,<code>[,...]           warning: NOISE | MEMCORRUPT | RXBAD | LINK
+ *   W,<code>[,...]           warning: NOISE | MEMCORRUPT | RXBAD | LINK | VEL
  *   B,<hex>,<build>          boot: MCUSR reset-cause bits + build stamp
  *
  * Safety: while anything is driving, the firmware expects a valid
@@ -127,6 +133,9 @@ void resetFlagsInit(void) {
 #define LINK_TIMEOUT_MS    1000UL // stop if no valid frame while driving
 #define TELEMETRY_MS       100UL
 #define OPEN_LOOP_PWM      150    // default speed for I commands
+// T (streamed wheel PWM): the host's speed loop runs at ~10 Hz, so a gap
+// of 300 ms means it has stopped steering -- stop rather than keep going.
+#define VEL_TIMEOUT_MS     300UL
 
 // Sync trim (P-only, deliberately weak).  Kept small ON PURPOSE:
 // boosting a wheel +50% pushed its DRV8871 into ILIM current-chopping,
@@ -216,6 +225,8 @@ long          pending_ticks  = 0;      // 0 = open-loop start
 uint8_t       pending_seq    = 0;
 
 int  open_loop_speed = OPEN_LOOP_PWM;
+bool          vel_active  = false;     // T stream in charge of the wheels
+unsigned long last_vel_ms = 0;
 unsigned long last_ramp_ms = 0;
 unsigned long last_rx_ms   = 0;        // any valid frame feeds this
 
@@ -457,6 +468,7 @@ void handleFrame(char* body) {
     if (have_last_reply && (uint8_t)seq == last_seq) { sendBody(last_reply); return; }
     if (kind == 'S') {
       brake_pending = false;
+      vel_active = false;
       if (move_active) finishMove("STOP");
       else softStop();
       // current_dir is kept: the wheels may still be spinning down, so
@@ -493,7 +505,42 @@ void handleFrame(char* body) {
       return;
     }
     if (move_active) finishMove("STOP");   // intent overrides a counted move
+    vel_active = false;
     armDrive(dir, open_loop_speed, 0, (uint8_t)seq);
+    snprintf(rbuf, sizeof(rbuf), "A,%u", seq);
+    reply(seq, rbuf);
+    return;
+  }
+
+  if (kind == 'T') {
+    int pl, pr;
+    if (sscanf(body + 1, ",%u,%d,%d", &seq, &pl, &pr) != 3 || seq > 255) return;
+    if (have_last_reply && (uint8_t)seq == last_seq) { sendBody(last_reply); return; }
+    if (move_active || (brake_pending && pending_ticks > 0)) {
+      snprintf(rbuf, sizeof(rbuf), "N,%u,BUSY", seq);
+      reply(seq, rbuf);
+      return;
+    }
+    pl = constrain(pl, -PWM_MAX, PWM_MAX);
+    pr = constrain(pr, -PWM_MAX, PWM_MAX);
+    brake_pending = false;            // a pending open-loop start is overridden
+    if (pl == 0 && pr == 0) {
+      vel_active = false;
+      softStop();
+    } else {
+      // Channel L drives the PHYSICAL RIGHT wheel and channel R the left
+      // one (see wheelSigns) -- the host speaks in physical wheels.
+      stopping = false;
+      vel_active = true;
+      last_vel_ms = millis();
+      current_dir = 'T';              // a later counted move still gets dead-time
+      noInterrupts();
+      enc_dir_l = (pr >= 0) ? 1 : -1;
+      enc_dir_r = (pl >= 0) ? 1 : -1;
+      interrupts();
+      target_pwm_left  = pr;
+      target_pwm_right = pl;
+    }
     snprintf(rbuf, sizeof(rbuf), "A,%u", seq);
     reply(seq, rbuf);
     return;
@@ -517,6 +564,7 @@ void handleFrame(char* body) {
       reply(seq, rbuf);
       return;
     }
+    vel_active = false;
     armDrive(dir, speed, ticks, (uint8_t)seq);
     snprintf(rbuf, sizeof(rbuf), "A,%u", seq);
     reply(seq, rbuf);
@@ -600,7 +648,7 @@ void setup() {
   // Reset cause + build stamp.  __DATE__/__TIME__ come from the compiler,
   // so every fresh build announces itself — a stale flash can never
   // masquerade as current source.
-  sendf("B,%X,drv8871-v5-odo built " __DATE__ " " __TIME__, cause);
+  sendf("B,%X,drv8871-v6-vel built " __DATE__ " " __TIME__, cause);
   last_rx_ms = millis();
 }
 
@@ -619,6 +667,13 @@ void loop() {
     if (move_active) finishMove("LINK");
     else softStop();
     sendBody("W,LINK");
+  }
+
+  // ---- Velocity watchdog: the host's speed loop has gone quiet ----- //
+  if (vel_active && (now - last_vel_ms) > VEL_TIMEOUT_MS) {
+    vel_active = false;
+    softStop();
+    sendBody("W,VEL");
   }
 
   // ---- Brake dead-time expiry: start the armed move -------------- //

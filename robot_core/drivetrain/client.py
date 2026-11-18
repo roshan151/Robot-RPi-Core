@@ -257,6 +257,14 @@ class SerialDrivetrain:
     # Open-loop intent methods (fire-and-forget / brain_loop streaming use)
     # ------------------------------------------------------------------ #
 
+    def set_wheels(self, left_pwm: int, right_pwm: int) -> None:
+        """Stream signed PWM per physical wheel (firmware v6 `-vel`; see ArduinoBridge.wheels)."""
+        self._bridge.wheels(left_pwm, right_pwm)
+
+    @property
+    def supports_velocity(self) -> bool:
+        return self._bridge.supports_velocity
+
     def intent_forward(self)  -> None: self._bridge.forward()
     def intent_backward(self) -> None: self._bridge.backward()
     def intent_left(self)     -> None: self._bridge.left()

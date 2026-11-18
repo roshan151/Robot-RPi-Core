@@ -214,6 +214,16 @@ class ArduinoBridge:
         v = max(0, min(255, int(value)))
         self._transact("V", str(v))
 
+    def wheels(self, left_pwm: int, right_pwm: int) -> None:
+        """Firmware v6 (`-vel`): signed PWM per PHYSICAL wheel, -255..255, streamed by
+        a speed loop. The firmware ramps to it and soft-stops if none arrives for 300 ms."""
+        l, r = (max(-255, min(255, int(v))) for v in (left_pwm, right_pwm))
+        self._transact("T", str(l), str(r), retries=1, ack_timeout=0.2)
+
+    @property
+    def supports_velocity(self) -> bool:
+        return "-vel" in (self.firmware_build or "")
+
     def stop(self) -> None:
         """Send stop with a short budget — safe to call during teardown.
 
