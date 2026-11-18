@@ -37,22 +37,34 @@ def hazards_from_floor(pts: Sequence[terrain.Point], p: terrain.Params,
     higher than floor noise (and lower than the robot, which passes under a table), lower
     than a drop, or no return where the floor should be. `sensor` = (x, height) of the
     ToF: a drop ray is also marked where it should have met the floor, nearer the edge."""
-    out = []
+    out, solid = [], []                               # solid: something standing there (its far side is unseen)
     for x, y, h in pts:
         if x < p.near_m:
             continue
         if h is None:
-            if not p.drive_unknown:
+            if p.holes_are_drops and not p.drive_unknown:
                 out.append((x, y))
         elif max(p.flat_tol_m, SURE_M) < h < p.body_m + 0.05:
             out.append((x, y))
+            solid.append((x, y))
         elif h < -max(p.max_drop_m, SURE_M):
             out.append((x, y))
             if sensor is not None:
                 t = sensor[1] / (sensor[1] - h)
                 out.append((sensor[0] + t * (x - sensor[0]), t * y))
-    return [a for i, a in enumerate(out)
+    keep = [a for i, a in enumerate(out)
             if any(j != i and math.dist(a, b) <= NEIGHBOUR_M for j, b in enumerate(out))]
+    return keep + fill_behind([a for a in keep if a in solid], sensor[0] if sensor is not None else 0.0)
+
+
+def fill_behind(pts: Sequence[XY], sensor_x: float = 0.0) -> List[XY]:
+    """The ToF sees only the near face of what stands in the way: points 0.1 and 0.2 m
+    further along each ray, so a way round does not cut the unseen far side."""
+    out = []
+    for x, y in pts:
+        n = math.hypot(x - sensor_x, y) or 1.0
+        out += [(x + (x - sensor_x) / n * d, y + y / n * d) for d in (0.1, 0.2)]
+    return out
 
 
 class Hazards:
@@ -78,9 +90,10 @@ class Hazards:
 
 
 def radius(p: terrain.Params) -> float:
-    """How far the robot's middle keeps from a hazard point: half its path, plus 0.15 m. The
-    ToF sees only the near side of what is in the way; its far side needs room too."""
-    return p.corridor_m / 2.0 + 0.15
+    """How far the robot's middle keeps from a hazard point: half its width plus the
+    clearance (robot.yaml robot_width_m, plan_clearance_m). What is behind an obstacle's
+    near face is filled in by hazards_from_floor, so this need not allow for it."""
+    return p.width_m / 2.0 + p.clearance_m
 
 
 def line_clear(a: XY, b: XY, hazards: Sequence[XY], radius_m: float) -> bool:

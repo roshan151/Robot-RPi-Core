@@ -122,10 +122,15 @@
                                # strip 2-4 cm high on flat floor (measured 2026-11-17)
     min_landing_m: 0.20        # flat floor needed beyond a step for it to count as climbable
     max_drop_m: 0.03           # a fall deeper than this is a drop: never driven
-    path_width_m: 0.30         # width of the strip of floor that is checked (the robot plus a margin)
+    robot_width_m: 0.255       # MEASURED 2026-11-18: the robot's width. The floor checked ahead is this plus 5 cm
+    plan_clearance_m: 0.08     # going round something: this gap between the robot's side and it
+    floor_auto_level: true     # judge each floor scan against the floor fitted right in front (the tilt servo
+                               # stops a few degrees off and the chassis rocks): see terrain.level
+    floor_holes_are_drops: false   # false: a floor zone with no return (dark floor at a glancing angle) is
+                               # "not seen": driven up to, never onto, and not planned round. true: a drop
     drive_on_unknown_floor: false   # false = never drive onto floor the ToF cannot read (very dark or shiny).
                                # Follow and explore then stop there; true drives it unchecked
-    robot_height_m: 0.30       # MEASURE: the robot's height. Explore maps what is lower than this as in the way
+    robot_height_m: 0.24       # MEASURED 2026-11-18: the robot's height. Lower than this is in its way
     stop_short_m: 0.25         # a drive cut short by something (follow) ends with the middle of the tracks this
                                # far before it: half the track length (0.14 m) plus a gap. At least 0.25
     # Head camera: the USB U20CAM-1080P-WDR (PS5268, 1080p HDR) on the gimbal,
@@ -137,7 +142,8 @@
     face_camera_size: [1920, 1080]   # enroll / match / follow (was [640, 480] for the V2)
     camera_inverted: true      # mounted upside down: rotated 180 deg (ISP on the ribbon camera, software on USB)
     head_tilt_offset_deg: 21.0 # the head (camera and ToF) looks this far UP at tilt 0, its straight position
-    head_height_m: 0.225        # MEASURE: ToF (and camera) height above the floor, head level
+    head_height_m: 0.22        # MEASURED 2026-11-18: ToF height above the floor, head level
+    tof_from_right_m: 0.10     # MEASURED 2026-11-18: ToF centre from the robot's right side (centre = robot_width_m / 2)
     pan_axis_x_m: 0.05         # MEASURE: pan axis ahead of the wheel-axle centre
     hfov_deg: 80.0             # USB HD: measured 2026-11-10 (1 m of tape = 764 px at 1.5 m). The lens bends
                                # (fisheye-like): ~105 at the edges, but the angle maths uses the centre. V2 was 66

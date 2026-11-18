@@ -239,8 +239,10 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
     if got > reach and not p.drive_unknown:
         got, short = (reach if reach >= MIN_DRIVE_M else 0.0), short or f"floor seen only to {reach + MARGIN_M:.2f} m"
     if short:                                        # what it judged by: the floor's height under each zone
-        log.info("floor seen at tilt %s, pitch %s (x m, y m, height m): %s", getattr(geom, "drive_tilt_deg", None),
-                 head.pitch() if getattr(head, "pitch", None) else None,
+        lv = getattr(head, "last_level", None)
+        log.info("floor seen at tilt %s, pitch %s, levelled by %s (x m, y m, height m): %s",
+                 getattr(geom, "drive_tilt_deg", None), head.pitch() if getattr(head, "pitch", None) else None,
+                 None if lv is None else f"{lv[0]:+.3f} m, pitch {lv[1]:+.1f}, roll {lv[2]:+.1f} deg",
                  sorted(((round(x, 2), round(y, 2), None if h is None else round(h, 3))
                          for x, y, h in pts if abs(y) <= p.corridor_m / 2.0 and x >= p.near_m),
                         key=lambda t: t[0])[:20])

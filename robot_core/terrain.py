@@ -46,6 +46,11 @@ class Params:
     body_m: float = 0.30           # the robot's height: anything lower than this is in its way
     stop_short_m: float = 0.25     # a drive cut short by something ends with the robot's middle this far
                                    # before it (half the track length plus a gap; at least 0.25)
+    width_m: float = 0.25          # the robot's width (local_plan keeps half of it, plus clearance_m, from hazards)
+    clearance_m: float = 0.08      # gap between the robot's side and a hazard when planning a way round
+    holes_are_drops: bool = True   # no return where the floor should be, beyond seen floor = a drop; False:
+                                   # floor not seen there (driven up to, never onto; not planned round)
+    auto_level: bool = False       # level each floor scan on the floor right in front (see level())
 
 
 @dataclass(frozen=True)
@@ -96,6 +101,8 @@ def classify(points: Sequence[Point], p: Params = Params(), reach_m: float = 0.5
         if (depth is not None and depth < -p.max_drop_m) or (gone and prev is not None):
             start = i if prev is None else prev + 1
             if start <= last_i:
+                if depth is None and not p.holes_are_drops:
+                    return Terrain(UNKNOWN, start * p.cell_m)     # dark or glancing floor: not seen, not a drop
                 return Terrain(DROP, start * p.cell_m, depth)
             break
         if i in cells:
@@ -110,6 +117,64 @@ def classify(points: Sequence[Point], p: Params = Params(), reach_m: float = 0.5
     if top > p.h_max_m or len(over) < 2:
         return Terrain(BLOCKED, rise * p.cell_m, top)      # too high, or what follows cannot be seen
     return Terrain(CLIMBABLE, rise * p.cell_m, top)
+
+
+LEVEL_REACH_M = 0.9       # the floor the ground plane is fitted to: right in front of the robot
+LEVEL_INLIER_M = 0.02     # a point this close to the plane is floor
+LEVEL_MAX_M = 0.07        # corrections bigger than these mean the fit found something else (a ramp,
+LEVEL_MAX_DEG = 12.0      # a box filling the view): the scan is left as it was
+
+
+def level(pts: Sequence[Point]) -> Tuple[List[Point], Optional[Tuple[float, float, float]]]:
+    """Heights measured from the floor the robot stands on, whatever the head's real angle.
+
+    The SG90 tilt servo stops a few degrees from where it was sent (backlash, the head's
+    weight) and the chassis rocks after a drive, so the same flat floor reads sloped one
+    way on one scan and the other way on the next. The floor right in front is where the
+    robot is about to drive and almost always floor: fit a plane h = a + b*x + c*y to the
+    points near it (refitting on the points close to the plane, so a box or a step does
+    not count) and measure every height from that plane. Returns the points and
+    (offset m, pitch deg, roll deg) of the correction, or None when there was too little
+    floor to fit or the correction would be too large to believe."""
+    cand = [(x, y, h) for x, y, h in pts if h is not None and x <= LEVEL_REACH_M and abs(h) <= 0.10]
+    if len(cand) < 8 or max(q[0] for q in cand) - min(q[0] for q in cand) < 0.15:
+        return list(pts), None
+    use, fit = cand, None
+    for _ in range(3):
+        fit = _plane(use, roll=max(q[1] for q in use) - min(q[1] for q in use) >= 0.10)
+        if fit is None:
+            return list(pts), None
+        keep = [q for q in cand if abs(q[2] - (fit[0] + fit[1] * q[0] + fit[2] * q[1])) <= LEVEL_INLIER_M]
+        if len(keep) < 8:
+            break
+        use = keep
+    a, b, c = fit
+    pitch, roll = math.degrees(math.atan(b)), math.degrees(math.atan(c))
+    if abs(a) > LEVEL_MAX_M or abs(pitch) > LEVEL_MAX_DEG or abs(roll) > LEVEL_MAX_DEG:
+        return list(pts), None
+    return [(x, y, None if h is None else h - (a + b * x + c * y)) for x, y, h in pts], (a, pitch, roll)
+
+
+def _plane(pts, roll: bool = True) -> Optional[Tuple[float, float, float]]:
+    """Least squares h = a + b*x (+ c*y), solving the normal equations by hand (no numpy)."""
+    rows = [(1.0, x, y if roll else 0.0, h) for x, y, h in pts]
+    m = [[sum(r[i] * r[j] for r in rows) for j in range(3)] for i in range(3)]
+    v = [sum(r[i] * r[3] for r in rows) for i in range(3)]
+    if not roll:
+        m[2][2] = 1.0                                    # c fixed at 0: too narrow a view to judge roll
+    det = (m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+           + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]))
+    if abs(det) < 1e-12:
+        return None
+    out = []
+    for k in range(3):                                   # Cramer's rule
+        mk = [row[:] for row in m]
+        for i in range(3):
+            mk[i][k] = v[i]
+        out.append((mk[0][0] * (mk[1][1] * mk[2][2] - mk[1][2] * mk[2][1])
+                    - mk[0][1] * (mk[1][0] * mk[2][2] - mk[1][2] * mk[2][0])
+                    + mk[0][2] * (mk[1][0] * mk[2][1] - mk[1][1] * mk[2][0])) / det)
+    return out[0], out[1], out[2]
 
 
 def may_drive(t: Terrain, p: Params = Params()) -> bool:
@@ -180,11 +245,16 @@ def scan_slice(columns: Sequence[Column], p: Params = Params(), low_m: float = 0
 def params_from(p: dict) -> Params:
     """Params from robot.yaml's /explorer section; anything missing keeps its default."""
     d = Params()
-    return Params(h_max_m=float(p.get("h_max_m", d.h_max_m)),
+    width = float(p.get("robot_width_m", d.width_m))
+    corridor = width + 0.05 if "robot_width_m" in p else float(p.get("path_width_m", d.corridor_m))
+    return Params(width_m=width, corridor_m=corridor,
+                  clearance_m=float(p.get("plan_clearance_m", d.clearance_m)),
+                  holes_are_drops=bool(p.get("floor_holes_are_drops", d.holes_are_drops)),
+                  auto_level=bool(p.get("floor_auto_level", d.auto_level)),
+                  h_max_m=float(p.get("h_max_m", d.h_max_m)),
                   flat_tol_m=float(p.get("flat_tol_m", d.flat_tol_m)),
                   min_landing_m=float(p.get("min_landing_m", d.min_landing_m)),
                   max_drop_m=float(p.get("max_drop_m", d.max_drop_m)),
-                  corridor_m=float(p.get("path_width_m", d.corridor_m)),
                   drive_unknown=bool(p.get("drive_on_unknown_floor", d.drive_unknown)),
                   body_m=float(p.get("robot_height_m", d.body_m)),
                   stop_short_m=max(0.25, float(p.get("stop_short_m", d.stop_short_m))))

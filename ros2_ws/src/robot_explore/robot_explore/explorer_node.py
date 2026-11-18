@@ -170,6 +170,11 @@ class ExplorerNode(Node):
         p("min_landing_m", 0.20)
         p("max_drop_m", 0.03)
         p("path_width_m", 0.30)
+        p("robot_width_m", 0.25)
+        p("tof_from_right_m", 0.125)
+        p("plan_clearance_m", 0.08)
+        p("floor_auto_level", False)
+        p("floor_holes_are_drops", True)
         p("drive_on_unknown_floor", False)
         p("robot_height_m", 0.30)
         p("stop_short_m", 0.25)
@@ -214,9 +219,11 @@ class ExplorerNode(Node):
         self.head = Head(self.gimbal, self.lidar, self.camera, HeadGeometry(
             height_m=float(v("head_height_m")), pan_axis_x_m=float(v("pan_axis_x_m")),
             hfov_deg=float(v("hfov_deg")), drive_tilt_deg=float(v("drive_tilt_deg")),
-            tof_perpendicular=bool(v("tof_perpendicular")), tilt_offset_deg=float(v("head_tilt_offset_deg"))),
+            tof_perpendicular=bool(v("tof_perpendicular")), tilt_offset_deg=float(v("head_tilt_offset_deg")),
+            pan_axis_y_m=float(v("tof_from_right_m")) - float(v("robot_width_m")) / 2.0),
             pitch=lambda: self._pitch(),
-            terrain_params=terrain.params_from({n: v(n) for n in ("h_max_m", "flat_tol_m", "min_landing_m", "max_drop_m", "path_width_m",
+            terrain_params=terrain.params_from({n: v(n) for n in ("h_max_m", "flat_tol_m", "min_landing_m", "max_drop_m", "robot_width_m",
+                                                             "plan_clearance_m", "floor_auto_level", "floor_holes_are_drops",
                                                              "drive_on_unknown_floor", "robot_height_m", "stop_short_m")}))
         self.vision = VisionClient(v("vision_url")) if v("vision_url") else VisionClient()
 

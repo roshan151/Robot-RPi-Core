@@ -623,7 +623,9 @@ class Explorer:
         pts, p = getattr(self.head, "last_floor", None), getattr(self.head, "terrain", None)
         geom = getattr(self.head, "geom", None)
         hz = local_plan.hazards_from_floor(pts, p, (geom.pan_axis_x_m, geom.height_m)) if pts and p else []
-        self._hazards.add(self.base.odom().as_tuple(), hz or probe.points)
+        if not hz:                                    # a single-beam probe: its points, and behind an obstacle
+            hz = list(probe.points) + (local_plan.fill_behind(probe.points) if probe.status == "obstacle" else [])
+        self._hazards.add(self.base.odom().as_tuple(), hz)
 
     def _go_round(self, wp) -> bool:
         """A step toward map waypoint `wp` is blocked: plan round what is known

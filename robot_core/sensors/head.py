@@ -46,6 +46,7 @@ class HeadGeometry:
     drive_tilt_deg: float = -30.0     # ToF: head tilt for looking at the floor ahead (the drive pose)
     tof_perpendicular: bool = True    # ToF ranges are distances to the sensor's plane, not along each ray
     tilt_offset_deg: float = 0.0      # how far up the head really looks at tilt 0 (+10 = 10 deg up)
+    pan_axis_y_m: float = 0.0         # ToF left of the robot's centre line (negative: to the right)
 
 
 @dataclass(frozen=True)
@@ -62,6 +63,7 @@ class Head:
         self.gimbal, self.lidar, self.camera, self.geom = gimbal, lidar, camera, geom
         self.pitch = pitch
         self.terrain = terrain_params or terrain.Params()
+        self.last_level = None                        # the last floor scan's correction (terrain.level)
 
     @property
     def has_grid(self) -> bool:
@@ -152,7 +154,7 @@ class Head:
         pan, tilt = (math.radians(a) for a in self.gimbal.angles())
         tilt += math.radians(self.geom.tilt_offset_deg)
         body = math.radians((self.pitch() if self.pitch else 0.0) or 0.0)
-        ox, height = self.geom.pan_axis_x_m, self.geom.height_m
+        ox, oy, height = self.geom.pan_axis_x_m, self.geom.pan_axis_y_m, self.geom.height_m
         out = []
         for r in range(SIZE):
             for c in range(SIZE):
@@ -169,11 +171,11 @@ class Head:
                 d = grid.rows[r][c]
                 if d is not None:
                     depth = d if self.geom.tof_perpendicular else d / along
-                    out.append((r, c, ox + depth * fwd, depth * left, height + depth * up, depth * along))
+                    out.append((r, c, ox + depth * fwd, oy + depth * left, height + depth * up, depth * along))
                 elif up < -1e-6:
                     depth = height / -up                                        # where this ray meets the floor
                     if depth * along <= FLOOR_REACH_M:
-                        out.append((r, c, ox + depth * fwd, depth * left, None, depth * along))
+                        out.append((r, c, ox + depth * fwd, oy + depth * left, None, depth * along))
         return out
 
     def zones(self):
@@ -217,13 +219,24 @@ class Head:
         if lower >= self.gimbal.tilt_limits()[0]:
             self.gimbal.move_to(0.0, lower, wait=True)
             pts += self.floor_profile()
+        if self.terrain.auto_level:                   # heights from the floor in front, not the servo's word
+            pts, self.last_level = terrain.level(pts)
         self.last_floor = pts                         # for local_plan: what was in the way, all across the view
         return pts
 
     def floor_look(self, tilt_deg: float) -> List[terrain.Point]:
         """One more look at the floor, from `tilt_deg` (higher than the drive pose: further out)."""
         self.gimbal.move_to(0.0, tilt_deg, wait=True)
-        return self.floor_profile()
+        pts = self.floor_profile()
+        if self.terrain.auto_level:                   # its own floor fit, else the last scan's
+            lv, fit = terrain.level(pts)
+            if fit is not None:
+                return lv
+            if self.last_level is not None:
+                a, b, c = self.last_level[0], math.tan(math.radians(self.last_level[1])), \
+                    math.tan(math.radians(self.last_level[2]))
+                return [(x, y, None if h is None else h - (a + b * x + c * y)) for x, y, h in pts]
+        return pts
 
     def terrain_ahead(self, reach_m: float) -> terrain.Terrain:
         """Look down and judge the path for the next `reach_m`. The head is left

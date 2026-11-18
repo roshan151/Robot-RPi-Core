@@ -72,10 +72,17 @@ uses the head's (+ = left).
 * **Going round** (`robot_core/local_plan.py`, shared with explore): whatever made a drive unsafe
   (box, step, drop, unreadable floor, something in the way) is remembered in the odometry frame
   for 2 min, so a drive into it is refused without looking again (`path known hazard`). Then A* on
-  a 5 cm grid round the robot, every hazard grown by half the path width + 0.15 m, gives a way
+  a 5 cm grid round the robot, every hazard grown by half the robot's width + `plan_clearance_m`
+  (0.255 / 2 + 0.08 m; the unseen far side of an obstacle is filled in 0.2 m deep), gives a way
   round as straight legs; up to three are driven per step, each floor-checked first, and the robot
   turns back to face the person. No way round: it stays and keeps facing them (`no way round`).
   The person's own legs (within 0.35 m of where they stand) are not remembered.
+  Only something 8 cm or more off the floor is remembered, and a floor zone with no return is
+  floor not seen, not a hazard (`floor_holes_are_drops: false`).
+* **Levelling** (`floor_auto_level`, `terrain.level`): every floor scan is judged against a plane
+  fitted to the floor right in front, because the SG90 tilt servo stops a few degrees off and the
+  chassis rocks: the same flat floor read 7 deg sloped one way, then the other. Corrections over
+  7 cm or 12 deg are not believed (a ramp, a box filling the view) and the scan is left as it was.
 * **Bumps**: a jolt during a drive (the drivetrain's `/motion_health` says `bumped`) is
   something the ToF did not see: glass, a thin chair leg. The drive is braked, the floor
   memory dropped, and no drive is tried until the robot has turned 20° away
