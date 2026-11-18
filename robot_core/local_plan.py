@@ -26,6 +26,9 @@ BORDER_M = 1.0          # how far beyond the start and the goal the grid reaches
 KEEP_S = 120.0          # a hazard is remembered this long (odometry drifts)
 NEIGHBOUR_M = 0.12      # a hazard point counts only with another within this (one noisy zone is not a box)
 MIN_GAP_M = 0.10        # never plan nearer a hazard than this, even to get out from beside it
+SURE_M = 0.08           # only something this far above or below the floor is remembered: the floor
+                        # itself reads up to ~5 cm off, which the drive check rightly refuses, but
+                        # planning round floor noise sends the robot the wrong way
 
 
 def hazards_from_floor(pts: Sequence[terrain.Point], p: terrain.Params,
@@ -41,9 +44,9 @@ def hazards_from_floor(pts: Sequence[terrain.Point], p: terrain.Params,
         if h is None:
             if not p.drive_unknown:
                 out.append((x, y))
-        elif p.flat_tol_m < h < p.body_m + 0.05:
+        elif max(p.flat_tol_m, SURE_M) < h < p.body_m + 0.05:
             out.append((x, y))
-        elif h < -p.max_drop_m:
+        elif h < -max(p.max_drop_m, SURE_M):
             out.append((x, y))
             if sensor is not None:
                 t = sensor[1] / (sensor[1] - h)

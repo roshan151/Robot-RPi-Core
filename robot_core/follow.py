@@ -68,6 +68,7 @@ FOLLOW_BUMP_TURN_DEG = 20.0     # after a bump, no drive until the robot has tur
 FAR_LOOK_DEG = 12.0             # a long drive: one more floor look this much higher than the drive pose
 PERSON_CLEAR_M = 0.35           # the person's own legs are not a hazard to remember
 DETOUR_LEGS = 3                 # legs of a way round driven per step before looking for the person
+DETOUR_MAX_TURN_DEG = 100.0     # a way round that starts by turning further (behind it, unseen) is not taken
 
 Pose = Tuple[float, float, float]   # x, y (m), heading (rad, CCW) in the odometry frame
 
@@ -238,9 +239,9 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
     if got > reach and not p.drive_unknown:
         got, short = (reach if reach >= MIN_DRIVE_M else 0.0), short or f"floor seen only to {reach + MARGIN_M:.2f} m"
     if short:                                        # what it judged by: the floor's height under each zone
-        log.info("floor seen at tilt %s, pitch %s (x m, height m): %s", getattr(geom, "drive_tilt_deg", None),
+        log.info("floor seen at tilt %s, pitch %s (x m, y m, height m): %s", getattr(geom, "drive_tilt_deg", None),
                  head.pitch() if getattr(head, "pitch", None) else None,
-                 sorted(((round(x, 2), None if h is None else round(h, 3))
+                 sorted(((round(x, 2), round(y, 2), None if h is None else round(h, 3))
                          for x, y, h in pts if abs(y) <= p.corridor_m / 2.0 and x >= p.near_m),
                         key=lambda t: t[0])[:20])
     if got <= 0.0:
@@ -265,6 +266,10 @@ def _detour(head, motion, hazards, want_m: float, person_xy, pose, bumped, seq: 
     if not path or len(path) < 2:
         log.info("follow %d: no way round (%d hazard points known)", seq, len(hazards.points()))
         status.detail("no way round")
+        return None
+    if abs(local_plan.leg(here, path[1])[0]) > DETOUR_MAX_TURN_DEG:
+        log.info("follow %d: way round starts behind the robot: not taken", seq)
+        status.detail("no way round ahead")
         return None
     log.info("follow %d: detour, %d legs via %s", seq, len(path) - 1,
              [(round(x, 2), round(y, 2)) for x, y in path[1:]])
