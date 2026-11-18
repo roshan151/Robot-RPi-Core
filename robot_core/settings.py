@@ -153,6 +153,8 @@ FACE_MIN_QUALITY = 0.6
 FOLLOW_SECONDS = _env("ROBOT_FOLLOW_S", "300", float)            # follow mode ends after this
 FOLLOW_TILT_DEG = _env("ROBOT_FOLLOW_TILT", "20", float)         # head tilt while finding them: the face
 FOLLOW_TRACK_TILT_DEG = _env("ROBOT_FOLLOW_TRACK_TILT", "10", float)  # once locked on: body and feet
+FOLLOW_KEEP_M = _env("ROBOT_FOLLOW_KEEP_M", "1.2", float)          # stop this far from the person (as the Mac)
+FOLLOW_MAX_DRIVE_M = _env("ROBOT_FOLLOW_MAX_DRIVE_M", "1.5", float)  # longest drive per step (the Mac caps at 0.5)
 FACE_MIN_SHOTS = 5
 # Long edge of frames sent for faces and follow. Faces need the pixels: with the
 # wide USB HD lens a 640 px frame leaves a face at 2 m ~18 px wide (useless), the

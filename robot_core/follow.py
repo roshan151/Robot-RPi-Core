@@ -52,7 +52,7 @@ import time
 from dataclasses import dataclass
 from typing import Callable, List, Optional, Tuple
 
-from robot_core import settings, status, task_cancel, terrain
+from robot_core import local_plan, settings, status, task_cancel, terrain
 from robot_core.sensors.camera import jpeg
 from robot_core.sensors.tof8x8 import range_in_box
 from robot_core.vision_client import VisionClient, VisionError
@@ -65,6 +65,9 @@ MARGIN_M = 0.2                  # the floor must be clear this far past the end 
 FLOOR_MEMORY_S = 10.0           # floor seen clear is trusted this long: people and pets move
 LAST_SEEN_S = 30.0              # where they were last seen is a search hint this long
 FOLLOW_BUMP_TURN_DEG = 20.0     # after a bump, no drive until the robot has turned this far
+FAR_LOOK_DEG = 12.0             # a long drive: one more floor look this much higher than the drive pose
+PERSON_CLEAR_M = 0.35           # the person's own legs are not a hazard to remember
+DETOUR_LEGS = 3                 # legs of a way round driven per step before looking for the person
 
 Pose = Tuple[float, float, float]   # x, y (m), heading (rad, CCW) in the odometry frame
 
@@ -150,24 +153,59 @@ def _in_the_way(zones, p: terrain.Params, person_m: Optional[float]) -> Optional
     the path's width, higher than a step it could climb and lower than the robot
     (a table top it passes under does not count), and nearer than the person by 0.3 m
     (so not the person). None without the person's range: their legs would count."""
-    if not zones or person_m is None:
-        return None
-    xs = [x for _, _, x, y, h, d in zones
-          if h is not None and x > p.near_m and abs(y) <= p.corridor_m / 2.0
-          and p.h_max_m < h < p.body_m + 0.05 and d < person_m - 0.3]
+    xs = [x for x, _ in _way_points(zones, p, person_m)]
     return min(xs) if xs else None
 
 
+def _way_points(zones, p: terrain.Params, person_m: Optional[float]):
+    """(x, y) of the tracking-view zones that `_in_the_way` counts."""
+    if not zones or person_m is None:
+        return []
+    return [(x, y) for _, _, x, y, h, d in zones
+            if h is not None and x > p.near_m and abs(y) <= p.corridor_m / 2.0
+            and p.h_max_m < h < p.body_m + 0.05 and d < person_m - 0.3]
+
+
+def _seen_to(pts, p: terrain.Params) -> float:
+    """How far ahead, in the robot's path, the floor was actually measured (0: not at all)."""
+    xs = [x for x, y, h in pts if h is not None and abs(y) <= p.corridor_m / 2.0 and x >= p.near_m]
+    return max(xs) if xs else 0.0
+
+
+def _radius(p: terrain.Params) -> float:
+    """How far the robot's middle keeps from a hazard when planning: half the path, plus a gap
+    (the ToF sees only an obstacle's near side, so its far side needs room too)."""
+    return local_plan.radius(p)
+
+
+def _remember(hazards, pose: Optional[Pose], pts_base, person_xy) -> None:
+    if hazards is None or pose is None or not pts_base:
+        return
+    hazards.add(pose, pts_base)
+    if person_xy is not None:
+        hazards.forget_near(person_xy, PERSON_CLEAR_M)
+
+
 def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Optional[_Seen],
-                pose: Optional[Pose], now: float) -> Tuple[float, Optional[str], Optional[_Seen]]:
-    """How far to drive of the Mac's `want_m`: (metres, why short or None, floor now
-    known clear). `zones` is the tracking view, already turned to the heading the drive
-    starts from. Without the 8x8 ToF: all of it, unchecked, as before."""
+                pose: Optional[Pose], now: float, hazards=None, person_xy=None,
+                check_known: bool = True) -> Tuple[float, Optional[str], Optional[_Seen]]:
+    """How far to drive of `want_m`: (metres, why short or None, floor now known clear).
+    `zones` is the tracking view, already turned to the heading the drive starts from.
+    `hazards` (local_plan.Hazards): what made earlier drives unsafe; a drive into one is
+    refused without looking again (unless `check_known` is False: a leg of a way round
+    that was planned round them), and what this check finds is added to it.
+    Without the 8x8 ToF: all of it, unchecked, as before."""
     if not head or not getattr(head, "has_grid", False) or task_cancel.requested():
         return want_m, None, seen
     p = head.terrain
     limit, why = want_m, None
+    if check_known and hazards is not None and pose is not None and not local_plan.line_clear(
+            pose[:2], (pose[0] + limit * math.cos(pose[2]), pose[1] + limit * math.sin(pose[2])),
+            hazards.points(), _radius(p)):
+        return 0.0, "known hazard", seen             # found before: no need to look at it again
     near = _in_the_way(zones, p, person_m)           # anything up to the robot's height (#4)
+    if near is not None:
+        _remember(hazards, pose, _way_points(zones, p, person_m), person_xy)
     if near is not None and near - p.stop_short_m < limit:
         limit, why = max(0.0, round(near - p.stop_short_m, 2)), f"in the way at {near:.2f} m"
     if limit < MIN_DRIVE_M:
@@ -183,17 +221,25 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
         # Only if it saw the floor right in front, or memory covers the stretch it did not.
         if floor and min(floor) <= max(p.near_m + 2 * p.cell_m, have + 0.05):
             got, _ = _shorten(pts, p, limit)
-            if got >= limit - 1e-9:
+            if got >= limit - 1e-9 and _seen_to(pts, p) >= limit + MARGIN_M:
                 return limit, why, (_Seen(pose, limit + MARGIN_M, now) if pose else None)
     # Glance down (two looks), then put the head back for the next frame.
     back = head.gimbal.angles()
     pts = head.floor_scan()
+    geom = getattr(head, "geom", None)
+    if _seen_to(pts, p) < limit + MARGIN_M and hasattr(head, "floor_look"):
+        pts = pts + head.floor_look(head.geom.drive_tilt_deg + FAR_LOOK_DEG)    # a long drive: look further out
     head.gimbal.move_to(back[0], back[1], wait=True)
     head.gimbal.wait_settled()
+    _remember(hazards, pose, local_plan.hazards_from_floor(
+        pts, p, (geom.pan_axis_x_m, geom.height_m) if hasattr(geom, "pan_axis_x_m") else None), person_xy)
     got, short = _shorten(pts, p, limit)
+    reach = round(_seen_to(pts, p) - MARGIN_M, 2)    # never drive onto floor it did not measure
+    if got > reach and not p.drive_unknown:
+        got, short = (reach if reach >= MIN_DRIVE_M else 0.0), short or f"floor seen only to {reach + MARGIN_M:.2f} m"
     if short:                                        # what it judged by: the floor's height under each zone
-        log.info("floor seen at tilt %.0f, pitch %s (x m, height m): %s", head.geom.drive_tilt_deg,
-                 head.pitch() if head.pitch else None,
+        log.info("floor seen at tilt %s, pitch %s (x m, height m): %s", getattr(geom, "drive_tilt_deg", None),
+                 head.pitch() if getattr(head, "pitch", None) else None,
                  sorted(((round(x, 2), None if h is None else round(h, 3))
                          for x, y, h in pts if abs(y) <= p.corridor_m / 2.0 and x >= p.near_m),
                         key=lambda t: t[0])[:20])
@@ -201,9 +247,50 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
         return 0.0, short or why, None
     clear = got + MARGIN_M                           # and how far it is clear beyond that, for next time
     if short is None:
-        clear = next((far for far in (1.0, 0.8, 0.6) if far > clear
+        clear = next((far for far in (1.7, 1.5, 1.2, 1.0, 0.8, 0.6) if clear < far <= _seen_to(pts, p)
                       and terrain.may_drive(terrain.classify(pts, p, far), p)), clear)
     return got, short or why, (_Seen(pose, clear, now) if pose else None)
+
+
+def _detour(head, motion, hazards, want_m: float, person_xy, pose, bumped, seq: int) -> Optional[_Seen]:
+    """The straight drive is blocked: plan a way round what is known (local_plan) and
+    drive its first leg, checked like any drive; then face the person again so the next
+    frame sees them. Returns the floor now known clear (None)."""
+    here = pose()
+    if here is None:
+        return None
+    p = head.terrain
+    goal = (here[0] + want_m * math.cos(here[2]), here[1] + want_m * math.sin(here[2]))
+    path = local_plan.plan(here[:2], goal, hazards.points(), _radius(p))
+    if not path or len(path) < 2:
+        log.info("follow %d: no way round (%d hazard points known)", seq, len(hazards.points()))
+        status.detail("no way round")
+        return None
+    log.info("follow %d: detour, %d legs via %s", seq, len(path) - 1,
+             [(round(x, 2), round(y, 2)) for x, y in path[1:]])
+    status.detail("going round")
+    for wp in path[1:DETOUR_LEGS + 1]:                # each leg: turn, check the floor, drive
+        if task_cancel.requested():
+            return None
+        at = pose() or here
+        turn, dist = local_plan.leg(at, wp)
+        if abs(turn) > 3.0:
+            _move(motion, motion.turn, round(turn, 1))
+        want = round(min(dist, settings.FOLLOW_MAX_DRIVE_M), 2)
+        go, short, _ = _plan_drive(head, want, [], None, None, pose(), time.monotonic(), hazards, person_xy,
+                                   check_known=False)
+        if short:
+            log.info("follow %d: detour leg %.2f of %.2f m, path %s", seq, go, want, short)
+        if go > 0.0 and _move(motion, motion.drive, go, bumped):
+            _remember(hazards, pose(), [(0.3, 0.0)], None)
+            break
+        if go < want - 0.02:                          # something new on the way round: re-plan next step
+            break
+    if person_xy is not None:                         # look at them again for the next frame
+        back, _ = local_plan.leg(pose() or here, person_xy)
+        if abs(back) > 8.0:
+            _move(motion, motion.turn, round(back, 1))
+    return None
 
 
 def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
@@ -233,6 +320,7 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
     seen: Optional[_Seen] = None                      # floor known clear (#3)
     last_seen: Optional[Tuple[float, float]] = None   # (heading of the person in the odom frame, when) (#5)
     owed_turn = 0.0                                   # degrees still to turn away after a bump (#7)
+    hazards = local_plan.Hazards() if head and getattr(head, "has_grid", False) else None   # what blocked drives
     t0, seq = clock(), 0
     try:
         while clock() - t0 < seconds and not task_cancel.requested():
@@ -279,15 +367,25 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                 status.detail("bumped: turn away first")
             elif res["drive_m"]:
                 person = res.get("distance_m") or rng
-                go, short, seen = _plan_drive(head, res["drive_m"], _turned(zones, res["turn_deg"]),
-                                              person, seen, pose(), time.monotonic())
+                want = res["drive_m"]                 # the Mac caps a step at 0.5 m: go up to keep distance
+                if person:
+                    want = round(max(want, min(person - settings.FOLLOW_KEEP_M, settings.FOLLOW_MAX_DRIVE_M)), 2)
+                person_xy = None                      # where they stand, in the odometry frame
+                if here and person and res.get("bearing_deg") is not None:
+                    a = here[2] + math.radians(res["bearing_deg"])
+                    person_xy = (here[0] + person * math.cos(a), here[1] + person * math.sin(a))
+                go, short, seen = _plan_drive(head, want, _turned(zones, res["turn_deg"]),
+                                              person, seen, pose(), time.monotonic(), hazards, person_xy)
                 if short:
-                    log.info("follow %d: drive %.2f of %.2f m, path %s", seq, go, res["drive_m"], short)
+                    log.info("follow %d: drive %.2f of %.2f m, path %s", seq, go, want, short)
                     status.detail(f"path {short}")
                 if go > 0.0 and _move(motion, motion.drive, go, bumped):
                     log.warning("follow %d: bumped into something the ToF did not see; stopped", seq)
                     status.detail("bumped: something unseen")
                     seen, owed_turn = None, FOLLOW_BUMP_TURN_DEG
+                    _remember(hazards, pose(), [(0.3, 0.0)], None)
+                elif go <= 0.0 and short and hazards is not None:
+                    seen = _detour(head, motion, hazards, want, person_xy, pose, bumped, seq)
     except (VisionError, RuntimeError) as exc:       # RuntimeError: camera or drivetrain gave up
         log.warning("follow ended: %s", exc)
         why = f"vision error: {exc}" if isinstance(exc, VisionError) else str(exc)

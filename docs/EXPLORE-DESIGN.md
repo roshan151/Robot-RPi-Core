@@ -145,6 +145,13 @@ gives no reading (`unknown`) all stop the drive; `drive_on_unknown_floor: true`
 allows the last one only. Explore also writes what it found onto the map so the
 planner routes around it from then on.
 
+**Going round without waiting for a scan** (`robot_core/local_plan.py`, shared with follow): a
+step that the floor probe refuses still goes onto the map as before, and its hazards (the whole
+floor scan's, with the 8x8 ToF) are also kept in the odometry frame. The robot plans a way round
+to the same waypoint on a small local grid and drives up to three legs of it, each probed with
+floor seen clear 0.35 m past its end (short legs must not creep up to an edge). Only when there
+is no way round does it fall back to the next keyframe for a new path from the Mac.
+
 **One keyframe** = two half-turns of the base x nine pan stops. At each stop:
 
 | Sent to the Mac | From | On the map |

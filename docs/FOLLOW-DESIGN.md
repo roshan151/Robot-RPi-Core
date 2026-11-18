@@ -65,6 +65,17 @@ uses the head's (+ = left).
   sensor cannot read is not driven (`drive_on_unknown_floor: true` allows it). The robot
   keeps turning to face the person either way; the OLED shows `path in the way at 0.62 m`.
   Without the ToF there is no check. See `TERRAIN-DESIGN.md`.
+* **Step length** (Pi side, `settings.FOLLOW_MAX_DRIVE_M` / `FOLLOW_KEEP_M`): the Mac's step is
+  capped at 0.5 m; the Pi drives up to `min(distance − 1.2, 1.5)` m instead, but never past the
+  floor it has actually measured (minus 0.2 m). When the drive pose does not see that far, one
+  more floor look is taken 12° higher.
+* **Going round** (`robot_core/local_plan.py`, shared with explore): whatever made a drive unsafe
+  (box, step, drop, unreadable floor, something in the way) is remembered in the odometry frame
+  for 2 min, so a drive into it is refused without looking again (`path known hazard`). Then A* on
+  a 5 cm grid round the robot, every hazard grown by half the path width + 0.15 m, gives a way
+  round as straight legs; up to three are driven per step, each floor-checked first, and the robot
+  turns back to face the person. No way round: it stays and keeps facing them (`no way round`).
+  The person's own legs (within 0.35 m of where they stand) are not remembered.
 * **Bumps**: a jolt during a drive (the drivetrain's `/motion_health` says `bumped`) is
   something the ToF did not see: glass, a thin chair leg. The drive is braked, the floor
   memory dropped, and no drive is tried until the robot has turned 20° away

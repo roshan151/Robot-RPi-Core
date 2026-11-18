@@ -254,7 +254,7 @@ def test_floor_seen_clear_is_not_looked_at_again_while_it_is_still_ahead():
     follow.follow(Camera(), Vision([drive, drive, drive, step("gone")]), m, "Sam", head=h, seconds=60,
                   clock=Clock(), pose=lambda: tuple(m.pose))
     assert [k for k, _ in m.moves] == ["drive"] * 3
-    assert h.glances == 2, "clear to 1 m: the second drive needs no look, the third does"
+    assert h.glances == 1, "floor seen clear to 1.5 m: three 0.3 m drives need one look"
 
 
 def test_the_tracking_view_is_used_when_it_sees_the_floor_right_in_front():
@@ -298,3 +298,53 @@ def test_once_lost_the_mac_is_told_where_they_were_last_seen():
     follow.follow(Camera(), v, m, "Sam", head=Head(), seconds=60, clock=Clock(), pose=lambda: tuple(m.pose))
     assert v.calls[0][1]["hint_deg"] is None
     assert abs(v.calls[1][1]["hint_deg"] - (-30.0)) < 0.2, "40 right, then the robot turned 10 right"
+
+
+# --------------------------------------------------------------------------- #
+# Longer steps, and planning round what blocked a drive (robot_core/local_plan.py)
+# --------------------------------------------------------------------------- #
+
+def test_a_far_person_gets_a_long_step_but_never_past_the_floor_seen():
+    far = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=3.0, bearing_deg=0.0)
+    for until, drive in ((2.0, 1.5), (1.5, 1.3)):
+        h, m = TofHead(scans=(floor(until=until),)), Moving()
+        follow.follow(Camera(), Vision([far, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock(),
+                      pose=lambda: tuple(m.pose))
+        assert m.moves == [("drive", drive)], (until, m.moves)
+    near = dict(far, distance_m=1.5)                     # 1.2 m from the person is close enough
+    h, m = TofHead(scans=(floor(until=2.0),)), Moving()
+    follow.follow(Camera(), Vision([near, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock(),
+                  pose=lambda: tuple(m.pose))
+    assert m.moves == [("drive", 0.5)], "the Mac's own step stands when it is longer"
+
+
+def wall(x=0.4, half=0.1):
+    """A floor scan with a 10 cm high box at x for 0.3 m, `half` m to each side of the path."""
+    pts = [p for p in floor(until=2.0) if not (x <= p[0] <= x + 0.3)]
+    y = -half
+    while y <= half + 1e-9:
+        pts += [(round(x + dx, 3), round(y, 3), 0.1) for dx in (0.0, 0.1, 0.2, 0.3)]
+        y += 0.05
+    return pts
+
+
+def test_a_box_in_the_way_is_driven_round_and_the_robot_faces_the_person_again():
+    drive = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=1.7, bearing_deg=0.0)
+    h, m = TofHead(scans=(wall(), floor(until=2.0))), Moving()
+    follow.follow(Camera(), Vision([drive, drive, step("gone")]), m, "Sam", head=h, seconds=60,
+                  clock=Clock(), pose=lambda: tuple(m.pose))
+    assert m.moves[0] == ("drive", 0.15), "first up to the box, stopping short of it"
+    rest = m.moves[1:]
+    assert rest[0][0] == "turn" and abs(rest[0][1]) >= 20, "out to the side"
+    assert sum(v for k, v in rest if k == "drive") > 0.3, "round the box, leg by leg"
+    assert rest[-1][0] == "turn", "and turned back towards them"
+    assert abs(m.pose[1]) > 0.25, "the path went beside the box"
+    assert h.glances >= 2 and h.moves.count("down") == h.glances
+
+
+def test_with_no_way_round_it_stops_and_does_not_keep_looking():
+    drive = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=1.7, bearing_deg=0.0)
+    h, m = TofHead(scans=(wall(half=2.0),)), Moving()
+    follow.follow(Camera(), Vision([drive, drive, drive, step("gone")]), m, "Sam", head=h, seconds=60,
+                  clock=Clock(), pose=lambda: tuple(m.pose))
+    assert m.moves == [("drive", 0.15)] and h.glances == 1

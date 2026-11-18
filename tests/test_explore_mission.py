@@ -280,14 +280,27 @@ def test_similar_plant_elsewhere_asks_the_vlm():
     assert vision.enrolled[0][0] == ""                    # a sibling: new plant
 
 
-def test_low_obstacle_found_by_floor_probe_stops_the_drive_and_reaches_the_map():
+def test_low_obstacle_found_by_floor_probe_is_driven_round_and_reaches_the_map():
+    import math
     world = World(plant=None, box=(-0.45, 0.0, 0.08))      # right on the planned path
     ex, _, vision, base = make(world, keyframes_until_done=3)
+    closest, drive = [9.0], base.drive
+
+    def watched(m):                                         # the robot's middle, against the box's edge
+        a = (world.pose.x, world.pose.y)
+        r = drive(m)
+        b = (world.pose.x, world.pose.y)
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        n2 = dx * dx + dy * dy
+        t = 0.0 if n2 == 0 else max(0.0, min(1.0, ((-0.45 - a[0]) * dx + (0.0 - a[1]) * dy) / n2))
+        closest[0] = min(closest[0], math.hypot(a[0] + t * dx + 0.45, a[1] + t * dy) - 0.08)
+        return r
+    base.drive = watched
     ex.run()
     assert vision.keyframes[1]["obstacles"], "obstacle not reported to SLAM"
     assert ex.stats.obstacles >= 1
-    # never drove into it: robot stays short of the box edge
-    assert world.pose.x > -0.45 + 0.08 + 0.05
+    assert world.pose.x < -0.45 - 0.08, "went on past it, without waiting for the next scan"
+    assert closest[0] >= 0.15, f"came within {closest[0]:.2f} m of the box"
 
 
 def test_plants_outside_pan_range_are_left_for_the_next_sector():

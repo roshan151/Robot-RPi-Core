@@ -217,7 +217,13 @@ class Head:
         if lower >= self.gimbal.tilt_limits()[0]:
             self.gimbal.move_to(0.0, lower, wait=True)
             pts += self.floor_profile()
+        self.last_floor = pts                         # for local_plan: what was in the way, all across the view
         return pts
+
+    def floor_look(self, tilt_deg: float) -> List[terrain.Point]:
+        """One more look at the floor, from `tilt_deg` (higher than the drive pose: further out)."""
+        self.gimbal.move_to(0.0, tilt_deg, wait=True)
+        return self.floor_profile()
 
     def terrain_ahead(self, reach_m: float) -> terrain.Terrain:
         """Look down and judge the path for the next `reach_m`. The head is left

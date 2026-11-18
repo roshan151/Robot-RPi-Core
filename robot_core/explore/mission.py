@@ -46,13 +46,15 @@ import time
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional, Protocol, Sequence, Tuple
 
-from robot_core import status as screen
+from robot_core import local_plan, status as screen
 from robot_core.odometry import Pose2D, wrap
 from robot_core.sensors.camera import jpeg
 from robot_core.sensors.tof8x8 import range_in_box
 from robot_core.vision_client import VisionError
 
 log = logging.getLogger(__name__)
+
+DETOUR_MARGIN_M = 0.35   # going round: floor must be seen clear this far past each leg
 
 
 class Base(Protocol):
@@ -134,6 +136,7 @@ class Explorer:
         self._obstacles_odom: List[Tuple[float, float]] = []
         self._low_odom: List[Tuple[float, float]] = []       # low obstacles seen by the ToF
         self._drops_odom: List[Tuple[float, float]] = []     # places where the floor falls away
+        self._hazards = local_plan.Hazards()                 # what blocked steps, for going round (local_plan)
         self._stop = threading.Event()
 
     # ================================================================ loop
@@ -589,6 +592,9 @@ class Explorer:
                     # unseen: a floor the ToF cannot read. Marked like an obstacle so the next
                     # path goes another way; never driven (robot.yaml drive_on_unknown_floor).
                     self._remember_obstacles(probe.points, "drop" if probe.status == "drop" else "obstacle")
+                    self._add_hazards(probe)
+                    if self._go_round(wp):                # a way round, without waiting for the next scan
+                        continue
                     room = (probe.distance_m or 0.0) - cfg.front_m - cfg.stop_short_m
                     if probe.status == "obstacle" and room > 0.1:     # close up to an obstacle; never toward a drop
                         self.base.drive(min(room, step))
@@ -610,6 +616,48 @@ class Explorer:
                 if travelled >= max_dist - 0.05:
                     return "leg_limit"
         return "arrived"
+
+    def _add_hazards(self, probe) -> None:
+        """What a blocked probe found, kept for planning round it: the whole floor scan's
+        hazards when the head has the 8x8 ToF, else the probe's own points."""
+        pts, p = getattr(self.head, "last_floor", None), getattr(self.head, "terrain", None)
+        geom = getattr(self.head, "geom", None)
+        hz = local_plan.hazards_from_floor(pts, p, (geom.pan_axis_x_m, geom.height_m)) if pts and p else []
+        self._hazards.add(self.base.odom().as_tuple(), hz or probe.points)
+
+    def _go_round(self, wp) -> bool:
+        """A step toward map waypoint `wp` is blocked: plan round what is known
+        (local_plan, in the odometry frame) and drive up to three legs of the way round,
+        each probed first. True if it moved; the caller then re-aims at `wp`."""
+        o = self.base.odom()
+        goal = self.m2o.inverse().compose(Pose2D(wp[0], wp[1], 0.0))
+        p = getattr(self.head, "terrain", None)
+        path = local_plan.plan((o.x, o.y), (goal.x, goal.y), self._hazards.points(),
+                               local_plan.radius(p) if p else 0.25)
+        if not path or len(path) < 2:
+            self._say("no way round here")
+            return False
+        self._say(f"going round: {len(path) - 1} legs")
+        moved = False
+        for to in path[1:4]:
+            if self._stop.is_set():
+                break
+            turn, dist = local_plan.leg(self.base.odom().as_tuple(), to)
+            if abs(turn) > 3.0 and self.base.turn_ccw(math.radians(-turn)) != "done":
+                break
+            step = min(dist, self.cfg.probe_step_m)
+            # Clear floor well past the leg's end: short legs must not creep up to an edge.
+            probe = self.head.floor_probe(step + max(self.cfg.stop_short_m, DETOUR_MARGIN_M))
+            if probe.status in ("obstacle", "drop", "unseen"):
+                self._remember_obstacles(probe.points, "drop" if probe.status == "drop" else "obstacle")
+                self._add_hazards(probe)
+                break
+            if self.base.drive(step) != "done":
+                break
+            moved = True
+            if step < dist - 0.02:                    # a long leg: the waypoint loop carries on from here
+                break
+        return moved
 
     def _remember_obstacles(self, pts_base, kind: str = "obstacle") -> None:
         """Points in base_link, seen from where the robot stands now, kept for the
