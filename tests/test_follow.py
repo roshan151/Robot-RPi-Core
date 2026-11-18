@@ -278,7 +278,7 @@ def test_something_in_the_way_at_any_height_shortens_the_drive_but_the_person_do
     for view in (legs, table):
         h, m = TofHead(view=view), Motion()
         follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
-        assert m.moves == [("drive", 0.5)]
+        assert m.moves == [("drive", 1.1)], "1.6 m away: up to 0.5 m from them"
 
 
 def test_a_bump_stops_the_drive_and_no_drive_is_tried_until_the_robot_has_turned_away():
@@ -306,12 +306,12 @@ def test_once_lost_the_mac_is_told_where_they_were_last_seen():
 
 def test_a_far_person_gets_a_long_step_but_never_past_the_floor_seen():
     far = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=3.0, bearing_deg=0.0)
-    for until, drive in ((2.5, 1.8), (1.5, 1.3)):        # 3.0 - 1.2 m; no live watch: floor seen - 0.2
+    for until, drive in ((3.0, 2.5), (1.5, 1.3)):        # 3.0 - 0.5 m; no live watch: floor seen - 0.2
         h, m = TofHead(scans=(floor(until=until),)), Moving()
         follow.follow(Camera(), Vision([far, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock(),
                       pose=lambda: tuple(m.pose))
         assert m.moves == [("drive", drive)], (until, m.moves)
-    near = dict(far, distance_m=1.5)                     # 1.2 m from the person is close enough
+    near = dict(far, distance_m=0.9)                     # 0.5 m from the person is close enough
     h, m = TofHead(scans=(floor(until=2.0),)), Moving()
     follow.follow(Camera(), Vision([near, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock(),
                   pose=lambda: tuple(m.pose))
@@ -439,15 +439,15 @@ def test_gliding_turns_in_proportion_and_turns_in_place_when_far_to_the_side():
     follow.follow(Camera(), Vision([seen_at(20.0), seen_at(-45.0), step("gone")]), m, "Sam", head=h, seconds=60,
                   clock=Clock(), pose=lambda: tuple(m.pose))
     (v1, w1), (v2, w2) = m.vel[:2]
-    assert v1 > 0 and w1 > 0.25, "20 deg left: on the move, turning left"
-    assert v2 == 0.0 and w2 < -0.6, "45 deg right: turn in place first"
+    assert v1 > 0 and w1 > 0.25, "20 deg left: on the move, curving left"
+    assert (v2, w2) == (0.0, 0.0) and ("turn", 27.0) in m.moves, "45 deg right: a counted turn on the spot"
 
 
 def test_close_enough_it_only_turns_to_keep_facing_them():
     h, m = glide_head(), Glider()
-    follow.follow(Camera(), Vision([seen_at(10.0, distance=1.1), step("gone")]), m, "Sam", head=h, seconds=60,
+    follow.follow(Camera(), Vision([seen_at(10.0, distance=0.55), step("gone")]), m, "Sam", head=h, seconds=60,
                   clock=Clock(), pose=lambda: tuple(m.pose))
-    assert m.vel[0][0] == 0.0 and m.vel[0][1] > 0 and h.glances == 0
+    assert m.vel[0] == (0.0, 0.0) and m.moves == [("turn", -6.0)] and h.glances == 0
 
 
 def test_a_box_ahead_slows_the_glide_and_close_up_it_stops_and_falls_back_to_a_step():
@@ -468,3 +468,15 @@ def test_without_the_velocity_mode_it_follows_in_steps_as_before():
     follow.follow(Camera(), Vision([seen_at(0.0), step("gone")]), m, "Sam", head=h, seconds=60,
                   clock=Clock(), pose=lambda: tuple(m.pose))
     assert [k for k, _ in m.moves] == ["drive"]
+
+
+def test_floor_noise_near_the_robot_is_not_something_in_the_way():
+    import random
+    rnd = random.Random(2)
+    noisy = [(x, y, round(0.03 + 0.012 * rnd.random(), 3) if x < 0.5 else h)    # near rows read 3-4 cm high
+             for x, y, h in floor(start=0.45, until=1.5)]
+    h, m = glide_head(view=zones(noisy)), Glider()
+    h.terrain.flat_tol_m = 0.045
+    follow.follow(Camera(), Vision([seen_at(0.0), step("gone")]), m, "Sam", head=h, seconds=60,
+                  clock=Clock(), pose=lambda: tuple(m.pose))
+    assert m.vel[0][0] > 0.1, m.vel

@@ -20,7 +20,7 @@
     # make a move stop early — short travel is traction or a lost encoder
     # channel, never calibration. See the calibration section of the README.
     ticks_per_cm: 38.5
-    ticks_per_degree: 6.0      # a float: the node declares it as one, and ROS refuses an int here
+    ticks_per_degree: 5.4      # a float: the node declares it as one, and ROS refuses an int here
 
     # The hard limit on a single move. Enforced in the goal callback, so the
     # model cannot talk its way past it.
@@ -49,7 +49,8 @@
                                # Checked 2026-11-18 with check_imu.py: level reads ~0 / ~0, front up = pitch +,
                                # left up = roll +. The IMU sits 6 cm from the left and the back: no setting
                                # needed, angles and turn rate are the same anywhere on the chassis
-    turn_tolerance_deg: 2.0    # a turn further off than this (by the gyro) gets a short correcting move
+    turn_tolerance_deg: 5.0    # a turn further off than this (by the gyro) gets a short correcting move.
+                               # Was 2: corrections of a few degrees overshoot ~2x (8.8 asked, 14.4 turned)
     max_pitch_deg: 25.0        # MEASURE: nose up/down beyond this is "tilted" and stops the move
     max_roll_deg: 20.0
     max_dip_deg: 8.0           # the nose falling this far below where a drive started, fast, stops it at once

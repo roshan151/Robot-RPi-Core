@@ -146,6 +146,8 @@ class DrivetrainNode(Node):
                 self._imu = None
         self._drivetrain.add_odometry_listener(
             lambda l, r, ms: self._odo.update(l, r, ms, time.monotonic(), yaw=self._yaw_rad()))
+        self._wheel_mps = None                       # (left, right, host time) measured, for /cmd_vel
+        self._last_totals = None
         self._drivetrain.add_odometry_listener(self._on_wheel_totals)
 
         moves = MutuallyExclusiveCallbackGroup()
@@ -184,8 +186,6 @@ class DrivetrainNode(Node):
                           callback_group=safety)
 
         # Velocity driving: only with firmware that has the T frame.
-        self._wheel_mps = None                       # (left, right, host time) measured
-        self._last_totals = None
         self._vel_cmd = (0.0, 0.0, 0.0)              # (v, w, host time)
         self._vel_on = False                         # the speed loop has the wheels
         self._vel_hold = False                       # stopped by /estop or motion health: wait for a 0 command

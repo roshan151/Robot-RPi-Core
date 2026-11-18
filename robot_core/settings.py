@@ -153,7 +153,7 @@ FACE_MIN_QUALITY = 0.6
 FOLLOW_SECONDS = _env("ROBOT_FOLLOW_S", "300", float)            # follow mode ends after this
 FOLLOW_TILT_DEG = _env("ROBOT_FOLLOW_TILT", "20", float)         # head tilt while finding them: the face
 FOLLOW_TRACK_TILT_DEG = _env("ROBOT_FOLLOW_TRACK_TILT", "10", float)  # once locked on: body and feet
-FOLLOW_KEEP_M = _env("ROBOT_FOLLOW_KEEP_M", "1.2", float)          # stop this far from the person (as the Mac)
+FOLLOW_KEEP_M = _env("ROBOT_FOLLOW_KEEP_M", "0.5", float)          # stop this far from the person (the Mac keeps 1.2)
 FOLLOW_MAX_DRIVE_M = _env("ROBOT_FOLLOW_MAX_DRIVE_M", "3.0", float)  # longest drive per step (the Mac caps at 0.5);
                                                                     # watched as it goes, so past the floor seen at the start
 FOLLOW_GLIDE = _flag("ROBOT_FOLLOW_GLIDE", "1")

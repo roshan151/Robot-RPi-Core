@@ -66,7 +66,7 @@ uses the head's (+ = left).
   keeps turning to face the person either way; the OLED shows `path in the way at 0.62 m`.
   Without the ToF there is no check. See `TERRAIN-DESIGN.md`.
 * **Step length** (Pi side, `settings.FOLLOW_MAX_DRIVE_M` / `FOLLOW_KEEP_M`): the Mac's step is
-  capped at 0.5 m; the Pi drives up to `min(distance − 1.2, 1.5)` m instead, but never past the
+  capped at 0.5 m and keeps 1.2 m back; the Pi drives up to `min(distance − 0.5, 3)` m instead, but never past the
   floor it has actually measured (minus 0.2 m). When the drive pose does not see that far, one
   more floor look is taken 12° higher.
 * **Going round** (`robot_core/local_plan.py`, shared with explore): whatever made a drive unsafe

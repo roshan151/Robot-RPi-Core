@@ -76,6 +76,8 @@ GLIDE_MAX_TURN = 0.8            # rad/s
 GLIDE_DEADBAND_DEG = 3.0        # nearer ahead than this: no turning
 GLIDE_MAX_BEARING_DEG = 30.0    # further to the side: turn in place first
 GLIDE_SPEED_GAIN = 0.4          # forward speed (m/s) per metre of clear path: slows as it closes in
+GLIDE_SPIN_DEG = 8.0            # not driving and further off than this: a counted turn (tracks scrub
+                                # turning on the spot; a slow velocity spin barely moves)
 
 Pose = Tuple[float, float, float]   # x, y (m), heading (rad, CCW) in the odometry frame
 
@@ -171,7 +173,18 @@ def _way_points(zones, p: terrain.Params, person_m: Optional[float]):
         return []
     return [(x, y) for _, _, x, y, h, d in zones
             if h is not None and x > p.near_m and abs(y) <= p.corridor_m / 2.0
-            and p.h_max_m < h < p.body_m + 0.05 and d < person_m - 0.3]
+            and max(p.h_max_m, p.flat_tol_m) < h < p.body_m + 0.05 and d < person_m - 0.3]
+
+
+def _levelled(zones, p: terrain.Params):
+    """The tracking view's zones with heights measured from the floor in front (as the
+    floor scan's): floor noise on the near rows must not read as something in the way."""
+    if not zones or not p.auto_level:
+        return zones
+    lv, fit = terrain.level([(x, y, h) for _, _, x, y, h, _ in zones])
+    if fit is None:
+        return zones
+    return [(r, c, x, y, h2, d) for (r, c, x, y, _, d), (_, _, h2) in zip(zones, lv)]
 
 
 def _seen_to(pts, p: terrain.Params) -> float:
@@ -353,10 +366,8 @@ def _glide_step(head, motion, res: dict, rng, here, pose, hazards, seen, gliding
             if go < MIN_DRIVE_M:
                 motion.velocity(0.0, 0.0)
                 return None
-        zones = head.zones()
+        zones = _levelled(head.zones(), p)
         pts = [(x, y, h) for _, _, x, y, h, _ in zones]
-        if p.auto_level:
-            pts, _ = terrain.level(pts)
         _remember(hazards, pose(), local_plan.hazards_from_floor(
             pts, p, (head.geom.pan_axis_x_m, head.geom.height_m)), person_xy)
         clear, why = _shorten(pts, p, want)
@@ -374,6 +385,13 @@ def _glide_step(head, motion, res: dict, rng, here, pose, hazards, seen, gliding
             status.detail(f"path {why}")
             return None
         v = min(settings.FOLLOW_GLIDE_MAX_MPS, GLIDE_SPEED_GAIN * clear)
+    if v == 0.0:                                      # turning only: on the spot, as a step does
+        motion.velocity(0.0, 0.0)
+        if abs(bearing) >= GLIDE_SPIN_DEG:
+            turn = res.get("turn_deg") or round(-0.6 * bearing, 1)
+            log.info("follow %d: glide turn %+.0f deg on the spot", seq, turn)
+            _move(motion, motion.turn, turn)
+        return False, seen
     motion.velocity(v, w)
     log.info("follow %d: glide %.2f m/s, turn %+.0f deg/s (clear %.2f m)", seq, v, math.degrees(w), clear)
     status.detail(f"following {person or 0:.1f} m")
@@ -485,9 +503,14 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                 break
             if res["state"] == "tracking" and here and res.get("bearing_deg") is not None:
                 last_seen = (here[2] + math.radians(res["bearing_deg"]), time.monotonic())
+            # The Mac drives only to 1.2 m from them; the Pi goes on to FOLLOW_KEEP_M (same 25 deg rule).
+            near_m, drive_m = res.get("distance_m") or rng, res["drive_m"]
+            if res["state"] == "tracking" and near_m and abs(res.get("bearing_deg") or 0.0) <= 25.0 \
+                    and near_m - settings.FOLLOW_KEEP_M >= MIN_DRIVE_M:
+                drive_m = max(drive_m, round(min(near_m - settings.FOLLOW_KEEP_M, settings.FOLLOW_MAX_DRIVE_M), 2))
             zones = []                                # the tracking view, for the path check (#3, #4)
-            if res["drive_m"] and head and getattr(head, "has_grid", False):
-                zones = head.zones()
+            if drive_m and head and getattr(head, "has_grid", False):
+                zones = _levelled(head.zones(), head.terrain)
             look = res.get("head")
             if head and look:
                 tracking = res.get("locked") and res["state"] in ("tracking", "holding")
@@ -518,12 +541,12 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
             if res["turn_deg"]:
                 _move(motion, motion.turn, res["turn_deg"])
                 owed_turn = max(0.0, owed_turn - abs(res["turn_deg"]))
-            if res["drive_m"] and owed_turn > 0.0:
+            if drive_m and owed_turn > 0.0:
                 log.info("follow %d: drive skipped, bumped here: turn %.0f deg more first", seq, owed_turn)
                 status.detail("bumped: turn away first")
-            elif res["drive_m"]:
+            elif drive_m:
                 person = res.get("distance_m") or rng
-                want = res["drive_m"]                 # the Mac caps a step at 0.5 m: go up to keep distance
+                want = drive_m                        # the Mac caps a step at 0.5 m: go up to keep distance
                 if person:
                     want = round(max(want, min(person - settings.FOLLOW_KEEP_M, settings.FOLLOW_MAX_DRIVE_M)), 2)
                 person_xy = None                      # where they stand, in the odometry frame
