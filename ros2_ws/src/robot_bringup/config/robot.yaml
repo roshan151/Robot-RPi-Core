@@ -42,7 +42,7 @@
     # IMU: DFRobot Fermion 10 DOF (SEN0697, BMI323) on I2C. Wiring and checks: README, "IMU and ToF
     # sensors". With it the heading comes from the gyro, every turn is trimmed to the asked
     # angle, and tilting past the limits stops the move.
-    imu_fitted: false          # set true once tests/hardware/check_imu.py reads sensible angles
+    imu_fitted: true           # set true once tests/hardware/check_imu.py reads sensible angles
     imu_bus: 1                 # I2C bus. 1 = GPIO2/3
     imu_gyro_addr: 105         # 0x69, the BMI323 with its address pad open (as shipped); 104 (0x68) if closed
     imu_axes: ["y", "x", "-z"]   # which board axis points robot-forward, robot-left, up; "-" flips one.
@@ -105,7 +105,7 @@
     # checks: README, "IMU and ToF sensors". It is the range sensor for follow and explore and
     # sees the floor ahead (docs/TERRAIN-DESIGN.md). With tof_fitted and tfluna_fitted both
     # false, follow runs without a range and explore is refused.
-    tof_fitted: false          # set true once tests/hardware/check_tof.py shows a sensible grid
+    tof_fitted: true           # set true once tests/hardware/check_tof.py shows a sensible grid
     tof_port: ""               # "" = on I2C (what the robot uses), with tof_bus / tof_addr. For USB instead: the
                                # ToF's serial port, best its fixed name from `ls /dev/serial/by-id/`
     tof_bus: 1                 # I2C bus (1 = GPIO2/3, shared with the IMU); not used on USB
