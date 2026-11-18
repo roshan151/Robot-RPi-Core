@@ -191,6 +191,11 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
     head.gimbal.move_to(back[0], back[1], wait=True)
     head.gimbal.wait_settled()
     got, short = _shorten(pts, p, limit)
+    if short:                                        # what it judged by: the floor's height under each zone
+        log.info("floor seen at tilt %.0f, pitch %s (x m, height m): %s", head.geom.drive_tilt_deg,
+                 head.pitch() if head.pitch else None,
+                 sorted((round(x, 2), None if h is None else round(h, 3))
+                        for x, y, h in pts if abs(y) <= p.corridor_m / 2.0 and x >= p.near_m)[:20])
     if got <= 0.0:
         return 0.0, short or why, None
     clear = got + MARGIN_M                           # and how far it is clear beyond that, for next time
