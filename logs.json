@@ -4601,3 +4601,27 @@
 {"ts":"2026-11-18T17:58:36.934Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 right commanded but the wheels are not turning","src":"robot_drivetrain"}
 {"ts":"2026-11-18T17:58:36.939Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 249)","src":"robot_core.drivetrain.arduino_bridge"}
 {"ts":"2026-11-18T17:58:36.940Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[43],"interrupted":43}
+{"ts":"2026-11-18T17:58:53.669Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='events' coro=<LiveAgent._pump_events() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:275> exception=APIError('1000 None. ')>","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:300 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-18T17:58:53.681Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved\nfuture: <Task finished name='mic-uplink' coro=<LiveAgent._pump_audio() done, defined at /home/roshan/Robot-RPi-Core/robot_core/live/agent.py:235> exception=ConnectionClosedOK(Close(code=1000, reason=''), Close(code=<CloseCode.NORMAL_CLOSURE: 1000>, reason=''), False)>","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:260 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-18T17:58:53.721Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-18T17:58:54.558Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-18T17:58:54.560Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-18T17:58:55.010Z","lvl":"warn","evt":"move.cancelled","job":43,"op":"right","val":14.189623919303031,"dur":20.049,"detail":"interrupted by stop"}
+{"ts":"2026-11-18T18:00:43.671Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1}
+{"ts":"2026-11-18T18:00:44.539Z","lvl":"warn","evt":"audio.error","stage":"uplink-send","err":"websocket send is slower than real time","send_s":3.47,"qdepth":64}
+{"ts":"2026-11-18T18:01:33.902Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":159.28,"repeats":2}
+{"ts":"2026-11-18T18:01:36.522Z","lvl":"info","evt":"voice.heard","text":"Rabin, system shutdown."}
+{"ts":"2026-11-18T18:01:36.700Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 250)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T18:01:36.702Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T18:01:36.748Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-18T18:01:37.052Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-18T18:01:37.094Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-18T18:01:37.096Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-18T18:01:37.098Z","lvl":"info","evt":"log","msg":"tool shutdown({}) -> {'ok': True, 'note': 'powering off in 4 seconds; stop cancels'} in 0.40s","src":"robot_core.live.agent"}
+{"ts":"2026-11-18T18:01:41.227Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 251)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T18:01:41.239Z","lvl":"warn","evt":"estop","reason":"shutdown","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T18:01:41.245Z","lvl":"info","evt":"log","msg":"motion executor stopped","src":"robot_core.motion_executor"}
+{"ts":"2026-11-18T17:59:59.356Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-18T18:00:00.125Z","lvl":"info","evt":"session.start","mode":"ros","pid":1659,"log":"logs.json"}
+{"ts":"2026-11-18T18:00:00.713Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T21:17:14.874Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v8-vel-luna built Nov 18 2026 13:14:47","src":"robot_core.drivetrain.arduino_bridge"}
