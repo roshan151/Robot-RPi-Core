@@ -6,6 +6,14 @@ tracking). This doc records the decisions behind it. **It amends `PLAN.md` and
 `VISION-DESIGN.md`** where the final hardware differs from what they assumed —
 see Part 0.
 
+> **Amended (Nov 2026).**
+> - **Driving the Mac's path:** each leg starts with a floor probe just ahead. A leg the Mac marks roomy (`goal.clear_m` at least 0.3 m) is then driven whole, up to `max_leg_m`, with the head in the drive pose watching the floor on every grid (`Explorer._watch`).
+> - **Something new on a leg** brakes it and goes on the local hazard map and the Mac's map. That waypoint then falls back to short probed steps and the detour.
+> - **Tight legs** keep the old `probe_step_m` steps.
+> - **The TF-Luna drop guard** brakes on its own; the drive returns `drop`, a drop is marked and the robot backs off.
+> - **On the Mac:** loop closure (keyframes back near old ones correct the chain and rebuild the map), roomier paths, `GET /v1/slam/walls` (wall lengths, explored size), plant positions as the median of visits.
+> - **Measurement quality:** head zero and ToF range calibration (README "Calibrating the head and the ToF"), same-side head approach (`head_backlash_deg`).
+
 ## Part 0 — What this changes in PLAN.md / VISION-DESIGN.md
 
 | Was | Now | Why |

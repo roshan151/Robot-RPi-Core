@@ -2,6 +2,13 @@
 
 > **Amended by `EXPLORE-DESIGN.md`** for the final hardware: no LD14P lidar (the TF-Luna on the head is the scanner), TF-Luna on the Pi UART instead of the Arduino, SLAM on the Mac instead of `slam_toolbox` on the Pi, pan limited to ±45°.
 > **Amended by `FOLLOW-DESIGN.md`**: person following is a voice `run_task("follow")` job — the Pi captures and moves, the Mac detects, identifies and plans each step.
+> **Amended (Nov 2026), planning split and sensors**:
+> - **Sensors.** The 8x8 ToF stays on the gimbal (accurate plant and room ranging comes first). The TF-Luna is fixed on the front, tilted down, read by the Arduino, as a drop guard (`robot_core/drop_guard.py`).
+> - **The Mac** recognises people and plants, ranges from images, and keeps the SLAM map, now with loop closure. It also chooses where to explore and plans the global route; paths keep clear of walls and carry `clear_m` per leg.
+> - **The Pi** keeps the pose and a local hazard map, drives each leg watched (braking mid-leg), goes round what the map lacks, and tracks the person for follow (`follow.PersonTracker`).
+> - **Why the Pi:** moment-to-moment decisions never wait on Wi-Fi.
+> - **Follow** is leg-based: look, then a watched leg of up to 1.5 m with the head on the path.
+> - **The Mac's `/v1/follow/step`** returns measurements (`distance_sigma_m`, `ground_xy`, `confidence`); its `turn_deg`/`drive_m` are used only while searching.
 
 The single source of truth for this rebuild. Supersedes `ROS2-MIGRATION.md` and
 `COMPUTE-BUDGET.md`, both of which contained decisions that have since changed.

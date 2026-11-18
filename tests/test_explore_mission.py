@@ -154,7 +154,7 @@ class FakeBase:
     def odom(self):
         return self.w.pose
 
-    def drive(self, m):
+    def drive(self, m, watch=None):
         self.drives.append(m)
         self.w.pose = self.w.pose.compose(Pose2D(m, 0, 0))
         return "done"
@@ -318,3 +318,76 @@ def test_plants_outside_the_radius_or_behind_the_start_are_skipped():
     assert ex._in_scope((0.0, 0.0))
     ex.cfg.explore_radius_m = 0                                   # 0 = unlimited
     assert ex._in_scope((50.0, 0.0))
+
+
+# --------------------------------------------------------------- watched legs (8x8 ToF)
+
+class _WatchHead:
+    """Just enough head for Explorer.follow: a grid that shows flat floor, or a box once
+    `box_after` grids have been looked at."""
+    has_grid = True
+
+    def __init__(self, box_after=None):
+        from robot_core import terrain
+        from types import SimpleNamespace
+        self.terrain = terrain.Params()
+        self.geom = SimpleNamespace(pan_axis_x_m=0.05, height_m=0.22)
+        self.looks, self.box_after, self.poses = 0, box_after, 0
+
+    def drive_pose(self):
+        self.poses += 1
+
+    def floor_probe(self, d):
+        from robot_core.sensors.head import Probe
+        return Probe("clear", None, [])
+
+    def floor_profile(self):
+        self.looks += 1
+        box = self.box_after is not None and self.looks > self.box_after
+        return [(x / 100, y / 100, 0.12 if box and x >= 30 else 0.0)
+                for x in range(20, 100, 5) for y in (-12, -6, 0, 6, 12)]
+
+
+class _WatchBase(FakeBase):
+    """drive() moves in 0.1 m slices, asking watch() before each, like the real one does per grid."""
+    def drive(self, m, watch=None):
+        self.drives.append(m)
+        done = 0.0
+        while done < m - 1e-9:
+            if watch is not None and watch():
+                self.ends.append(self.w.pose.x)
+                return "blocked"
+            step = min(0.1, m - done)
+            self.w.pose = self.w.pose.compose(Pose2D(step, 0, 0))
+            done += step
+        return "done"
+
+
+def _explorer(head, base):
+    from types import SimpleNamespace
+    world = SimpleNamespace(pose=Pose2D(0, 0, 0))
+    base.w, base.ends = world, []
+    return Explorer(base, head, vision=None)
+
+
+def test_a_roomy_leg_is_driven_whole_and_watched():
+    head, base = _WatchHead(), _WatchBase(None)
+    ex = _explorer(head, base)
+    out = ex.follow([[0, 0], [1.4, 0]], max_dist=1.5, clear=[1.0, 0.8])
+    assert out == "arrived" and base.drives[0] == pytest.approx(1.4) and head.poses == 1
+    assert head.looks >= 10                           # the floor was looked at the whole way
+
+
+def test_a_tight_leg_keeps_the_old_short_steps():
+    head, base = _WatchHead(), _WatchBase(None)
+    ex = _explorer(head, base)
+    ex.follow([[0, 0], [1.4, 0]], max_dist=1.5, clear=[1.0, 0.2])
+    assert max(base.drives) <= ex.cfg.probe_step_m + 1e-9 and head.poses == 0
+
+
+def test_something_new_on_a_roomy_leg_brakes_it_and_is_remembered():
+    head, base = _WatchHead(box_after=3), _WatchBase(None)
+    ex = _explorer(head, base)
+    ex.follow([[0, 0], [1.4, 0]], max_dist=1.5, clear=[1.0, 0.8])
+    assert base.ends and base.ends[0] < 1.0 and len(ex._hazards.points()) > 0
+    assert max(base.drives[1:]) <= ex.cfg.probe_step_m + 1e-9    # after the brake: short probed steps

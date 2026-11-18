@@ -279,6 +279,10 @@ class SerialDrivetrain:
     # Encoder status
     # ------------------------------------------------------------------ #
 
+    def tfluna(self):
+        """(range cm or None, time.monotonic() it arrived; 0.0 = never) from firmware v7+."""
+        return self._bridge.tfluna_cm, self._bridge.tfluna_t
+
     def get_encoder_status(self) -> Dict[str, Any]:
         """Return the latest encoder counts and left-right sync error."""
         with self._enc_lock:

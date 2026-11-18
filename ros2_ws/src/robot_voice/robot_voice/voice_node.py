@@ -181,9 +181,20 @@ def main(args=None) -> None:
     if not node.declare_parameter("tts", True).value:          # robot.yaml /voice
         settings.TTS_ENABLED = False
 
-    log_path = robot_log.setup(None)
+    debug = bool(node.declare_parameter("debug_mode", False).value)   # robot.yaml /voice
+    log_path = robot_log.setup(None, debug=debug)
     robot_log.event("session.start", mode="ros", pid=os.getpid(),
-                    log=str(log_path))
+                    log=str(log_path), debug=debug)
+    if debug:                            # camera frames + ToF grids to the Mac (robot_core/debug_upload.py)
+        import yaml
+        from robot_core import debug_upload
+        with open(os.path.join(get_package_share_directory("robot_bringup"), "config", "robot.yaml")) as f:
+            ex = yaml.safe_load(f)["/explorer"]["ros__parameters"]
+        debug_upload.configure(
+            True, ex.get("vision_url") or settings.VISION_SERVICE_BASE_URL,
+            geometry={"camera_hfov_deg": float(ex.get("hfov_deg", 66.0)), "tof_fov_deg": 60.0,
+                      "tof_on": "gimbal"},
+            extras=lambda: {"pose": _pose[0], "pitch_deg": _pitch[0]})
     connect(node)                        # after setup(): status + warnings go to the OLED
     status.task("voice")
 
@@ -219,7 +230,7 @@ def main(args=None) -> None:
 
     def _on_health(m) -> None:
         _pitch[0] = m.pitch_deg if m.imu_known else None
-        if m.state == "bumped":
+        if m.state in ("bumped", "drop"):            # a drop under the TF-Luna: treated like a bump
             _bump_t[0] = time.monotonic()
 
     node.create_subscription(MotionHealth, "motion_health", _on_health, 10)

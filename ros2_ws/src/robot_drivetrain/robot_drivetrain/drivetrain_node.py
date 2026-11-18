@@ -104,6 +104,13 @@ class DrivetrainNode(Node):
         self.declare_parameter("imu_gyro_addr", 0x69)           # the BMI323
         self.declare_parameter("imu_axes", ["y", "x", "-z"])   # board axis along robot forward, left, up
         self.declare_parameter("turn_tolerance_deg", 2.0)
+        self.declare_parameter("turn_trim", True)               # false: no correcting moves after a turn
+        # TF-Luna drop guard (firmware v7+, robot_core/drop_guard.py): brake a forward drive on a drop
+        self.declare_parameter("drop_guard", False)
+        self.declare_parameter("tfluna_floor_cm", 0.0)          # the floor's range at the mount angle; 0 = learn
+        self.declare_parameter("drop_jump_cm", 6.0)
+        self.declare_parameter("drop_low_cm", 6.0)
+        self.declare_parameter("drop_misses", 3)
         self.declare_parameter("max_pitch_deg", 25.0)
         self.declare_parameter("max_roll_deg", 20.0)
         self.declare_parameter("max_dip_deg", 8.0)                # nose falling this far on a drive: stop
@@ -146,6 +153,14 @@ class DrivetrainNode(Node):
                 self._imu = None
         self._drivetrain.add_odometry_listener(
             lambda l, r, ms: self._odo.update(l, r, ms, time.monotonic(), yaw=self._yaw_rad()))
+        self._drop = self._drop_why = None
+        self._drop_t = 0.0
+        if self.get_parameter("drop_guard").value:
+            from robot_core.drop_guard import DropGuard
+            self._drop = DropGuard(float(self.get_parameter("tfluna_floor_cm").value),
+                                   float(self.get_parameter("drop_jump_cm").value),
+                                   float(self.get_parameter("drop_low_cm").value),
+                                   int(self.get_parameter("drop_misses").value))
         self._wheel_mps = None                       # (left, right, host time) measured, for /cmd_vel
         self._last_totals = None
         self._drivetrain.add_odometry_listener(self._on_wheel_totals)
@@ -336,7 +351,8 @@ class DrivetrainNode(Node):
 
         event = self._wait(goal_handle, job_id, action_type, deadline)
         if (event is not None and event.status == DONE and yaw0 is not None
-                and op in ("left", "right") and not goal_handle.request.gesture):
+                and op in ("left", "right") and not goal_handle.request.gesture
+                and self.get_parameter("turn_trim").value):
             event = self._trim_turn(goal_handle, action_type, value if op == "left" else -value,
                                     yaw0, deadline, event)
 
@@ -489,8 +505,21 @@ class DrivetrainNode(Node):
         if ims is not None:
             self._publish_imu(ims, stamp, base_frame)
         rep = self._health.update(st, op, now, imu=ims)
+        state, reason = rep.state, rep.reason
+        if self._drop is not None:                         # TF-Luna drop guard, every tick (10 Hz)
+            cm, t_cm = self._drivetrain.tfluna()
+            cur = status["current"]
+            forward = (op == "straight" and (cur is None or float(cur["value"]) > 0)) if op else False
+            why = self._drop.update(cm, forward) if now - t_cm < 0.5 else None
+            if why:
+                self._drop_why, self._drop_t = why, now
+                self.get_logger().warn(f"drop guard: {why}")
+                self._vel_hold = self._vel_on or self._vel_hold
+                self._exec.cancel_all(f"drop guard: {why}")
+            if self._drop_why and now - self._drop_t < 2.0:   # say so for 2 s: follow/explore remember it
+                state, reason = "drop", self._drop_why
         self._health_pub.publish(MotionHealthMsg(
-            state=rep.state, reason=rep.reason, v=rep.v, w=rep.w,
+            state=state, reason=reason, v=rep.v, w=rep.w,
             sigma_xy=rep.sigma_xy, sigma_theta=rep.sigma_theta,
             drift_deg_per_m=rep.drift_deg_per_m,
             visual_known=rep.visual_moving is not None,

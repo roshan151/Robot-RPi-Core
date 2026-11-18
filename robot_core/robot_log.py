@@ -169,9 +169,11 @@ class JsonlFormatter(logging.Formatter):
             payload.update(fields)
 
         # Plain logger.warning()/error() calls carry no structured fields, so
-        # keep their text and say where it came from.
+        # keep their text and say where it came from. One line, capped: a log you
+        # read, not a wall of text (tracebacks go in "tb", sensor data to debug mode).
         if not hasattr(record, "evt"):
-            payload["msg"] = record.getMessage()
+            msg = record.getMessage().split("\n", 1)[0]
+            payload["msg"] = msg if len(msg) <= MSG_MAX else msg[:MSG_MAX] + "..."
             payload["src"] = record.name
 
         if record.exc_info:
@@ -199,15 +201,25 @@ def _short_tb(tb: Any, limit: int = 6) -> list:
     ]
 
 
+MSG_MAX = 300                         # characters of a plain log line kept in the file
+
+
 class _FileFilter(logging.Filter):
     """Structured events always; the robot's own INFO+; anything else only if WARNING+.
+    With `warnings_only` (robot.yaml debug_mode: false), WARNING+ and nothing else.
 
     This is the whole 'clean not verbose' policy in four lines.
     """
 
+    def __init__(self, warnings_only: bool = False) -> None:
+        super().__init__()
+        self.warnings_only = warnings_only
+
     def filter(self, record: logging.LogRecord) -> bool:
-        return (hasattr(record, "evt") or record.levelno >= logging.WARNING
-                or (record.levelno >= logging.INFO and record.name.startswith("robot")))
+        if record.levelno >= logging.WARNING:
+            return True
+        return not self.warnings_only and (
+            hasattr(record, "evt") or (record.levelno >= logging.INFO and record.name.startswith("robot")))
 
 
 # --------------------------------------------------------------------------- #
@@ -219,8 +231,11 @@ def setup(
     console_level: int = logging.INFO,
     max_bytes: Optional[int] = None,
     backups: Optional[int] = None,
+    debug: Optional[bool] = None,
 ) -> Path:
-    """Configure logging. Safe to call twice; the second call is a no-op."""
+    """Configure logging. Safe to call twice; the second call is a no-op.
+    `debug` False (default: robot.yaml debug_mode) keeps only warnings and errors
+    in the file; True or unknown (no robot.yaml) keeps everything as before."""
     if _state["handler"] is not None:
         return _state["path"]
 
@@ -235,7 +250,7 @@ def setup(
         log_path, maxBytes=max_bytes, backupCount=backups, encoding="utf-8"
     )
     handler.setFormatter(JsonlFormatter())
-    handler.addFilter(_FileFilter())
+    handler.addFilter(_FileFilter(warnings_only=(settings.debug_mode() if debug is None else debug) is False))
     handler.setLevel(logging.DEBUG)
 
     console = logging.StreamHandler(sys.stderr)

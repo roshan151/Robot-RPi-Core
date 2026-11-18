@@ -219,3 +219,22 @@ if __name__ == "__main__":
             print(f"  FAIL  {fn.__name__}: {type(e).__name__}: {e}")
     print(f"\n{len(fns) - failed}/{len(fns)} passed")
     sys.exit(1 if failed else 0)
+
+
+def test_debug_off_keeps_only_warnings_and_lines_stay_short() -> None:
+    """robot.yaml debug_mode: false -> info events and chatter stay out of the file;
+    a plain line is one line, capped (tracebacks go in "tb")."""
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "logs.json"
+        robot_log._state.update({"handler": None, "path": None, "on_fatal": None})
+        logging.getLogger().handlers.clear()
+        robot_log.setup(str(p), console_level=logging.CRITICAL, debug=False)
+        robot_log.event("move.done", job=1, op="left", val=30, dur=0.4)
+        logging.getLogger("robot_core.follow").info("follow 1: tracking")
+        robot_log.event("estop", logging.WARNING, reason="test")
+        logging.getLogger("robot_core.x").warning("first line\nsecond line " + "y" * 500)
+        recs = _lines(p)
+        assert [r["evt"] for r in recs] == ["estop", "log"]
+        assert recs[1]["msg"] == "first line"
+        logging.getLogger("robot_core.x").warning("z" * 1000)
+        assert len(_lines(p)[-1]["msg"]) == robot_log.MSG_MAX + 3

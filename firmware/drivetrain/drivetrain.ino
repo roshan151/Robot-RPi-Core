@@ -21,6 +21,10 @@
  *   5V / GND  -> both encoders' blue / green (NOT the 9 V rail — the
  *                encoders' internal 10k pull-up ties Vout to Vcc, so
  *                Vcc must equal the Arduino's logic voltage)
+ *   TF-Luna (I2C mode, 0x10): 1 +5V -> 5V, 2 SDA -> A4, 3 SCL -> A5,
+ *                4 GND -> GND, 5 CFG -> GND (selects I2C).  SDA/SCL
+ *                need 4.7k pull-ups to 3.3 V (internal 5 V ones are
+ *                turned off).  D6 is dead: do not use it.
  *   Buck OUT+ (8-9 V)      -> each DRV8871 POWER+ (VM)
  *   Star point (buck OUT-) -> each DRV8871 POWER- and Arduino GND,
  *                             each on its OWN wire (no ground ring)
@@ -54,8 +58,10 @@
  *   N,<seq>,<reason>         command rejected (BADARG | BUSY)
  *   D,<seq>,<status>,<el>,<er>  counted move finished:
  *                            OK | TIMEOUT | NOISE | STOP | LINK
- *   E,<el>,<er>,<ol>,<or>,<ms>  telemetry every 100 ms: per-move counts,
- *                            then never-reset odometry totals and millis()
+ *   E,<el>,<er>,<ol>,<or>,<ms>,<cm>  telemetry every 100 ms: per-move
+ *                            counts, never-reset odometry totals, millis(),
+ *                            then the TF-Luna range in cm (-1: no sensor
+ *                            or a weak/saturated reading)
  *   W,<code>[,...]           warning: NOISE | MEMCORRUPT | RXBAD | LINK | VEL
  *   B,<hex>,<build>          boot: MCUSR reset-cause bits + build stamp
  *
@@ -66,6 +72,7 @@
  */
 
 #include <Arduino.h>
+#include <Wire.h>
 
 // ---------------------------------------------------------------- //
 // Reset-cause capture.  MCUSR records WHY the chip last reset:
@@ -132,6 +139,8 @@ void resetFlagsInit(void) {
 #define MOVE_TIMEOUT_MS    15000UL
 #define LINK_TIMEOUT_MS    1000UL // stop if no valid frame while driving
 #define TELEMETRY_MS       100UL
+#define LUNA_ADDR          0x10   // TF-Luna in I2C mode (CFG pin to GND)
+#define LUNA_AMP_MIN       100    // weaker than this the range is unreliable
 #define OPEN_LOOP_PWM      150    // default speed for I commands
 // T (streamed wheel PWM): the host's speed loop runs at ~10 Hz, so a gap
 // of 300 ms means it has stopped steering -- stop rather than keep going.
@@ -145,6 +154,12 @@ void resetFlagsInit(void) {
 #define SYNC_DIFF_MAX      300    // ticks of error the P term may see
 #define SYNC_AUTHORITY_PCT 20     // max correction as % of base speed
 #define SYNC_FLOOR_PCT     35     // never drive a wheel below this % of base
+// A track running BACKWARD gets this much more PWM in counted moves. The logs
+// (Nov 2026) show the forward-running track leading in every turn, whichever
+// side it is (left turns: right leads; right turns: left leads), by 10-22% on
+// turns over 15 deg: a direction asymmetry the sync P term saturates on. Tune
+// it with Monitoring-Sensors/calibrate.py drive (it measures the lead).
+#define REVERSE_TRIM_PCT   10
 
 // Encoder ISR debounce: real edges are >1 ms apart at full speed; noise
 // bursts from the driver MOSFET edges arrive microseconds apart.
@@ -262,6 +277,21 @@ void sendf(const char* fmt, ...) {
   vsnprintf(buf, sizeof(buf), fmt, ap);
   va_end(ap);
   sendBody(buf);
+}
+
+// TF-Luna range in cm, or -1 (absent, bus error, weak or saturated).
+// Registers 0x00-0x03: distance low/high (cm), signal strength low/high.
+int readLuna() {
+  Wire.beginTransmission(LUNA_ADDR);
+  Wire.write((uint8_t)0x00);
+  if (Wire.endTransmission() != 0) return -1;
+  if (Wire.requestFrom((uint8_t)LUNA_ADDR, (uint8_t)4) != 4) return -1;
+  uint8_t b[4];
+  for (uint8_t i = 0; i < 4; i++) b[i] = Wire.read();   // one at a time: order matters
+  uint16_t dist = b[0] | ((uint16_t)b[1] << 8);
+  uint16_t amp  = b[2] | ((uint16_t)b[3] << 8);
+  if (amp < LUNA_AMP_MIN || amp == 0xFFFF) return -1;
+  return (int)dist;
 }
 
 // ---------------------- Motor primitives ------------------------ //
@@ -643,12 +673,19 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(ENC_R), isr_right, RISING);
 
   coastMotors();
+
+  Wire.begin();
+  digitalWrite(SDA, LOW);           // internal pull-ups off: the TF-Luna is 3.3 V,
+  digitalWrite(SCL, LOW);           // the external 4.7k pull-ups go to 3.3 V
+#if defined(WIRE_HAS_TIMEOUT)
+  Wire.setWireTimeout(3000, true);  // a missing or hung sensor never stalls loop()
+#endif
   delay(200);
 
   // Reset cause + build stamp.  __DATE__/__TIME__ come from the compiler,
   // so every fresh build announces itself — a stale flash can never
   // masquerade as current source.
-  sendf("B,%X,drv8871-v6-vel built " __DATE__ " " __TIME__, cause);
+  sendf("B,%X,drv8871-v8-vel-luna built " __DATE__ " " __TIME__, cause);
   last_rx_ms = millis();
 }
 
@@ -724,6 +761,8 @@ void loop() {
       int floor_pwm = (int)((long)base * SYNC_FLOOR_PCT / 100);
       int mag_l = base - corr;                   // left ahead -> slow left
       int mag_r = base + corr;
+      if (target_pwm_left  < 0) mag_l = (int)((long)mag_l * (100 + REVERSE_TRIM_PCT) / 100);
+      if (target_pwm_right < 0) mag_r = (int)((long)mag_r * (100 + REVERSE_TRIM_PCT) / 100);
       if (mag_l < floor_pwm) mag_l = floor_pwm;  // a wheel commanded to 0
       if (mag_r < floor_pwm) mag_r = floor_pwm;  // stops counting and opens
       if (mag_l > PWM_MAX)   mag_l = PWM_MAX;    // the loop — never allow it
@@ -833,7 +872,7 @@ void loop() {
     ol = odo_left;
     orr = odo_right;
     interrupts();
-    sendf("E,%ld,%ld,%ld,%ld,%lu", el, er, ol, orr, now);
+    sendf("E,%ld,%ld,%ld,%ld,%lu,%d", el, er, ol, orr, now, readLuna());
   }
 
   // ---- Corrupt-frame counter (rate-limited) ------------------------ //

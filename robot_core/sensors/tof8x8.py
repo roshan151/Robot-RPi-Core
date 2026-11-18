@@ -33,7 +33,7 @@ way up the board is mounted decides that. A board turned on its side is set with
 `tilt_deg` (robot.yaml tof_tilt): 90 = turned a quarter-turn clockwise as seen from
 behind the head looking out (the board's top edge points to the robot's right),
 -90 = anticlockwise; the grid is turned back so row 0 is the top of the view again.
-Mirroring after that: check with tests/hardware/check_tof.py and set `flip_rows` /
+Mirroring after that: check with Monitoring-Sensors/calibrate.py tof and set `flip_rows` /
 `flip_cols` (robot.yaml tof_flip_rows / tof_flip_cols). The view is square, so a
 turned board sees the same 60 x 60 degrees.
 """
@@ -50,6 +50,7 @@ from collections import deque
 from dataclasses import dataclass
 from typing import Callable, List, Optional, Sequence, Tuple
 
+from .. import debug_upload
 from .tfluna import Reading
 
 log = logging.getLogger(__name__)
@@ -176,7 +177,8 @@ class Tof8x8:
 
     def __init__(self, bus: int = 1, addr: int = 0x33, hz: float = 5.0,
                  flip_rows: bool = False, flip_cols: bool = False,
-                 history: int = 200, link=None, tilt_deg: int = 0, port: Optional[str] = None) -> None:
+                 history: int = 200, link=None, tilt_deg: int = 0, port: Optional[str] = None,
+                 range_scale: float = 1.0, range_offset_m: float = 0.0) -> None:
         if int(tilt_deg) % 90:
             raise ValueError(f"tof_tilt must be a multiple of 90 degrees, not {tilt_deg}")
         self._port = port
@@ -188,6 +190,7 @@ class Tof8x8:
         else:
             self._link = link if link is not None else _I2C(bus, addr)
         self._flip = (flip_rows, flip_cols, int(tilt_deg))
+        self._fix = (float(range_scale), float(range_offset_m))   # tape-measured: true = scale * read + offset
         self._period = 1.0 / hz
         self._hist: deque = deque(maxlen=history)          # Grid
         self._cond = threading.Condition()
@@ -196,9 +199,14 @@ class Tof8x8:
         self._thread.start()
 
     def _add(self, rows) -> None:
+        scale, off = self._fix
+        if (scale, off) != (1.0, 0.0):
+            rows = tuple(tuple(None if v is None else round(scale * v + off, 4) for v in row) for row in rows)
         with self._cond:
-            self._hist.append(Grid(time.monotonic(), rows))
+            g = Grid(time.monotonic(), rows)
+            self._hist.append(g)
             self._cond.notify_all()
+        debug_upload.offer_tof(g.t, g.rows)             # debug mode only; a reference, no copy
 
     def _usb_loop(self) -> None:
         frames, failing = TextFrames(), False
@@ -332,4 +340,6 @@ def from_params(p: dict) -> Tof8x8:
     return Tof8x8(port=str(p.get("tof_port") or "") or None,
                   bus=int(p.get("tof_bus", 1)), addr=int(p.get("tof_addr", 0x33)),
                   flip_rows=bool(p.get("tof_flip_rows", False)), flip_cols=bool(p.get("tof_flip_cols", False)),
-                  tilt_deg=int(p.get("tof_tilt", 0)))
+                  tilt_deg=int(p.get("tof_tilt", 0)),
+                  range_scale=float(p.get("tof_range_scale", 1.0)),
+                  range_offset_m=float(p.get("tof_range_offset_m", 0.0)))

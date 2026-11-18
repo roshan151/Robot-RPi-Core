@@ -56,7 +56,7 @@ from robot_display.link import connect
 from robot_interfaces.action import Drive, Turn
 from robot_interfaces.msg import MotionHealth, VisualMotion
 
-STUCK_STATES = ("stalled", "slipping", "tilted")
+STUCK_STATES = ("stalled", "slipping", "tilted", "drop")    # drop: the TF-Luna guard braked
 
 
 def _wait(future, timeout: float):
@@ -92,6 +92,7 @@ class RosBase:
         self._health = m
         if m.state in STUCK_STATES:
             self._stuck_at = time.monotonic()
+            self._stuck_why = m.state
 
     def wait_ready(self, timeout: float = 30.0) -> bool:
         deadline = time.monotonic() + timeout
@@ -104,22 +105,33 @@ class RosBase:
     def odom(self) -> Pose2D:
         return self._odom or Pose2D()
 
-    def _run(self, client, goal, timeout: float) -> str:
+    def _run(self, client, goal, timeout: float, watch=None) -> str:
+        """`watch()`: called while the move runs (it paces itself, e.g. one ToF grid);
+        True cancels the move and the answer is "blocked"."""
         t0 = time.monotonic()
         handle = _wait(client.send_goal_async(goal), 5.0)
         if handle is None or not handle.accepted:
             return "rejected"
-        res = _wait(handle.get_result_async(), timeout)
+        fut = handle.get_result_async()
+        blocked = False
+        while watch is not None and not fut.done() and time.monotonic() - t0 < timeout:
+            if watch():
+                blocked = True
+                _wait(handle.cancel_goal_async(), 2.0)
+                break
+        res = _wait(fut, max(1.0, timeout - (time.monotonic() - t0)))
         time.sleep(0.25)                   # let /odom catch up (10 Hz telemetry)
+        if blocked:
+            return "blocked"
         if res is None:
             return "timeout"
         status = res.result.status
         if status != "done" and self._stuck_at >= t0:
-            return "stuck"                 # drivetrain_node braked on motion health
+            return "drop" if getattr(self, "_stuck_why", "") == "drop" else "stuck"   # braked on motion health
         return status
 
-    def drive(self, meters: float) -> str:
-        return self._run(self._drive, Drive.Goal(meters=float(meters)), 30.0)
+    def drive(self, meters: float, watch=None) -> str:
+        return self._run(self._drive, Drive.Goal(meters=float(meters)), 30.0, watch)
 
     def turn_ccw(self, radians: float) -> str:
         deg = math.degrees(radians)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -9,6 +10,8 @@ from types import SimpleNamespace
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import pytest  # noqa: E402
 
 from robot_core import follow  # noqa: E402
 
@@ -297,14 +300,17 @@ def test_once_lost_the_mac_is_told_where_they_were_last_seen():
     m, v = Moving(), Vision([seen, lost, step("gone")])
     follow.follow(Camera(), v, m, "Sam", head=Head(), seconds=60, clock=Clock(), pose=lambda: tuple(m.pose))
     assert v.calls[0][1]["hint_deg"] is None
-    assert abs(v.calls[1][1]["hint_deg"] - (-30.0)) < 0.2, "40 right, then the robot turned 10 right"
+    # The Pi's tracker turns to face the tracked person (40 right), not the Mac's partial 10:
+    assert m.moves[0] == ("turn", 40.0)
+    assert abs(v.calls[1][1]["hint_deg"]) < 0.2, "40 right, then the robot turned 40 right to face them"
 
 
 # --------------------------------------------------------------------------- #
 # Longer steps, and planning round what blocked a drive (robot_core/local_plan.py)
 # --------------------------------------------------------------------------- #
 
-def test_a_far_person_gets_a_long_step_but_never_past_the_floor_seen():
+def test_a_far_person_gets_a_long_step_but_never_past_the_floor_seen(monkeypatch):
+    monkeypatch.setattr(follow.settings, "FOLLOW_MAX_DRIVE_M", 3.0)   # legs of up to 3 m
     far = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=3.0, bearing_deg=0.0)
     for until, drive in ((3.0, 2.5), (1.5, 1.3)):        # 3.0 - 0.5 m; no live watch: floor seen - 0.2
         h, m = TofHead(scans=(floor(until=until),)), Moving()
@@ -315,7 +321,7 @@ def test_a_far_person_gets_a_long_step_but_never_past_the_floor_seen():
     h, m = TofHead(scans=(floor(until=2.0),)), Moving()
     follow.follow(Camera(), Vision([near, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock(),
                   pose=lambda: tuple(m.pose))
-    assert m.moves == [("drive", 0.5)], "the Mac's own step stands when it is longer"
+    assert m.moves == [("drive", 0.4)], "the Pi decides: up to 0.5 m from them, whatever the Mac's step"
 
 
 def wall(x=0.4, half=0.1):
@@ -381,7 +387,8 @@ class SlowDrive(Moving):
         return super().stop()
 
 
-def test_a_long_drive_is_watched_as_it_goes_and_brakes_when_something_comes_near():
+def test_a_long_drive_is_watched_as_it_goes_and_brakes_when_something_comes_near(monkeypatch):
+    monkeypatch.setattr(follow.settings, "FOLLOW_MAX_DRIVE_M", 3.0)   # legs of up to 3 m
     far = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=4.2, bearing_deg=0.0)
     clear, box_far, box_near = floor(until=0.9), floor(until=0.9, box=(0.7, 0.1)), floor(until=0.9, box=(0.4, 0.1))
     h, m = WatchingHead([clear, box_far, box_near], scans=(floor(until=1.4),)), SlowDrive(polls=6)
@@ -392,7 +399,8 @@ def test_a_long_drive_is_watched_as_it_goes_and_brakes_when_something_comes_near
     assert "drive pose" in h.moves and h.moves[-1] == (0.0, 10.0), "head down for the drive, back up after"
 
 
-def test_one_thin_grid_does_not_brake_but_several_in_a_row_do():
+def test_one_thin_grid_does_not_brake_but_several_in_a_row_do(monkeypatch):
+    monkeypatch.setattr(follow.settings, "FOLLOW_MAX_DRIVE_M", 3.0)   # legs of up to 3 m
     far = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=3.2, bearing_deg=0.0)
     h, m = WatchingHead([[], floor(until=0.9), [], [], []], scans=(floor(until=2.5),)), SlowDrive(polls=8)
     follow.follow(Camera(), Vision([far, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock(),
@@ -403,6 +411,12 @@ def test_one_thin_grid_does_not_brake_but_several_in_a_row_do():
 # --------------------------------------------------------------------------- #
 # Gliding: following by steering (motion.velocity, firmware v6)
 # --------------------------------------------------------------------------- #
+
+@pytest.fixture()
+def glide(monkeypatch):
+    """Gliding is off by default (the ToF is on the gimbal): these tests switch it on."""
+    monkeypatch.setattr(follow.settings, "FOLLOW_GLIDE", True)
+
 
 class Glider(Moving):
     """Motion with the velocity mode: records every (v, w)."""
@@ -424,7 +438,7 @@ def seen_at(bearing, distance=3.0):
     return dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=distance, bearing_deg=bearing)
 
 
-def test_gliding_steers_toward_the_person_and_drives_without_stopping():
+def test_gliding_steers_toward_the_person_and_drives_without_stopping(glide):
     h, m = glide_head(), Glider()
     follow.follow(Camera(), Vision([seen_at(0.0), seen_at(0.0), step("gone")]), m, "Sam", head=h, seconds=60,
                   clock=Clock(), pose=lambda: tuple(m.pose))
@@ -434,7 +448,7 @@ def test_gliding_steers_toward_the_person_and_drives_without_stopping():
     assert (0.0, -21.0) in h.moves, "head held level (21 deg below its straight position)"
 
 
-def test_gliding_turns_in_proportion_and_turns_in_place_when_far_to_the_side():
+def test_gliding_turns_in_proportion_and_turns_in_place_when_far_to_the_side(glide):
     h, m = glide_head(), Glider()
     follow.follow(Camera(), Vision([seen_at(20.0), seen_at(-45.0), step("gone")]), m, "Sam", head=h, seconds=60,
                   clock=Clock(), pose=lambda: tuple(m.pose))
@@ -443,14 +457,14 @@ def test_gliding_turns_in_proportion_and_turns_in_place_when_far_to_the_side():
     assert (v2, w2) == (0.0, 0.0) and ("turn", 27.0) in m.moves, "45 deg right: a counted turn on the spot"
 
 
-def test_close_enough_it_only_turns_to_keep_facing_them():
+def test_close_enough_it_only_turns_to_keep_facing_them(glide):
     h, m = glide_head(), Glider()
     follow.follow(Camera(), Vision([seen_at(10.0, distance=0.55), step("gone")]), m, "Sam", head=h, seconds=60,
                   clock=Clock(), pose=lambda: tuple(m.pose))
     assert m.vel[0] == (0.0, 0.0) and m.moves == [("turn", -6.0)] and h.glances == 0
 
 
-def test_a_box_ahead_slows_the_glide_and_close_up_it_stops_and_falls_back_to_a_step():
+def test_a_box_ahead_slows_the_glide_and_close_up_it_stops_and_falls_back_to_a_step(glide):
     h, m = glide_head(view=zones(floor(start=0.45, until=1.5, box=(0.6, 0.1)))), Glider()
     follow.follow(Camera(), Vision([seen_at(0.0), step("gone")]), m, "Sam", head=h, seconds=60,
                   clock=Clock(), pose=lambda: tuple(m.pose))
@@ -470,7 +484,7 @@ def test_without_the_velocity_mode_it_follows_in_steps_as_before():
     assert [k for k, _ in m.moves] == ["drive"]
 
 
-def test_floor_noise_near_the_robot_is_not_something_in_the_way():
+def test_floor_noise_near_the_robot_is_not_something_in_the_way(glide):
     import random
     rnd = random.Random(2)
     noisy = [(x, y, round(0.03 + 0.012 * rnd.random(), 3) if x < 0.5 else h)    # near rows read 3-4 cm high
@@ -480,3 +494,30 @@ def test_floor_noise_near_the_robot_is_not_something_in_the_way():
     follow.follow(Camera(), Vision([seen_at(0.0), step("gone")]), m, "Sam", head=h, seconds=60,
                   clock=Clock(), pose=lambda: tuple(m.pose))
     assert m.vel[0][0] > 0.1, m.vel
+
+
+# --------------------------------------------------------------------------- #
+# The Pi's person tracker (follow.PersonTracker)
+# --------------------------------------------------------------------------- #
+
+def test_tracker_places_the_person_in_the_odom_frame_and_weighs_readings_by_how_sure_they_are():
+    t = follow.PersonTracker(keep_m=0.5, max_leg_m=1.5)
+    t.update((1.0, 0.0, math.pi / 2), 0.0, 2.0, 0.05, t=0.0)          # facing +y: they are at (1, 2)
+    assert t.xy == pytest.approx((1.0, 2.0))
+    t.update((1.0, 0.0, math.pi / 2), 0.0, 2.6, 0.78, t=0.1)           # a box-width guess: barely moves it
+    assert t.xy[1] < 2.05
+    turn, drive, dist = t.move((1.0, 0.0, math.pi / 2))
+    assert turn == 0.0 and drive == pytest.approx(min(dist - 0.5, 1.5)) and dist < 2.05
+
+
+def test_tracker_turns_past_the_deadband_and_ignores_one_wild_reading():
+    t = follow.PersonTracker(keep_m=0.5, max_leg_m=1.5)
+    t.update((0.0, 0.0, 0.0), 30.0, 2.0, 0.05, t=0.0)                  # 30 deg left
+    turn, drive, _ = t.move((0.0, 0.0, 0.0))
+    assert turn == pytest.approx(-30.0) and drive > 0                   # turn left to face them, then the leg
+    assert t.move((0.0, 0.0, math.radians(25.0)))[0] == 0.0             # within 8 deg: no turn
+    before = t.xy
+    t.update((0.0, 0.0, 0.0), -60.0, 4.0, 0.05, t=0.2)                  # a lookalike far off: ignored once
+    assert t.xy == before
+    t.update((0.0, 0.0, 0.0), -60.0, 4.0, 0.05, t=0.4)                  # twice: believed
+    assert t.xy == pytest.approx((2.0, -3.464), abs=1e-3)

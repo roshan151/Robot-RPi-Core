@@ -174,7 +174,7 @@ listener hears whichever mic is live. Its prompt and behaviour do not change.
    the image width; d = camera-to-wall distance in metres. Then
    `hfov_deg = 2·atan(0.5 / d)` (expect ~105°). Also check the image is upright,
    and flip `camera_inverted` if not.
-   `python tests/hardware/check_camera.py head` then confirms frames keep
+   `python calibrate.py check` (Monitoring-Sensors) then confirms frames keep
    coming while the servos move.
 7. **Mic name.** `pactl list short sources`: the camera mic is the
    `alsa_input.usb-…` line. If the default `ROBOT_ROOM_MIC=alsa_input.usb-`
@@ -329,6 +329,6 @@ V = 3.91 m → 105°
 Put the result in robot.yaml: under /explorer, set hfov_deg: <your number>. The Pi sends it to the Mac with every follow step, so there’s nothing to change on the Mac. Then sudo systemctl start robot-voice.
 
 ## Re trim floor height 
-To correct it, re-trim tilt_center_us in robot.yaml with tests/hardware/check_servo_pulse.py. Put a mark on a wall at camera height (25 cm) and adjust until it sits on the middle row of the picture at tilt 0. If the bracket holds the camera pitched up, that will leave the head visibly tilted down at “level”, which is fine for the maths.
+To correct it, re-trim tilt_center_us in robot.yaml with Monitoring-Sensors/calibrate.py head (it measures the tilt zero from the floor). Put a mark on a wall at camera height (25 cm) and adjust until it sits on the middle row of the picture at tilt 0. If the bracket holds the camera pitched up, that will leave the head visibly tilted down at “level”, which is fine for the maths.
 
 After a re-trim the robot will see lower than it does now, so your face may drop out of view at close range. If lock-on suffers, raise FOLLOW_TILT_DEG.

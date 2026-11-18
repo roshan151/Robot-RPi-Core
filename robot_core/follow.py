@@ -52,7 +52,7 @@ import time
 from dataclasses import dataclass
 from typing import Callable, List, Optional, Tuple
 
-from robot_core import local_plan, settings, status, task_cancel, terrain
+from robot_core import debug_upload, local_plan, settings, status, task_cancel, terrain
 from robot_core.sensors.camera import jpeg
 from robot_core.sensors.tof8x8 import range_in_box
 from robot_core.vision_client import VisionClient, VisionError
@@ -79,7 +79,64 @@ GLIDE_SPEED_GAIN = 0.4          # forward speed (m/s) per metre of clear path: s
 GLIDE_SPIN_DEG = 8.0            # not driving and further off than this: a counted turn (tracks scrub
                                 # turning on the spot; a slow velocity spin barely moves)
 
+TURN_DEADBAND_DEG = 8.0         # tracked person nearer ahead than this: no turn
+DRIVE_MAX_BEARING_DEG = 25.0    # further to the side: turn first, drive next frame
+WALK_MPS = 0.6                  # how fast a tracked person may have moved, for the tracker's doubt
+
 Pose = Tuple[float, float, float]   # x, y (m), heading (rad, CCW) in the odometry frame
+
+
+class PersonTracker:
+    """Where the person stands, in the odometry frame, from the Mac's measurements.
+
+    Each tracking answer places them from the robot's pose when the frame was taken
+    (the robot stands still while the Mac answers, so that is the pose read just after
+    the capture): `distance_m` along `bearing_deg`. Readings are combined by how sure
+    each is (distance_sigma_m: a ToF range counts for far more than a box-size guess),
+    and the estimate's doubt grows by WALK_MPS for every second it is not seen, so a
+    person who walked on is taken at their new place. A reading far outside the doubt
+    (a lookalike, a bad range) is ignored once; twice running, it is believed.
+    The robot then turns to face the estimate and drives a leg toward it."""
+
+    def __init__(self, keep_m: float, max_leg_m: float) -> None:
+        self.keep_m, self.max_leg_m = keep_m, max_leg_m
+        self.xy: Optional[Tuple[float, float]] = None
+        self.var = 0.0
+        self.t = 0.0
+        self.rejected = 0
+
+    def update(self, here: Pose, bearing_deg: float, dist_m: float, sigma_m: Optional[float],
+               t: float) -> None:
+        a = here[2] + math.radians(bearing_deg)
+        z = (here[0] + dist_m * math.cos(a), here[1] + dist_m * math.sin(a))
+        r = max(0.03, sigma_m if sigma_m else 0.3 * dist_m) ** 2
+        if self.xy is None:
+            self.xy, self.var, self.t = z, r, t
+            return
+        var = self.var + (WALK_MPS * max(0.0, t - self.t)) ** 2
+        gap = math.hypot(z[0] - self.xy[0], z[1] - self.xy[1])
+        if gap > 3.0 * math.sqrt(var + r) + 0.3 and self.rejected < 1:
+            self.rejected += 1
+            return
+        if gap > 3.0 * math.sqrt(var + r) + 0.3:
+            self.xy, self.var, self.t, self.rejected = z, r, t, 0     # twice: it is real, start again there
+            return
+        k = var / (var + r)
+        self.xy = (self.xy[0] + k * (z[0] - self.xy[0]), self.xy[1] + k * (z[1] - self.xy[1]))
+        self.var, self.t, self.rejected = (1.0 - k) * var, t, 0
+
+    def move(self, now: Pose) -> Optional[Tuple[float, float, float]]:
+        """(turn_deg + right, drive_m, distance_m) toward the estimate from `now`, or None."""
+        if self.xy is None:
+            return None
+        dx, dy = self.xy[0] - now[0], self.xy[1] - now[1]
+        dist = math.hypot(dx, dy)
+        bearing = math.degrees(_wrap(math.atan2(dy, dx) - now[2]))       # + left
+        turn = -bearing if abs(bearing) > TURN_DEADBAND_DEG else 0.0
+        left = bearing + turn                                             # after the turn
+        drive = min(dist - self.keep_m, self.max_leg_m) \
+            if dist - self.keep_m >= MIN_DRIVE_M and abs(left) <= DRIVE_MAX_BEARING_DEG else 0.0
+        return round(turn, 1), round(max(0.0, drive), 2), round(dist, 2)
 
 
 def _wrap(a: float) -> float:
@@ -260,9 +317,9 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
     reach = round(_seen_to(pts, p) - MARGIN_M, 2)    # never drive onto floor it did not measure
     if got > reach and not p.drive_unknown and not watched:
         got, short = (reach if reach >= MIN_DRIVE_M else 0.0), short or f"floor seen only to {reach + MARGIN_M:.2f} m"
-    if short:                                        # what it judged by: the floor's height under each zone
+    if short:                                        # what it judged by (debug: the raw grid goes to the Mac)
         lv = getattr(head, "last_level", None)
-        log.info("floor seen at tilt %s, pitch %s, levelled by %s (x m, y m, height m): %s",
+        log.debug("floor seen at tilt %s, pitch %s, levelled by %s (x m, y m, height m): %s",
                  getattr(geom, "drive_tilt_deg", None), head.pitch() if getattr(head, "pitch", None) else None,
                  None if lv is None else f"{lv[0]:+.3f} m, pitch {lv[1]:+.1f}, roll {lv[2]:+.1f} deg",
                  sorted(((round(x, 2), round(y, 2), None if h is None else round(h, 3))
@@ -473,6 +530,7 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
     hazards = local_plan.Hazards() if head and getattr(head, "has_grid", False) else None   # what blocked drives
     glide = settings.FOLLOW_GLIDE and _watching(head) and getattr(motion, "can_glide", lambda: False)()
     gliding, glide_t = False, 0.0                     # moving under motion.velocity right now, since
+    tracker = PersonTracker(settings.FOLLOW_KEEP_M, settings.FOLLOW_MAX_DRIVE_M)   # the Pi decides the moves
     if glide:
         log.info("follow: gliding (velocity mode)")
     t0, seq = clock(), 0
@@ -491,18 +549,29 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
             hint = None                               # where they were last seen, from here (+ left)
             if last_seen and here and time.monotonic() - last_seen[1] < LAST_SEEN_S:
                 hint = round(math.degrees(_wrap(last_seen[0] - here[2])), 1)
+            img = jpeg(frame.main, settings.FACE_WIRE_LONG_EDGE)
+            debug_upload.offer_jpeg(getattr(frame, "seq", 0), img)   # debug mode: sent as is, no second encode
             res = vision.follow_step(
-                jpeg(frame.main, settings.FACE_WIRE_LONG_EDGE), seq,
+                img, seq,
                 pan_deg=frame.pan_deg, tilt_deg=frame.tilt_deg,
                 hfov_deg=head.geom.hfov_deg if head else 66.0,
                 camera_height_m=head.geom.height_m if head else 0.25, range_m=rng,
                 tof_grid=grid.rows if grid is not None else None, hint_deg=hint)
-            log.info("follow %d: %s", seq, res)
+            log.info("follow %d: %s %s, bearing %s, %s m (%s), turn %s, drive %s", seq, res["state"],
+                     res.get("target") or "-", res.get("bearing_deg"), res.get("distance_m"),
+                     res.get("distance_from"), res.get("turn_deg"), res.get("drive_m"))
             status.detail(f"{res['state']} {res.get('distance_m') or ''}")
             if res["state"] == "gone":
                 break
             if res["state"] == "tracking" and here and res.get("bearing_deg") is not None:
                 last_seen = (here[2] + math.radians(res["bearing_deg"]), time.monotonic())
+                d = res.get("distance_m") or rng
+                if d and res.get("distance_from") != "near":
+                    tracker.update(here, res["bearing_deg"], d, res.get("distance_sigma_m"), time.monotonic())
+                    mv = None if glide else tracker.move(pose() or here)   # gliding steers by itself
+                    if mv:                            # the Pi's turn and leg, from the tracked position
+                        res = {**res, "turn_deg": mv[0], "drive_m": mv[1], "distance_m": mv[2]}
+                        log.info("follow %d: tracked at %.2f m: turn %+.0f, drive %.2f", seq, mv[2], mv[0], mv[1])
             # The Mac drives only to 1.2 m from them; the Pi goes on to FOLLOW_KEEP_M (same 25 deg rule).
             near_m, drive_m = res.get("distance_m") or rng, res["drive_m"]
             if res["state"] == "tracking" and near_m and abs(res.get("bearing_deg") or 0.0) <= 25.0 \

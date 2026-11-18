@@ -65,7 +65,7 @@ and is not read; nor is the barometer.
   sixteen strips of floor, about 4 to 9 cm apart within half a metre.
 * **Floor profile**: each zone's range becomes (ahead, left, height above the floor) using
   the head's pan and tilt and the robot's pitch. `tof_perpendicular` says whether the
-  module reports distance to its face or along the ray; `check_tof.py --wall` measures it.
+  module reports distance to its face or along the ray; `calibrate.py drive` (Monitoring-Sensors) measures it.
 
 `terrain.classify(points, params, reach)` judges a strip `path_width_m` wide, for as far
 as the robot means to drive:
@@ -101,7 +101,7 @@ FOLLOW-DESIGN Part 3; in short:
 
 * **Nothing here has run on the robot.** The IMU and ToF drivers are written from the
   chips' registers and DFRobot's library and are tested against fakes. Expect to adjust
-  after `check_imu.py` and `check_tof.py`.
+  after `calibrate.py imu` and `calibrate.py tof` (Monitoring-Sensors).
 * **Low sills are at the edge of what the ToF resolves.** A ray that meets the front of a
   2 cm sill reads a height between 0 and 2 cm, under the noise floor, so a narrow sill can
   read as flat. That is safe (the tracks climb it) but means `climbable` is mostly reported

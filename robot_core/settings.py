@@ -154,10 +154,12 @@ FOLLOW_SECONDS = _env("ROBOT_FOLLOW_S", "300", float)            # follow mode e
 FOLLOW_TILT_DEG = _env("ROBOT_FOLLOW_TILT", "20", float)         # head tilt while finding them: the face
 FOLLOW_TRACK_TILT_DEG = _env("ROBOT_FOLLOW_TRACK_TILT", "10", float)  # once locked on: body and feet
 FOLLOW_KEEP_M = _env("ROBOT_FOLLOW_KEEP_M", "0.5", float)          # stop this far from the person (the Mac keeps 1.2)
-FOLLOW_MAX_DRIVE_M = _env("ROBOT_FOLLOW_MAX_DRIVE_M", "3.0", float)  # longest drive per step (the Mac caps at 0.5);
+FOLLOW_MAX_DRIVE_M = _env("ROBOT_FOLLOW_MAX_DRIVE_M", "1.5", float)  # longest drive per step (the Mac caps at 0.5);
                                                                     # watched as it goes, so past the floor seen at the start
-FOLLOW_GLIDE = _flag("ROBOT_FOLLOW_GLIDE", "1")
-                                    # follow by steering continuously (/cmd_vel, firmware v6) instead of steps
+FOLLOW_GLIDE = _flag("ROBOT_FOLLOW_GLIDE", "0")
+                                    # 1: follow by steering continuously (/cmd_vel, firmware v6) instead of legs.
+                                    # Off: with the ToF on the gimbal the path is only watched during a leg
+                                    # (head in the drive pose), not while the head is on the person
 FOLLOW_GLIDE_MAX_MPS = _env("ROBOT_FOLLOW_GLIDE_MAX_MPS", "0.2", float)   # gliding top speed
 FOLLOW_GLIDE_TILT_DEG = _env("ROBOT_FOLLOW_GLIDE_TILT", "0", float)       # gliding head angle above level: the
                                     # camera sees the person and the ToF the floor 0.5-1.3 m ahead
@@ -174,6 +176,23 @@ FACE_EDGE_MARGIN = 0.02         # a shot is kept only with the whole face this f
 LOG_PATH = _env("ROBOT_LOG_PATH", "logs.json")
 LOG_MAX_BYTES = _env("ROBOT_LOG_MAX_BYTES", "2000000", int)
 LOG_BACKUPS = _env("ROBOT_LOG_BACKUPS", "3", int)
+ROBOT_YAML = _env("ROBOT_YAML", str(Path(__file__).resolve().parent.parent
+                                    / "ros2_ws/src/robot_bringup/config/robot.yaml"))
+
+
+def debug_mode():
+    """robot.yaml /voice debug_mode: True / False, or None when it cannot be read
+    (no file, no yaml: a standalone run), which keeps full logging and no uploads.
+    ROBOT_DEBUG_MODE=1 / 0 in the environment overrides the file (tests, one-off runs)."""
+    if os.environ.get("ROBOT_DEBUG_MODE") is not None:
+        return _flag("ROBOT_DEBUG_MODE")
+    try:
+        import yaml
+        with open(ROBOT_YAML) as f:
+            v = yaml.safe_load(f)["/voice"]["ros__parameters"].get("debug_mode")
+        return None if v is None else bool(v)
+    except Exception:                 # noqa: BLE001
+        return None
 
 # --- What the voice model is told ---------------------------------------------
 LIVE_SYSTEM_PROMPT = os.environ.get("ROBOT_LIVE_PROMPT", """\

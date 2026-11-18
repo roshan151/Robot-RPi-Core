@@ -4,6 +4,18 @@
 records the simple first version. **It amends `VISION-DESIGN.md`** (§4.6
 `follow_node`, §7.2) the way `EXPLORE-DESIGN.md` does for explore mode.
 
+> **Amended (Nov 2026).** Here is how a frame turns into a move now:
+> - The Mac's answer is a measurement: bearing in the robot's frame, `distance_m` with `distance_sigma_m`, `ground_xy`, `confidence`.
+> - The Pi's `follow.PersonTracker` places the person in the odometry frame, from the pose read just after the capture (the robot stands still while the Mac answers).
+> - It combines readings by how sure each is, and ignores one wild reading.
+> - It then turns to face the tracked position (8 deg deadband) and drives a watched leg of up to 1.5 m (`FOLLOW_MAX_DRIVE_M`), keeping 0.5 m from the person.
+>
+> What else changed:
+> - The Mac's `turn_deg`/`drive_m` (0.6 turn gain, 0.5 m step, 1.2 m keep) are used only while searching.
+> - Gliding (`ROBOT_FOLLOW_GLIDE`) is off by default: with the ToF on the gimbal, the path is watched only during a leg.
+> - Gyro turn corrections are off (`turn_trim: false`).
+> - The TF-Luna drop guard reports `drop`, which is treated like a bump.
+
 ## Part 0 — What this changes in PLAN.md / VISION-DESIGN.md
 
 | Was | Now | Why |

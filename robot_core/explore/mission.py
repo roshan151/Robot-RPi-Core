@@ -46,7 +46,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional, Protocol, Sequence, Tuple
 
-from robot_core import local_plan, status as screen
+from robot_core import local_plan, status as screen, terrain
 from robot_core.odometry import Pose2D, wrap
 from robot_core.sensors.camera import jpeg
 from robot_core.sensors.tof8x8 import range_in_box
@@ -55,11 +55,15 @@ from robot_core.vision_client import VisionError
 log = logging.getLogger(__name__)
 
 DETOUR_MARGIN_M = 0.35   # going round: floor must be seen clear this far past each leg
+WATCH_REACH_M = 0.8      # a watched leg: the floor judged this far ahead on every grid
+WATCH_MARGIN_M = 0.2     # ...and the robot brakes once a hazard is within stop_short_m + this
+WATCH_UNSEEN = 3         # ...or this many grids in a row are too thin to judge
+ROOMY_M = 0.3            # a leg passing at least this far from anything mapped is driven whole
 
 
 class Base(Protocol):
     def odom(self) -> Pose2D: ...
-    def drive(self, meters: float) -> str: ...          # done|stuck|cancelled|failed|timeout
+    def drive(self, meters: float, watch=None) -> str: ...   # done|stuck|drop|blocked|cancelled|failed|timeout
     def turn_ccw(self, radians: float) -> str: ...
     def set_map_to_odom(self, pose: Pose2D) -> None: ...
     def relocalized(self) -> None: ...
@@ -190,7 +194,7 @@ class Explorer:
                 if res.get("done"):
                     self._say("exploration complete — nothing reachable left unexplored")
                     break
-                outcome = self.follow(res["goal"]["path"], self.cfg.max_leg_m)
+                outcome = self.follow(res["goal"]["path"], self.cfg.max_leg_m, res["goal"].get("clear_m"))
                 self._say(f"drive: {outcome}")
         except VisionError as exc:
             self._say(f"vision service unavailable, stopping: {exc}")
@@ -569,11 +573,49 @@ class Explorer:
         dth = wrap(math.atan2(xy[1] - p.y, xy[0] - p.x) - p.theta)
         return self.base.turn_ccw(dth) if abs(dth) > math.radians(3) else "done"
 
-    def follow(self, path: Sequence[Sequence[float]], max_dist: float) -> str:
-        """Drive a map path waypoint by waypoint: turn, probe the floor, step."""
+    def _watching(self) -> bool:
+        return bool(getattr(self.head, "has_grid", False)) and hasattr(self.head, "floor_profile") \
+            and hasattr(self.head, "drive_pose")
+
+    def _watch(self):
+        """A watch for base.drive: one ToF grid per call with the head in its drive pose;
+        True (brake) once a hazard is within stop_short_m + WATCH_MARGIN_M, or the floor
+        cannot be judged for WATCH_UNSEEN grids running. What it saw is kept for planning."""
+        p, unseen = self.head.terrain, [0]
+
+        def watch() -> bool:
+            pts = self.head.floor_profile()
+            if getattr(p, "auto_level", False):
+                pts, _ = terrain.level(pts)
+            t = terrain.classify(pts, p, WATCH_REACH_M)
+            if terrain.may_drive(t, p):
+                unseen[0] = 0
+                return False
+            unseen[0] = unseen[0] + 1 if t.kind == terrain.UNKNOWN and t.distance_m is None else 0
+            near = t.distance_m is not None and t.distance_m <= self.cfg.stop_short_m + WATCH_MARGIN_M
+            if near or unseen[0] >= WATCH_UNSEEN:
+                geom = self.head.geom
+                hz = local_plan.hazards_from_floor(pts, p, (geom.pan_axis_x_m, geom.height_m))
+                if hz:
+                    self._hazards.add(self.base.odom().as_tuple(), hz)
+                    self._remember_obstacles(hz, "drop" if t.kind == terrain.DROP else "obstacle")
+                self._say(f"braked mid-leg: {terrain.why_not(t)}")
+                return True
+            return False
+        return watch
+
+    def follow(self, path: Sequence[Sequence[float]], max_dist: float,
+               clear: Optional[Sequence[float]] = None) -> str:
+        """Drive a map path waypoint by waypoint: turn, probe the floor just ahead, then
+        drive the leg. With the 8x8 ToF a leg the map says is roomy (clear_m from the Mac
+        at least ROOMY_M) is driven whole, up to max_dist, the head watching the floor the
+        whole way and braking on anything new; otherwise in probe_step_m steps as before.
+        The TF-Luna drop guard (drivetrain) watches the floor under it either way."""
         cfg = self.cfg
         travelled = 0.0
-        for wp in list(path)[1:]:
+        watched = self._watching()
+        for i, wp in enumerate(list(path)[1:], start=1):
+            roomy = watched and clear is not None and i < len(clear) and clear[i] >= ROOMY_M
             for _ in range(8):                        # bounded re-aims per waypoint
                 if self._stop.is_set():
                     return "stopped"
@@ -584,10 +626,10 @@ class Explorer:
                 st = self.face(wp)
                 if st != "done":
                     return st
-                step = min(dist, cfg.probe_step_m, max_dist - travelled)
+                step = min(dist, max_dist - travelled) if roomy else min(dist, cfg.probe_step_m, max_dist - travelled)
                 if step <= 0.05:
                     return "leg_limit"
-                probe = self.head.floor_probe(step + cfg.stop_short_m)
+                probe = self.head.floor_probe(min(step, cfg.probe_step_m) + cfg.stop_short_m)
                 if probe.status in ("obstacle", "drop", "unseen"):
                     # unseen: a floor the ToF cannot read. Marked like an obstacle so the next
                     # path goes another way; never driven (robot.yaml drive_on_unknown_floor).
@@ -604,8 +646,23 @@ class Explorer:
                     if self.vision.path_clear(jpeg(view.main), step) is False:
                         self._remember_obstacles([(self.head.sensor_xy[0] + step, 0.0)])
                         return "blocked (vlm)"
-                st = self.base.drive(step)
-                travelled += step
+                if roomy and step > cfg.probe_step_m:
+                    self.head.drive_pose()
+                    p0 = self.base.odom()
+                    st = self.base.drive(step, watch=self._watch())
+                    p1 = self.base.odom()
+                    travelled += math.hypot(p1.x - p0.x, p1.y - p0.y)
+                    if st == "blocked":
+                        roomy = False                 # short probed steps from here: it is seen and gone round
+                        continue
+                else:
+                    st = self.base.drive(step)
+                    travelled += step
+                if st == "drop":                      # the TF-Luna guard braked: a drop just ahead
+                    self.stats.drops += 1
+                    self._remember_obstacles([(0.35, 0.0)], "drop")
+                    self.base.drive(-0.15)
+                    return "drop"
                 if st == "stuck":
                     self.stats.stuck += 1
                     self._remember_obstacles([(0.25, 0.0)])

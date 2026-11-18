@@ -731,3 +731,49 @@ def test_moves_go_at_the_usual_speed_unless_they_ask_for_more_up_to_the_ceiling(
         assert g.pan.hi == pytest.approx(81.0, abs=0.1) and g.pan.lo == -90.0   # 2500 us: +81 to the left
     finally:
         g.close()
+
+
+def test_gimbal_backlash_reaches_every_target_moving_up():
+    from robot_core.sensors.gimbal import _Axis, FakePwm
+    ax = _Axis(AxisConfig(channel=0, min_deg=-45, max_deg=45, max_speed_dps=90, accel_dps2=360,
+                          backlash_deg=2.0), FakePwm())
+    ax.aim(10.0)                                     # up: straight there
+    assert (ax.target, ax.after, ax.goal()) == (10.0, None, 10.0)
+    while ax.step(0.02):
+        pass
+    ax.aim(-30.0)                                    # down: past it to -32, then up to -30
+    assert (ax.target, ax.after, ax.goal()) == (-32.0, -30.0, -30.0)
+    low = 0.0
+    while ax.step(0.02):
+        low = min(low, ax.pos)
+    assert ax.pos == -30.0 and abs(low + 32.0) < 1e-6
+    ax.aim(-45.0)                                    # at the limit: no room below, straight there
+    assert ax.after is None and ax.target == -45.0
+
+
+def test_calibration_fits():
+    import math
+    from robot_core import calibrate
+    wall = [(a, 1.2 / math.cos(math.radians(a - 3.0))) for a in range(-30, 31, 3)]
+    p0, d = calibrate.pan_zero(wall)
+    assert abs(p0 - 3.0) < 1e-6 and abs(d - 1.2) < 1e-6
+    floor = [(t, 0.22 / math.sin(math.radians(-(t + 1.5)))) for t in range(-40, -9, 3)]
+    e, spread = calibrate.tilt_zero(floor, 0.22)
+    assert abs(e - 1.5) < 1e-6 and spread < 1e-6
+    scale, off = calibrate.range_fit([(0.5, 0.48), (1.0, 0.97), (2.0, 1.95), (3.0, 2.93)])
+    assert abs(scale * 1.95 + off - 2.0) < 0.01
+    assert calibrate.centre_change(2.0, 10.0) == 20.0 and calibrate.centre_change(2.0, 10.0, True) == -20.0
+
+
+def test_calibration_self_fits():
+    import math
+    from robot_core import calibrate
+    floor = [(t, 0.21 / math.sin(math.radians(-(t + 1.2)))) for t in range(-44, -13, 3)]
+    e, h, spread = calibrate.tilt_and_height(floor)
+    assert abs(e - 1.2) < 0.06 and abs(h - 0.21) < 0.003 and spread < 0.005
+    # backing away: tape 0.60 -> 1.55 (told 1.0 m), the ToF reads 3 % short with a 1 cm offset
+    true = [0.60, 1.075, 1.55]
+    out = calibrate.drive_fit(0.60, 1.55, [t * 0.97 - 0.01 for t in true], [0.0, 0.5, 1.0], 38.5)
+    assert out["ticks_per_cm"] == round(38.5 / 0.95, 2) and abs(out["tof_range_scale"] - 1 / 0.97) < 1e-3
+    assert calibrate.turn_fit([360, 360], [340, 344], 5.4)["ticks_per_degree"] == round(5.4 * (360 / 340 + 360 / 344) / 2, 3)
+    assert calibrate.reverse_trim([1.05, 1.05], 10)["REVERSE_TRIM_PCT"] == 16
