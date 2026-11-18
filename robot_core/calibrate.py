@@ -1,5 +1,5 @@
 """Calibration maths: plain functions, so they are tested without hardware.
-Monitoring-Sensors/calibrate.py collects the readings (through robot_core/calibrate_pi.py
+Monitoring-Service/calibrate.py collects the readings (through robot_core/calibrate_pi.py
 on the Pi) and these turn them into robot.yaml values.
 
   pan_zero      head square-on to a flat wall, pan swept: the range is shortest where

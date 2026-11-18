@@ -33,7 +33,7 @@ The plan is in build order. Each step leaves a working robot, and nothing before
 
 - New `robot_core/sensors/imu.py`: reads the accelerometer and gyro, calibrates gyro bias at standstill, runs a small fusion filter in a background thread (same shape as `tfluna.py`), and includes a fake for tests.
 - `pyproject.toml`: add an I²C library to an optional extra.
-- New `tests/hardware/check_imu.py` (since replaced by `Monitoring-Sensors/calibrate.py imu`); cases added to `tests/test_sensors.py`.
+- New `tests/hardware/check_imu.py` (since replaced by `Monitoring-Service/calibrate.py imu`); cases added to `tests/test_sensors.py`.
 
 **Done when:** tilting the robot by hand shows correct angles, and yaw drifts under about 1° per minute at rest.
 
@@ -46,7 +46,7 @@ The plan is in build order. Each step leaves a working robot, and nothing before
 - New `robot_core/sensors/tof8x8.py`: `grid()` returns 64 ranges, and `read()`/`latest()` match the `TFLuna` interface using the centre zones, so `Head` works unchanged.
 - `explorer_node.py` and `voice_node.py`: construct it where the TF-Luna is built today.
 - `robot.yaml`: add `tof_fitted` and the mount measurements.
-- New `tests/hardware/check_tof.py` (since replaced by `Monitoring-Sensors/calibrate.py tof`).
+- New `tests/hardware/check_tof.py` (since replaced by `Monitoring-Service/calibrate.py tof`).
 
 **Done when:** explore starts again and existing tests pass.
 

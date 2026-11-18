@@ -42,7 +42,7 @@
     # IMU: DFRobot Fermion 10 DOF (SEN0697, BMI323) on I2C. Wiring and checks: README, "IMU and ToF
     # sensors". With it the heading comes from the gyro, every turn is trimmed to the asked
     # angle, and tilting past the limits stops the move.
-    imu_fitted: true           # set true once calibrate.py imu (Monitoring-Sensors) passes
+    imu_fitted: true           # set true once calibrate.py imu (Monitoring-Service) passes
     imu_bus: 1                 # I2C bus. 1 = GPIO2/3
     imu_gyro_addr: 105         # 0x69, the BMI323 with its address pad open (as shipped); 104 (0x68) if closed
     imu_axes: ["-x", "-y", "z"]  # which board axis points robot-forward, robot-left, up; "-" flips one.
@@ -102,7 +102,7 @@
     tts: false
 
     # if true, debug mode: every camera frame and ToF grid a task collects goes to the Mac
-    # (Vision-Microservice POST /v1/debug/frame, for Monitoring-Sensors to show), at most
+    # (Vision-Microservice POST /v1/debug/frame, for Monitoring-Service to show), at most
     # 2 a second, dropped rather than queued so the robot never waits; and logs.json records
     # info lines too. false: no uploads, and logs.json keeps warnings and errors only.
     # Read by every node that writes logs.json (drivetrain and display too).
@@ -146,14 +146,14 @@
     # checks: README, "IMU and ToF sensors". It is the range sensor for follow and explore and
     # sees the floor ahead (docs/TERRAIN-DESIGN.md). With tof_fitted and tfluna_fitted both
     # false, follow runs without a range and explore is refused.
-    tof_fitted: true           # set true once calibrate.py tof (Monitoring-Sensors) passes
+    tof_fitted: true           # set true once calibrate.py tof (Monitoring-Service) passes
     tof_port: ""               # "" = on I2C (what the robot uses), with tof_bus / tof_addr. For USB instead: the
                                # ToF's serial port, best its fixed name from `ls /dev/serial/by-id/`
     tof_bus: 1                 # I2C bus (1 = GPIO2/3, shared with the IMU); not used on USB
     tof_addr: 51               # 0x33, both address switches as shipped; not used on USB
     tof_tilt: 90               # board turned on its side: 90 = a quarter-turn clockwise seen from behind the head
                                # (its top edge to the robot's right), -90 = anticlockwise, 0 = upright. Multiples of 90
-    tof_range_scale: 1.0       # calibrate.py drive (Monitoring-Sensors): true = scale * reading + offset
+    tof_range_scale: 1.0       # calibrate.py drive (Monitoring-Service): true = scale * reading + offset
     tof_range_offset_m: 0.0
     tof_flip_rows: false       # true if the floor shows in the TOP rows (calibrate.py tof)
     tof_flip_cols: false       # true if a hand on the robot's left shows in the RIGHT columns
@@ -193,7 +193,7 @@
     pwm_chip: 0                # Pi 4: 0. Pi 5: 2
     pan_channel: 1             # GPIO13
     tilt_channel: 0            # GPIO12
-    pan_center_us: 1600.0      # calibrate.py head (Monitoring-Sensors): head points straight ahead
+    pan_center_us: 1600.0      # calibrate.py head (Monitoring-Service): head points straight ahead
     tilt_center_us: 1400.0     # calibrate.py head: head is level
     pan_us_per_deg: 11.111     # pulse change per degree (2000/180); the servo's spec; calibrate.py head checks the result
     tilt_us_per_deg: 11.111

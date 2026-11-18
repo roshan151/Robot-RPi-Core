@@ -1,4 +1,4 @@
-"""The Pi side of Monitoring-Sensors/calibrate.py. Not run by hand: the Mac script
+"""The Pi side of Monitoring-Service/calibrate.py. Not run by hand: the Mac script
 starts it over SSH (robot-voice stopped first: it owns the serial port, head and camera)
 and sends it one command per line on stdin; each answer is one JSON line on stdout:
 

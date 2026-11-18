@@ -158,7 +158,7 @@ void resetFlagsInit(void) {
 // (Nov 2026) show the forward-running track leading in every turn, whichever
 // side it is (left turns: right leads; right turns: left leads), by 10-22% on
 // turns over 15 deg: a direction asymmetry the sync P term saturates on. Tune
-// it with Monitoring-Sensors/calibrate.py drive (it measures the lead).
+// it with Monitoring-Service/calibrate.py drive (it measures the lead).
 #define REVERSE_TRIM_PCT   10
 
 // Encoder ISR debounce: real edges are >1 ms apart at full speed; noise
@@ -281,7 +281,16 @@ void sendf(const char* fmt, ...) {
 
 // TF-Luna range in cm, or -1 (absent, bus error, weak or saturated).
 // Registers 0x00-0x03: distance low/high (cm), signal strength low/high.
+// The bus is touched only if the sensor answered at boot AND both lines sit
+// high (pulled up, idle): with no pull-ups fitted the lines float and a Wire
+// call can wait forever, which froze the whole loop (Nov 18: the Pi's first
+// ping went unanswered and the drivetrain node never started).
+bool luna_ok = false;
+
+bool busIdle() { return digitalRead(SDA) == HIGH && digitalRead(SCL) == HIGH; }
+
 int readLuna() {
+  if (!luna_ok || !busIdle()) return -1;
   Wire.beginTransmission(LUNA_ADDR);
   Wire.write((uint8_t)0x00);
   if (Wire.endTransmission() != 0) return -1;
@@ -679,13 +688,19 @@ void setup() {
   digitalWrite(SCL, LOW);           // the external 4.7k pull-ups go to 3.3 V
 #if defined(WIRE_HAS_TIMEOUT)
   Wire.setWireTimeout(3000, true);  // a missing or hung sensor never stalls loop()
-#endif
+#endif                              // older cores (before 1.8.3) have no timeout: the boot check
+                                    // and busIdle() below are what keep the loop from freezing
   delay(200);
+  if (busIdle()) {                  // pulled up and idle: ask once whether the TF-Luna is there
+    Wire.beginTransmission(LUNA_ADDR);
+    luna_ok = (Wire.endTransmission() == 0);
+  }
 
   // Reset cause + build stamp.  __DATE__/__TIME__ come from the compiler,
   // so every fresh build announces itself — a stale flash can never
   // masquerade as current source.
-  sendf("B,%X,drv8871-v8-vel-luna built " __DATE__ " " __TIME__, cause);
+  sendf(luna_ok ? "B,%X,drv8871-v9-vel-luna built " __DATE__ " " __TIME__
+                : "B,%X,drv8871-v9-vel-noluna built " __DATE__ " " __TIME__, cause);
   last_rx_ms = millis();
 }
 

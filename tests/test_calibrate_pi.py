@@ -1,4 +1,4 @@
-"""The Pi side of Monitoring-Sensors/calibrate.py: JSON lines in, JSON lines out; an
+"""The Pi side of Monitoring-Service/calibrate.py: JSON lines in, JSON lines out; an
 error answers and keeps the session going. No hardware: hello and the fits only."""
 
 import json

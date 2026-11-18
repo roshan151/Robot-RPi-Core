@@ -33,7 +33,7 @@ way up the board is mounted decides that. A board turned on its side is set with
 `tilt_deg` (robot.yaml tof_tilt): 90 = turned a quarter-turn clockwise as seen from
 behind the head looking out (the board's top edge points to the robot's right),
 -90 = anticlockwise; the grid is turned back so row 0 is the top of the view again.
-Mirroring after that: check with Monitoring-Sensors/calibrate.py tof and set `flip_rows` /
+Mirroring after that: check with Monitoring-Service/calibrate.py tof and set `flip_rows` /
 `flip_cols` (robot.yaml tof_flip_rows / tof_flip_cols). The view is square, so a
 turned board sees the same 60 x 60 degrees.
 """
