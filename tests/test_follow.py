@@ -91,7 +91,12 @@ class Head:
         self.lidar = SimpleNamespace(read=lambda n, timeout: 1.8)
         self.geom = SimpleNamespace(hfov_deg=60.0, height_m=0.3)
 
-    def move_to(self, pan=None, tilt=None, wait=False): self.moves.append((pan, tilt))
+    fast_dps = 120.0
+    speeds: list = []
+
+    def move_to(self, pan=None, tilt=None, speed_dps=None, wait=False):
+        self.moves.append((pan, tilt))
+        self.speeds.append(speed_dps)
     def wait_settled(self): return True
 
 
@@ -111,7 +116,9 @@ def test_finds_them_looking_up_then_tracks_looking_lower_and_searches_looking_up
                 dict(step("holding"), head=[0, 0], locked=True),
                 dict(step("searching"), head=[30, 0], locked=True),
                 step("gone")])
+    h.speeds = []
     follow.follow(Camera(), v, Motion(), "Sam", head=h, seconds=60, clock=Clock())
+    assert h.speeds[1:] == [120.0, None, None, 120.0], "searching looks move fast; tracking at the usual speed"
     assert h.moves == [(0.0, S.FOLLOW_TILT_DEG),               # start: the face
                        (0, S.FOLLOW_TILT_DEG),                 # still confirming who it is
                        (0, S.FOLLOW_TRACK_TILT_DEG),           # locked on: body and feet

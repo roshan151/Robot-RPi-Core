@@ -148,9 +148,13 @@
     pan_invert: false          # +pan must turn the head LEFT
     tilt_invert: true          # +tilt must look UP (flipped: this servo was mounted the other way up)
     servo_speed_dps: 60.0      # head speed, deg/s; lower = slower, below ~10 gets steppy
+    servo_fast_dps: 120.0      # the most a move may ask for: follow's search sweep. Still ramped (accelerates
+                               # and slows down), so not a snap; set it to servo_speed_dps to keep every move slow
     servo_min_us: 500.0        # hard pulse window: no angle or trim can send a pulse outside it. The driver
-    servo_max_us: 2400.0       # shrinks the reachable angles to fit (pan at 2300 us has only ~9 deg to the left):
-                               # re-fit the horn nearer the middle, or widen this if the servo really goes further
+    servo_max_us: 2500.0       # shrinks the reachable angles to fit: with pan centred at 1600 us, 2500 lets it
+                               # reach +81 deg to the left (2400 stopped it at +72; -90 right is at 600 us).
+                               # If the servo buzzes at full left, it is against its stop: back to 2400.
+                               # Full +-90: re-fit the pan horn one tooth so straight ahead is near 1500 us
     hold_on_close: true        # on shutdown park at centre and KEEP holding it (false: release the PWM, servos go limp)
     servo_power_gpio: 4        # BCM pin that reads the servo +5 V through a 10k/20k divider (high = on); 0 = none fitted.
                                # While it reads low the head is frozen and moves are refused, so switching the servos on

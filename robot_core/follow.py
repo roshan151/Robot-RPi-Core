@@ -261,8 +261,9 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
             look = res.get("head")
             if head and look:
                 tracking = res.get("locked") and res["state"] in ("tracking", "holding")
-                base = settings.FOLLOW_TRACK_TILT_DEG if tracking else settings.FOLLOW_TILT_DEG
-                head.gimbal.move_to(look[0], base + look[1], wait=True)
+                base = settings.FOLLOW_TILT_DEG if not tracking else settings.FOLLOW_TRACK_TILT_DEG
+                fast = getattr(head.gimbal, "fast_dps", None) if res["state"] == "searching" else None
+                head.gimbal.move_to(look[0], base + look[1], speed_dps=fast, wait=True)   # search: quicker, still ramped
                 head.gimbal.wait_settled()
             if res["turn_deg"]:
                 _move(motion, motion.turn, res["turn_deg"])

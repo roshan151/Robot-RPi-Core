@@ -207,7 +207,8 @@ class AxisConfig:
     center_us: float = 1500.0       # the start position — trim per servo
     us_per_deg: float = 2000.0 / 180.0
     invert: bool = False            # flip if +angle moves the wrong way
-    max_speed_dps: float = 30.0     # cruise speed (deg/s): slow and deliberate
+    max_speed_dps: float = 30.0     # the speed ceiling (deg/s): no move goes faster
+    cruise_dps: Optional[float] = None   # a move that asks for no speed goes this fast (None: the ceiling)
     accel_dps2: float = 180.0
     min_us: float = 500.0           # hard electrical limits: no trim or angle can push a pulse
     max_us: float = 2400.0          # outside these (an SG90 just buzzes against its end stop)
@@ -223,7 +224,7 @@ class _Axis:
         self.pos = 0.0          # commanded angle right now (deg)
         self.vel = 0.0
         self.target = 0.0
-        self.speed = cfg.max_speed_dps
+        self.speed = cfg.cruise_dps or cfg.max_speed_dps
         self.last_us = 0.0      # the pulse last written: one frame may not jump far from it
         # The angles this servo can really reach: inside min_deg..max_deg AND
         # inside the min_us..max_us pulse window around this centre. Clamping to
@@ -403,12 +404,18 @@ class Gimbal:
             for ax, want in ((self.pan, pan), (self.tilt, tilt)):
                 if want is not None:
                     ax.target = ax.clamp(want)
-                    ax.speed = min(speed_dps or ax.cfg.max_speed_dps, ax.cfg.max_speed_dps)    # servo_speed_dps is a hard ceiling
+                    ax.speed = min(speed_dps or ax.cfg.cruise_dps or ax.cfg.max_speed_dps,
+                                   ax.cfg.max_speed_dps)     # the ceiling (servo_fast_dps) is hard
             self._moving = True
             target = (self.pan.target, self.tilt.target)
         if wait:
             self.wait(timeout)
         return target
+
+    @property
+    def fast_dps(self) -> float:
+        """The fastest a move may ask for (robot.yaml servo_fast_dps): still ramped, never a snap."""
+        return self.pan.cfg.max_speed_dps
 
     def wait(self, timeout: float = 10.0) -> bool:
         with self._arrived:
@@ -571,19 +578,20 @@ def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float
     """A Gimbal from the `/explorer` parameters in robot.yaml (channels, centre
     trims, us-per-degree, inversion, speed). Pan is always ±90°; callers may narrow the tilt
     range — the face tasks pass tilt_min=0 so the head never looks below level."""
-    speed = float(p.get("servo_speed_dps", 30.0))
+    speed = float(p.get("servo_speed_dps", 30.0))                       # every ordinary move
+    ceiling = max(speed, float(p.get("servo_fast_dps", speed)))       # moves that ask for more (follow's search)
     lo_us, hi_us = float(p.get("servo_min_us", 500.0)), float(p.get("servo_max_us", 2400.0))
     pin = int(p.get("servo_power_gpio") or 0)
     return Gimbal(
         pan=AxisConfig(channel=int(p.get("pan_channel", 1)), min_deg=PAN_DEFAULT.min_deg, max_deg=PAN_DEFAULT.max_deg,
                        center_us=float(p.get("pan_center_us", 1500.0)),
                        us_per_deg=float(p.get("pan_us_per_deg", PAN_DEFAULT.us_per_deg)),
-                       invert=bool(p.get("pan_invert", False)), max_speed_dps=speed,
+                       invert=bool(p.get("pan_invert", False)), max_speed_dps=ceiling, cruise_dps=speed,
                        min_us=lo_us, max_us=hi_us),
         tilt=AxisConfig(channel=int(p.get("tilt_channel", 0)), min_deg=tilt_min, max_deg=tilt_max,
                         center_us=float(p.get("tilt_center_us", 1500.0)),
                         us_per_deg=float(p.get("tilt_us_per_deg", TILT_DEFAULT.us_per_deg)),
-                        invert=bool(p.get("tilt_invert", False)), max_speed_dps=speed,
+                        invert=bool(p.get("tilt_invert", False)), max_speed_dps=ceiling, cruise_dps=speed,
                         min_us=lo_us, max_us=hi_us),
         backend=backend, chip=int(p.get("pwm_chip", 0)),
         hold_on_close=bool(p.get("hold_on_close", True)),

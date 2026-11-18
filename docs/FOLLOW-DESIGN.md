@@ -36,10 +36,10 @@ locks onto whichever enrolled person is confirmed first.
 
 | State | Meaning | Move |
 |---|---|---|
-| `searching` | Not locked yet (or lost for a while) | The robot stays put and the **head** sweeps (`head` in the answer: pan, tilt above the follow tilt): left to 90° in 30° steps, up 45°, across to −90°, down, back to centre. The sweep pauses while anyone is in view |
+| `searching` | Not locked yet (or lost for a while) | The robot stays put and the **head** sweeps (`head` in the answer: pan, tilt above the follow tilt): eight looks: left to 90° in 45° steps, up 30°, across to −90°, down, back to centre, at `servo_fast_dps` (120°/s, still ramped). With `hint_deg` it looks where they were last seen first. The sweep pauses while anyone is in view |
 | `tracking` | Found | Turn to face them (deadband 8°). If within 25° of ahead and the distance is known, drive `min(distance − 1.2, 0.5)` m |
 | `holding` | Missed for ≤ 3 frames | Nothing |
-| `gone` | The whole head sweep with no luck | The Pi ends the task |
+| `gone` | The whole head sweep with no luck, or 20 s since they were lost (`search_s`), whichever comes first | The Pi ends the task and the voice session reopens |
 
 `turn_deg` uses the drive/turn tools' convention (+ = right); `bearing_deg`
 uses the head's (+ = left).

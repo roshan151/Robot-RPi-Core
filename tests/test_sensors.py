@@ -714,3 +714,20 @@ def test_tof_over_usb_reads_text_grids():
         assert g.rows[0][0] == pytest.approx(1.056)                         # turned upright: was row 7, col 0
     finally:
         tof.close()
+
+
+def test_moves_go_at_the_usual_speed_unless_they_ask_for_more_up_to_the_ceiling():
+    from robot_core.sensors import gimbal as gm
+    g = gm.from_params({"servo_speed_dps": 60.0, "servo_fast_dps": 120.0, "pan_center_us": 1600.0,
+                        "servo_max_us": 2500.0, "servo_power_gpio": 0}, backend="fake")
+    try:
+        assert g.fast_dps == 120.0
+        g.move_to(pan=10, wait=False)
+        assert g.pan.speed == 60.0
+        g.move_to(pan=20, speed_dps=g.fast_dps, wait=False)
+        assert g.pan.speed == 120.0
+        g.move_to(pan=30, speed_dps=500, wait=False)
+        assert g.pan.speed == 120.0                                  # the ceiling is hard
+        assert g.pan.hi == pytest.approx(81.0, abs=0.1) and g.pan.lo == -90.0   # 2500 us: +81 to the left
+    finally:
+        g.close()
