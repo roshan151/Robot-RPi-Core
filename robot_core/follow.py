@@ -552,7 +552,6 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
             if last_seen and here and time.monotonic() - last_seen[1] < LAST_SEEN_S:
                 hint = round(math.degrees(_wrap(last_seen[0] - here[2])), 1)
             img = jpeg(frame.main, settings.FACE_WIRE_LONG_EDGE)
-            debug_upload.offer_jpeg(getattr(frame, "seq", 0), img)   # debug mode: sent as is, no second encode
             res = vision.follow_step(
                 img, seq,
                 pan_deg=frame.pan_deg, tilt_deg=frame.tilt_deg,
@@ -583,9 +582,17 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                         res = {**res, "turn_deg": turn, "drive_m": drive, "distance_m": mv[2]}
                         log.info("follow %d: bearing %+.0f, tracked at %.2f m: turn %+.0f, drive %.2f",
                                  seq, b, mv[2], turn, drive)
-            # The Mac drives only to 1.2 m from them; the Pi goes on to FOLLOW_KEEP_M (same 25 deg rule).
+            # The Mac drives only to 1.2 m from them; the Pi goes on to FOLLOW_KEEP_M (same 25 deg rule,
+            # judged after this frame's turn: Nov 18, 29 deg off meant turn and never drive).
+            debug_upload.offer_event(img, {                 # debug mode: this frame, the Mac's answer, the decision
+                "task": "follow", "seq": seq, "state": res["state"], "target": res.get("target"),
+                "bearing_deg": res.get("bearing_deg"), "distance_m": res.get("distance_m"),
+                "distance_from": res.get("distance_from"), "turn_deg": res["turn_deg"], "drive_m": res["drive_m"],
+                "range_m": rng, "pose": here, "pose_now": pose(), "head": res.get("head"),
+                "busy": motion.busy()}, grid.rows if grid is not None else None, getattr(frame, "seq", None))
             near_m, drive_m = res.get("distance_m") or rng, res["drive_m"]
-            if res["state"] == "tracking" and near_m and abs(res.get("bearing_deg") or 0.0) <= 25.0 \
+            if res["state"] == "tracking" and near_m \
+                    and abs((res.get("bearing_deg") or 0.0) + res["turn_deg"]) <= DRIVE_MAX_BEARING_DEG \
                     and near_m - settings.FOLLOW_KEEP_M >= MIN_DRIVE_M:
                 drive_m = max(drive_m, round(min(near_m - settings.FOLLOW_KEEP_M, settings.FOLLOW_MAX_DRIVE_M), 2))
             zones = []                                # the tracking view, for the path check (#3, #4)

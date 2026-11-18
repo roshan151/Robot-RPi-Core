@@ -198,6 +198,13 @@ def main(args=None) -> None:
     connect(node)                        # after setup(): status + warnings go to the OLED
     status.task("voice")
 
+    # A thread that dies (the rclpy spin thread included) says so in logs.json, not only the journal.
+    def _thread_died(a) -> None:
+        robot_log.event("fatal", logging.CRITICAL, cause="thread died",
+                        thread=a.thread.name if a.thread else "?",
+                        err=f"{a.exc_type.__name__}: {a.exc_value}", tb=robot_log._short_tb(a.exc_traceback))
+    threading.excepthook = _thread_died
+
     # rclpy on its own thread so the asyncio loop below never waits on it.
     executor = MultiThreadedExecutor(num_threads=4)
     executor.add_node(node)
@@ -233,16 +240,32 @@ def main(args=None) -> None:
         if m.state in ("bumped", "drop"):            # a drop under the TF-Luna: treated like a bump
             _bump_t[0] = time.monotonic()
 
-    node.create_subscription(MotionHealth, "motion_health", _on_health, 10)
+    from rclpy.callback_groups import ReentrantCallbackGroup
+    topics = ReentrantCallbackGroup()        # never held back by a slow callback elsewhere
+    node.create_subscription(MotionHealth, "motion_health", _on_health, 10, callback_group=topics)
 
     # Where the robot is (encoders, gyro heading with the IMU): follow's floor memory and search hint.
     from nav_msgs.msg import Odometry
 
+    _pose_t, _odom_warned = [time.monotonic()], [False]   # when /odom last came; warned already?
+
     def _on_odom(m) -> None:
         q = m.pose.pose.orientation
         _pose[0] = (m.pose.pose.position.x, m.pose.pose.position.y, 2.0 * math.atan2(q.z, q.w))
+        _pose_t[0] = time.monotonic()
 
-    node.create_subscription(Odometry, "odom", _on_odom, 10)
+    node.create_subscription(Odometry, "odom", _on_odom, 10, callback_group=topics)
+
+    def _odom_watch() -> None:               # follow and explore steer by this pose: say when it stops
+        quiet = time.monotonic() - _pose_t[0]
+        if quiet > 5.0 and not _odom_warned[0]:
+            _odom_warned[0] = True
+            robot_log.event("voice.diag", logging.WARNING,
+                            err=f"no /odom for {quiet:.0f} s: follow has no pose (drivetrain telemetry?)")
+        elif quiet <= 5.0:
+            _odom_warned[0] = False
+
+    node.create_timer(5.0, _odom_watch, callback_group=topics)
     _explore_stop = node.create_client(Trigger, "explore/stop")
 
     try:

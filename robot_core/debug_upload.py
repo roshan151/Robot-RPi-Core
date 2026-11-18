@@ -12,6 +12,11 @@ Built so it can never slow the robot down:
   * a frame the task already JPEG-encoded for the Mac (offer_jpeg) is sent as it is.
 Off (the default, and in every process that never calls configure) each offer_*
 returns at once.
+
+Events (offer_event) are different: a task's own record of one step, e.g. each follow
+frame with what the Mac answered and what the Pi decided. They are queued, not dropped
+(up to EVENT_QUEUE; only the oldest go if the Mac is unreachable that long), and sent
+as fast as the link allows, so a debug session has every one of them.
 """
 
 from __future__ import annotations
@@ -20,6 +25,7 @@ import json
 import logging
 import threading
 import time
+from collections import deque
 from datetime import datetime, timezone
 from typing import Callable, Optional
 
@@ -31,6 +37,7 @@ BACKOFF_S = 5.0              # Mac unreachable: wait this long before the next t
 JPEG_LONG_EDGE = 640         # frames the task did not encode itself are sent this size...
 JPEG_QUALITY = 80            # ...at this quality
 TOF_ONLY_AFTER_S = 1.0       # no new camera frame for this long: send ToF grids on their own
+EVENT_QUEUE = 120            # events waiting to be sent, at most (the oldest go first)
 
 _on = False
 _lock = threading.Lock()
@@ -39,6 +46,7 @@ _stop = threading.Event()
 _frame = None                # camera Frame (sensors/camera.py)
 _jpeg = None                 # (frame seq, JPEG bytes) the task encoded for the Mac
 _tof = None                  # (time.monotonic(), rows in metres / None)
+_events: deque = deque(maxlen=EVENT_QUEUE)   # (jpeg or None, note dict, rows or None, frame seq or None)
 _cfg: dict = {}
 
 
@@ -85,6 +93,15 @@ def offer_tof(t: float, rows) -> None:
         _new.set()
 
 
+def offer_event(jpeg: Optional[bytes], note: dict, rows=None, seq: Optional[int] = None) -> None:
+    """Queue one step's record (never dropped while there is room): its JPEG, a small dict
+    of what happened (`note`), the ToF grid it used, and its camera frame seq."""
+    if _on:
+        with _lock:
+            _events.append((jpeg, note, rows, seq))
+        _new.set()
+
+
 def _encode(img) -> bytes:
     import cv2
     h, w = img.shape[:2]
@@ -108,6 +125,32 @@ def _loop() -> None:
     while not _stop.is_set():
         _new.wait(0.5)
         _new.clear()
+        while _events and not _stop.is_set():          # every event, in order, before the sampled frames
+            with _lock:
+                jpeg_e, note, rows, seq = _events[0]
+            n += 1
+            meta = {"session": _cfg["session"], "n": n, "kind": "event",
+                    "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+                    "geometry": _cfg["geometry"], "note": note, "frame": {"seq": seq} if seq else None,
+                    "tof": {"age_ms": 0, "rows": _rows(rows)} if rows else None}
+            try:
+                if _cfg["extras"]:
+                    meta["extras"] = _cfg["extras"]()
+                files = {"image": ("frame.jpg", jpeg_e, "image/jpeg")} if jpeg_e else None
+                r = s.post(_cfg["url"], data={"meta": json.dumps(meta, default=str)}, files=files,
+                           timeout=TIMEOUT_S * 2)
+                r.raise_for_status()
+                with _lock:
+                    _events.popleft()
+                if seq:
+                    sent_seq = seq                         # the sampled path need not send this frame again
+                failing = False
+            except Exception as e:                         # noqa: BLE001
+                if not failing:
+                    log.warning("debug mode: event upload failed (%s); keeping up to %d", type(e).__name__, EVENT_QUEUE)
+                failing = True
+                _stop.wait(BACKOFF_S)
+                break
         t0 = time.monotonic()
         with _lock:
             frame, jpeg, tof = _frame, _jpeg, _tof

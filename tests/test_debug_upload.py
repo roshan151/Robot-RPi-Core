@@ -59,3 +59,17 @@ def test_newest_only_at_most_max_hz_and_paired_with_the_tof(monkeypatch):
     assert meta["frame"]["seq"] == 40 and files["image"][1] == b"already-encoded"
     assert meta["tof"]["rows"][0][0] == 4.0 and meta["geometry"]["camera_hfov_deg"] == 66.0
     assert [m["n"] for _, m, _, _ in posts] == list(range(1, len(posts) + 1))
+
+
+def test_events_are_all_sent_in_order_with_their_notes(monkeypatch):
+    du = _fresh(monkeypatch)
+    du.configure(True, "http://mac:8080", geometry={})
+    try:
+        for i in range(1, 11):                          # 10 events in a burst: none dropped
+            du.offer_event(b"jpg%d" % i, {"task": "follow", "seq": i}, [[1.0] * 8] * 8, seq=i)
+        time.sleep(1.0)
+    finally:
+        du.stop()
+    ev = [(m, f) for _, m, f, _ in _Session.posts if m.get("kind") == "event"]
+    assert [m["note"]["seq"] for m, _ in ev] == list(range(1, 11))
+    assert ev[0][1]["image"][1] == b"jpg1" and ev[0][0]["tof"]["rows"][0][0] == 1.0

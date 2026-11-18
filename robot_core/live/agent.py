@@ -656,7 +656,7 @@ async def _run_task(tools: RobotTools) -> None:
     await tools.dispatch("answer", {"value": "yes" if ok or cancelled else "no"})
     # Let the gesture finish before the microphone reopens, and drop its move
     # results so the next session is not told about them.
-    for _ in range(100):
+    for _ in range(15):                      # 3 s at most (Nov 18: a lost move result held it 20 s)
         if not tools.motion.busy():
             break
         await asyncio.sleep(0.2)
