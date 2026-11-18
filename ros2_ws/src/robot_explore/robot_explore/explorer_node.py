@@ -164,6 +164,7 @@ class ExplorerNode(Node):
         p("tof_flip_cols", False)
         p("tof_perpendicular", True)
         p("drive_tilt_deg", -30.0)
+        p("head_tilt_offset_deg", 0.0)
         p("h_max_m", 0.03)
         p("min_landing_m", 0.20)
         p("max_drop_m", 0.03)
@@ -212,7 +213,7 @@ class ExplorerNode(Node):
         self.head = Head(self.gimbal, self.lidar, self.camera, HeadGeometry(
             height_m=float(v("head_height_m")), pan_axis_x_m=float(v("pan_axis_x_m")),
             hfov_deg=float(v("hfov_deg")), drive_tilt_deg=float(v("drive_tilt_deg")),
-            tof_perpendicular=bool(v("tof_perpendicular"))),
+            tof_perpendicular=bool(v("tof_perpendicular")), tilt_offset_deg=float(v("head_tilt_offset_deg"))),
             pitch=lambda: self._pitch(),
             terrain_params=terrain.params_from({n: v(n) for n in ("h_max_m", "min_landing_m", "max_drop_m", "path_width_m",
                                                              "drive_on_unknown_floor", "robot_height_m", "stop_short_m")}))

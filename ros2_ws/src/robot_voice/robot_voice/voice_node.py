@@ -142,7 +142,8 @@ def _run_task(task: str, name: str) -> bool:
             head = Head(gimbal, lidar, camera, HeadGeometry(
                 height_m=float(p.get("head_height_m", 0.25)), hfov_deg=float(p.get("hfov_deg", 66.0)),
                 pan_axis_x_m=float(p.get("pan_axis_x_m", 0.05)), drive_tilt_deg=drive_tilt,
-                tof_perpendicular=bool(p.get("tof_perpendicular", True))),
+                tof_perpendicular=bool(p.get("tof_perpendicular", True)),
+                tilt_offset_deg=float(p.get("head_tilt_offset_deg", 0.0))),
                 pitch=lambda: _pitch[0], terrain_params=terrain.params_from(p))
         except Exception as e:                                  # noqa: BLE001
             robot_log.event("task.error", logging.WARNING, err=f"head unavailable: {type(e).__name__}: {e}")

@@ -134,6 +134,7 @@
     camera_main_size: [1920, 1080]   # explore photos
     face_camera_size: [1920, 1080]   # enroll / match / follow (was [640, 480] for the V2)
     camera_inverted: true      # mounted upside down: rotated 180 deg (ISP on the ribbon camera, software on USB)
+    head_tilt_offset_deg: 21.0 # the head (camera and ToF) looks this far UP at tilt 0, its straight position
     head_height_m: 0.225        # MEASURE: ToF (and camera) height above the floor, head level
     pan_axis_x_m: 0.05         # MEASURE: pan axis ahead of the wheel-axle centre
     hfov_deg: 80.0             # USB HD: measured 2026-11-10 (1 m of tape = 764 px at 1.5 m). The lens bends

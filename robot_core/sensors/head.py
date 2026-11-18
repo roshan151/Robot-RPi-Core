@@ -45,6 +45,7 @@ class HeadGeometry:
     sweep_dps: float = 30.0       # 90° in 3 s → ~3 readings per degree at 100 Hz
     drive_tilt_deg: float = -30.0     # ToF: head tilt for looking at the floor ahead (the drive pose)
     tof_perpendicular: bool = True    # ToF ranges are distances to the sensor's plane, not along each ray
+    tilt_offset_deg: float = 0.0      # how far up the head really looks at tilt 0 (+10 = 10 deg up)
 
 
 @dataclass(frozen=True)
@@ -149,6 +150,7 @@ class Head:
         if grid is None:
             return []
         pan, tilt = (math.radians(a) for a in self.gimbal.angles())
+        tilt += math.radians(self.geom.tilt_offset_deg)
         body = math.radians((self.pitch() if self.pitch else 0.0) or 0.0)
         ox, height = self.geom.pan_axis_x_m, self.geom.height_m
         out = []
