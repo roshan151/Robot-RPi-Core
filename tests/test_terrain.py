@@ -187,3 +187,14 @@ def test_a_head_with_the_single_beam_tfluna_still_probes_the_old_way():
 def test_params_from_robot_yaml_names():
     p = terrain.params_from({"h_max_m": 0.04, "path_width_m": 0.26})
     assert (p.h_max_m, p.corridor_m, p.max_drop_m) == (0.04, 0.26, Params().max_drop_m)
+
+
+def test_returns_nearer_than_the_robot_s_own_front_are_not_obstacles():
+    """Nov 18: the front-mounted TF-Luna read 8-12 cm in the bottom-left zones: a box 15 cm ahead."""
+    from robot_core.sensors import tof8x8
+    rows = [[0.36] * 8 for _ in range(8)]
+    rows[7][:3] = [0.10, 0.08, 0.11]
+    g = tof8x8.Grid(0.0, tuple(tuple(r) for r in rows))
+    gim = SimpleNamespace(angles=lambda: (0.0, -30.0), wait_settled=lambda: True)
+    h = Head(gim, SimpleNamespace(grid=lambda *a, **k: g), None, HeadGeometry(height_m=0.22))
+    assert all(d >= 0.15 for *_, d in h.zones()) and len(h.zones()) == 61

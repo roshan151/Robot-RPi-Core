@@ -61,6 +61,7 @@ log = logging.getLogger(__name__)
 
 MOVE_TIMEOUT_S = 30.0
 MIN_DRIVE_M = 0.08              # a drive cut shorter than this is not worth making
+RECHECK_S = 5.0                 # a hazard on the way seen longer ago than this is looked at again
 MARGIN_M = 0.2                  # the floor must be clear this far past the end of a drive
 FLOOR_MEMORY_S = 10.0           # floor seen clear is trusted this long: people and pets move
 LAST_SEEN_S = 30.0              # where they were last seen is a search hint this long
@@ -281,10 +282,15 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
         return want_m, None, seen
     p = head.terrain
     limit, why = want_m, None
-    if check_known and hazards is not None and pose is not None and not local_plan.line_clear(
-            pose[:2], (pose[0] + limit * math.cos(pose[2]), pose[1] + limit * math.sin(pose[2])),
-            hazards.points(), _radius(p)):
-        return 0.0, "known hazard", seen             # found before: no need to look at it again
+    # Something remembered on the way: seen in the last RECHECK_S, refused without looking again;
+    # older, looked at again (Nov 18: one false reading refused every drive for two minutes), and
+    # a fresh look that finds the way clear forgets it.
+    recheck = False
+    if check_known and hazards is not None and pose is not None:
+        end = (pose[0] + limit * math.cos(pose[2]), pose[1] + limit * math.sin(pose[2]))
+        if not local_plan.line_clear(pose[:2], end, hazards.points(RECHECK_S), _radius(p)):
+            return 0.0, "known hazard", seen
+        recheck = not local_plan.line_clear(pose[:2], end, hazards.points(), _radius(p))
     near = _in_the_way(zones, p, person_m)           # anything up to the robot's height (#4)
     if near is not None:
         _remember(hazards, pose, _way_points(zones, p, person_m), person_xy)
@@ -294,10 +300,10 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
         return 0.0, why, seen
 
     # The floor (#3: look as little as possible).
-    have = seen.left(pose, now) if seen else 0.0
+    have = 0.0 if recheck or not seen else seen.left(pose, now)
     if have >= limit + MARGIN_M - 1e-9:
         return limit, why, seen                      # seen clear a moment ago, still ahead
-    if zones:                                        # the tracking view's lower rows
+    if zones and not recheck:                        # the tracking view's lower rows
         pts = [(x, y, h) for _, _, x, y, h, _ in zones]
         floor = [x for x, y, h in pts if h is not None and abs(y) <= p.corridor_m / 2.0 and x >= p.near_m]
         # Only if it saw the floor right in front, or memory covers the stretch it did not.
@@ -313,9 +319,14 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
         pts = pts + head.floor_look(head.geom.drive_tilt_deg + FAR_LOOK_DEG)    # a long drive: look further out
     head.gimbal.move_to(back[0], back[1], wait=True)
     head.gimbal.wait_settled()
+    got, short = _shorten(pts, p, limit)
+    if recheck and got >= MIN_DRIVE_M:               # seen clear now: what was remembered there was wrong
+        for i in range(int(got / 0.1) + 1):
+            hazards.forget_near((pose[0] + i * 0.1 * math.cos(pose[2]), pose[1] + i * 0.1 * math.sin(pose[2])),
+                                _radius(p))
+        log.info("follow: path seen clear for %.2f m: remembered hazards there forgotten", got)
     _remember(hazards, pose, local_plan.hazards_from_floor(
         pts, p, (geom.pan_axis_x_m, geom.height_m) if hasattr(geom, "pan_axis_x_m") else None), person_xy)
-    got, short = _shorten(pts, p, limit)
     reach = round(_seen_to(pts, p) - MARGIN_M, 2)    # never drive onto floor it did not measure
     if got > reach and not p.drive_unknown and not watched:
         got, short = (reach if reach >= MIN_DRIVE_M else 0.0), short or f"floor seen only to {reach + MARGIN_M:.2f} m"

@@ -532,3 +532,17 @@ def test_a_wrong_heading_cannot_make_it_spin():
     follow.follow(Camera(), Vision([ahead, ahead, ahead, step("gone")]), m, "Sam", head=Head(), seconds=60,
                   clock=Clock(), pose=flipped)
     assert all(k != "turn" for k, _ in m.moves), m.moves
+
+
+def test_a_hazard_remembered_long_ago_is_looked_at_again_and_forgotten_when_clear():
+    """Nov 18: one false reading made every later drive 'known hazard' for two minutes."""
+    from robot_core import local_plan
+    t = [0.0]
+    hz = local_plan.Hazards(clock=lambda: t[0])
+    hz.add((0.0, 0.0, 0.0), [(0.4, 0.0), (0.45, 0.0)])            # a phantom right ahead
+    h = TofHead(scans=(floor(until=2.0),))
+    go, why, _ = follow._plan_drive(h, 0.6, [], 1.5, None, (0.0, 0.0, 0.0), 0.0, hz)
+    assert (go, why, h.glances) == (0.0, "known hazard", 0)        # just seen: refused, no second look
+    t[0] = follow.RECHECK_S + 1.0
+    go, why, _ = follow._plan_drive(h, 0.6, [], 1.5, None, (0.0, 0.0, 0.0), 0.0, hz)
+    assert go == 0.6 and h.glances == 1 and hz.points() == []      # looked again, clear: forgotten

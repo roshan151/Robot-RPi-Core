@@ -81,9 +81,10 @@ class Hazards:
         self._pts = [q for q in self._pts if now - q[2] <= self.keep_s] + new
         return len(new)
 
-    def points(self) -> List[XY]:
-        now = self._clock()
-        return [(x, y) for x, y, t in self._pts if now - t <= self.keep_s]
+    def points(self, max_age_s: Optional[float] = None) -> List[XY]:
+        """The points still kept (only those seen in the last `max_age_s`, if given)."""
+        now, keep = self._clock(), self.keep_s if max_age_s is None else min(self.keep_s, max_age_s)
+        return [(x, y) for x, y, t in self._pts if now - t <= keep]
 
     def forget_near(self, xy: XY, radius_m: float) -> None:
         self._pts = [q for q in self._pts if math.hypot(q[0] - xy[0], q[1] - xy[1]) > radius_m]

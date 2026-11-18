@@ -47,6 +47,8 @@ class HeadGeometry:
     tof_perpendicular: bool = True    # ToF ranges are distances to the sensor's plane, not along each ray
     tilt_offset_deg: float = 0.0      # how far up the head really looks at tilt 0 (+10 = 10 deg up)
     pan_axis_y_m: float = 0.0         # ToF left of the robot's centre line (negative: to the right)
+    self_range_m: float = 0.15        # ToF returns nearer than this are the robot itself (Nov 18: the front-mounted
+                                      # TF-Luna in the bottom-left zones at 8-12 cm read as a 15 cm box ahead)
 
 
 @dataclass(frozen=True)
@@ -169,6 +171,8 @@ class Head:
                            fwd * math.sin(body) + up * math.cos(body))
                 along = math.sqrt(1.0 + ty * ty + tz * tz)                      # ray length per metre of depth
                 d = grid.rows[r][c]
+                if d is not None and d < self.geom.self_range_m:
+                    continue                                                    # its own body: no reading
                 if d is not None:
                     depth = d if self.geom.tof_perpendicular else d / along
                     out.append((r, c, ox + depth * fwd, oy + depth * left, height + depth * up, depth * along))
