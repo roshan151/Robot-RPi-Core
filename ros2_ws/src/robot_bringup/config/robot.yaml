@@ -19,8 +19,8 @@
     # Calibration. Both scale the TARGET, not the measurement, so neither can
     # make a move stop early — short travel is traction or a lost encoder
     # channel, never calibration. See the calibration section of the README.
-    ticks_per_cm: 38.5
-    ticks_per_degree: 5.4      # a float: the node declares it as one, and ROS refuses an int here
+    ticks_per_cm: 37.2
+    ticks_per_degree: 7.309    # a float: the node declares it as one, and ROS refuses an int here
 
     # The hard limit on a single move. Enforced in the goal callback, so the
     # model cannot talk its way past it.
@@ -150,8 +150,8 @@
     tof_addr: 51               # 0x33, both address switches as shipped; not used on USB
     tof_tilt: 90               # board turned on its side: 90 = a quarter-turn clockwise seen from behind the head
                                # (its top edge to the robot's right), -90 = anticlockwise, 0 = upright. Multiples of 90
-    tof_range_scale: 1.0       # calibrate.py drive (Monitoring-Service): true = scale * reading + offset
-    tof_range_offset_m: 0.0
+    tof_range_scale: 1.4682    # calibrate.py drive (Monitoring-Service): true = scale * reading + offset
+    tof_range_offset_m: -1.1013
     tof_flip_rows: false       # true if the floor shows in the TOP rows (calibrate.py tof)
     tof_flip_cols: false       # true if a hand on the robot's left shows in the RIGHT columns
     tof_perpendicular: true    # ranges are distances to the sensor's face, not along each ray
