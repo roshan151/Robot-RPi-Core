@@ -27,16 +27,34 @@ def test_boot_blips_until_the_voice_session_is_up_then_plays_online_once():
     assert r.heard() is None
 
 
-def test_a_lost_session_blips_until_it_is_back_and_gives_up_after_a_while():
+def test_a_lost_session_blips_until_the_screen_shows_the_mic_again():
     r = Rig()
     r.b.on_message({"k": "sound", "v": "online"}); r.heard()
     r.b.on_message({"k": "error", "v": "L01"})
-    assert r.heard() == "connecting" and r.heard() == "connecting"
+    r.t += 600
+    assert r.heard() == "connecting" and r.heard() == "connecting", "for as long as it takes"
+    r.b.on_message({"k": "note", "v": "mic: room", "n": 5.0})
+    assert r.heard() is None, "mic: room on the screen: the session is opening again"
     r.b.on_message({"k": "sound", "v": "online"})
     assert r.heard() == "online" and r.heard() is None
-    r.b.on_message({"k": "error", "v": "L01"})
-    r.t += buzzer.CONNECT_FOR_S + 1
-    assert r.heard() is None, "a lost 'online' cannot leave it blipping for ever"
+    r.b.on_message({"k": "sound", "v": "offline"})                      # the agent gave up
+    assert r.heard() == "connecting"
+    r.b.on_message({"k": "note", "v": "mic: buds"})
+    assert r.heard() is None
+
+
+def test_quiet_during_a_task_then_blips_after_it_until_the_session_is_back():
+    r = Rig()
+    r.b.on_message({"k": "task", "v": "voice"})
+    r.b.on_message({"k": "sound", "v": "online"}); r.heard()
+    r.b.on_message({"k": "task", "v": "follow"})                        # session closed for the task
+    assert r.heard() is None
+    r.b.on_message({"k": "task", "v": "voice"})                         # task over
+    assert r.heard() == "connecting" and r.heard() == "connecting"
+    r.b.on_message({"k": "note", "v": "mic: room"})
+    assert r.heard() is None
+    r.b.on_message({"k": "sound", "v": "online"})
+    assert r.heard() == "online"
 
 
 def test_failures_sound_once_however_often_they_are_reported_and_end_the_blips():

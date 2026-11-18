@@ -295,7 +295,7 @@ A passive buzzer lets the robot be understood without looking at its screen. The
 | Sound | What you hear | When |
 |---|---|---|
 | **Online** | three quick rising notes, once | the voice session is up and the robot is waiting for a command (after boot, and after a lost session comes back) |
-| **Connecting** | two short low blips, every 2.5 s | booting, or the voice session dropped and is reconnecting (`L01`); stops at "online", at a failure, or after 90 s. One pair of blips alone = a passing error: vision unreachable or slow (`V01`, `V02`), motor command timeout (`S04`), audio error (`A01`) |
+| **Connecting** | two short low blips, every 1 s | the voice session is not up: booting, the session dropped (`L01`), the voice agent gave up, or a task (follow, enroll) has ended and the session has not reopened. Keeps going, however long, until the screen shows `mic: room` (or `mic: buds`: the agent opening its session again), "online", or a failure. Quiet while a task runs, since the session is closed on purpose then. One pair of blips alone = a passing error: vision unreachable or slow (`V01`, `V02`), motor command timeout (`S04`), audio error (`A01`) |
 | **Failure** | four falling notes, the last one long | something that will not fix itself: fatal error (`X02`), Arduino link lost (`S01`), emergency stop (`S03`), camera will not open (`C01`), head stopped or latched (`G04` to `G07`), explore aborted (`N03`). At most once every 8 s |
 
 ### Wiring the buzzer

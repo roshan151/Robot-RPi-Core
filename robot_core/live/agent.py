@@ -585,6 +585,7 @@ async def _run_supervised(tools: RobotTools) -> None:
                 backoff = settings.LIVE_RECONNECT_BACKOFF_S
                 continue
             robot_log.event("session.stop", reason="live session closed")
+            status.sound("offline")          # buzzer: no voice until the robot is restarted
             return
         except asyncio.CancelledError:
             raise

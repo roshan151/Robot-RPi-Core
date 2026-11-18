@@ -1,7 +1,7 @@
 """Three sounds on a passive buzzer, so the robot can be understood without its screen.
 
     online       three rising notes, once      the voice session is up: waiting for a command
-    connecting   two short blips, every 2.5 s  booting / (re)connecting / a passing error
+    connecting   two short blips, every 1 s    the voice session is not up / a passing error
     failure      four falling notes, the last  something is broken and will not fix itself
                  one long
 
@@ -9,8 +9,12 @@ Nothing else in the robot calls this. The display node feeds it every status
 message (the ones it already draws on the OLED) and `on_message` decides:
 
     sound "online"   (the voice agent, when its session connects)   -> online, once
-    start-up, sound "connecting", or error L01 (voice session lost) -> connecting, until
-                     "online", a failure, or CONNECT_FOR_S has passed
+    the voice session not up: start-up, error L01 (session lost),
+        sound "offline" (the voice agent gave up), or a task (follow,
+        enroll...) over and back to "voice"                         -> connecting, repeated
+        until the screen shows "mic: room" / "mic: buds" (the agent opening its
+        session again), "online", a failure, or a task starting (the session is
+        closed on purpose while one runs: no blips then)
     errors in TRANSIENT (vision unreachable, motor command timeout) -> connecting, once
     errors in FAILURES  (fatal, Arduino lost, e-stop, head latched) -> failure
 
@@ -36,8 +40,7 @@ TUNES = {
 FAILURES = {"X02", "S01", "S03", "C01", "G04", "G05", "G06", "G07", "N03"}
 RECONNECTING = {"L01"}                    # keeps blipping until the session is back
 TRANSIENT = {"V01", "V02", "S04", "A01"}  # one pair of blips
-CONNECT_EVERY_S = 2.5
-CONNECT_FOR_S = 90.0                      # a lost "online" cannot leave it blipping for ever
+CONNECT_EVERY_S = 1.0
 REPEAT_GAP_S = 8.0                        # the same error reported over and over sounds once in this long
 
 
@@ -64,7 +67,8 @@ class Buzzer:
         self._tone, self._clock, self._sleep = tone, clock, sleep
         self._q: "queue.Queue[Optional[str]]" = queue.Queue(maxsize=4)
         self._online = False
-        self._connecting_until = clock() + CONNECT_FOR_S      # booting: connecting until told otherwise
+        self._blipping = True                                 # booting: the voice session is not up yet
+        self._task = ""
         self._last: dict = {}                                 # tune -> when it was last asked for
         self._thread: Optional[threading.Thread] = None
 
@@ -74,19 +78,25 @@ class Buzzer:
         """One status message (robot_core.status). Never raises, never blocks."""
         k, v, now = msg.get("k"), str(msg.get("v", "")), self._clock()
         if k == "sound" and v == "online":
-            self._connecting_until = 0.0
+            self._blipping = False
             if not self._online:                              # a silent re-connect (session length limit) stays silent
                 self._online = True
                 self.play("online")
-        elif (k == "sound" and v == "connecting") or (k == "error" and v in RECONNECTING):
-            self._online, self._connecting_until = False, now + CONNECT_FOR_S
+        elif k == "note" and v.startswith("mic:"):            # the agent is opening its session again
+            self._blipping = False
+        elif (k == "sound" and v in ("connecting", "offline")) or (k == "error" and v in RECONNECTING):
+            self._online, self._blipping = False, True
         elif k == "error" and v in FAILURES:
-            self._connecting_until = 0.0
+            self._blipping = False
             self._once("failure", now)
         elif k == "error" and v in TRANSIENT:
             self._once("connecting", now)
-        elif k == "task" and v not in ("", "voice"):          # at work without a voice session (explore launch)
-            self._connecting_until = 0.0
+        elif k == "task":
+            if v not in ("", "voice"):                        # a task runs with the session closed on purpose
+                self._blipping = False
+            elif v == "voice" and self._task not in ("", "voice"):
+                self._online, self._blipping = False, True    # back from a task: until the session is up again
+            self._task = v
 
     def _once(self, name: str, now: float) -> None:
         if now - self._last.get(name, -1e9) >= REPEAT_GAP_S:
@@ -106,7 +116,7 @@ class Buzzer:
         try:
             name = self._q.get(timeout=timeout)
         except queue.Empty:
-            name = "connecting" if self._clock() < self._connecting_until else ""
+            name = "connecting" if self._blipping else ""
         if name is None:
             return False
         try:
