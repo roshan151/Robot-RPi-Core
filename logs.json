@@ -5208,3 +5208,92 @@
 {"ts":"2026-11-18T23:00:52.784Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:260 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
 {"ts":"2026-11-18T23:00:53.255Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
 {"ts":"2026-11-18T23:00:53.256Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-18T23:14:35.198Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-18T23:14:35.929Z","lvl":"info","evt":"session.start","mode":"ros","pid":2175,"log":"logs.json","debug":true}
+{"ts":"2026-11-18T23:14:36.283Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:14:37.966Z","lvl":"info","evt":"log","msg":"debug mode: uploading sensor data to http://roshans-mac-mini.local:8080/v1/debug/frame, session 20261118-171437","src":"robot_core.debug_upload"}
+{"ts":"2026-11-18T23:14:38.200Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v9-vel-noluna built Nov 18 2026 14:52:53","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:14:38.201Z","lvl":"info","evt":"log","msg":"Connected on /dev/ttyUSB0 (boot frame received)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:14:38.253Z","lvl":"info","evt":"log","msg":"motion executor started","src":"robot_core.motion_executor"}
+{"ts":"2026-11-18T23:14:39.623Z","lvl":"info","evt":"log","msg":"drivetrain ready on /dev/ttyUSB0 (limit 5.0 m, velocity on)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T23:14:39.843Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:14:39.844Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T23:14:39.886Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-18T23:14:42.109Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-18T23:14:42.110Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-18T23:15:17.929Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":35.52}
+{"ts":"2026-11-18T23:15:20.087Z","lvl":"info","evt":"voice.heard","text":"proben follow me"}
+{"ts":"2026-11-18T23:15:20.102Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-18T23:15:20.103Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'follow'}) -> {'ok': True, 'starting': 'follow', 'note': 'session closing; it reopens when the task ends'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-18T23:15:20.168Z","lvl":"info","evt":"task.start","task":"follow","name":"","_unregistered":true}
+{"ts":"2026-11-18T23:15:20.173Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 241)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:15:20.175Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T23:15:20.390Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-18T23:15:20.468Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-18T23:15:20.766Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-18T23:15:23.432Z","lvl":"info","evt":"log","msg":"follow 1: searching -, bearing None, None m (None), turn 0.0, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:23.775Z","lvl":"info","evt":"log","msg":"follow 2: tracking Roshan, bearing -29.0, 0.9 m (tof), turn 17.4, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:23.778Z","lvl":"info","evt":"log","msg":"follow 2: bearing -29, tracked at 0.90 m: turn +20, drive 0.40","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:24.745Z","lvl":"debug","evt":"move.start","job":1,"op":"right","val":20.3}
+{"ts":"2026-11-18T23:15:25.387Z","lvl":"info","evt":"move.done","job":1,"op":"right","val":20.3,"dur":0.642}
+{"ts":"2026-11-18T23:15:28.685Z","lvl":"debug","evt":"move.start","job":2,"op":"straight","val":0.4}
+{"ts":"2026-11-18T23:15:28.732Z","lvl":"info","evt":"log","msg":"follow 2: braked mid-drive, blocked at 0.45 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:28.740Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 242)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:15:28.741Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[2],"interrupted":2}
+{"ts":"2026-11-18T23:15:30.009Z","lvl":"info","evt":"log","msg":"follow 3: tracking Roshan, bearing -5.2, 1.46 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:30.010Z","lvl":"info","evt":"log","msg":"follow 3: bearing -5, tracked at 1.46 m: turn +0, drive 0.96","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:30.627Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 straight commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-18T23:15:30.636Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 243)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:15:30.637Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[2],"interrupted":2}
+{"ts":"2026-11-18T23:15:32.413Z","lvl":"info","evt":"log","msg":"follow 3: drive 0.45 of 0.96 m, path floor not seen at 0.70 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:33.538Z","lvl":"info","evt":"log","msg":"follow 3: braked mid-drive, blocked at 0.45 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:33.541Z","lvl":"warn","evt":"move.cancelled","job":3,"op":"straight","val":0.45,"dur":0.0,"detail":"estop service"}
+{"ts":"2026-11-18T23:15:33.552Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 244)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:15:33.553Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[3,2],"interrupted":2}
+{"ts":"2026-11-18T23:15:34.783Z","lvl":"info","evt":"log","msg":"follow 4: tracking Roshan, bearing -5.5, 1.4 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:34.784Z","lvl":"info","evt":"log","msg":"follow 4: bearing -6, tracked at 1.40 m: turn +0, drive 0.90","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:39.944Z","lvl":"info","evt":"log","msg":"follow 4: braked mid-drive, blocked at 0.20 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:39.946Z","lvl":"warn","evt":"move.cancelled","job":4,"op":"straight","val":0.9,"dur":0.0,"detail":"estop service"}
+{"ts":"2026-11-18T23:15:39.954Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 245)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:15:39.956Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[4,2],"interrupted":2}
+{"ts":"2026-11-18T23:15:41.233Z","lvl":"info","evt":"log","msg":"follow 5: tracking Roshan, bearing -5.2, 1.39 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:41.237Z","lvl":"info","evt":"log","msg":"follow 5: bearing -5, tracked at 1.39 m: turn +0, drive 0.89","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:43.641Z","lvl":"info","evt":"log","msg":"follow 5: braked mid-drive, blocked at 0.20 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:43.643Z","lvl":"warn","evt":"move.cancelled","job":5,"op":"straight","val":0.89,"dur":0.0,"detail":"estop service"}
+{"ts":"2026-11-18T23:15:43.647Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 246)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:15:43.651Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[5,2],"interrupted":2}
+{"ts":"2026-11-18T23:15:44.905Z","lvl":"info","evt":"log","msg":"follow 6: tracking Roshan, bearing -5.1, 1.39 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:44.906Z","lvl":"info","evt":"log","msg":"follow 6: bearing -5, tracked at 1.39 m: turn +0, drive 0.89","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:46.447Z","lvl":"info","evt":"log","msg":"follow 6: braked mid-drive, blocked at 0.20 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:46.449Z","lvl":"warn","evt":"move.cancelled","job":6,"op":"straight","val":0.89,"dur":0.0,"detail":"estop service"}
+{"ts":"2026-11-18T23:15:46.457Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 247)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:15:46.458Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[6,2],"interrupted":2}
+{"ts":"2026-11-18T23:15:47.681Z","lvl":"info","evt":"log","msg":"follow 7: tracking Roshan, bearing -5.2, 1.45 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:47.682Z","lvl":"info","evt":"log","msg":"follow 7: bearing -5, tracked at 1.45 m: turn +0, drive 0.95","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:48.703Z","lvl":"warn","evt":"move.cancelled","job":2,"op":"straight","val":0.4,"dur":20.019,"detail":"interrupted by stop"}
+{"ts":"2026-11-18T23:15:49.403Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":28.56,"repeats":1}
+{"ts":"2026-11-18T23:15:50.113Z","lvl":"info","evt":"log","msg":"follow 7: drive 0.50 of 0.95 m, path floor not seen at 0.75 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:51.204Z","lvl":"debug","evt":"move.start","job":7,"op":"straight","val":0.5}
+{"ts":"2026-11-18T23:15:51.415Z","lvl":"info","evt":"voice.heard","text":"Stop and stop follow."}
+{"ts":"2026-11-18T23:15:51.417Z","lvl":"info","evt":"task.cancel","by":"voice","_unregistered":true}
+{"ts":"2026-11-18T23:15:51.418Z","lvl":"info","evt":"log","msg":"tool cancel_task({}) -> {'ok': True, 'note': 'task cancelled'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-18T23:15:51.426Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 248)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:15:51.431Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[7],"interrupted":7}
+{"ts":"2026-11-18T23:15:52.458Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 249)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:15:52.459Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[7],"interrupted":7}
+{"ts":"2026-11-18T23:15:52.515Z","lvl":"info","evt":"log","msg":"follow cancelled (voice)","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:15:53.224Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 straight commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-18T23:15:53.231Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 250)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:15:53.232Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[7],"interrupted":7}
+{"ts":"2026-11-18T23:15:53.643Z","lvl":"info","evt":"task.end","task":"follow","ok":true,"cancelled":true,"_unregistered":true}
+{"ts":"2026-11-18T23:15:53.644Z","lvl":"info","evt":"gesture","name":"yes","text_only":true}
+{"ts":"2026-11-18T23:15:53.645Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-18T23:15:56.661Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:300 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-18T23:15:56.672Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:260 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-18T23:15:56.714Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-18T23:15:57.445Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-18T23:15:57.446Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-18T23:16:05.888Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 251)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:16:05.891Z","lvl":"warn","evt":"estop","reason":"shutdown","dropped":[7],"interrupted":7}
+{"ts":"2026-11-18T23:16:11.252Z","lvl":"warn","evt":"move.cancelled","job":7,"op":"straight","val":0.5,"dur":20.047,"detail":"interrupted by stop"}
+{"ts":"2026-11-18T23:16:11.253Z","lvl":"info","evt":"log","msg":"motion executor stopped","src":"robot_core.motion_executor"}
