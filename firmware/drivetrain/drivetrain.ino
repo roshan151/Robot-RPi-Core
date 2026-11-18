@@ -159,7 +159,7 @@ void resetFlagsInit(void) {
 // side it is (left turns: right leads; right turns: left leads), by 10-22% on
 // turns over 15 deg: a direction asymmetry the sync P term saturates on. Tune
 // it with Monitoring-Service/calibrate.py drive (it measures the lead).
-#define REVERSE_TRIM_PCT   10
+#define REVERSE_TRIM_PCT   8
 
 // Encoder ISR debounce: real edges are >1 ms apart at full speed; noise
 // bursts from the driver MOSFET edges arrive microseconds apart.
