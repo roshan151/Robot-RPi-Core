@@ -80,6 +80,8 @@ GLIDE_SPIN_DEG = 8.0            # not driving and further off than this: a count
                                 # turning on the spot; a slow velocity spin barely moves)
 
 TURN_DEADBAND_DEG = 8.0         # tracked person nearer ahead than this: no turn
+TURN_GAIN = 0.7                 # turn this share of the camera's bearing: an uncalibrated turn can come
+                                # out up to ~2x on small angles, and a share of it settles instead of swinging
 DRIVE_MAX_BEARING_DEG = 25.0    # further to the side: turn first, drive next frame
 WALK_MPS = 0.6                  # how fast a tracked person may have moved, for the tracker's doubt
 
@@ -569,9 +571,18 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                 if d and res.get("distance_from") != "near":
                     tracker.update(here, res["bearing_deg"], d, res.get("distance_sigma_m"), time.monotonic())
                     mv = None if glide else tracker.move(pose() or here)   # gliding steers by itself
-                    if mv:                            # the Pi's turn and leg, from the tracked position
-                        res = {**res, "turn_deg": mv[0], "drive_m": mv[1], "distance_m": mv[2]}
-                        log.info("follow %d: tracked at %.2f m: turn %+.0f, drive %.2f", seq, mv[2], mv[0], mv[1])
+                    if mv:
+                        # The TURN comes from this frame's bearing (relative to the robot, so a heading
+                        # that is off or late cannot make it chase a spot where nobody is: Nov 18, it
+                        # spun on the spot); the tracker's smoothed DISTANCE sizes the leg.
+                        b = res["bearing_deg"]
+                        turn = round(-TURN_GAIN * b, 1) if abs(b) > TURN_DEADBAND_DEG else 0.0
+                        drive = round(min(mv[2] - settings.FOLLOW_KEEP_M, settings.FOLLOW_MAX_DRIVE_M), 2) \
+                            if mv[2] - settings.FOLLOW_KEEP_M >= MIN_DRIVE_M and abs(b + turn) <= DRIVE_MAX_BEARING_DEG \
+                            else 0.0
+                        res = {**res, "turn_deg": turn, "drive_m": drive, "distance_m": mv[2]}
+                        log.info("follow %d: bearing %+.0f, tracked at %.2f m: turn %+.0f, drive %.2f",
+                                 seq, b, mv[2], turn, drive)
             # The Mac drives only to 1.2 m from them; the Pi goes on to FOLLOW_KEEP_M (same 25 deg rule).
             near_m, drive_m = res.get("distance_m") or rng, res["drive_m"]
             if res["state"] == "tracking" and near_m and abs(res.get("bearing_deg") or 0.0) <= 25.0 \

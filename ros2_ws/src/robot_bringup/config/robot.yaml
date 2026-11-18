@@ -102,11 +102,8 @@
     tts: false
 
     # if true, debug mode: every camera frame and ToF grid a task collects goes to the Mac
-    # (Vision-Microservice POST /v1/debug/frame, for Monitoring-Service to show), at most
-    # 2 a second, dropped rather than queued so the robot never waits; and logs.json records
-    # info lines too. false: no uploads, and logs.json keeps warnings and errors only.
-    # Read by every node that writes logs.json (drivetrain and display too).
-    debug_mode: false
+    # (Vision-Microservice POST /v1/debug/frame, for Monitoring-Service to show)
+    debug_mode: true          # on while debugging follow and the ToF overlay; false for normal runs
 
 /explorer:
   ros__parameters:

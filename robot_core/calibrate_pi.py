@@ -309,14 +309,16 @@ class Rig:
         imu = self.imu()
         if imu is None:
             raise RuntimeError("imu_fitted is false in robot.yaml")
-        ps, rs, t0 = [], [], time.monotonic()
+        ps, rs, ys, t0 = [], [], [], time.monotonic()
         while time.monotonic() - t0 < seconds:
             s = imu.state()
             if s:
                 ps.append(s.pitch_deg)
                 rs.append(s.roll_deg)
+                ys.append(s.yaw_deg)
             time.sleep(0.05)
-        return {"pitch_deg": round(statistics.mean(ps), 2), "roll_deg": round(statistics.mean(rs), 2)}
+        return {"pitch_deg": round(statistics.mean(ps), 2), "roll_deg": round(statistics.mean(rs), 2),
+                "yaw_start_deg": round(ys[0], 2), "yaw_end_deg": round(ys[-1], 2)}   # yaw: + is left (CCW)
 
     def cmd_imu_drift(self, seconds: float = 60.0) -> dict:
         y0, t0 = self.yaw(), time.monotonic()

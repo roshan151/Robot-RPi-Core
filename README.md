@@ -621,7 +621,7 @@ One switch in `robot.yaml`, read by every node that writes `logs.json`:
 | Sensor uploads | Every camera frame and ToF grid a task collects (follow, enroll, match) goes to Vision-Microservice (`POST /v1/debug/frame`), with head pan/tilt, pitch and pose | None |
 | `logs.json` | Everything: events, the robot's info lines, warnings | Warnings and errors only |
 
-Viewing the uploads: Monitoring-Service (`sensor_view.py`), on the Mac. It shows the frame in black and white with the ToF grid laid over it as coloured dots.
+Viewing the uploads: Monitoring-Service (`tof_camera_overlaid.py`), on the Mac. It shows the frame in black and white with the ToF grid laid over it as coloured dots.
 
 The uploads are built not to slow the robot down (`robot_core/debug_upload.py`):
 - The camera and ToF only hand over a reference to data they already have.
@@ -899,7 +899,7 @@ ranges. Do these once, and again after changing the head:
    reached moving up and the play is always on the same side. Moves stay
    ramped. `0` turns it off.
 
-Check the result with Monitoring-Service (`sensor_view.py`, debug mode on):
+Check the result with Monitoring-Service (`tof_camera_overlaid.py`, debug mode on):
 the ToF dots should sit on what they measure in the camera image.
 
 ### Capacitors: What, Where, How

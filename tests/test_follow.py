@@ -300,9 +300,9 @@ def test_once_lost_the_mac_is_told_where_they_were_last_seen():
     m, v = Moving(), Vision([seen, lost, step("gone")])
     follow.follow(Camera(), v, m, "Sam", head=Head(), seconds=60, clock=Clock(), pose=lambda: tuple(m.pose))
     assert v.calls[0][1]["hint_deg"] is None
-    # The Pi's tracker turns to face the tracked person (40 right), not the Mac's partial 10:
-    assert m.moves[0] == ("turn", 40.0)
-    assert abs(v.calls[1][1]["hint_deg"]) < 0.2, "40 right, then the robot turned 40 right to face them"
+    # The Pi turns by 70 % of the camera's bearing (40 right -> 28 right), not the Mac's partial 10:
+    assert m.moves[0] == ("turn", 28.0)
+    assert abs(v.calls[1][1]["hint_deg"] - (-12.0)) < 0.2, "40 right, then the robot turned 28 right"
 
 
 # --------------------------------------------------------------------------- #
@@ -521,3 +521,14 @@ def test_tracker_turns_past_the_deadband_and_ignores_one_wild_reading():
     assert t.xy == before
     t.update((0.0, 0.0, 0.0), -60.0, 4.0, 0.05, t=0.4)                  # twice: believed
     assert t.xy == pytest.approx((2.0, -3.464), abs=1e-3)
+
+
+def test_a_wrong_heading_cannot_make_it_spin():
+    """Odometry that says the robot turned the WRONG way (a yaw sign error): the turn still
+    follows the camera, so a person straight ahead gets no turn at all."""
+    ahead = dict(step("tracking"), head=[0, 0], locked=True, bearing_deg=0.0, distance_m=2.0)
+    m = Moving()
+    flipped = lambda: (m.pose[0], m.pose[1], -m.pose[2] + 1.0)      # heading off by a lot  # noqa: E731
+    follow.follow(Camera(), Vision([ahead, ahead, ahead, step("gone")]), m, "Sam", head=Head(), seconds=60,
+                  clock=Clock(), pose=flipped)
+    assert all(k != "turn" for k, _ in m.moves), m.moves
