@@ -29,6 +29,7 @@ Read it back with:
 What lands in the file
 ----------------------
   * every structured event() call, at any level
+  * every INFO or worse from the robot's own loggers (robot*, e.g. robot_core.follow)
   * every WARNING or worse from any logger in the process
 
 Routine INFO chatter from library loggers stays on the console only.  That is
@@ -199,13 +200,14 @@ def _short_tb(tb: Any, limit: int = 6) -> list:
 
 
 class _FileFilter(logging.Filter):
-    """Structured events always; unstructured records only if WARNING+.
+    """Structured events always; the robot's own INFO+; anything else only if WARNING+.
 
     This is the whole 'clean not verbose' policy in four lines.
     """
 
     def filter(self, record: logging.LogRecord) -> bool:
-        return hasattr(record, "evt") or record.levelno >= logging.WARNING
+        return (hasattr(record, "evt") or record.levelno >= logging.WARNING
+                or (record.levelno >= logging.INFO and record.name.startswith("robot")))
 
 
 # --------------------------------------------------------------------------- #

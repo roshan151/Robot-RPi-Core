@@ -27,6 +27,7 @@ has to be the one that says no.
 
 from __future__ import annotations
 
+import logging
 import math
 import threading
 import time
@@ -55,7 +56,26 @@ from robot_interfaces.msg import Encoders, MotionHealth as MotionHealthMsg, Visu
 _POLL_S = 0.1
 
 
+class _PyLog:
+    """The node's logger, written through Python logging so its lines land in logs.json
+    (robot_log). Anything but a plain message (once=, throttle_duration_sec=) stays on ROS's."""
+
+    def __init__(self, ros) -> None:
+        self._ros, self._py = ros, logging.getLogger("robot_drivetrain")
+
+    def __getattr__(self, name):
+        level = {"debug": logging.DEBUG, "info": logging.INFO, "warn": logging.WARNING,
+                 "warning": logging.WARNING, "error": logging.ERROR, "fatal": logging.CRITICAL}.get(name)
+        ros = getattr(self._ros, name)
+        if level is None:
+            return ros
+        return lambda msg, **kw: ros(msg, **kw) if kw else self._py.log(level, msg)
+
+
 class DrivetrainNode(Node):
+    def get_logger(self):
+        return _PyLog(super().get_logger())
+
     def __init__(self) -> None:
         super().__init__("drivetrain")
 
