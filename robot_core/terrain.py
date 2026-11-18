@@ -181,6 +181,7 @@ def params_from(p: dict) -> Params:
     """Params from robot.yaml's /explorer section; anything missing keeps its default."""
     d = Params()
     return Params(h_max_m=float(p.get("h_max_m", d.h_max_m)),
+                  flat_tol_m=float(p.get("flat_tol_m", d.flat_tol_m)),
                   min_landing_m=float(p.get("min_landing_m", d.min_landing_m)),
                   max_drop_m=float(p.get("max_drop_m", d.max_drop_m)),
                   corridor_m=float(p.get("path_width_m", d.corridor_m)),

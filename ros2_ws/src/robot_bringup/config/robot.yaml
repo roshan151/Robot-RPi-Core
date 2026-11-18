@@ -118,6 +118,8 @@
                                # (check_tof.py against a flat wall says which)
     drive_tilt_deg: -30.0      # head tilt for looking at the floor ahead; follow glances here before a drive
     h_max_m: 0.03              # MEASURE (boards of 1 to 4 cm): the highest step the tracks climb
+    flat_tol_m: 0.045          # floor reads up to this high is still floor: the 8x8 ToF reads the nearest
+                               # strip 2-4 cm high on flat floor (measured 2026-11-17)
     min_landing_m: 0.20        # flat floor needed beyond a step for it to count as climbable
     max_drop_m: 0.03           # a fall deeper than this is a drop: never driven
     path_width_m: 0.30         # width of the strip of floor that is checked (the robot plus a margin)
