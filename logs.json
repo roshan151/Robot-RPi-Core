@@ -4818,3 +4818,393 @@
 {"ts":"2026-11-18T22:36:37.625Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":11.62,"repeats":3}
 {"ts":"2026-11-18T22:36:38.598Z","lvl":"info","evt":"voice.heard","text":"\u00bfQu\u00e9?"}
 {"ts":"2026-11-18T22:38:43.802Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":125.2,"repeats":1}
+{"ts":"2026-11-18T22:40:12.863Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":84.35,"repeats":3}
+{"ts":"2026-11-18T22:43:34.456Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":200.75,"repeats":1}
+{"ts":"2026-11-18T22:47:26.240Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":230.59,"repeats":1}
+{"ts":"2026-11-18T22:48:02.064Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 247)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T22:48:02.065Z","lvl":"warn","evt":"estop","reason":"shutdown","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T22:48:02.105Z","lvl":"info","evt":"log","msg":"motion executor stopped","src":"robot_core.motion_executor"}
+{"ts":"2026-11-18T22:46:07.664Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-18T22:46:08.657Z","lvl":"info","evt":"session.start","mode":"ros","pid":1722,"log":"logs.json","debug":true}
+{"ts":"2026-11-18T22:46:10.191Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T22:46:12.147Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v9-vel-noluna built Nov 18 2026 14:52:53","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T22:46:12.148Z","lvl":"info","evt":"log","msg":"Connected on /dev/ttyUSB0 (boot frame received)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T22:46:12.202Z","lvl":"info","evt":"log","msg":"motion executor started","src":"robot_core.motion_executor"}
+{"ts":"2026-11-18T22:46:13.801Z","lvl":"info","evt":"log","msg":"drivetrain ready on /dev/ttyUSB0 (limit 5.0 m, velocity on)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T22:54:19.608Z","lvl":"info","evt":"log","msg":"debug mode: uploading sensor data to http://roshans-mac-mini.local:8080/v1/debug/frame, session 20261118-165419","src":"robot_core.debug_upload"}
+{"ts":"2026-11-18T22:54:19.774Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T22:54:19.776Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T22:54:19.842Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-18T22:54:22.647Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-18T22:54:22.648Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-18T22:54:54.732Z","lvl":"error","evt":"log","msg":"emergency_stop: raw write failed: (4, 'Interrupted system call')","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T22:54:54.740Z","lvl":"warn","evt":"estop","reason":"shutdown","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T22:54:54.741Z","lvl":"info","evt":"log","msg":"motion executor stopped","src":"robot_core.motion_executor"}
+{"ts":"2026-11-18T22:58:52.231Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-18T22:58:52.985Z","lvl":"info","evt":"session.start","mode":"ros","pid":2241,"log":"logs.json","debug":true}
+{"ts":"2026-11-18T22:58:53.286Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T22:58:55.024Z","lvl":"info","evt":"log","msg":"debug mode: uploading sensor data to http://roshans-mac-mini.local:8080/v1/debug/frame, session 20261118-165855","src":"robot_core.debug_upload"}
+{"ts":"2026-11-18T22:58:55.202Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v9-vel-noluna built Nov 18 2026 14:52:53","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T22:58:55.203Z","lvl":"info","evt":"log","msg":"Connected on /dev/ttyUSB0 (boot frame received)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T22:58:55.255Z","lvl":"info","evt":"log","msg":"motion executor started","src":"robot_core.motion_executor"}
+{"ts":"2026-11-18T22:58:56.631Z","lvl":"info","evt":"log","msg":"drivetrain ready on /dev/ttyUSB0 (limit 5.0 m, velocity on)","src":"robot_drivetrain"}
+{"ts":"2026-11-18T22:58:56.679Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T22:58:56.680Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T22:58:56.713Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-18T22:58:59.782Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-18T22:58:59.783Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-18T22:59:00.839Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.76}
+{"ts":"2026-11-18T22:59:02.165Z","lvl":"info","evt":"voice.heard","text":"follow me"}
+{"ts":"2026-11-18T22:59:02.166Z","lvl":"info","evt":"voice.say","text":"(model speech discarded \u2014 robot answers by moving)","bytes_dropped":2}
+{"ts":"2026-11-18T22:59:02.167Z","lvl":"info","evt":"voice.say","text":"<!-- No response","spoken":false}
+{"ts":"2026-11-18T22:59:02.188Z","lvl":"info","evt":"voice.say","text":"required -->","spoken":false}
+{"ts":"2026-11-18T22:59:07.059Z","lvl":"info","evt":"voice.heard","text":"Robin, follow me."}
+{"ts":"2026-11-18T22:59:07.074Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-18T22:59:07.075Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'follow'}) -> {'ok': True, 'starting': 'follow', 'note': 'session closing; it reopens when the task ends'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-18T22:59:07.198Z","lvl":"info","evt":"task.start","task":"follow","name":"","_unregistered":true}
+{"ts":"2026-11-18T22:59:07.205Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 241)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T22:59:07.206Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T22:59:07.407Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-18T22:59:07.450Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-18T22:59:07.757Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-18T22:59:11.551Z","lvl":"info","evt":"log","msg":"follow 1: searching -, bearing None, None m (None), turn 0.0, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:11.894Z","lvl":"info","evt":"log","msg":"follow 2: tracking Roshan, bearing 22.2, 1.11 m (tof), turn -13.3, drive 0.31","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:11.896Z","lvl":"info","evt":"log","msg":"follow 2: bearing +22, tracked at 1.11 m: turn -16, drive 0.61","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:12.756Z","lvl":"debug","evt":"move.start","job":1,"op":"left","val":15.5}
+{"ts":"2026-11-18T22:59:13.417Z","lvl":"warn","evt":"log","msg":"left(15.5\u00b0): high left-right sync error \u2014 \u0394L=114 \u0394R=141 diff=27 (19.1%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T22:59:13.418Z","lvl":"warn","evt":"log","msg":"left(15.5\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T22:59:13.421Z","lvl":"info","evt":"move.done","job":1,"op":"left","val":15.5,"dur":0.663}
+{"ts":"2026-11-18T22:59:15.778Z","lvl":"info","evt":"log","msg":"follow 2: drive 0.00 of 0.61 m, path blocked at 0.15 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:15.780Z","lvl":"info","evt":"log","msg":"follow 2: detour, 1 legs via [(0.55, 0.26)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:17.977Z","lvl":"info","evt":"log","msg":"follow 2: detour leg 0.00 of 0.61 m, path blocked at 0.15 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:18.371Z","lvl":"info","evt":"log","msg":"follow 3: tracking Roshan, bearing 1.3, 1.32 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:18.372Z","lvl":"info","evt":"log","msg":"follow 3: bearing +1, tracked at 1.32 m: turn +0, drive 0.82","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:18.514Z","lvl":"info","evt":"log","msg":"follow 3: drive 0.00 of 0.82 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:18.520Z","lvl":"info","evt":"log","msg":"follow 3: detour, 5 legs via [(0.04, -0.1), (0.24, -0.1), (0.39, -0.05), (0.74, 0.3), (0.74, 0.35)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:18.532Z","lvl":"debug","evt":"move.start","job":2,"op":"right","val":88.7}
+{"ts":"2026-11-18T22:59:20.361Z","lvl":"info","evt":"move.done","job":2,"op":"right","val":88.7,"dur":1.829}
+{"ts":"2026-11-18T22:59:22.877Z","lvl":"info","evt":"log","msg":"follow 3: detour leg 0.00 of 0.11 m, path blocked at 0.15 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:22.887Z","lvl":"debug","evt":"move.start","job":3,"op":"left","val":98.0}
+{"ts":"2026-11-18T22:59:24.840Z","lvl":"info","evt":"move.done","job":3,"op":"left","val":98.0,"dur":1.954}
+{"ts":"2026-11-18T22:59:25.206Z","lvl":"info","evt":"log","msg":"follow 4: holding Roshan, bearing None, None m (None), turn 0.0, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:25.523Z","lvl":"info","evt":"log","msg":"follow 5: tracking Roshan, bearing 23.6, 1.31 m (tof), turn -14.2, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:25.525Z","lvl":"info","evt":"log","msg":"follow 5: bearing +24, tracked at 1.31 m: turn -16, drive 0.81","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:25.763Z","lvl":"debug","evt":"move.start","job":4,"op":"left","val":16.5}
+{"ts":"2026-11-18T22:59:26.450Z","lvl":"warn","evt":"log","msg":"left(16.5\u00b0): high left-right sync error \u2014 \u0394L=121 \u0394R=151 diff=30 (19.9%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T22:59:26.450Z","lvl":"warn","evt":"log","msg":"left(16.5\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T22:59:26.451Z","lvl":"info","evt":"move.done","job":4,"op":"left","val":16.5,"dur":0.688}
+{"ts":"2026-11-18T22:59:26.557Z","lvl":"info","evt":"log","msg":"follow 5: drive 0.00 of 0.81 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:26.561Z","lvl":"info","evt":"log","msg":"follow 5: detour, 4 legs via [(-0.07, 0.05), (-0.07, 0.15), (0.43, 0.65), (0.47, 0.65)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:26.570Z","lvl":"debug","evt":"move.start","job":5,"op":"left","val":82.1}
+{"ts":"2026-11-18T22:59:28.260Z","lvl":"info","evt":"move.done","job":5,"op":"left","val":82.1,"dur":1.69}
+{"ts":"2026-11-18T22:59:28.376Z","lvl":"debug","evt":"move.start","job":6,"op":"right","val":85.7}
+{"ts":"2026-11-18T22:59:30.221Z","lvl":"info","evt":"move.done","job":6,"op":"right","val":85.7,"dur":1.846}
+{"ts":"2026-11-18T22:59:30.600Z","lvl":"info","evt":"log","msg":"follow 6: tracking Roshan, bearing 8.1, 1.03 m (tof), turn -4.8, drive 0.23","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:30.601Z","lvl":"info","evt":"log","msg":"follow 6: bearing +8, tracked at 1.03 m: turn -6, drive 0.53","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:30.764Z","lvl":"debug","evt":"move.start","job":7,"op":"left","val":5.7}
+{"ts":"2026-11-18T22:59:31.378Z","lvl":"warn","evt":"log","msg":"left(5.7\u00b0): high left-right sync error \u2014 \u0394L=42 \u0394R=48 diff=6 (12.5%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T22:59:31.378Z","lvl":"warn","evt":"log","msg":"left(5.7\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T22:59:31.379Z","lvl":"info","evt":"move.done","job":7,"op":"left","val":5.7,"dur":0.616}
+{"ts":"2026-11-18T22:59:31.455Z","lvl":"info","evt":"log","msg":"follow 6: drive 0.00 of 0.53 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:31.459Z","lvl":"info","evt":"log","msg":"follow 6: detour, 3 legs via [(-0.07, 0.04), (-0.07, 0.14), (0.26, 0.44)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:31.470Z","lvl":"debug","evt":"move.start","job":8,"op":"left","val":76.2}
+{"ts":"2026-11-18T22:59:33.094Z","lvl":"info","evt":"move.done","job":8,"op":"left","val":76.2,"dur":1.623}
+{"ts":"2026-11-18T22:59:33.172Z","lvl":"debug","evt":"move.start","job":9,"op":"right","val":69.5}
+{"ts":"2026-11-18T22:59:34.804Z","lvl":"info","evt":"move.done","job":9,"op":"right","val":69.5,"dur":1.632}
+{"ts":"2026-11-18T22:59:35.201Z","lvl":"info","evt":"log","msg":"follow 7: tracking Roshan, bearing -2.2, 1.17 m (tof), turn 0.0, drive 0.37","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:35.202Z","lvl":"info","evt":"log","msg":"follow 7: bearing -2, tracked at 1.17 m: turn +0, drive 0.67","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:35.374Z","lvl":"info","evt":"log","msg":"follow 7: drive 0.00 of 0.67 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:35.378Z","lvl":"info","evt":"log","msg":"follow 7: detour, 3 legs via [(-0.07, 0.08), (-0.07, 0.13), (0.26, 0.59)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:35.391Z","lvl":"debug","evt":"move.start","job":10,"op":"left","val":50.9}
+{"ts":"2026-11-18T22:59:36.663Z","lvl":"info","evt":"move.done","job":10,"op":"left","val":50.9,"dur":1.272}
+{"ts":"2026-11-18T22:59:38.937Z","lvl":"info","evt":"log","msg":"follow 7: detour leg 0.00 of 0.11 m, path blocked at 0.15 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:38.948Z","lvl":"debug","evt":"move.start","job":11,"op":"right","val":56.9}
+{"ts":"2026-11-18T22:59:40.293Z","lvl":"info","evt":"move.done","job":11,"op":"right","val":56.9,"dur":1.345}
+{"ts":"2026-11-18T22:59:40.700Z","lvl":"info","evt":"log","msg":"follow 8: tracking Roshan, bearing 0.2, 1.13 m (tof), turn 0.0, drive 0.33","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:40.701Z","lvl":"info","evt":"log","msg":"follow 8: bearing +0, tracked at 1.13 m: turn +0, drive 0.63","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:40.874Z","lvl":"info","evt":"log","msg":"follow 8: drive 0.00 of 0.63 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:40.882Z","lvl":"info","evt":"log","msg":"follow 8: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:41.240Z","lvl":"info","evt":"log","msg":"follow 9: tracking Roshan, bearing 3.9, 1.67 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:41.242Z","lvl":"info","evt":"log","msg":"follow 9: bearing +4, tracked at 1.64 m: turn +0, drive 1.14","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:41.274Z","lvl":"info","evt":"log","msg":"follow 9: drive 0.00 of 1.14 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:41.283Z","lvl":"info","evt":"log","msg":"follow 9: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:41.598Z","lvl":"info","evt":"log","msg":"follow 10: tracking Roshan, bearing 3.9, 1.64 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:41.599Z","lvl":"info","evt":"log","msg":"follow 10: bearing +4, tracked at 1.64 m: turn +0, drive 1.14","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:41.674Z","lvl":"info","evt":"log","msg":"follow 10: drive 0.00 of 1.14 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:41.683Z","lvl":"info","evt":"log","msg":"follow 10: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:41.940Z","lvl":"info","evt":"log","msg":"follow 11: tracking Roshan, bearing 3.9, 1.56 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:41.941Z","lvl":"info","evt":"log","msg":"follow 11: bearing +4, tracked at 1.57 m: turn +0, drive 1.07","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:42.074Z","lvl":"info","evt":"log","msg":"follow 11: drive 0.00 of 1.07 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:42.083Z","lvl":"info","evt":"log","msg":"follow 11: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:42.416Z","lvl":"info","evt":"log","msg":"follow 12: tracking Roshan, bearing 3.9, 1.52 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:42.417Z","lvl":"info","evt":"log","msg":"follow 12: bearing +4, tracked at 1.52 m: turn +0, drive 1.02","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:42.474Z","lvl":"info","evt":"log","msg":"follow 12: drive 0.00 of 1.02 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:42.483Z","lvl":"info","evt":"log","msg":"follow 12: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:42.839Z","lvl":"info","evt":"log","msg":"follow 13: tracking Roshan, bearing 4.5, 1.62 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:42.840Z","lvl":"info","evt":"log","msg":"follow 13: bearing +4, tracked at 1.61 m: turn +0, drive 1.11","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:42.874Z","lvl":"info","evt":"log","msg":"follow 13: drive 0.00 of 1.11 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:42.883Z","lvl":"info","evt":"log","msg":"follow 13: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:43.156Z","lvl":"info","evt":"log","msg":"follow 14: tracking Roshan, bearing 8.6, 1.79 m (tof), turn -5.2, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:43.158Z","lvl":"info","evt":"log","msg":"follow 14: bearing +9, tracked at 1.76 m: turn -6, drive 1.26","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:43.284Z","lvl":"debug","evt":"move.start","job":12,"op":"left","val":6.0}
+{"ts":"2026-11-18T22:59:43.918Z","lvl":"warn","evt":"log","msg":"left(6.0\u00b0): high left-right sync error \u2014 \u0394L=44 \u0394R=62 diff=18 (29.0%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T22:59:43.919Z","lvl":"warn","evt":"log","msg":"left(6.0\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T22:59:43.920Z","lvl":"info","evt":"move.done","job":12,"op":"left","val":6.0,"dur":0.636}
+{"ts":"2026-11-18T22:59:43.975Z","lvl":"info","evt":"log","msg":"follow 14: drive 0.00 of 1.26 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:43.989Z","lvl":"info","evt":"log","msg":"follow 14: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:44.397Z","lvl":"info","evt":"log","msg":"follow 15: tracking Roshan, bearing 1.2, 1.58 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:44.398Z","lvl":"info","evt":"log","msg":"follow 15: bearing +1, tracked at 1.58 m: turn +0, drive 1.08","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:44.474Z","lvl":"info","evt":"log","msg":"follow 15: drive 0.00 of 1.08 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:44.487Z","lvl":"info","evt":"log","msg":"follow 15: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:44.765Z","lvl":"info","evt":"log","msg":"follow 16: tracking Roshan, bearing -0.3, 1.86 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:44.766Z","lvl":"info","evt":"log","msg":"follow 16: bearing -0, tracked at 1.83 m: turn +0, drive 1.33","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:44.874Z","lvl":"info","evt":"log","msg":"follow 16: drive 0.00 of 1.33 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:44.881Z","lvl":"info","evt":"log","msg":"follow 16: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:45.241Z","lvl":"info","evt":"log","msg":"follow 17: tracking Roshan, bearing -1.4, 2.0 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:45.242Z","lvl":"info","evt":"log","msg":"follow 17: bearing -1, tracked at 1.99 m: turn +0, drive 1.49","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:45.274Z","lvl":"info","evt":"log","msg":"follow 17: drive 0.00 of 1.49 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:45.282Z","lvl":"info","evt":"log","msg":"follow 17: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:45.585Z","lvl":"info","evt":"log","msg":"follow 18: tracking Roshan, bearing -5.2, 1.72 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:45.587Z","lvl":"info","evt":"log","msg":"follow 18: bearing -5, tracked at 1.75 m: turn +0, drive 1.25","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:45.874Z","lvl":"info","evt":"log","msg":"follow 18: drive 0.00 of 1.25 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:45.882Z","lvl":"info","evt":"log","msg":"follow 18: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:46.275Z","lvl":"info","evt":"log","msg":"follow 19: tracking Roshan, bearing -7.0, 1.56 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:46.276Z","lvl":"info","evt":"log","msg":"follow 19: bearing -7, tracked at 1.57 m: turn +0, drive 1.07","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:46.474Z","lvl":"info","evt":"log","msg":"follow 19: drive 0.00 of 1.07 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:46.482Z","lvl":"info","evt":"log","msg":"follow 19: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:46.665Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":38.84,"repeats":3}
+{"ts":"2026-11-18T22:59:46.833Z","lvl":"info","evt":"log","msg":"follow 20: tracking Roshan, bearing -7.2, 1.41 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:46.840Z","lvl":"info","evt":"log","msg":"follow 20: bearing -7, tracked at 1.42 m: turn +0, drive 0.92","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:46.894Z","lvl":"info","evt":"log","msg":"follow 20: drive 0.00 of 0.92 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:46.902Z","lvl":"info","evt":"log","msg":"follow 20: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:47.259Z","lvl":"info","evt":"log","msg":"follow 21: holding Roshan, bearing None, None m (None), turn 0.0, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:47.592Z","lvl":"info","evt":"log","msg":"follow 22: tracking Roshan, bearing 10.3, 1.0 m (tof), turn -6.2, drive 0.2","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:47.595Z","lvl":"info","evt":"log","msg":"follow 22: bearing +10, tracked at 1.01 m: turn -7, drive 0.51","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:48.404Z","lvl":"debug","evt":"move.start","job":13,"op":"left","val":7.2}
+{"ts":"2026-11-18T22:59:48.590Z","lvl":"info","evt":"voice.heard","text":"Robin cancel follow."}
+{"ts":"2026-11-18T22:59:48.592Z","lvl":"info","evt":"task.cancel","by":"voice","_unregistered":true}
+{"ts":"2026-11-18T22:59:48.593Z","lvl":"info","evt":"log","msg":"tool cancel_task({}) -> {'ok': True, 'note': 'task cancelled'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-18T22:59:48.600Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 243)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T22:59:48.601Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[13],"interrupted":13}
+{"ts":"2026-11-18T22:59:48.605Z","lvl":"warn","evt":"move.cancelled","job":13,"op":"left","val":7.2,"dur":0.201,"detail":"interrupted by stop"}
+{"ts":"2026-11-18T22:59:48.612Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 243)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T22:59:48.613Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[13],"interrupted":13}
+{"ts":"2026-11-18T22:59:48.622Z","lvl":"info","evt":"log","msg":"follow cancelled (voice)","src":"robot_core.follow"}
+{"ts":"2026-11-18T22:59:50.287Z","lvl":"info","evt":"task.end","task":"follow","ok":true,"cancelled":true,"_unregistered":true}
+{"ts":"2026-11-18T22:59:50.288Z","lvl":"info","evt":"gesture","name":"yes","text_only":true}
+{"ts":"2026-11-18T22:59:50.289Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-18T22:59:50.329Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-18T22:59:50.403Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:300 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-18T22:59:50.414Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:260 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-18T22:59:50.909Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-18T22:59:50.910Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-18T23:00:09.360Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-18T23:00:09.360Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'follow'}) -> {'ok': True, 'starting': 'follow', 'note': 'session closing; it reopens when the task ends'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-18T23:00:09.363Z","lvl":"info","evt":"voice.heard","text":"Raben, follow me."}
+{"ts":"2026-11-18T23:00:09.488Z","lvl":"info","evt":"task.start","task":"follow","name":"","_unregistered":true}
+{"ts":"2026-11-18T23:00:09.492Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 244)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:00:09.493Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T23:00:09.595Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-18T23:00:09.658Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-18T23:00:10.144Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-18T23:00:11.552Z","lvl":"info","evt":"log","msg":"follow 1: searching -, bearing None, None m (None), turn 0.0, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:11.868Z","lvl":"info","evt":"log","msg":"follow 2: tracking Roshan, bearing -8.1, 1.5 m (tof), turn 4.9, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:11.869Z","lvl":"info","evt":"log","msg":"follow 2: bearing -8, tracked at 1.50 m: turn +6, drive 1.00","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:12.835Z","lvl":"debug","evt":"move.start","job":14,"op":"right","val":5.7}
+{"ts":"2026-11-18T23:00:13.473Z","lvl":"info","evt":"move.done","job":14,"op":"right","val":5.7,"dur":0.637}
+{"ts":"2026-11-18T23:00:15.684Z","lvl":"info","evt":"log","msg":"follow 2: drive 0.00 of 1.00 m, path blocked at 0.15 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:15.689Z","lvl":"info","evt":"log","msg":"follow 2: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:16.025Z","lvl":"info","evt":"log","msg":"follow 3: tracking Roshan, bearing 0.5, 1.62 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:16.027Z","lvl":"info","evt":"log","msg":"follow 3: bearing +0, tracked at 1.62 m: turn +0, drive 1.12","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:16.184Z","lvl":"info","evt":"log","msg":"follow 3: drive 0.00 of 1.12 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:16.189Z","lvl":"info","evt":"log","msg":"follow 3: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:16.521Z","lvl":"info","evt":"log","msg":"follow 4: tracking Roshan, bearing 0.5, 1.52 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:16.522Z","lvl":"info","evt":"log","msg":"follow 4: bearing +0, tracked at 1.53 m: turn +0, drive 1.03","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:16.584Z","lvl":"info","evt":"log","msg":"follow 4: drive 0.00 of 1.03 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:16.588Z","lvl":"info","evt":"log","msg":"follow 4: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:16.882Z","lvl":"info","evt":"log","msg":"follow 5: tracking Roshan, bearing 0.6, 1.51 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:16.883Z","lvl":"info","evt":"log","msg":"follow 5: bearing +1, tracked at 1.51 m: turn +0, drive 1.01","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:17.184Z","lvl":"info","evt":"log","msg":"follow 5: drive 0.00 of 1.01 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:17.188Z","lvl":"info","evt":"log","msg":"follow 5: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:17.611Z","lvl":"info","evt":"log","msg":"follow 6: tracking Roshan, bearing 0.8, 1.63 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:17.612Z","lvl":"info","evt":"log","msg":"follow 6: bearing +1, tracked at 1.63 m: turn +0, drive 1.13","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:17.783Z","lvl":"info","evt":"log","msg":"follow 6: drive 0.00 of 1.13 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:17.791Z","lvl":"info","evt":"log","msg":"follow 6: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:18.177Z","lvl":"info","evt":"log","msg":"follow 7: tracking Roshan, bearing 3.9, 1.6 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:18.180Z","lvl":"info","evt":"log","msg":"follow 7: bearing +4, tracked at 1.60 m: turn +0, drive 1.10","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:18.384Z","lvl":"info","evt":"log","msg":"follow 7: drive 0.00 of 1.10 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:18.391Z","lvl":"info","evt":"log","msg":"follow 7: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:18.668Z","lvl":"info","evt":"log","msg":"follow 8: tracking Roshan, bearing 3.6, 1.56 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:18.669Z","lvl":"info","evt":"log","msg":"follow 8: bearing +4, tracked at 1.56 m: turn +0, drive 1.06","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:18.783Z","lvl":"info","evt":"log","msg":"follow 8: drive 0.00 of 1.06 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:18.788Z","lvl":"info","evt":"log","msg":"follow 8: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:19.170Z","lvl":"info","evt":"log","msg":"follow 9: tracking Roshan, bearing 4.2, 1.61 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:19.171Z","lvl":"info","evt":"log","msg":"follow 9: bearing +4, tracked at 1.61 m: turn +0, drive 1.11","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:19.204Z","lvl":"info","evt":"log","msg":"follow 9: drive 0.00 of 1.11 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:19.208Z","lvl":"info","evt":"log","msg":"follow 9: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:19.516Z","lvl":"info","evt":"log","msg":"follow 10: tracking Roshan, bearing 4.7, 1.69 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:19.517Z","lvl":"info","evt":"log","msg":"follow 10: bearing +5, tracked at 1.68 m: turn +0, drive 1.18","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:19.584Z","lvl":"info","evt":"log","msg":"follow 10: drive 0.00 of 1.18 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:19.592Z","lvl":"info","evt":"log","msg":"follow 10: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:19.877Z","lvl":"info","evt":"log","msg":"follow 11: tracking Roshan, bearing 4.6, 1.62 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:19.879Z","lvl":"info","evt":"log","msg":"follow 11: bearing +5, tracked at 1.63 m: turn +0, drive 1.13","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:19.984Z","lvl":"info","evt":"log","msg":"follow 11: drive 0.00 of 1.13 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:19.991Z","lvl":"info","evt":"log","msg":"follow 11: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:20.341Z","lvl":"info","evt":"log","msg":"follow 12: tracking Roshan, bearing 4.5, 1.71 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:20.342Z","lvl":"info","evt":"log","msg":"follow 12: bearing +4, tracked at 1.70 m: turn +0, drive 1.20","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:20.384Z","lvl":"info","evt":"log","msg":"follow 12: drive 0.00 of 1.20 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:20.389Z","lvl":"info","evt":"log","msg":"follow 12: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:20.706Z","lvl":"info","evt":"log","msg":"follow 13: tracking Roshan, bearing 4.4, 1.66 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:20.708Z","lvl":"info","evt":"log","msg":"follow 13: bearing +4, tracked at 1.66 m: turn +0, drive 1.16","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:20.784Z","lvl":"info","evt":"log","msg":"follow 13: drive 0.00 of 1.16 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:20.792Z","lvl":"info","evt":"log","msg":"follow 13: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:21.103Z","lvl":"info","evt":"log","msg":"follow 14: tracking Roshan, bearing 4.2, 1.68 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:21.105Z","lvl":"info","evt":"log","msg":"follow 14: bearing +4, tracked at 1.68 m: turn +0, drive 1.18","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:21.184Z","lvl":"info","evt":"log","msg":"follow 14: drive 0.00 of 1.18 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:21.193Z","lvl":"info","evt":"log","msg":"follow 14: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:21.453Z","lvl":"info","evt":"log","msg":"follow 15: tracking Roshan, bearing 4.1, 1.75 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:21.454Z","lvl":"info","evt":"log","msg":"follow 15: bearing +4, tracked at 1.74 m: turn +0, drive 1.24","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:21.584Z","lvl":"info","evt":"log","msg":"follow 15: drive 0.00 of 1.24 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:21.593Z","lvl":"info","evt":"log","msg":"follow 15: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:21.881Z","lvl":"info","evt":"log","msg":"follow 16: tracking Roshan, bearing 3.9, 1.81 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:21.882Z","lvl":"info","evt":"log","msg":"follow 16: bearing +4, tracked at 1.80 m: turn +0, drive 1.30","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:21.984Z","lvl":"info","evt":"log","msg":"follow 16: drive 0.00 of 1.30 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:21.990Z","lvl":"info","evt":"log","msg":"follow 16: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:22.273Z","lvl":"info","evt":"log","msg":"follow 17: tracking Roshan, bearing 3.8, 1.56 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:22.274Z","lvl":"info","evt":"log","msg":"follow 17: bearing +4, tracked at 1.58 m: turn +0, drive 1.08","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:22.404Z","lvl":"info","evt":"log","msg":"follow 17: drive 0.00 of 1.08 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:22.409Z","lvl":"info","evt":"log","msg":"follow 17: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:22.788Z","lvl":"info","evt":"log","msg":"follow 18: tracking Roshan, bearing 3.6, 1.74 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:22.789Z","lvl":"info","evt":"log","msg":"follow 18: bearing +4, tracked at 1.73 m: turn +0, drive 1.23","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:22.983Z","lvl":"info","evt":"log","msg":"follow 18: drive 0.00 of 1.23 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:22.991Z","lvl":"info","evt":"log","msg":"follow 18: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:23.361Z","lvl":"info","evt":"log","msg":"follow 19: tracking Roshan, bearing 6.2, 1.91 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:23.362Z","lvl":"info","evt":"log","msg":"follow 19: bearing +6, tracked at 1.90 m: turn +0, drive 1.40","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:23.584Z","lvl":"info","evt":"log","msg":"follow 19: drive 0.00 of 1.40 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:23.593Z","lvl":"info","evt":"log","msg":"follow 19: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:23.900Z","lvl":"info","evt":"log","msg":"follow 20: tracking Roshan, bearing 7.6, 1.79 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:23.902Z","lvl":"info","evt":"log","msg":"follow 20: bearing +8, tracked at 1.80 m: turn +0, drive 1.30","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:23.984Z","lvl":"info","evt":"log","msg":"follow 20: drive 0.00 of 1.30 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:23.993Z","lvl":"info","evt":"log","msg":"follow 20: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:24.361Z","lvl":"info","evt":"log","msg":"follow 21: tracking Roshan, bearing 6.2, 1.95 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:24.362Z","lvl":"info","evt":"log","msg":"follow 21: bearing +6, tracked at 1.94 m: turn +0, drive 1.44","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:24.404Z","lvl":"info","evt":"log","msg":"follow 21: drive 0.00 of 1.44 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:24.410Z","lvl":"info","evt":"log","msg":"follow 21: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:24.746Z","lvl":"info","evt":"log","msg":"follow 22: tracking Roshan, bearing 5.5, 2.04 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:24.747Z","lvl":"info","evt":"log","msg":"follow 22: bearing +6, tracked at 2.03 m: turn +0, drive 1.50","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:24.804Z","lvl":"info","evt":"log","msg":"follow 22: drive 0.00 of 1.50 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:24.810Z","lvl":"info","evt":"log","msg":"follow 22: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:25.272Z","lvl":"info","evt":"log","msg":"follow 23: tracking Roshan, bearing 5.3, 1.86 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:25.275Z","lvl":"info","evt":"log","msg":"follow 23: bearing +5, tracked at 1.87 m: turn +0, drive 1.37","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:25.404Z","lvl":"info","evt":"log","msg":"follow 23: drive 0.00 of 1.37 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:25.419Z","lvl":"info","evt":"log","msg":"follow 23: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:25.841Z","lvl":"info","evt":"log","msg":"follow 24: tracking Roshan, bearing 5.4, 1.99 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:25.843Z","lvl":"info","evt":"log","msg":"follow 24: bearing +5, tracked at 1.98 m: turn +0, drive 1.48","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:26.004Z","lvl":"info","evt":"log","msg":"follow 24: drive 0.00 of 1.48 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:26.010Z","lvl":"info","evt":"log","msg":"follow 24: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:26.328Z","lvl":"info","evt":"log","msg":"follow 25: tracking Roshan, bearing 5.6, 1.96 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:26.329Z","lvl":"info","evt":"log","msg":"follow 25: bearing +6, tracked at 1.96 m: turn +0, drive 1.46","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:26.404Z","lvl":"info","evt":"log","msg":"follow 25: drive 0.00 of 1.46 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:26.414Z","lvl":"info","evt":"log","msg":"follow 25: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:26.712Z","lvl":"info","evt":"log","msg":"follow 26: tracking Roshan, bearing 5.6, 1.87 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:26.713Z","lvl":"info","evt":"log","msg":"follow 26: bearing +6, tracked at 1.88 m: turn +0, drive 1.38","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:26.804Z","lvl":"info","evt":"log","msg":"follow 26: drive 0.00 of 1.38 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:26.809Z","lvl":"info","evt":"log","msg":"follow 26: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:27.070Z","lvl":"info","evt":"log","msg":"follow 27: tracking Roshan, bearing 5.6, 1.86 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:27.071Z","lvl":"info","evt":"log","msg":"follow 27: bearing +6, tracked at 1.86 m: turn +0, drive 1.36","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:27.203Z","lvl":"info","evt":"log","msg":"follow 27: drive 0.00 of 1.36 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:27.209Z","lvl":"info","evt":"log","msg":"follow 27: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:27.502Z","lvl":"info","evt":"log","msg":"follow 28: tracking Roshan, bearing 5.6, 1.34 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:27.503Z","lvl":"info","evt":"log","msg":"follow 28: bearing +6, tracked at 1.38 m: turn +0, drive 0.88","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:27.604Z","lvl":"info","evt":"log","msg":"follow 28: drive 0.00 of 0.88 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:27.608Z","lvl":"info","evt":"log","msg":"follow 28: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:27.894Z","lvl":"info","evt":"log","msg":"follow 29: tracking Roshan, bearing 5.6, 1.89 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:27.896Z","lvl":"info","evt":"log","msg":"follow 29: bearing +6, tracked at 1.83 m: turn +0, drive 1.33","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:28.004Z","lvl":"info","evt":"log","msg":"follow 29: drive 0.00 of 1.33 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:28.015Z","lvl":"info","evt":"log","msg":"follow 29: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:28.309Z","lvl":"info","evt":"log","msg":"follow 30: tracking Roshan, bearing 5.7, 1.52 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:28.311Z","lvl":"info","evt":"log","msg":"follow 30: bearing +6, tracked at 1.55 m: turn +0, drive 1.05","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:28.404Z","lvl":"info","evt":"log","msg":"follow 30: drive 0.00 of 1.05 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:28.411Z","lvl":"info","evt":"log","msg":"follow 30: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:28.819Z","lvl":"info","evt":"log","msg":"follow 31: tracking Roshan, bearing 5.7, 2.01 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:28.821Z","lvl":"info","evt":"log","msg":"follow 31: bearing +6, tracked at 1.98 m: turn +0, drive 1.48","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:29.004Z","lvl":"info","evt":"log","msg":"follow 31: drive 0.00 of 1.48 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:29.014Z","lvl":"info","evt":"log","msg":"follow 31: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:29.294Z","lvl":"info","evt":"log","msg":"follow 32: tracking Roshan, bearing 5.5, 1.82 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:29.296Z","lvl":"info","evt":"log","msg":"follow 32: bearing +6, tracked at 1.83 m: turn +0, drive 1.33","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:29.404Z","lvl":"info","evt":"log","msg":"follow 32: drive 0.00 of 1.33 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:29.413Z","lvl":"info","evt":"log","msg":"follow 32: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:29.724Z","lvl":"info","evt":"log","msg":"follow 33: tracking Roshan, bearing 5.4, 1.91 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:29.726Z","lvl":"info","evt":"log","msg":"follow 33: bearing +5, tracked at 1.90 m: turn +0, drive 1.40","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:29.804Z","lvl":"info","evt":"log","msg":"follow 33: drive 0.00 of 1.40 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:29.810Z","lvl":"info","evt":"log","msg":"follow 33: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:30.121Z","lvl":"info","evt":"log","msg":"follow 34: tracking Roshan, bearing 5.5, 1.77 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:30.122Z","lvl":"info","evt":"log","msg":"follow 34: bearing +6, tracked at 1.78 m: turn +0, drive 1.28","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:30.204Z","lvl":"info","evt":"log","msg":"follow 34: drive 0.00 of 1.28 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:30.209Z","lvl":"info","evt":"log","msg":"follow 34: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:30.542Z","lvl":"info","evt":"log","msg":"follow 35: tracking Roshan, bearing 5.6, 1.9 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:30.547Z","lvl":"info","evt":"log","msg":"follow 35: bearing +6, tracked at 1.89 m: turn +0, drive 1.39","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:30.604Z","lvl":"info","evt":"log","msg":"follow 35: drive 0.00 of 1.39 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:30.622Z","lvl":"info","evt":"log","msg":"follow 35: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:30.920Z","lvl":"info","evt":"log","msg":"follow 36: tracking Roshan, bearing 6.7, 1.35 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:30.921Z","lvl":"info","evt":"log","msg":"follow 36: bearing +7, tracked at 1.40 m: turn +0, drive 0.90","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:31.004Z","lvl":"info","evt":"log","msg":"follow 36: drive 0.00 of 0.90 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:31.010Z","lvl":"info","evt":"log","msg":"follow 36: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:31.343Z","lvl":"info","evt":"log","msg":"follow 37: tracking Roshan, bearing 8.3, 1.86 m (tof), turn -5.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:31.345Z","lvl":"info","evt":"log","msg":"follow 37: bearing +8, tracked at 1.82 m: turn -6, drive 1.32","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:31.413Z","lvl":"debug","evt":"move.start","job":15,"op":"left","val":5.8}
+{"ts":"2026-11-18T23:00:32.070Z","lvl":"warn","evt":"log","msg":"left(5.8\u00b0): high left-right sync error \u2014 \u0394L=43 \u0394R=62 diff=19 (30.6%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T23:00:32.071Z","lvl":"warn","evt":"log","msg":"left(5.8\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T23:00:32.071Z","lvl":"info","evt":"move.done","job":15,"op":"left","val":5.8,"dur":0.658}
+{"ts":"2026-11-18T23:00:32.106Z","lvl":"info","evt":"log","msg":"follow 37: drive 0.00 of 1.32 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:32.115Z","lvl":"info","evt":"log","msg":"follow 37: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:32.517Z","lvl":"info","evt":"log","msg":"follow 38: tracking Roshan, bearing 2.2, 1.92 m (tof), turn 0.0, drive 0.5","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:32.518Z","lvl":"info","evt":"log","msg":"follow 38: bearing +2, tracked at 1.92 m: turn +0, drive 1.42","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:32.604Z","lvl":"info","evt":"log","msg":"follow 38: drive 0.00 of 1.42 m, path known hazard","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:32.610Z","lvl":"info","evt":"log","msg":"follow 38: detour, 4 legs via [(-0.12, 0.01), (-0.17, 0.06), (-0.12, 0.41), (0.44, 1.3)]","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:32.622Z","lvl":"debug","evt":"move.start","job":16,"op":"left","val":82.5}
+{"ts":"2026-11-18T23:00:34.190Z","lvl":"info","evt":"move.done","job":16,"op":"left","val":82.5,"dur":1.568}
+{"ts":"2026-11-18T23:00:37.344Z","lvl":"info","evt":"log","msg":"follow 38: detour leg 0.00 of 0.11 m, path floor not seen","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:37.354Z","lvl":"debug","evt":"move.start","job":17,"op":"right","val":86.9}
+{"ts":"2026-11-18T23:00:37.793Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":27.58,"repeats":3}
+{"ts":"2026-11-18T23:00:39.119Z","lvl":"info","evt":"move.done","job":17,"op":"right","val":86.9,"dur":1.764}
+{"ts":"2026-11-18T23:00:39.424Z","lvl":"info","evt":"log","msg":"follow 39: holding Roshan, bearing None, None m (None), turn 0.0, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:39.704Z","lvl":"info","evt":"log","msg":"follow 40: holding Roshan, bearing None, None m (None), turn 0.0, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:39.750Z","lvl":"info","evt":"voice.heard","text":"Robin can do follow."}
+{"ts":"2026-11-18T23:00:39.754Z","lvl":"info","evt":"voice.say","text":"\u00c1lex, la","spoken":false}
+{"ts":"2026-11-18T23:00:39.875Z","lvl":"info","evt":"voice.say","text":"instrucci\u00f3n fue","spoken":false}
+{"ts":"2026-11-18T23:00:40.000Z","lvl":"info","evt":"voice.say","text":"para activar","spoken":false}
+{"ts":"2026-11-18T23:00:40.045Z","lvl":"info","evt":"log","msg":"follow 41: holding Roshan, bearing None, None m (None), turn 0.0, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:40.226Z","lvl":"info","evt":"voice.say","text":"la funci\u00f3n, no","spoken":false}
+{"ts":"2026-11-18T23:00:40.290Z","lvl":"info","evt":"voice.say","text":"para detener el robot.","spoken":false}
+{"ts":"2026-11-18T23:00:40.313Z","lvl":"info","evt":"log","msg":"follow 42: searching Roshan, bearing None, None m (None), turn 0.0, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:41.714Z","lvl":"info","evt":"log","msg":"follow 43: searching Roshan, bearing None, None m (None), turn 0.0, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:43.100Z","lvl":"info","evt":"log","msg":"follow 44: tracking Roshan, bearing 116.2, 1.54 m (tof), turn -69.7, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:43.101Z","lvl":"info","evt":"log","msg":"follow 44: bearing +116, tracked at 1.54 m: turn -81, drive 0.00","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:45.095Z","lvl":"debug","evt":"move.start","job":18,"op":"left","val":81.3}
+{"ts":"2026-11-18T23:00:46.819Z","lvl":"info","evt":"move.done","job":18,"op":"left","val":81.3,"dur":1.724}
+{"ts":"2026-11-18T23:00:47.292Z","lvl":"info","evt":"log","msg":"follow 45: holding Roshan, bearing None, None m (None), turn 0.0, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:47.625Z","lvl":"info","evt":"log","msg":"follow 46: holding Roshan, bearing None, None m (None), turn 0.0, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:47.962Z","lvl":"info","evt":"log","msg":"follow 47: holding Roshan, bearing None, None m (None), turn 0.0, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:48.245Z","lvl":"info","evt":"log","msg":"follow 48: tracking Roshan, bearing 34.8, 1.52 m (tof), turn -20.9, drive 0.0","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:48.246Z","lvl":"info","evt":"log","msg":"follow 48: bearing +35, tracked at 1.52 m: turn -24, drive 1.02","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:48.340Z","lvl":"debug","evt":"move.start","job":19,"op":"left","val":24.4}
+{"ts":"2026-11-18T23:00:49.142Z","lvl":"warn","evt":"log","msg":"left(24.4\u00b0): high left-right sync error \u2014 \u0394L=180 \u0394R=210 diff=30 (14.3%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T23:00:49.143Z","lvl":"warn","evt":"log","msg":"left(24.4\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-18T23:00:49.143Z","lvl":"info","evt":"move.done","job":19,"op":"left","val":24.4,"dur":0.804}
+{"ts":"2026-11-18T23:00:49.255Z","lvl":"info","evt":"voice.heard","text":"cancel follow"}
+{"ts":"2026-11-18T23:00:49.259Z","lvl":"info","evt":"task.cancel","by":"voice","_unregistered":true}
+{"ts":"2026-11-18T23:00:49.260Z","lvl":"info","evt":"log","msg":"tool cancel_task({}) -> {'ok': True, 'note': 'task cancelled'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-18T23:00:49.266Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 245)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-18T23:00:49.267Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-18T23:00:51.385Z","lvl":"info","evt":"log","msg":"follow 48: drive 0.00 of 1.02 m, path blocked at 0.15 m","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:51.389Z","lvl":"info","evt":"log","msg":"follow 48: way round starts behind the robot: not taken","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:51.495Z","lvl":"info","evt":"log","msg":"follow cancelled (voice)","src":"robot_core.follow"}
+{"ts":"2026-11-18T23:00:52.673Z","lvl":"info","evt":"task.end","task":"follow","ok":true,"cancelled":true,"_unregistered":true}
+{"ts":"2026-11-18T23:00:52.674Z","lvl":"info","evt":"gesture","name":"yes","text_only":true}
+{"ts":"2026-11-18T23:00:52.675Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-18T23:00:52.709Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-18T23:00:52.778Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:300 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-18T23:00:52.784Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:260 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-18T23:00:53.255Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-18T23:00:53.256Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
