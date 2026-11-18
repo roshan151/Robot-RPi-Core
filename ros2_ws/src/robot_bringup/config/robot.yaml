@@ -45,10 +45,10 @@
     imu_fitted: true           # set true once tests/hardware/check_imu.py reads sensible angles
     imu_bus: 1                 # I2C bus. 1 = GPIO2/3
     imu_gyro_addr: 105         # 0x69, the BMI323 with its address pad open (as shipped); 104 (0x68) if closed
-    imu_axes: ["y", "x", "-z"]   # which board axis points robot-forward, robot-left, up; "-" flips one.
-                               # As mounted: flat, chips UP, the printed Y arrow to the robot's FRONT and
-                               # X to its LEFT (the printed Z points into the board, so up is -z).
-                               # check_imu.py tells you if it is right
+    imu_axes: ["-x", "-y", "z"]  # which board axis points robot-forward, robot-left, up; "-" flips one.
+                               # Checked 2026-11-18 with check_imu.py: level reads ~0 / ~0, front up = pitch +,
+                               # left up = roll +. The IMU sits 6 cm from the left and the back: no setting
+                               # needed, angles and turn rate are the same anywhere on the chassis
     turn_tolerance_deg: 2.0    # a turn further off than this (by the gyro) gets a short correcting move
     max_pitch_deg: 25.0        # MEASURE: nose up/down beyond this is "tilted" and stops the move
     max_roll_deg: 20.0
