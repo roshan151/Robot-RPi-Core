@@ -10,16 +10,11 @@ def test_hazards_are_what_the_floor_check_refuses_and_a_lone_noisy_zone_is_not()
     pts = [(0.5, 0.0, 0.0), (0.6, 0.0, 0.1), (0.62, 0.05, 0.1), (0.8, 0.0, -0.2), (0.82, 0.03, -0.2),
            (1.0, 0.0, None), (1.02, 0.02, None), (1.3, 0.0, 0.09), (0.7, 0.4, 0.9), (0.72, 0.42, 0.9)]
     got = lp.hazards_from_floor(pts, p)
-    assert (0.6, 0.0) in got and (0.8, 0.0) in got and (1.0, 0.0) in got
+    assert (0.6, 0.0) in got, "a box"
+    assert (0.82, 0.03) not in got and (1.0, 0.0) not in got, "low floor and no return: drops are the TF-Luna's"
     assert (1.3, 0.0) not in got, "one zone alone is noise"
     assert (0.7, 0.4) not in got, "above the robot: it passes under"
     assert (0.5, 0.0) not in got
-
-
-def test_a_drop_is_also_marked_where_the_ray_should_have_met_the_floor():
-    pts = [(1.0, 0.0, -0.25), (1.0, 0.05, -0.25)]
-    got = lp.hazards_from_floor(pts, terrain.Params(), sensor=(0.0, 0.25))
-    assert any(abs(x - 0.5) < 1e-6 for x, _ in got)
 
 
 def test_plans_round_a_box_and_straight_when_nothing_is_in_the_way():
@@ -46,15 +41,6 @@ def test_hazards_are_kept_in_the_odometry_frame_and_forgotten_in_time():
 def test_leg_turns_are_positive_to_the_right():
     turn, dist = lp.leg((0.0, 0.0, 0.0), (1.0, -1.0))
     assert abs(turn - 45.0) < 1e-6 and abs(dist - math.sqrt(2)) < 1e-9
-
-
-def test_no_return_on_dark_floor_is_not_seen_floor_not_a_drop_when_configured():
-    p = terrain.Params(holes_are_drops=False)
-    pts = [(x / 100.0, 0.0, 0.0) for x in range(20, 60, 5)] + [(0.66, y / 10.0, None) for y in (-1, 0, 1)]
-    t = terrain.classify(pts, p, 0.9)
-    assert t.kind == terrain.UNKNOWN and abs(t.distance_m - 0.6) < 1e-9, "driven up to, never onto"
-    assert lp.hazards_from_floor(pts, p) == [], "and not planned round"
-    assert terrain.classify(pts, terrain.Params(), 0.9).kind == terrain.DROP
 
 
 def test_a_tilted_head_reads_flat_floor_flat_once_levelled():

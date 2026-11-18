@@ -24,7 +24,6 @@ h_max_m is the one to measure (plan step 0: boards of 1 to 4 cm).
 from __future__ import annotations
 
 import math
-import statistics
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -91,22 +90,8 @@ def classify(points: Sequence[Point], p: Params = Params(), reach_m: float = 0.5
     if sum(1 for i in seen if i <= last_i + 1) < 2:
         return Terrain(UNKNOWN)
 
-    # A drop. Either the rays that should have met the floor carry on and land lower
-    # and further away, or they meet nothing at all. It starts somewhere after the
-    # last slice that was still floor.
-    prev = None
-    for i in sorted(set(seen) | set(holes)):
-        gone = holes.get(i, 0) > len(cells.get(i, ()))
-        depth = statistics.median(cells[i]) if i in cells else None
-        if (depth is not None and depth < -p.max_drop_m) or (gone and prev is not None):
-            start = i if prev is None else prev + 1
-            if start <= last_i:
-                if depth is None and not p.holes_are_drops:
-                    return Terrain(UNKNOWN, start * p.cell_m)     # dark or glancing floor: not seen, not a drop
-                return Terrain(DROP, start * p.cell_m, depth)
-            break
-        if i in cells:
-            prev = i
+    # No drops from the ToF: a drop is the TF-Luna's to find (the drivetrain's drop guard).
+    # Floor lower than it should be, or no floor return, is not judged here (Nov 18).
 
     rise = next((i for i in seen if i <= last_i and _high(cells[i]) > p.flat_tol_m), None)
     if rise is None:
@@ -212,21 +197,14 @@ class Slice:
 def scan_slice(columns: Sequence[Column], p: Params = Params(), low_m: float = 0.12) -> Slice:
     """Turn one grid into map data. Per bearing: the nearest reading between the
     floor and the robot's own height is an obstacle (what is higher, it drives
-    under); a reading below the floor is a drop, and so is a missing floor beyond
-    floor that was seen."""
+    under). No drops: those are the TF-Luna's (`drops` stays empty)."""
     out = Slice([], [], [])
     for col in columns:
-        floor_seen, floor_at, hit = False, None, False
+        floor_at, hit = None, False
         for d, x, y, h in col.readings:
             if h is None:
-                if floor_seen:
-                    out.drops.append((x, y))
-                    break
                 continue
             margin = 2.0 * p.flat_tol_m + 0.02 * d             # a tilt error grows with distance
-            if h < -(p.max_drop_m + 0.02 * d):
-                out.drops.append((x, y))
-                break
             # In the way: lower than the robot is tall. The level row climbs with distance
             # (a wall 3 m off is met half a metre up), and that is still the wall.
             if margin < h < p.body_m + 0.08 * d:
@@ -236,7 +214,7 @@ def scan_slice(columns: Sequence[Column], p: Params = Params(), low_m: float = 0
                 hit = True
                 break
             if abs(h) <= margin:
-                floor_seen, floor_at = True, (x, y)
+                floor_at = (x, y)
         if not hit and floor_at is not None:
             out.clear.append(floor_at)
     return out

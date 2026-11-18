@@ -41,17 +41,9 @@ def hazards_from_floor(pts: Sequence[terrain.Point], p: terrain.Params,
     for x, y, h in pts:
         if x < p.near_m:
             continue
-        if h is None:
-            if p.holes_are_drops and not p.drive_unknown:
-                out.append((x, y))
-        elif max(p.flat_tol_m, SURE_M) < h < p.body_m + 0.05:
+        if h is not None and max(p.flat_tol_m, SURE_M) < h < p.body_m + 0.05:   # no drops: the TF-Luna's
             out.append((x, y))
             solid.append((x, y))
-        elif h < -max(p.max_drop_m, SURE_M):
-            out.append((x, y))
-            if sensor is not None:
-                t = sensor[1] / (sensor[1] - h)
-                out.append((sensor[0] + t * (x - sensor[0]), t * y))
     keep = [a for i, a in enumerate(out)
             if any(j != i and math.dist(a, b) <= NEIGHBOUR_M for j, b in enumerate(out))]
     return keep + fill_behind([a for a in keep if a in solid], sensor[0] if sensor is not None else 0.0)

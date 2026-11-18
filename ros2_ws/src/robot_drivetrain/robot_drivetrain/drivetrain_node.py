@@ -76,6 +76,13 @@ class DrivetrainNode(Node):
     def get_logger(self):
         return _PyLog(super().get_logger())
 
+    def _drop_note(self) -> None:
+        """Only the TF-Luna watches for drops (not the ToF): without a fresh reading, or with the
+        guard off, say so on the OLED's note row (renewed every 10 s while it lasts)."""
+        cm, t = self._drivetrain.tfluna()
+        if self._drop is None or cm is None or time.monotonic() - t > 2.0:
+            status.note("drop: not detected", 15.0)
+
     def __init__(self) -> None:
         super().__init__("drivetrain")
 
@@ -184,6 +191,7 @@ class DrivetrainNode(Node):
         )
         self.create_service(Trigger, "estop", self._on_estop,
                             callback_group=safety)
+        self.create_timer(10.0, self._drop_note, callback_group=safety)
 
         self._encoders = self.create_publisher(Encoders, "encoders", 10)
         self._odom_pub = self.create_publisher(Odometry, "odom", 10)

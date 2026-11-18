@@ -221,55 +221,6 @@ def test_tof_range_on_the_person_is_sent_once_their_box_is_known_and_the_grid_ev
     assert len(v.calls[0][1]["tof_grid"]) == 8 and v.calls[0][1]["tof_grid"][0][0] == 1.6
 
 
-def test_the_floor_is_checked_before_a_drive_and_the_robot_drives_up_to_what_is_in_the_way():
-    drive = dict(step("tracking", turn=-10.0, drive=0.5), head=[0, 0], locked=True)
-    h, v, m = TofHead(scans=(floor(box=(0.6, 0.1)), floor())), Vision([drive, drive, step("gone")]), Motion()
-    follow.follow(Camera(), v, m, "Sam", head=h, seconds=60, clock=Clock())
-    assert m.moves == [("turn", -10.0), ("drive", 0.35), ("turn", -10.0), ("drive", 0.5)], \
-        "a box at 0.6 m: stop 0.25 m short of it, not skip the drive"
-    i = h.moves.index("down")
-    assert h.moves[i + 1] == (0.0, 10.0), "the head goes back to where it was for the next frame"
-
-
-def test_too_close_to_a_drop_a_step_or_a_box_or_an_unreadable_floor_is_not_driven():
-    drive = dict(step("tracking", drive=0.3), head=[0, 0], locked=True)
-    for scan, drives in ((floor(drop=0.3), 0), (floor(box=(0.3, 0.02)), 0), (floor(box=(0.3, 0.1)), 0),
-                         ([], 0), (floor(), 1)):
-        h, m = TofHead(scans=(scan,)), Motion()
-        follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
-        assert len(m.moves) == drives, scan[:3]
-    h, m = TofHead(scans=([],)), Motion()
-    h.terrain.drive_unknown = True                               # robot.yaml drive_on_unknown_floor: true
-    follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
-    assert len(m.moves) == 1
-
-
-def test_stairs_down_ahead_stop_the_drive_short_of_the_edge():
-    drive = dict(step("tracking", drive=0.5), head=[0, 0], locked=True)
-    h, m = TofHead(scans=(floor(drop=0.7),)), Motion()
-    follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
-    assert m.moves == [("drive", 0.45)]
-
-
-def test_floor_seen_clear_is_not_looked_at_again_while_it_is_still_ahead():
-    drive = dict(step("tracking", drive=0.3), head=[0, 0], locked=True)
-    h, m = TofHead(), Moving()
-    follow.follow(Camera(), Vision([drive, drive, drive, step("gone")]), m, "Sam", head=h, seconds=60,
-                  clock=Clock(), pose=lambda: tuple(m.pose))
-    assert [k for k, _ in m.moves] == ["drive"] * 3
-    assert h.glances == 1, "floor seen clear to 1.5 m: three 0.3 m drives need one look"
-
-
-def test_the_tracking_view_is_used_when_it_sees_the_floor_right_in_front():
-    drive = dict(step("tracking", drive=0.4), head=[0, 0], locked=True)
-    h, m = TofHead(view=zones(floor(start=0.2))), Motion()
-    follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
-    assert m.moves == [("drive", 0.4)] and h.glances == 0
-    h, m = TofHead(view=zones(floor(start=0.6))), Motion()          # the near floor not in view: look down
-    follow.follow(Camera(), Vision([drive, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock())
-    assert m.moves == [("drive", 0.4)] and h.glances == 1
-
-
 def test_something_in_the_way_at_any_height_shortens_the_drive_but_the_person_does_not():
     drive = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=1.6)
     chair = zones([(0.65, 0.05, 0.25)]) + zones(floor())             # a chair seat edge at 25 cm, 0.65 m ahead
@@ -309,21 +260,6 @@ def test_once_lost_the_mac_is_told_where_they_were_last_seen():
 # Longer steps, and planning round what blocked a drive (robot_core/local_plan.py)
 # --------------------------------------------------------------------------- #
 
-def test_a_far_person_gets_a_long_step_but_never_past_the_floor_seen(monkeypatch):
-    monkeypatch.setattr(follow.settings, "FOLLOW_MAX_DRIVE_M", 3.0)   # legs of up to 3 m
-    far = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=3.0, bearing_deg=0.0)
-    for until, drive in ((3.0, 2.5), (1.5, 1.3)):        # 3.0 - 0.5 m; no live watch: floor seen - 0.2
-        h, m = TofHead(scans=(floor(until=until),)), Moving()
-        follow.follow(Camera(), Vision([far, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock(),
-                      pose=lambda: tuple(m.pose))
-        assert m.moves == [("drive", drive)], (until, m.moves)
-    near = dict(far, distance_m=0.9)                     # 0.5 m from the person is close enough
-    h, m = TofHead(scans=(floor(until=2.0),)), Moving()
-    follow.follow(Camera(), Vision([near, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock(),
-                  pose=lambda: tuple(m.pose))
-    assert m.moves == [("drive", 0.4)], "the Pi decides: up to 0.5 m from them, whatever the Mac's step"
-
-
 def wall(x=0.4, half=0.1):
     """A floor scan with a 10 cm high box at x for 0.3 m, `half` m to each side of the path."""
     pts = [p for p in floor(until=2.0) if not (x <= p[0] <= x + 0.3)]
@@ -336,7 +272,7 @@ def wall(x=0.4, half=0.1):
 
 def test_a_box_in_the_way_is_driven_round_and_the_robot_faces_the_person_again():
     drive = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=1.7, bearing_deg=0.0)
-    h, m = TofHead(scans=(wall(), floor(until=2.0))), Moving()
+    h, m = TofHead(view=zones(wall())), Moving()      # the box in the tracking view: no look down
     follow.follow(Camera(), Vision([drive, drive, step("gone")]), m, "Sam", head=h, seconds=60,
                   clock=Clock(), pose=lambda: tuple(m.pose))
     assert m.moves[0] == ("drive", 0.15), "first up to the box, stopping short of it"
@@ -345,15 +281,15 @@ def test_a_box_in_the_way_is_driven_round_and_the_robot_faces_the_person_again()
     assert sum(v for k, v in rest if k == "drive") > 0.3, "round the box, leg by leg"
     assert rest[-1][0] == "turn", "and turned back towards them"
     assert abs(m.pose[1]) > 0.25, "the path went beside the box"
-    assert h.glances >= 2 and h.moves.count("down") == h.glances
+    assert h.glances == 0, "the head never looks down at the floor"
 
 
 def test_with_no_way_round_it_stops_and_does_not_keep_looking():
     drive = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=1.7, bearing_deg=0.0)
-    h, m = TofHead(scans=(wall(half=2.0),)), Moving()
+    h, m = TofHead(view=zones(wall(half=2.0))), Moving()
     follow.follow(Camera(), Vision([drive, drive, drive, step("gone")]), m, "Sam", head=h, seconds=60,
                   clock=Clock(), pose=lambda: tuple(m.pose))
-    assert m.moves == [("drive", 0.15)] and h.glances == 1
+    assert m.moves == [("drive", 0.15)] and h.glances == 0
 
 
 class WatchingHead(TofHead):
@@ -387,31 +323,6 @@ class SlowDrive(Moving):
         return super().stop()
 
 
-def test_a_long_drive_is_watched_as_it_goes_and_brakes_when_something_comes_near(monkeypatch):
-    monkeypatch.setattr(follow.settings, "FOLLOW_MAX_DRIVE_M", 3.0)   # legs of up to 3 m
-    far = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=4.2, bearing_deg=0.0)
-    clear, box_far, box_near = floor(until=0.9), floor(until=0.9, box=(0.7, 0.1)), floor(until=0.9, box=(0.4, 0.1))
-    h, m = WatchingHead([clear, box_far, box_near], scans=(floor(until=1.4),)), SlowDrive(polls=6)
-    follow.follow(Camera(), Vision([far, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock(),
-                  pose=lambda: tuple(m.pose))
-    assert m.moves[0] == ("drive", 3.0), "a 3 m drive although the glance saw floor only to 1.4 m"
-    assert m.stopped == 1 and h.watched == 3, "clear, a box still far, then the box near: brake"
-    assert "drive pose" in h.moves and h.moves[-1] == (0.0, 10.0), "head down for the drive, back up after"
-
-
-def test_one_thin_grid_does_not_brake_but_several_in_a_row_do(monkeypatch):
-    monkeypatch.setattr(follow.settings, "FOLLOW_MAX_DRIVE_M", 3.0)   # legs of up to 3 m
-    far = dict(step("tracking", drive=0.5), head=[0, 0], locked=True, distance_m=3.2, bearing_deg=0.0)
-    h, m = WatchingHead([[], floor(until=0.9), [], [], []], scans=(floor(until=2.5),)), SlowDrive(polls=8)
-    follow.follow(Camera(), Vision([far, step("gone")]), m, "Sam", head=h, seconds=60, clock=Clock(),
-                  pose=lambda: tuple(m.pose))
-    assert m.stopped == 1 and h.watched == 5
-
-
-# --------------------------------------------------------------------------- #
-# Gliding: following by steering (motion.velocity, firmware v6)
-# --------------------------------------------------------------------------- #
-
 @pytest.fixture()
 def glide(monkeypatch):
     """Gliding is off by default (the ToF is on the gimbal): these tests switch it on."""
@@ -444,7 +355,7 @@ def test_gliding_steers_toward_the_person_and_drives_without_stopping(glide):
                   clock=Clock(), pose=lambda: tuple(m.pose))
     assert m.vel[:2] == [(0.2, 0.0), (0.2, 0.0)] and m.vel[-1] == (0.0, 0.0), m.vel
     assert m.moves == [], "no stop-and-go moves at all"
-    assert h.glances == 1, "the floor right in front is looked at once, when it sets off"
+    assert h.glances == 0, "the head never looks down at the floor"
     assert (0.0, -21.0) in h.moves, "head held level (21 deg below its straight position)"
 
 
@@ -474,7 +385,7 @@ def test_a_box_ahead_slows_the_glide_and_close_up_it_stops_and_falls_back_to_a_s
     follow.follow(Camera(), Vision([seen_at(0.0), step("gone")]), m, "Sam", head=h, seconds=60,
                   clock=Clock(), pose=lambda: tuple(m.pose))
     assert all(v == 0.0 for v, _ in m.vel), "too close: never driven on"
-    assert sum(d for k, d in m.moves if k == "drive") < 0.1
+    assert m.moves[0][0] == "turn", "a step round it instead: first out to the side, not into the box"
 
 
 def test_without_the_velocity_mode_it_follows_in_steps_as_before():
@@ -540,9 +451,9 @@ def test_a_hazard_remembered_long_ago_is_looked_at_again_and_forgotten_when_clea
     t = [0.0]
     hz = local_plan.Hazards(clock=lambda: t[0])
     hz.add((0.0, 0.0, 0.0), [(0.4, 0.0), (0.45, 0.0)])            # a phantom right ahead
-    h = TofHead(scans=(floor(until=2.0),))
-    go, why, _ = follow._plan_drive(h, 0.6, [], 1.5, None, (0.0, 0.0, 0.0), 0.0, hz)
-    assert (go, why, h.glances) == (0.0, "known hazard", 0)        # just seen: refused, no second look
+    h, view = TofHead(), zones(floor(until=2.0))                   # the tracking view: just floor
+    go, why, _ = follow._plan_drive(h, 0.6, view, 1.5, None, (0.0, 0.0, 0.0), 0.0, hz)
+    assert (go, why) == (0.0, "known hazard")                       # just seen: refused
     t[0] = follow.RECHECK_S + 1.0
-    go, why, _ = follow._plan_drive(h, 0.6, [], 1.5, None, (0.0, 0.0, 0.0), 0.0, hz)
-    assert go == 0.6 and h.glances == 1 and hz.points() == []      # looked again, clear: forgotten
+    go, why, _ = follow._plan_drive(h, 0.6, view, 1.5, None, (0.0, 0.0, 0.0), 0.0, hz)
+    assert go == 0.6 and hz.points() == [] and h.glances == 0       # the view shows it clear: forgotten

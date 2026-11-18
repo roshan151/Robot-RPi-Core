@@ -50,7 +50,7 @@ import logging
 import math
 import time
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 from robot_core import debug_upload, local_plan, settings, status, task_cancel, terrain
 from robot_core.sensors.camera import jpeg
@@ -66,12 +66,9 @@ MARGIN_M = 0.2                  # the floor must be clear this far past the end 
 FLOOR_MEMORY_S = 10.0           # floor seen clear is trusted this long: people and pets move
 LAST_SEEN_S = 30.0              # where they were last seen is a search hint this long
 FOLLOW_BUMP_TURN_DEG = 20.0     # after a bump, no drive until the robot has turned this far
-FAR_LOOK_DEG = 12.0             # a long drive: one more floor look this much higher than the drive pose
 PERSON_CLEAR_M = 0.35           # the person's own legs are not a hazard to remember
 DETOUR_LEGS = 3                 # legs of a way round driven per step before looking for the person
 DETOUR_MAX_TURN_DEG = 100.0     # a way round that starts by turning further (behind it, unseen) is not taken
-WATCH_REACH_M = 0.8             # driving: the floor judged on every new grid, this far ahead
-WATCH_UNSEEN_GRIDS = 3          # ...and this many grids in a row too thin to judge also brake
 GLIDE_TURN_GAIN = 0.8           # gliding: turn rate (rad/s) per radian the person is off to the side
 GLIDE_MAX_TURN = 0.8            # rad/s
 GLIDE_DEADBAND_DEG = 3.0        # nearer ahead than this: no turning
@@ -247,12 +244,6 @@ def _levelled(zones, p: terrain.Params):
     return [(r, c, x, y, h2, d) for (r, c, x, y, _, d), (_, _, h2) in zip(zones, lv)]
 
 
-def _seen_to(pts, p: terrain.Params) -> float:
-    """How far ahead, in the robot's path, the floor was actually measured (0: not at all)."""
-    xs = [x for x, y, h in pts if h is not None and abs(y) <= p.corridor_m / 2.0 and x >= p.near_m]
-    return max(xs) if xs else 0.0
-
-
 def _radius(p: terrain.Params) -> float:
     """How far the robot's middle keeps from a hazard when planning: half the path, plus a gap
     (the ToF sees only an obstacle's near side, so its far side needs room too)."""
@@ -292,59 +283,24 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
             return 0.0, "known hazard", seen
         recheck = not local_plan.line_clear(pose[:2], end, hazards.points(), _radius(p))
     near = _in_the_way(zones, p, person_m)           # anything up to the robot's height (#4)
-    if near is not None:
-        _remember(hazards, pose, _way_points(zones, p, person_m), person_xy)
+    if near is not None:                             # all of it across the view, not just the path
+        _remember(hazards, pose, local_plan.hazards_from_floor(
+            [(x, y, h) for _, _, x, y, h, d in zones if d < person_m - 0.3], p), person_xy)
+    if recheck:
+        if not zones or near is not None:            # nothing new seen to clear it
+            return 0.0, "known hazard", seen
+        for i in range(int(limit / 0.1) + 1):        # the tracking view sees the way clear now
+            hazards.forget_near((pose[0] + i * 0.1 * math.cos(pose[2]), pose[1] + i * 0.1 * math.sin(pose[2])),
+                                _radius(p))
+        log.info("follow: way seen clear for %.2f m: remembered hazards there forgotten", limit)
     if near is not None and near - p.stop_short_m < limit:
         limit, why = max(0.0, round(near - p.stop_short_m, 2)), f"in the way at {near:.2f} m"
     if limit < MIN_DRIVE_M:
         return 0.0, why, seen
 
-    # The floor (#3: look as little as possible).
-    have = 0.0 if recheck or not seen else seen.left(pose, now)
-    if have >= limit + MARGIN_M - 1e-9:
-        return limit, why, seen                      # seen clear a moment ago, still ahead
-    if zones and not recheck:                        # the tracking view's lower rows
-        pts = [(x, y, h) for _, _, x, y, h, _ in zones]
-        floor = [x for x, y, h in pts if h is not None and abs(y) <= p.corridor_m / 2.0 and x >= p.near_m]
-        # Only if it saw the floor right in front, or memory covers the stretch it did not.
-        if floor and min(floor) <= max(p.near_m + 2 * p.cell_m, have + 0.05):
-            got, _ = _shorten(pts, p, limit)
-            if got >= limit - 1e-9 and _seen_to(pts, p) >= limit + MARGIN_M:
-                return limit, why, (_Seen(pose, limit + MARGIN_M, now) if pose else None)
-    # Glance down (two looks), then put the head back for the next frame.
-    back = head.gimbal.angles()
-    pts = head.floor_scan()
-    geom = getattr(head, "geom", None)
-    if not watched and _seen_to(pts, p) < limit + MARGIN_M and hasattr(head, "floor_look"):
-        pts = pts + head.floor_look(head.geom.drive_tilt_deg + FAR_LOOK_DEG)    # a long drive: look further out
-    head.gimbal.move_to(back[0], back[1], wait=True)
-    head.gimbal.wait_settled()
-    got, short = _shorten(pts, p, limit)
-    if recheck and got >= MIN_DRIVE_M:               # seen clear now: what was remembered there was wrong
-        for i in range(int(got / 0.1) + 1):
-            hazards.forget_near((pose[0] + i * 0.1 * math.cos(pose[2]), pose[1] + i * 0.1 * math.sin(pose[2])),
-                                _radius(p))
-        log.info("follow: path seen clear for %.2f m: remembered hazards there forgotten", got)
-    _remember(hazards, pose, local_plan.hazards_from_floor(
-        pts, p, (geom.pan_axis_x_m, geom.height_m) if hasattr(geom, "pan_axis_x_m") else None), person_xy)
-    reach = round(_seen_to(pts, p) - MARGIN_M, 2)    # never drive onto floor it did not measure
-    if got > reach and not p.drive_unknown and not watched:
-        got, short = (reach if reach >= MIN_DRIVE_M else 0.0), short or f"floor seen only to {reach + MARGIN_M:.2f} m"
-    if short:                                        # what it judged by (debug: the raw grid goes to the Mac)
-        lv = getattr(head, "last_level", None)
-        log.debug("floor seen at tilt %s, pitch %s, levelled by %s (x m, y m, height m): %s",
-                 getattr(geom, "drive_tilt_deg", None), head.pitch() if getattr(head, "pitch", None) else None,
-                 None if lv is None else f"{lv[0]:+.3f} m, pitch {lv[1]:+.1f}, roll {lv[2]:+.1f} deg",
-                 sorted(((round(x, 2), round(y, 2), None if h is None else round(h, 3))
-                         for x, y, h in pts if abs(y) <= p.corridor_m / 2.0 and x >= p.near_m),
-                        key=lambda t: t[0])[:20])
-    if got <= 0.0:
-        return 0.0, short or why, None
-    clear = got + MARGIN_M                           # and how far it is clear beyond that, for next time
-    if short is None:
-        clear = next((far for far in (1.7, 1.5, 1.2, 1.0, 0.8, 0.6) if clear < far <= _seen_to(pts, p)
-                      and terrain.may_drive(terrain.classify(pts, p, far), p)), clear)
-    return got, short or why, (_Seen(pose, clear, now) if pose else None)
+    # The floor is not judged here: drops are the TF-Luna's (the drivetrain brakes, reported as a
+    # bump), and the head never looks down (Nov 18: ToF floor checks refused clear floor every time).
+    return limit, why, seen
 
 
 def _watching(head) -> bool:
@@ -354,55 +310,8 @@ def _watching(head) -> bool:
 
 
 def _drive(head, motion, go_m: float, bumped, hazards, pose, person_xy, seq: int) -> bool:
-    """Drive `go_m`; True if bumped (as _move). With the 8x8 ToF the head looks down at
-    the floor for the whole drive and every new grid (5 a second) is judged out to
-    WATCH_REACH_M: the robot brakes once something is within stop_short_m + MARGIN_M,
-    so a drive can run on past the floor that was seen before it started."""
-    if not _watching(head):
-        return _move(motion, motion.drive, go_m, bumped)
-    if task_cancel.requested():
-        return False
-    p, geom = head.terrain, head.geom
-    back = head.gimbal.angles()
-    head.drive_pose()
-    t0 = time.monotonic()
-    hit = lambda: bool(bumped) and (bumped() or 0.0) >= t0       # noqa: E731
-    try:
-        res = motion.drive(go_m)
-        if not res.get("ok"):
-            raise RuntimeError(f"move refused: {res.get('error')}")
-        unseen = 0
-        while motion.busy():
-            if task_cancel.requested():
-                return False
-            if hit():
-                motion.stop()
-                return True
-            if time.monotonic() > t0 + MOVE_TIMEOUT_S:
-                raise RuntimeError("move timed out")
-            pts = head.floor_profile()               # waits for the next grid
-            if p.auto_level:
-                pts, _ = terrain.level(pts)
-            t = terrain.classify(pts, p, WATCH_REACH_M)
-            if terrain.may_drive(t, p):
-                unseen = 0
-                continue
-            thin = t.kind == terrain.UNKNOWN and t.distance_m is None
-            unseen = unseen + 1 if thin else 0
-            near = t.distance_m is not None and t.distance_m <= p.stop_short_m + MARGIN_M
-            if (near or unseen >= WATCH_UNSEEN_GRIDS) and motion.busy():
-                motion.stop()
-                log.info("follow %d: braked mid-drive, %s", seq, terrain.why_not(t))
-                status.detail(f"braked: {terrain.why_not(t)}")
-                _remember(hazards, pose(), local_plan.hazards_from_floor(
-                    pts, p, (geom.pan_axis_x_m, geom.height_m)), person_xy)
-                break
-        if hit():
-            motion.stop()
-            return True
-        return False
-    finally:
-        head.gimbal.move_to(back[0], back[1], wait=True)
+    """Drive `go_m`; True if bumped (as _move), the TF-Luna's drop brake included."""
+    return _move(motion, motion.drive, go_m, bumped)   # the head stays on the person
 
 
 def _glide_tilt(head) -> float:

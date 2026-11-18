@@ -235,22 +235,3 @@ def test_a_low_box_the_level_beam_would_miss_goes_on_the_map_as_low():
     assert ex.stats.low_obstacles >= 1
 
 
-def test_where_the_floor_ends_is_mapped_and_never_driven_onto():
-    room = Room(plant=None, floor_ends_x=-0.9)                   # stairs down behind the start
-    ex, room, vision, base = make(room, keyframes_until_done=4)  # every goal is 0.5 m further that way
-    ex.run()
-    drops = [p for kf in vision.keyframes for p in kf["drops"]]
-    assert drops, "the edge was not reported to the map"
-    assert room.pose.x > -0.9 + 0.25, f"drove to x={room.pose.x:.2f}, the floor ends at -0.9"
-    assert ex.stats.drops >= 1
-
-
-def test_a_floor_the_sensor_cannot_read_is_not_driven_unless_allowed():
-    dark = Room(plant=None, dark=(-3.0, -0.25))                  # a black rug across the way
-    ex, room, vision, base = make(dark, keyframes_until_done=2)
-    ex.run()
-    assert base.drives == [] or min(room.pose.x, 0) > -0.2
-    ex, room, vision, base = make(Room(plant=None, dark=(-3.0, 0.05)),
-                                  params=terrain.Params(drive_unknown=True), keyframes_until_done=2)
-    ex.run()
-    assert base.drives, "with drive_on_unknown_floor it goes, as it did before the ToF"

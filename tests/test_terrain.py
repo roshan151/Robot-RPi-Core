@@ -49,11 +49,6 @@ def test_a_step_with_nothing_seen_beyond_it_is_blocked():
     assert classify(floor(lambda x: 0.02 if x >= 0.40 else 0.0, x1=0.42), P, 0.6).kind == BLOCKED
 
 
-def test_a_table_edge_or_stairs_down_is_a_drop():
-    t = classify(floor(lambda x: -0.18 if x >= 0.45 else 0.0), P, 0.6)
-    assert t.kind == DROP and t.distance_m == pytest.approx(0.45) and t.height_m < -0.03
-
-
 def test_only_what_is_within_reach_counts():
     box_far = floor(lambda x: 0.12 if x >= 0.80 else 0.0)
     assert classify(box_far, P, 0.4).kind == FLAT
@@ -69,18 +64,6 @@ def test_too_little_floor_seen_is_unknown():
     assert classify([], P, 0.5).kind == UNKNOWN
     assert classify(floor(lambda x: 0.0, x0=0.70), P, 0.5).kind == UNKNOWN     # nothing within reach
     assert classify([(0.30, 0.0, 0.0)] * 4, P, 0.5).kind == UNKNOWN            # one strip of floor says little
-
-
-def test_a_drop_shows_as_floor_then_readings_that_land_lower_and_further():
-    # What the sensor really returns at a table edge 45 cm ahead: floor up to it, then nothing
-    # until the rays reach the lower floor much further on.
-    pts = floor(lambda x: 0.0, x1=0.43) + floor(lambda x: -0.20, x0=0.80, x1=1.2)
-    t = classify(pts, P, 0.6)
-    assert t.kind == DROP and t.distance_m == pytest.approx(0.45)
-    assert classify(pts, P, 0.3).kind == FLAT                                   # the edge is beyond this drive
-
-
-# ------------------------------------------------------------------ the head
 
 
 class Gimbal:
@@ -147,13 +130,14 @@ def test_floor_profile_puts_a_flat_floor_at_height_zero():
 def test_terrain_ahead_reads_flat_a_box_and_a_drop_through_the_grid():
     assert head_over(lambda x: 0.0).terrain_ahead(0.5).kind == FLAT
     assert head_over(lambda x: 0.15 if x >= 0.40 else 0.0).terrain_ahead(0.6).kind == BLOCKED
-    assert head_over(lambda x: -0.20 if x >= 0.40 else 0.0).terrain_ahead(0.6).kind == DROP
+    assert head_over(lambda x: -0.20 if x >= 0.40 else 0.0).terrain_ahead(0.6).kind == FLAT   # drops: TF-Luna's
 
 
 def test_the_robots_own_pitch_is_taken_out():
     # Nose up 8 degrees over a flat floor: the sensor looks 8 degrees higher than the head thinks.
-    assert head_over(lambda x: 0.0, nose_up=8.0).terrain_ahead(0.5).kind != FLAT
-    assert head_over(lambda x: 0.0, nose_up=8.0, pitch=lambda: 8.0).terrain_ahead(0.5).kind == FLAT
+    # Nose down 8 degrees: flat floor reads as rising unless the pitch is taken out.
+    assert head_over(lambda x: 0.0, nose_up=-8.0).terrain_ahead(0.5).kind != FLAT
+    assert head_over(lambda x: 0.0, nose_up=-8.0, pitch=lambda: -8.0).terrain_ahead(0.5).kind == FLAT
 
 
 def test_the_floor_is_looked_at_twice_the_second_time_between_the_first_rows():
@@ -170,7 +154,7 @@ def test_floor_probe_uses_the_grid_and_keeps_its_old_answers():
     assert head_over(lambda x: 0.0).floor_probe(0.4).status == "clear"
     p = head_over(lambda x: 0.15 if x >= 0.40 else 0.0).floor_probe(0.5)
     assert p.status == "obstacle" and p.distance_m == pytest.approx(0.40, abs=0.05) and p.points
-    assert head_over(lambda x: -0.20 if x >= 0.40 else 0.0).floor_probe(0.5).status == "drop"
+    assert head_over(lambda x: -0.20 if x >= 0.40 else 0.0).floor_probe(0.5).status == "clear"  # drops: TF-Luna's
     low = head_over(lambda x: 0.025 if x >= 0.40 else 0.0)
     assert low.floor_probe(0.5).status == "obstacle"                  # climbable, but nothing climbs yet
     h = head_over(lambda x: 0.0)
