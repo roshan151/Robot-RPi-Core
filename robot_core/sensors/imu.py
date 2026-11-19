@@ -39,7 +39,7 @@ import struct
 import threading
 import time
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Callable, Optional, Sequence, Tuple
 
 log = logging.getLogger(__name__)
@@ -180,8 +180,10 @@ class Fusion:
 class Imu:
     def __init__(self, bus: int = 1, axes: Sequence[str] = ("x", "y", "z"), hz: float = 100.0,
                  gyro_addr: int = GYRO_ADDR,
-                 source: Optional[Callable[[], Sample]] = None) -> None:
-        self._chips = None
+                 source: Optional[Callable[[], Sample]] = None, pitch_offset_deg: float = 0.0) -> None:
+        """`pitch_offset_deg`: what the IMU reads with the robot on flat floor (the board is not
+        mounted quite level): taken off every pitch, so flat floor reads 0."""
+        self._chips, self._pitch0 = None, float(pitch_offset_deg)
         if source is None:
             self._chips = Chips(bus, gyro_addr)
             source = self._chips.read
@@ -216,7 +218,8 @@ class Imu:
     def state(self) -> Optional[ImuState]:
         """The latest angles, or None before the first sample."""
         with self._lock:
-            return self._state
+            st = self._state
+        return st if st is None or not self._pitch0 else replace(st, pitch_deg=st.pitch_deg - self._pitch0)
 
     def set_moving(self, moving: bool) -> None:
         """The gyro's zero is only measured while this is False (the drivetrain says so)."""

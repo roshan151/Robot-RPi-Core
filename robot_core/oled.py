@@ -62,6 +62,15 @@ def _battery(d, x: int, y: int, percent: float) -> None:
         d.rectangle((x + 2, y + 2, x + 1 + w, y + 4), fill="white")
 
 
+def _no_drop(d, x: int, y: int) -> None:
+    """16x16 icon at (x, y): a stair (three steps) in a crossed-out circle: no drop detection."""
+    d.rectangle((x - 1, y - 1, x + 16, y + 16), fill="black")                 # clear what is under it
+    d.line([(x + 3, y + 11), (x + 6, y + 11), (x + 6, y + 8), (x + 9, y + 8), (x + 9, y + 5),
+            (x + 12, y + 5), (x + 12, y + 12), (x + 3, y + 12), (x + 3, y + 11)], fill="white")   # the stair
+    d.ellipse((x, y, x + 15, y + 15), outline="white")
+    d.line((x + 2, y + 2, x + 13, y + 13), fill="white")                       # crossed out
+
+
 def _eyes(d, box, pose: str) -> None:
     x0, y0, x1, y1 = box
     fh = min(y1 - y0 - 4, 40)                                                  # the face, an outline around the eyes
@@ -138,6 +147,8 @@ def draw(device, frame: status.Frame, at: str = "o") -> None:
                 _text(d, 4, bottom + 3 + i * SMALL_H, line.upper(), TINY_FONT, SMALL_W)
         if bottom - top >= 22:                                                 # free space under the text
             ANIMS.get(frame.anim, ANIMS[""])[1](d, (0, top, device.width, bottom), at)
+        if getattr(frame, "no_drop", False):                                   # bottom right, over the rest
+            _no_drop(d, device.width - 17, bottom - 17)
 
 
 class Oled:

@@ -65,21 +65,22 @@ class Hazards:
     def __init__(self, keep_s: float = KEEP_S, clock=time.monotonic) -> None:
         self.keep_s, self._clock, self._pts = keep_s, clock, []      # (x, y, t)
 
-    def add(self, pose: Sequence[float], pts_base: Iterable[XY]) -> int:
-        """pose: the robot's (x, y, heading) when it saw them; pts_base: (x ahead, y left)."""
+    def add(self, pose: Sequence[float], pts_base: Iterable[XY], felt: bool = False) -> int:
+        """pose: the robot's (x, y, heading) when it saw them; pts_base: (x ahead, y left).
+        `felt`: found by bumping into it, not seen: forget_near (a view that looks clear) keeps it."""
         x0, y0, th = pose[0], pose[1], pose[2]
         c, s, now = math.cos(th), math.sin(th), self._clock()
-        new = [(x0 + c * x - s * y, y0 + s * x + c * y, now) for x, y in pts_base]
+        new = [(x0 + c * x - s * y, y0 + s * x + c * y, now, felt) for x, y in pts_base]
         self._pts = [q for q in self._pts if now - q[2] <= self.keep_s] + new
         return len(new)
 
     def points(self, max_age_s: Optional[float] = None) -> List[XY]:
         """The points still kept (only those seen in the last `max_age_s`, if given)."""
         now, keep = self._clock(), self.keep_s if max_age_s is None else min(self.keep_s, max_age_s)
-        return [(x, y) for x, y, t in self._pts if now - t <= keep]
+        return [(x, y) for x, y, t, _ in self._pts if now - t <= keep]
 
     def forget_near(self, xy: XY, radius_m: float) -> None:
-        self._pts = [q for q in self._pts if math.hypot(q[0] - xy[0], q[1] - xy[1]) > radius_m]
+        self._pts = [q for q in self._pts if q[3] or math.hypot(q[0] - xy[0], q[1] - xy[1]) > radius_m]
 
 
 def radius(p: terrain.Params) -> float:

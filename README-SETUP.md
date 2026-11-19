@@ -132,13 +132,11 @@ sudo systemctl restart robot-voice
 
 Because the workspace is built with `--symlink-install`, edits to existing Python files only need the restart. New packages and new `.msg`/`.action` files need the `./install_pi.sh` build step.
 
-## Laptop (tests only, no Pi needed)
+## Testing
 
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-pytest
-```
+All testing runs from the Mac in Monitoring-Service: `python test_software.py` (Vision-Microservice
+and the robot's code end to end, nothing moves) and `python test_hardware.py` (the running robot).
+Each opens a plain-English results page.
 
 ## About ROS on the Pi
 

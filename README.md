@@ -6,7 +6,7 @@ A Raspberry Pi robot that listens (Gemini Live voice), looks (camera + TF-Luna o
 
 ## Repository layout
 
-Two layers, and the boundary is the point. `robot_core/` is the robot as plain Python and imports **no ROS**; `ros2_ws/` is thin nodes that call into it. That keeps the tests runnable on a laptop and means deleting `ros2_ws/` still leaves a working robot. `tests/test_layering.py` enforces it.
+Two layers, and the boundary is the point. `robot_core/` is the robot as plain Python and imports **no ROS**; `ros2_ws/` is thin nodes that call into it. That means deleting `ros2_ws/` still leaves a working robot. `Monitoring-Service/test_software.py robot` checks it.
 
 | Path | Purpose |
 |------|--------|
@@ -26,7 +26,7 @@ Two layers, and the boundary is the point. `robot_core/` is the robot as plain P
 | `ros2_ws/src/` | ROS 2 nodes: `robot_interfaces` (actions, messages), `robot_drivetrain`, `robot_voice`, `robot_explore`, `robot_vision` (Mac-service client node), `robot_display` (OLED + power watcher), `robot_bringup` (launch files, `robot.yaml`) |
 | `install_pi.sh`, `cleanup_pi.sh`, `README-SETUP.md`, `start_robot.sh`, `robot-voice.service` | Pi installer and its guide, the launcher, the boot service |
 | `flash.sh`, `check_bt_audio.sh`, `vision_test.py`, `read_log.py` | Flash the Arduino (from the Mac), check the buds' audio, test the vision service, read `logs.json` |
-| `tests/` | Unit tests (no hardware or ROS needed). Checks and calibration on the real robot: `Monitoring-Service/calibrate.py` on the Mac ("Calibration and checks") |
+| (tests) | None here: all testing runs from the Mac in Monitoring-Service: `test_software.py` (the code end to end, nothing moves), `test_hardware.py` (the running robot) and `calibrate.py` ("Calibration and checks") |
 | `docs/` | `PLAN.md`, `VISION-DESIGN.md`, `EXPLORE-DESIGN.md`, `FOLLOW-DESIGN.md`, `TERRAIN-DESIGN.md`, `HARDWARE-BASICS.md` |
 
 The Mac service lives in its own repo, **Vision-Microservice**.
@@ -186,7 +186,7 @@ A tool is a function the voice model can call. All of it lives in `robot_core/li
    ```
 3. **Register it** in the table inside `dispatch()`: `"beep": self._beep,` (use a lambda to pass defaults, as `look_left` does). The tool name shows on the OLED automatically, and exceptions become an `{"ok": False}` result instead of crashing the session.
 4. **Tell the model in the prompt**: add a line to the rules in `robot_core/settings.py` so it knows when to use the tool (for example *"beep(): ... "*).
-5. **Add a test** in `tests/test_robot_tools.py` (dispatch it, check the result), and add the name to the test that lists every tool (`test_*_tools_and_stop_takes_no_arguments`, rename its count), which will fail until you do.
+5. **Check it**: run `python test_software.py robot` in Monitoring-Service; "Voice assistant's tools ready" lists every tool the robot declares.
 
 If the tool needs hardware, create the object in the node and pass it in, the way `head` is: `run_live_agent(motion, run_task, head)` in `voice_node.py` hands it to `RobotTools(...)` through `robot_core/live/agent.py`.
 

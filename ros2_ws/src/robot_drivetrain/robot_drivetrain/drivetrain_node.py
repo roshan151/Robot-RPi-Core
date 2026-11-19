@@ -31,6 +31,7 @@ import logging
 import math
 import threading
 import time
+from types import SimpleNamespace
 from typing import Optional
 
 import rclpy
@@ -43,9 +44,9 @@ from rclpy.node import Node
 from std_srvs.srv import Trigger
 from tf2_ros import TransformBroadcaster
 
-from robot_core import settings, status, velocity
+from robot_core import robot_log, settings, status, velocity
 from robot_core.drivetrain import SerialDrivetrain
-from robot_core.motion_executor import CANCELLED, DONE, MotionExecutor
+from robot_core.motion_executor import CANCELLED, DONE, FAILED, MotionExecutor
 from robot_core.odometry import DiffDriveOdometry, MotionHealth, effective_wheelbase_m, turn_correction
 from sensor_msgs.msg import Imu as ImuMsg
 from robot_interfaces.action import Drive, Turn
@@ -78,10 +79,10 @@ class DrivetrainNode(Node):
 
     def _drop_note(self) -> None:
         """Only the TF-Luna watches for drops (not the ToF): without a fresh reading, or with the
-        guard off, say so on the OLED's note row (renewed every 10 s while it lasts)."""
+        guard off, say so with the OLED's no-drop icon (renewed every 10 s while it lasts)."""
         cm, t = self._drivetrain.tfluna()
         if self._drop is None or cm is None or time.monotonic() - t > 2.0:
-            status.note("drop: not detected", 15.0)
+            status.no_drop(15.0)
 
     def __init__(self) -> None:
         super().__init__("drivetrain")
@@ -110,8 +111,14 @@ class DrivetrainNode(Node):
         self.declare_parameter("imu_bus", 1)
         self.declare_parameter("imu_gyro_addr", 0x69)           # the BMI323
         self.declare_parameter("imu_axes", ["y", "x", "-z"])   # board axis along robot forward, left, up
+        self.declare_parameter("imu_pitch_offset_deg", 0.0)     # pitch read on flat floor: taken off (calibrate.py imu)
         self.declare_parameter("turn_tolerance_deg", 2.0)
         self.declare_parameter("turn_trim", True)               # false: no correcting moves after a turn
+        # Gyro-held moves (velocity mode + IMU): straight drives steered back to their start heading,
+        # and a turn's last few degrees finished slowly against the gyro (see _held).
+        self.declare_parameter("drive_heading_hold", True)
+        self.declare_parameter("drive_held_mps", 0.18)          # straight-drive speed, held
+        self.declare_parameter("drive_heading_gain", 3.0)       # rad/s of turn per rad of heading error
         # TF-Luna drop guard (firmware v7+, robot_core/drop_guard.py): brake a forward drive on a drop
         self.declare_parameter("drop_guard", False)
         self.declare_parameter("tfluna_floor_cm", 0.0)          # the floor's range at the mount angle; 0 = learn
@@ -150,7 +157,8 @@ class DrivetrainNode(Node):
                 from robot_core.sensors.imu import Imu
                 self._imu = Imu(bus=int(self.get_parameter("imu_bus").value),
                                 axes=list(self.get_parameter("imu_axes").value),
-                                gyro_addr=int(self.get_parameter("imu_gyro_addr").value))
+                                gyro_addr=int(self.get_parameter("imu_gyro_addr").value),
+                                pitch_offset_deg=float(self.get_parameter("imu_pitch_offset_deg").value))
                 if not self._imu.wait_calibrated(5.0):
                     self.get_logger().warn("imu: gyro not zeroed yet (was the robot moving?); "
                                            "it zeroes itself the next time it stands still")
@@ -213,6 +221,7 @@ class DrivetrainNode(Node):
         self._vel_on = False                         # the speed loop has the wheels
         self._vel_hold = False                       # stopped by /estop or motion health: wait for a 0 command
         self._vel_ctrl = None
+        self._held_on = False                        # _held has the wheels (and the speed loop)
         if getattr(self._drivetrain, "supports_velocity", False):
             p = {n: self.get_parameter(f"velocity_{n}").value for n in vars(velocity.VelocityParams())}
             self._vel_ctrl = velocity.WheelSpeedController(
@@ -286,7 +295,7 @@ class DrivetrainNode(Node):
 
     def _busy(self) -> bool:
         status = self._exec.status()
-        return bool(status["moving"] or status["queue_depth"])
+        return bool(status["moving"] or status["queue_depth"] or self._held_on)
 
     def _reject_gesture_if_busy(self, goal) -> bool:
         """Gestures are dropped, never queued behind real motion.
@@ -352,17 +361,28 @@ class DrivetrainNode(Node):
         a different callback group.
         """
         yaw0 = self._yaw_deg()
-        job_id = self._exec.submit(op, value, gesture=goal_handle.request.gesture)
         timeout = float(self.get_parameter("move_timeout_s").value)
         deadline = self.get_clock().now().nanoseconds / 1e9 + timeout + 1.0
         status.anim("tank", timeout + 2.0)        # OLED: the tank runs while the wheels do
 
-        event = self._wait(goal_handle, job_id, action_type, deadline)
+        gesture = goal_handle.request.gesture
+        if op in ("straight", "reverse") and not gesture and self._can_hold() \
+                and self.get_parameter("drive_heading_hold").value:
+            event = self._held(goal_handle, deadline, meters=value if op == "straight" else -value)
+        else:
+            event = self._wait(goal_handle, self._exec.submit(op, value, gesture=gesture), action_type, deadline)
         if (event is not None and event.status == DONE and yaw0 is not None
-                and op in ("left", "right") and not goal_handle.request.gesture
+                and op in ("left", "right") and not gesture
                 and self.get_parameter("turn_trim").value):
-            event = self._trim_turn(goal_handle, action_type, value if op == "left" else -value,
-                                    yaw0, deadline, event)
+            goal = value if op == "left" else -value
+            if self._can_hold():                 # the last degrees, slowly, against the gyro
+                time.sleep(0.3)                  # let it stop rocking before reading
+                if turn_correction(goal, self._yaw_deg() - yaw0,
+                                   float(self.get_parameter("turn_tolerance_deg").value)) is not None:
+                    fix = self._held(goal_handle, deadline, yaw_goal=yaw0 + goal)
+                    event = event if fix.status == DONE else fix
+            else:
+                event = self._trim_turn(goal_handle, action_type, goal, yaw0, deadline, event)
 
         status.anim("")
         result = action_type.Result()
@@ -424,6 +444,76 @@ class DrivetrainNode(Node):
             if trim is None or trim.status != DONE:
                 return trim
         return event
+
+    def _can_hold(self) -> bool:
+        """Gyro-held moves need the speed loop (firmware -vel) and a gyro heading."""
+        return self._vel_ctrl is not None and self._yaw_deg() is not None
+
+    def _held(self, goal_handle, deadline: float, meters: float = 0.0, yaw_goal: Optional[float] = None):
+        """Drive `meters` (signed) holding the heading it starts on, or (no meters) turn on the
+        spot to `yaw_goal` (deg, CCW +), in velocity mode. Ten times a second the gyro's heading
+        error becomes a turn rate, and the speed loop holds each track to its share: a track that
+        slips or a weaker motor is steered out as it happens (counted moves only keep the tick
+        counts equal). Distance comes from the encoders; it slows over the last few cm. Stops on a
+        cancel, /estop, motion health or the drop guard (all set _vel_hold). Returns an event
+        like the executor's."""
+        ctrl, tpm = self._vel_ctrl, settings.TICKS_PER_CM * 100.0
+        gain = float(self.get_parameter("drive_heading_gain").value)
+        speed = min(float(self.get_parameter("drive_held_mps").value), ctrl.p.max_mps)
+        tol = float(self.get_parameter("turn_tolerance_deg").value)
+        target = self._yaw_deg() if yaw_goal is None else yaw_goal
+        start, t0, err = self._last_totals, time.monotonic(), 0.0
+        result, detail = DONE, ""
+        ctrl.reset()
+        self._vel_hold, self._held_on, self._vel_on = False, True, True
+        try:
+            while True:
+                if goal_handle.is_cancel_requested:
+                    result, detail = CANCELLED, "action cancel"
+                    break
+                if self._vel_hold:                   # /estop, motion health or the drop guard braked
+                    result, detail = CANCELLED, "interrupted by stop"
+                    break
+                if self.get_clock().now().nanoseconds / 1e9 > deadline:
+                    result, detail = FAILED, "timeout"
+                    break
+                yaw = self._yaw_deg()
+                if yaw is None:
+                    result, detail = FAILED, "gyro lost"
+                    break
+                err = target - yaw
+                if meters:
+                    tot = self._last_totals
+                    gone = 0.0 if start is None or tot is None else \
+                        (abs(tot[0] - start[0]) + abs(tot[1] - start[1])) / 2.0 / tpm
+                    left = abs(meters) - gone
+                    if left <= 0.005:
+                        break
+                    v = math.copysign(min(speed, max(0.05, 1.5 * left)), meters)
+                    w = max(-0.6, min(0.6, gain * math.radians(err)))
+                else:
+                    if abs(err) <= tol:
+                        break
+                    v = 0.0
+                    w = math.copysign(min(0.6, max(0.25, gain * math.radians(abs(err)))), err)
+                meas = self._wheel_mps
+                meas = meas[:2] if meas is not None and time.monotonic() - meas[2] < 0.3 else None
+                self._drivetrain.set_wheels(*ctrl.step(v, w, meas, 0.1))
+                time.sleep(0.1)
+        except Exception as e:                       # noqa: BLE001 — T refused or link down
+            result, detail = FAILED, f"{type(e).__name__}: {e}"
+        finally:
+            try:
+                self._drivetrain.set_wheels(0, 0)
+            except Exception:                        # noqa: BLE001
+                pass
+            ctrl.reset()
+            self._held_on = self._vel_on = False
+        dur = time.monotonic() - t0
+        robot_log.event({DONE: "move.done", CANCELLED: "move.cancelled"}.get(result, "move.failed"),
+                        op="held", val=round(meters, 3) if meters else round(target, 1), dur=round(dur, 3),
+                        heading_err=round(err, 1), detail=detail or None)
+        return SimpleNamespace(status=result, duration_s=dur, detail=detail)
 
     def _publish_feedback(self, goal_handle, action_type) -> None:
         counts = self._drivetrain.get_encoder_status()
@@ -584,6 +674,8 @@ class DrivetrainNode(Node):
         """10 Hz: drive the tracks at the latest /cmd_vel, held by the speed loop. Not
         while a Drive/Turn goal runs, after a stop until /cmd_vel says 0, nor once
         /cmd_vel has gone quiet for velocity_timeout_s."""
+        if self._held_on:                            # a gyro-held move is using the speed loop
+            return
         ctrl, now = self._vel_ctrl, time.monotonic()
         v, w, t = self._vel_cmd
         if self._busy() or self._vel_hold:           # a goal has the wheels, or a stop braked them:

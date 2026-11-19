@@ -190,7 +190,7 @@ None of it should learn what a node is.
 
 Three consequences, and they are the whole argument:
 
-1. `tests/` keeps running on your laptop with no ROS installed.
+1. `robot_core` runs on its own with no ROS installed (Monitoring-Service/test_software.py checks it).
 2. Lightweight is enforced structurally — a node that grew logic would have to
    import Layer A anyway, so DDS stays a pipe carrying ~1 msg/sec.
 3. It's reversible. Delete Layer B, you still have a robot.
@@ -291,7 +291,6 @@ Robot-Computer-Vision/
 │   └── robot_bringup/                   # launch/, config/, mode manager
 │
 ├── maps/                                # build artifacts from scan mode
-├── tests/                               # tests robot_core only
 └── docs/
 ```
 

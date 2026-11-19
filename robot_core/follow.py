@@ -47,6 +47,7 @@ onto the person at all.
 from __future__ import annotations
 
 import logging
+import dataclasses
 import math
 import time
 from dataclasses import dataclass
@@ -67,6 +68,10 @@ FLOOR_MEMORY_S = 10.0           # floor seen clear is trusted this long: people 
 LAST_SEEN_S = 30.0              # where they were last seen is a search hint this long
 FOLLOW_BUMP_TURN_DEG = 20.0     # after a bump, no drive until the robot has turned this far
 PERSON_CLEAR_M = 0.35           # the person's own legs are not a hazard to remember
+VIEW_TOP_M = 1.0                # tracking view: anything up to this high in the path is in the way. The head
+                                # looks up at the person, so a wall shows only above the robot (Nov 18: walls
+                                # at 0.3-0.8 m high were taken for table tops it passes under)
+BUMP_WALL = [(0.3, y / 10.0) for y in range(-4, 5)]   # a bump: something 0.8 m wide across the front, not a post
 DETOUR_LEGS = 3                 # legs of a way round driven per step before looking for the person
 DETOUR_MAX_TURN_DEG = 100.0     # a way round that starts by turning further (behind it, unseen) is not taken
 GLIDE_TURN_GAIN = 0.8           # gliding: turn rate (rad/s) per radian the person is off to the side
@@ -224,10 +229,25 @@ def _in_the_way(zones, p: terrain.Params, person_m: Optional[float]) -> Optional
     return min(xs) if xs else None
 
 
+def _view_params(p: terrain.Params) -> terrain.Params:
+    """The tracking view's rules: the path as wide as the robot plus the planner's gap each
+    side (Nov 18: 2.5 cm each side let it clip a wall corner), and up to VIEW_TOP_M high."""
+    return dataclasses.replace(p, corridor_m=max(p.corridor_m, p.width_m + 2.0 * p.clearance_m),
+                               body_m=max(p.body_m, VIEW_TOP_M))
+
+
+def _felt(hazards, pose) -> None:
+    """Bumped into something the ToF did not see: remember a wall across the front, kept
+    even when the view looks clear (it looked clear before the bump too)."""
+    if hazards is not None and pose is not None:
+        hazards.add(pose, BUMP_WALL, felt=True)
+
+
 def _way_points(zones, p: terrain.Params, person_m: Optional[float]):
     """(x, y) of the tracking-view zones that `_in_the_way` counts."""
     if not zones or person_m is None:
         return []
+    p = _view_params(p)
     return [(x, y) for _, _, x, y, h, d in zones
             if h is not None and x > p.near_m and abs(y) <= p.corridor_m / 2.0
             and max(p.h_max_m, p.flat_tol_m) < h < p.body_m + 0.05 and d < person_m - 0.3]
@@ -285,13 +305,15 @@ def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Opt
     near = _in_the_way(zones, p, person_m)           # anything up to the robot's height (#4)
     if near is not None:                             # all of it across the view, not just the path
         _remember(hazards, pose, local_plan.hazards_from_floor(
-            [(x, y, h) for _, _, x, y, h, d in zones if d < person_m - 0.3], p), person_xy)
+            [(x, y, h) for _, _, x, y, h, d in zones if d < person_m - 0.3], _view_params(p)), person_xy)
     if recheck:
         if not zones or near is not None:            # nothing new seen to clear it
             return 0.0, "known hazard", seen
         for i in range(int(limit / 0.1) + 1):        # the tracking view sees the way clear now
             hazards.forget_near((pose[0] + i * 0.1 * math.cos(pose[2]), pose[1] + i * 0.1 * math.sin(pose[2])),
                                 _radius(p))
+        if not local_plan.line_clear(pose[:2], end, hazards.points(), _radius(p)):
+            return 0.0, "known hazard", seen         # what it bumped into is still there
         log.info("follow: way seen clear for %.2f m: remembered hazards there forgotten", limit)
     if near is not None and near - p.stop_short_m < limit:
         limit, why = max(0.0, round(near - p.stop_short_m, 2)), f"in the way at {near:.2f} m"
@@ -411,7 +433,7 @@ def _detour(head, motion, hazards, want_m: float, person_xy, pose, bumped, seq: 
         if short:
             log.info("follow %d: detour leg %.2f of %.2f m, path %s", seq, go, want, short)
         if go > 0.0 and _drive(head, motion, go, bumped, hazards, pose, person_xy, seq):
-            _remember(hazards, pose(), [(0.3, 0.0)], None)
+            _felt(hazards, pose())
             break
         if go < want - 0.02:                          # something new on the way round: re-plan next step
             break
@@ -531,7 +553,7 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                 motion.velocity(0.0, 0.0)             # hit something the ToF did not see (#7)
                 log.warning("follow %d: bumped while gliding; stopped", seq)
                 status.detail("bumped: something unseen")
-                _remember(hazards, pose(), [(0.3, 0.0)], None)
+                _felt(hazards, pose())
                 gliding, seen, owed_turn = False, None, FOLLOW_BUMP_TURN_DEG
             if glide and res["state"] == "tracking" and res.get("locked") and res.get("bearing_deg") is not None \
                     and owed_turn <= 0.0:
@@ -569,8 +591,9 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                 if go > 0.0 and _drive(head, motion, go, bumped, hazards, pose, person_xy, seq):
                     log.warning("follow %d: bumped into something the ToF did not see; stopped", seq)
                     status.detail("bumped: something unseen")
-                    seen, owed_turn = None, FOLLOW_BUMP_TURN_DEG
-                    _remember(hazards, pose(), [(0.3, 0.0)], None)
+                    seen = None                   # the remembered wall makes the next drive go round it;
+                    _felt(hazards, pose())        # without a pose to remember it by, turn away first
+                    owed_turn = 0.0 if hazards is not None and pose() is not None else FOLLOW_BUMP_TURN_DEG
                 elif go <= 0.0 and short and hazards is not None:
                     seen = _detour(head, motion, hazards, want, person_xy, pose, bumped, seq)
     except (VisionError, RuntimeError) as exc:       # RuntimeError: camera or drivetrain gave up
