@@ -290,6 +290,9 @@ class LocalNav:
         radius = self.params.radius_m + self.params.margin_m
         fresh = self.waypoints and self.wp_goal is not None and math.dist(self.wp_goal, goal) < 0.6 \
             and now - self._wp_t < GLOBAL_FRESH_S
+        if fresh and self._detour(here, goal, self.waypoints, radius):
+            fresh = False                                 # the Mac goes the long way round something our
+            self.detail = "Mac path is a detour: going direct"   # costmap does not have (Nov 19: a phantom)
         if fresh:
             path, self.source = self.waypoints, "global"
         else:                                             # no word from the Mac: plan on the costmap
@@ -344,6 +347,19 @@ class LocalNav:
         self.aim.update(now, v, w, focus_pan, near)
 
     # ------------------------------------------------------------- planning
+
+    def _detour(self, here, goal, path, radius: float) -> bool:
+        """The Mac's path is over twice as long as the straight line (plus 0.5 m), and the straight
+        line is clear on our own costmap: ToF sees nothing there, so the detour is for something only
+        the Mac believes in."""
+        pts = [tuple(here[:2])] + [tuple(p[:2]) for p in path[1:]]
+        length = sum(math.dist(a, b) for a, b in zip(pts, pts[1:])) + math.dist(pts[-1], goal)
+        direct = math.dist(here[:2], goal)
+        if length <= 2.0 * direct + 0.5 or direct < 0.7:
+            return False
+        k = (direct - 0.45) / direct                      # up to 0.45 m short: the person's own legs are there
+        end = (here[0] + k * (goal[0] - here[0]), here[1] + k * (goal[1] - here[1]))
+        return self.costmap.line_clear(tuple(here[:2]), end, radius)
 
     def _maybe_plan(self, now: float, here: Pose, goal: Tuple[float, float]) -> None:
         if self.planner is None or self._planning or now - self._plan_t < self.plan_every:
