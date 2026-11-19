@@ -1,5 +1,5 @@
 """Debug mode (robot.yaml /voice debug_mode): send the sensor data a task collects
-to the Mac, Vision-Microservice POST /v1/debug/frame, for Monitoring-Service to show.
+to the Mac, Vision-And-Planning POST /v1/debug/frame, for Monitoring-Service to show.
 
 Built so it can never slow the robot down:
   * the sensors only hand over a reference to what they already hold (offer_*): no

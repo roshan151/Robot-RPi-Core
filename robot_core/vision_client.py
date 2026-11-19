@@ -1,4 +1,4 @@
-"""Client for the vision service on the Mac (Vision-Microservice).
+"""Client for the vision service on the Mac (Vision-And-Planning).
 
 The one place on the Pi that knows the endpoint paths. Explore mode is a
 sequential mission — it waits for each answer before acting — so this is a

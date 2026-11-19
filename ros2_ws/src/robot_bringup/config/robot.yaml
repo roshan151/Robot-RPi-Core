@@ -110,7 +110,7 @@
     tts: false
 
     # if true, debug mode: every camera frame and ToF grid a task collects goes to the Mac
-    # (Vision-Microservice POST /v1/debug/frame, for Monitoring-Service to show)
+    # (Vision-And-Planning POST /v1/debug/frame, for Monitoring-Service to show)
     debug_mode: true          # on while debugging follow and the ToF overlay; false for normal runs
 
 /explorer:

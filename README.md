@@ -29,7 +29,7 @@ Two layers, and the boundary is the point. `robot_core/` is the robot as plain P
 | (tests) | None here: all testing runs from the Mac in Monitoring-Service: `test_software.py` (the code end to end, nothing moves), `test_hardware.py` (the running robot) and `calibrate.py` ("Calibration and checks") |
 | `docs/` | `PLAN.md`, `VISION-DESIGN.md`, `EXPLORE-DESIGN.md`, `FOLLOW-DESIGN.md`, `TERRAIN-DESIGN.md`, `HARDWARE-BASICS.md` |
 
-The Mac service lives in its own repo, **Vision-Microservice**.
+The Mac service lives in its own repo, **Vision-And-Planning** (on GitHub still `roshan151/Vision-And-Planning`).
 
 ## Hardware (summary)
 
@@ -38,7 +38,7 @@ The Mac service lives in its own repo, **Vision-Microservice**.
 - **Head:** Pi camera (mounted inverted) and two hobby servos: pan on GPIO13 (±90°), tilt on GPIO12 (±45°)
 - **IMU** (Fermion 10 DOF, BMI323) on the base, on I2C, and **8x8 ToF** (Gravity SEN0628) on the head, also on I2C: see "IMU and ToF sensors"
 - **Bluetooth buds** for microphone and speaker
-- **Mac mini** on the LAN running Vision-Microservice
+- **Mac mini** on the LAN running Vision-And-Planning
 
 Wiring, power and encoder notes are in the Electrical Schematics section below.
 
@@ -140,7 +140,7 @@ ros2 topic echo /explore/status     # what it is doing, in plain English
 
 The robot stops, sweeps the TF-Luna ±45° on the head in each of four directions (a 360° scan), and sends that keyframe to the Mac. The Mac matches it into the map, corrects the drifting wheel odometry, and returns a path to the nearest unexplored area. Whenever the camera sees a plant, the robot ranges it, checks the plant register on the Mac, then drives to 3–4 viewpoints around it and saves a photo from each. New plants are enrolled as `plant_NNN`; known plants get a new visit, which is what growth tracking reads. Before every drive step the head tilts down to check the floor, which catches low obstacles and drops that the level sweep misses.
 
-- **Map:** `http://<mac>:8080/v1/slam/map.png` (plants marked in red). **Stored on the Mac only** (the Pi keeps nothing), in the Vision-Microservice folder: photos in `plants/map_{index}/plant_{NNN}/photo_{i}.png` + `bbox_{i}.txt` (a new map gets a new `map_{index}`), maps in `maps/<name>.npz` + `.png`, rewritten after every scan.
+- **Map:** `http://<mac>:8080/v1/slam/map.png` (plants marked in red). **Stored on the Mac only** (the Pi keeps nothing), in the Vision-And-Planning folder: photos in `plants/map_{index}/plant_{NNN}/photo_{i}.png` + `bbox_{i}.txt` (a new map gets a new `map_{index}`), maps in `maps/<name>.npz` + `.png`, rewritten after every scan.
 - **Guard rails** (`/explorer` in `robot.yaml`, or `--ros-args -p no_behind:=true -p explore_radius_m:=5.0`): `explore_radius_m` (default `10`, `0` = unlimited) only explores within that radius of `start_pose`; `no_behind: true` only explores ahead of the start heading. Both apply to where it drives and which plants it photographs; the 360° scans still map everything around it. When nothing inside the limits is left, the run ends as complete.
 - **Re-scan later on the same map:** set `continue_map: true` and `start_pose` (where the robot stands, read off the map) under `/explorer` in `robot.yaml`.
 - **Motion health:** `ros2 topic echo /motion_health` compares the command, the encoders and the camera. It reports `stalled` (wheels blocked), `slipping` (wheels turning, image static), `pushed`, or `wrong_direction`; the drivetrain brakes on stalled or slipping.
@@ -160,7 +160,7 @@ In command mode, say it to the robot: *"remember my face, I'm Sam"* (`enroll_fac
 
 For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° and 40° up (never below level), stops on the first face, centres it, and holds while it captures, then parks. Tilt is limited to ±45° everywhere; face tasks narrow it to 0°/+45°. The durations are set in [Common variables](#common-variables).
 
-The voice session **closes for the whole task**, then reopens. While the task runs, a cancel-only voice session listens: say *"stop"* / *"Robin stop"* / *"that's enough"* and the robot brakes and ends the task (needs internet). Without internet: `ros2 service call /task/stop std_srvs/srv/Trigger`. See [docs/TASK-CANCEL.md](docs/TASK-CANCEL.md). The robot answers by gesture: **nod = it worked / the face is known / it stopped when asked, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
+The voice session **closes for the whole task**, then reopens. While the task runs, a cancel-only voice session listens: say *"stop"* / *"Robin stop"* / *"that's enough"* and the robot brakes and ends the task (needs internet). Without internet: `ros2 service call /task/stop std_srvs/srv/Trigger`. See [docs/TASK-CANCEL.md](docs/TASK-CANCEL.md). The robot answers by gesture: **nod = it worked / the face is known / it stopped when asked, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-And-Planning/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
 
 ### Shutting the Pi down by voice
 
@@ -602,7 +602,7 @@ It changes nothing on the robot by itself.
 | `tfluna` | The TF-Luna on flat floor | `tfluna_floor_cm` |
 | `head` | Head directions; pan sweep at a wall; tilt sweep over the floor | `pan_center_us`, `tilt_center_us`, `head_height_m` |
 | `drive` | Backing 1 m from a wall (2 tape readings) and two full turns (gyro) | `ticks_per_cm`, `tof_range_scale`, `tof_range_offset_m`, `tof_perpendicular`, `ticks_per_degree`, firmware `REVERSE_TRIM_PCT` |
-| `service` | Vision-Microservice on the Mac: health and detect latency (no Pi needed) | (reports) |
+| `service` | Vision-And-Planning on the Mac: health and detect latency (no Pi needed) | (reports) |
 
 `all` runs `check` → `encoders` → `imu` → `tof` → `tfluna` → `head` → `drive`. Ctrl-C skips the current step.
 
@@ -618,7 +618,7 @@ One switch in `robot.yaml`, read by every node that writes `logs.json`:
 
 | | `debug_mode: true` | `debug_mode: false` (default) |
 |---|---|---|
-| Sensor uploads | Every camera frame and ToF grid a task collects (follow, enroll, match) goes to Vision-Microservice (`POST /v1/debug/frame`), with head pan/tilt, pitch and pose | None |
+| Sensor uploads | Every camera frame and ToF grid a task collects (follow, enroll, match) goes to Vision-And-Planning (`POST /v1/debug/frame`), with head pan/tilt, pitch and pose | None |
 | `logs.json` | Everything: events, the robot's info lines, warnings | Warnings and errors only |
 
 Viewing the uploads: Monitoring-Service (`tof_camera_overlaid.py`), on the Mac. It shows the frame in black and white with the ToF grid laid over it as coloured dots.

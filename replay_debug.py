@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Replay a debug-mode session (Vision-Microservice debug/<session>/) through follow's
+Replay a debug-mode session (Vision-And-Planning debug/<session>/) through follow's
 safety checks, offline, to see where they would have stepped in.
 
-  python replay_debug.py ../Vision-Microservice/debug/20261119-101426
+  python replay_debug.py ../Vision-And-Planning/debug/20261119-101426
   python replay_debug.py <session> --strict     # exit 1 if any stuck / drive-into-obstacle moment
 
 Every frame of a session carries the odometry pose, the robot's pitch and the raw 8x8 ToF
