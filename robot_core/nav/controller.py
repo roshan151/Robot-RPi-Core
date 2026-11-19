@@ -64,6 +64,12 @@ BLIND_MPS = 0.08                # top speed while the way ahead has not been see
 SEEN_MPS = 0.18                 # ...or this, where the map remembers it as free (the head is on the person)
 
 
+def _length(here, path, goal) -> float:
+    """How far it is from here along `path` (its first point is where it was planned from) to `goal`."""
+    pts = [tuple(here[:2])] + [tuple(p[:2]) for p in path[1:]]
+    return sum(math.dist(a, b) for a, b in zip(pts, pts[1:])) + math.dist(pts[-1], goal)
+
+
 class PoseFix:
     """The odometry pose with the metres the tracks slipped taken back out. The heading is the
     gyro's and is kept. Everything the nav stack keeps is in this frame."""
@@ -141,7 +147,7 @@ class LocalNav:
         self.planner, self.plan_every = planner, plan_every_s
         self.period, self.goal_timeout = 1.0 / hz, goal_timeout_s
         self.goal: Optional[Tuple[float, float]] = None
-        self.keep_m, self.goal_t, self.face_goal = 0.0, 0.0, True
+        self.keep_m, self.goal_t, self.face_goal, self.near_m = 0.0, 0.0, True, 0.0
         self.focus: Optional[Tuple[float, float]] = None
         self.ignore: Optional[Tuple[Tuple[float, float], float]] = None   # (xy, radius): not an obstacle
         self.waypoints: List[Tuple[float, float]] = []     # the Mac's (global)
@@ -177,12 +183,16 @@ class LocalNav:
         self.reflex.stop()
         self._send(0.0, 0.0)
 
-    def set_goal(self, xy: Optional[Tuple[float, float]], keep_m: float = 0.0, face: bool = True) -> None:
+    def set_goal(self, xy: Optional[Tuple[float, float]], keep_m: float = 0.0, face: bool = True,
+                 near_m: float = 0.0) -> None:
         """Go to `xy` (odometry frame, as `pose`), stopping `keep_m` short; None: stop here.
-        Call again to renew it: a goal not renewed for goal_timeout_s is dropped."""
+        near_m: within keep_m + near_m, if the way there goes the long way round something, stand
+        and face it instead (a person seen beside a suitcase). Call again to renew it: a goal not
+        renewed for goal_timeout_s is dropped."""
         with self._lock:
             moved = xy is None or self.goal is None or math.dist(xy, self.goal) > 0.3
             self.goal, self.keep_m, self.face_goal, self.goal_t = xy, keep_m, face, self.clock()
+            self.near_m = near_m
             if moved:
                 self._plan_t = 0.0                       # a new goal: ask for a plan now
 
@@ -269,6 +279,7 @@ class LocalNav:
             return                                        # and the body stood while the head followed them away)
         with self._lock:
             goal, keep, face_goal, goal_t, focus = self.goal, self.keep_m, self.face_goal, self.goal_t, self.focus
+            near_m = self.near_m
         if self._recover:
             self._do_recover(here)
             return
@@ -296,6 +307,10 @@ class LocalNav:
             return
         self._maybe_plan(now, here, goal, keep)
         radius = self.params.radius_m + self.params.margin_m
+        if now - self._local_t >= LOCAL_EVERY_S and not self._local_busy:   # always: the Mac's way is checked
+            self._local_t, self._local_busy = now, True                    # against it
+            threading.Thread(target=self._plan_local, args=(here[:2], goal), name="nav-local",
+                             daemon=True).start()            # off the control thread: slow on a Pi
         fresh = self.waypoints and self.wp_goal is not None and math.dist(self.wp_goal, goal) < 0.6 \
             and now - self._wp_t < GLOBAL_FRESH_S
         if fresh and self._detour(here, goal, self.waypoints, radius):
@@ -304,11 +319,16 @@ class LocalNav:
         if fresh:
             path, self.source = self.waypoints, "global"
         else:                                             # no word from the Mac: plan on the costmap
-            if now - self._local_t >= LOCAL_EVERY_S and not self._local_busy:
-                self._local_t, self._local_busy = now, True
-                threading.Thread(target=self._plan_local, args=(here[:2], goal), name="nav-local",
-                                 daemon=True).start()        # off the control thread: slow on a Pi
             path, self.source = self.local_wps, "local"
+        if path and near_m and dist <= keep + near_m and _length(here, path, goal) > dist + 0.5:
+            # Near them, but the way to them goes round something (a suitcase beside them, a door frame): face
+            # them and stand. Going round turned it away from them and spun it on the spot (Nov 19).
+            w = dwa.face(bearing) if face_goal else 0.0
+            self._send(0.0, w)
+            self.state, self.detail = "arrived", f"{dist:.2f} m, the way round is long: facing it"
+            self._moving_since = None
+            self.aim.update(now, 0.0, w, focus_pan)
+            return
         target = dwa.target_on_path(here, path, self.costmap.clearance, radius) if path else None
         if target is None or math.dist(target, goal) < 0.1:   # the goal itself: stop keep_m short of it
             target, stop_at = goal, keep
@@ -373,11 +393,14 @@ class LocalNav:
         return False
 
     def _detour(self, here, goal, path, radius: float) -> bool:
-        """The Mac's path is over twice as long as the straight line (plus 0.5 m), and the straight
-        line is clear on our own costmap: ToF sees nothing there, so the detour is for something only
-        the Mac believes in."""
-        pts = [tuple(here[:2])] + [tuple(p[:2]) for p in path[1:]]
-        length = sum(math.dist(a, b) for a, b in zip(pts, pts[1:])) + math.dist(pts[-1], goal)
+        """The Mac's path is over 1.5 times as long as our own (plus 0.3 m): its map closed a doorway our
+        fresh costmap has open, and it went round through the unseen inside of a wall (Nov 19). Or it is
+        over twice as long as the straight line (plus 0.5 m), and the straight line is clear on our own
+        costmap: ToF sees nothing there, so the detour is for something only the Mac believes in."""
+        length = _length(here, path, goal)
+        loc = self.local_wps
+        if loc and loc is not path and math.dist(loc[-1], goal) < 0.6 and length > 1.5 * _length(here, loc, goal) + 0.3:
+            return True
         direct = math.dist(here[:2], goal)
         if length <= 2.0 * direct + 0.5 or direct < 0.7:
             return False

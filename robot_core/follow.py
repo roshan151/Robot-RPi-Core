@@ -46,6 +46,7 @@ LOST_KEEP_M = 0.3               # lost: go to this far short of where they were 
 LOST_GO_S = 10.0                # ...for at most this long before the head search takes over
 LOST_AHEAD_M = (0.5, 1.2)       # walking when lost: go this much further along their way (by their speed)
 LOST_FACE_S = 2.0               # then turn to face the way they went, for at most this long
+NEAR_M = 0.7                    # seen within FOLLOW_KEEP_M + this, but the way to them goes round something: face, stand
 WALK_MPS = 0.6                  # how fast a tracked person may have moved, for the tracker's doubt
 PERSON_CLEAR_M = 0.35           # round the person: their legs, not an obstacle
 
@@ -200,7 +201,7 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                     nav.set_focus(spot, PERSON_CLEAR_M)
                 elif d:
                     tracker.update(here, b, d, res.get("distance_sigma_m"), time.monotonic())
-                    nav.set_goal(tracker.xy, keep_m=settings.FOLLOW_KEEP_M)
+                    nav.set_goal(tracker.xy, keep_m=settings.FOLLOW_KEEP_M, near_m=NEAR_M)
                     nav.set_focus(tracker.xy, PERSON_CLEAR_M)
             elif state == "searching" and res.get("locked") and not lost_done and tracker.xy is not None \
                     and last_seen and time.monotonic() - last_seen[1] < LAST_SEEN_S:
