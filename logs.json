@@ -2444,3 +2444,351 @@
 {"ts":"2026-11-19T17:58:43.712Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:260 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
 {"ts":"2026-11-19T17:58:44.401Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
 {"ts":"2026-11-19T17:58:44.402Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-19T19:07:44.488Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-19T19:07:45.200Z","lvl":"info","evt":"session.start","mode":"ros","pid":2169,"log":"logs.json","debug":true}
+{"ts":"2026-11-19T19:07:45.557Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T19:07:47.231Z","lvl":"info","evt":"log","msg":"debug mode: uploading sensor data to http://roshans-mac-mini.local:8080/v1/debug/frame, session 20261119-130747","src":"robot_core.debug_upload"}
+{"ts":"2026-11-19T19:07:47.473Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v9-vel-noluna built Nov 18 2026 14:52:53","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T19:07:47.474Z","lvl":"info","evt":"log","msg":"Connected on /dev/ttyUSB0 (boot frame received)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T19:07:47.526Z","lvl":"info","evt":"log","msg":"motion executor started","src":"robot_core.motion_executor"}
+{"ts":"2026-11-19T19:07:48.911Z","lvl":"info","evt":"log","msg":"drivetrain ready on /dev/ttyUSB0 (limit 5.0 m, velocity on)","src":"robot_drivetrain"}
+{"ts":"2026-11-19T19:07:49.106Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T19:07:49.108Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T19:07:49.150Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-19T19:07:51.601Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-19T19:07:51.602Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-19T19:09:56.027Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":124.09}
+{"ts":"2026-11-19T19:09:58.263Z","lvl":"info","evt":"voice.heard","text":"Robert, follow me."}
+{"ts":"2026-11-19T19:09:58.275Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-19T19:09:58.275Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'follow'}) -> {'ok': True, 'starting': 'follow', 'note': 'session closing; it reopens when the task ends'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T19:09:58.371Z","lvl":"info","evt":"task.start","task":"follow","name":"","_unregistered":true}
+{"ts":"2026-11-19T19:09:58.375Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 241)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T19:09:58.376Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T19:09:58.594Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-19T19:09:58.672Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T19:09:59.158Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-19T19:10:00.798Z","lvl":"info","evt":"log","msg":"follow 1: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:00.985Z","lvl":"info","evt":"log","msg":"follow 2: tracking Roshan, bearing 29.1, 0.98 m (tof); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:01.177Z","lvl":"info","evt":"log","msg":"follow 3: tracking Roshan, bearing 29.2, 0.99 m (tof); nav driving 0.98 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:01.368Z","lvl":"info","evt":"log","msg":"follow 4: tracking Roshan, bearing 29.3, 1.03 m (tof); nav driving 0.99 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:01.524Z","lvl":"info","evt":"log","msg":"follow 5: tracking Roshan, bearing 30.6, 1.04 m (tof); nav driving 1.02 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:01.689Z","lvl":"info","evt":"log","msg":"follow 6: tracking Roshan, bearing 32.5, 1.08 m (tof); nav driving 1.02 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:01.855Z","lvl":"info","evt":"log","msg":"follow 7: tracking Roshan, bearing 36.0, 1.13 m (tof); nav driving 1.02 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:02.007Z","lvl":"info","evt":"log","msg":"follow 8: tracking Roshan, bearing 40.7, 1.38 m (tof); nav driving 1.05 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:02.169Z","lvl":"info","evt":"log","msg":"follow 9: tracking Roshan, bearing 41.4, 1.35 m (tof); nav driving 1.24 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:02.384Z","lvl":"info","evt":"log","msg":"follow 10: tracking Roshan, bearing 40.4, 1.4 m (tof); nav driving 1.26 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:02.561Z","lvl":"info","evt":"log","msg":"follow 11: tracking Roshan, bearing 39.0, 1.29 m (tof); nav driving 1.30 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:02.719Z","lvl":"info","evt":"log","msg":"follow 12: tracking Roshan, bearing 37.3, 1.19 m (tof); nav driving 1.23 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:02.900Z","lvl":"info","evt":"log","msg":"follow 13: tracking Roshan, bearing 34.5, 0.99 m (tof); nav driving 1.14 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:03.063Z","lvl":"info","evt":"log","msg":"follow 14: tracking Roshan, bearing 40.6, 0.96 m (tof); nav driving 0.97 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:03.262Z","lvl":"info","evt":"log","msg":"follow 15: tracking Roshan, bearing 39.2, 0.96 m (tof); nav driving 0.90 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:03.432Z","lvl":"info","evt":"log","msg":"follow 16: tracking Roshan, bearing 39.6, 0.96 m (tof); nav driving 0.89 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:03.606Z","lvl":"info","evt":"log","msg":"follow 17: tracking Roshan, bearing 40.8, 0.96 m (tof); nav driving 0.90 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:03.762Z","lvl":"info","evt":"log","msg":"follow 18: tracking Roshan, bearing 38.4, 0.96 m (tof); nav driving 0.91 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:03.948Z","lvl":"info","evt":"log","msg":"follow 19: tracking Roshan, bearing 38.8, 0.96 m (tof); nav driving 0.91 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:04.123Z","lvl":"info","evt":"log","msg":"follow 20: tracking Roshan, bearing 39.7, 0.87 m (tof); nav driving 0.93 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:04.282Z","lvl":"info","evt":"log","msg":"follow 21: tracking Roshan, bearing 38.5, 0.87 m (tof); nav driving 0.86 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:04.474Z","lvl":"info","evt":"log","msg":"follow 22: tracking Roshan, bearing 36.5, 0.82 m (tof); nav driving 0.82 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:04.678Z","lvl":"info","evt":"log","msg":"follow 23: tracking Roshan, bearing 32.5, 0.98 m (tof); nav driving 0.75 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:04.837Z","lvl":"info","evt":"log","msg":"follow 24: tracking Roshan, bearing 29.2, 1.02 m (tof); nav driving 0.89 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:05.136Z","lvl":"info","evt":"log","msg":"follow 25: tracking Roshan, bearing 28.5, 0.97 m (tof); nav driving 0.92 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:05.321Z","lvl":"info","evt":"log","msg":"follow 26: tracking Roshan, bearing 22.4, 0.86 m (tof); nav driving 0.90 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:05.567Z","lvl":"info","evt":"log","msg":"follow 27: tracking Roshan, bearing 20.6, 0.65 m (tof); nav driving 0.76 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:05.784Z","lvl":"info","evt":"log","msg":"follow 28: tracking Roshan, bearing 22.7, 0.6 m (tof); nav arrived 0.56 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:05.937Z","lvl":"info","evt":"log","msg":"follow 29: tracking Roshan, bearing 20.9, 0.58 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:06.172Z","lvl":"info","evt":"log","msg":"follow 30: tracking Roshan, bearing 19.4, 0.58 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:06.385Z","lvl":"info","evt":"log","msg":"follow 31: tracking Roshan, bearing 17.5, 0.65 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:06.571Z","lvl":"info","evt":"log","msg":"follow 32: tracking Roshan, bearing 16.5, 0.63 m (tof); nav arrived 0.62 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:06.781Z","lvl":"info","evt":"log","msg":"follow 33: tracking Roshan, bearing 19.8, 0.62 m (tof); nav arrived 0.64 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:07.095Z","lvl":"info","evt":"log","msg":"follow 34: tracking Roshan, bearing 25.5, 0.64 m (tof); nav arrived 0.64 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:07.329Z","lvl":"info","evt":"log","msg":"follow 35: tracking Roshan, bearing 21.9, 0.68 m (tof); nav arrived 0.65 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:07.499Z","lvl":"info","evt":"log","msg":"follow 36: tracking Roshan, bearing 28.4, 0.67 m (tof); nav arrived 0.68 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:07.748Z","lvl":"info","evt":"log","msg":"follow 37: tracking Roshan, bearing 34.2, 0.65 m (tof); nav arrived 0.67 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:07.904Z","lvl":"info","evt":"log","msg":"follow 38: tracking Roshan, bearing 34.6, 0.69 m (tof); nav arrived 0.66 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:08.143Z","lvl":"info","evt":"log","msg":"follow 39: tracking Roshan, bearing 35.9, 1.35 m (tof); nav arrived 0.69 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:08.360Z","lvl":"info","evt":"log","msg":"follow 40: tracking Roshan, bearing 29.9, 2.12 m (tof); nav driving 1.23 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:08.500Z","lvl":"info","evt":"log","msg":"follow 41: tracking Roshan, bearing 21.6, 1.69 m (tof); nav driving 1.23 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:08.679Z","lvl":"info","evt":"log","msg":"follow 42: tracking Roshan, bearing 22.5, 0.87 m (tof); nav driving 1.63 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:08.851Z","lvl":"info","evt":"log","msg":"follow 43: tracking Roshan, bearing 20.0, 0.84 m (tof); nav driving 1.61 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:09.016Z","lvl":"info","evt":"log","msg":"follow 44: tracking Roshan, bearing 13.1, 0.88 m (tof); nav driving 0.88 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:09.209Z","lvl":"info","evt":"log","msg":"follow 45: tracking Roshan, bearing 9.0, 0.85 m (tof); nav driving 0.84 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:09.382Z","lvl":"info","evt":"log","msg":"follow 46: tracking Roshan, bearing 9.3, 0.93 m (tof); nav driving 0.79 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:09.556Z","lvl":"info","evt":"log","msg":"follow 47: tracking Roshan, bearing 14.2, 0.75 m (tof); nav driving 0.82 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:09.718Z","lvl":"info","evt":"log","msg":"follow 48: tracking Roshan, bearing 18.9, 0.87 m (tof); nav driving 0.71 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:09.876Z","lvl":"info","evt":"log","msg":"follow 49: tracking Roshan, bearing 5.0, 2.04 m (tof); nav driving 0.77 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:10.066Z","lvl":"info","evt":"log","msg":"follow 50: tracking Roshan, bearing 12.5, 1.91 m (tof); nav driving 0.73 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:10.283Z","lvl":"info","evt":"log","msg":"follow 51: tracking Roshan, bearing 18.1, 0.83 m (tof); nav driving 1.81 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:10.463Z","lvl":"info","evt":"log","msg":"follow 52: tracking Roshan, bearing 16.3, 0.81 m (tof); nav driving 1.77 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:10.766Z","lvl":"info","evt":"log","msg":"follow 53: tracking Roshan, bearing 14.0, 0.63 m (tof); nav driving 0.78 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:10.966Z","lvl":"info","evt":"log","msg":"follow 54: tracking Roshan, bearing 18.0, 0.63 m (tof); nav arrived 0.56 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:11.136Z","lvl":"info","evt":"log","msg":"follow 55: tracking Roshan, bearing 20.4, 0.51 m (tof); nav arrived 0.57 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:11.433Z","lvl":"info","evt":"log","msg":"follow 56: tracking Roshan, bearing 21.2, 0.51 m (tof); nav arrived 0.48 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:11.591Z","lvl":"info","evt":"log","msg":"follow 57: tracking Roshan, bearing 17.6, 0.61 m (tof); nav arrived 0.49 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:11.814Z","lvl":"info","evt":"log","msg":"follow 58: tracking Roshan, bearing 18.3, 0.64 m (tof); nav arrived 0.58 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:12.011Z","lvl":"info","evt":"log","msg":"follow 59: tracking Roshan, bearing 13.1, 1.6 m (tof); nav arrived 0.64 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:12.179Z","lvl":"info","evt":"log","msg":"follow 60: tracking Roshan, bearing 12.1, 1.6 m (tof); nav arrived 0.64 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:12.482Z","lvl":"info","evt":"log","msg":"follow 61: tracking Roshan, bearing 13.6, 0.64 m (tof); nav driving 1.49 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:12.660Z","lvl":"info","evt":"log","msg":"follow 62: tracking Roshan, bearing 11.5, 0.64 m (tof); nav driving 0.72 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:12.863Z","lvl":"info","evt":"log","msg":"follow 63: tracking Roshan, bearing 9.9, 0.48 m (tof); nav driving 0.64 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:13.045Z","lvl":"info","evt":"log","msg":"follow 64: tracking Roshan, bearing 3.1, 0.48 m (tof); nav arrived 0.47 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:13.214Z","lvl":"info","evt":"log","msg":"follow 65: tracking Roshan, bearing 2.1, 0.56 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:13.389Z","lvl":"info","evt":"log","msg":"follow 66: tracking Roshan, bearing 4.2, 0.58 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:13.569Z","lvl":"info","evt":"log","msg":"follow 67: tracking Roshan, bearing 2.7, 0.46 m (tof); nav arrived 0.56 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:13.739Z","lvl":"info","evt":"log","msg":"follow 68: tracking Roshan, bearing 3.5, 0.44 m (tof); nav arrived 0.48 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:13.909Z","lvl":"info","evt":"log","msg":"follow 69: tracking Roshan, bearing 3.7, 0.51 m (tof); nav arrived 0.45 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:14.071Z","lvl":"info","evt":"log","msg":"follow 70: tracking Roshan, bearing 2.5, 0.57 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:14.233Z","lvl":"info","evt":"log","msg":"follow 71: tracking Roshan, bearing 4.1, 0.54 m (tof); nav arrived 0.55 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:14.435Z","lvl":"info","evt":"log","msg":"follow 72: tracking Roshan, bearing 3.7, 0.54 m (tof); nav arrived 0.54 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:14.633Z","lvl":"info","evt":"log","msg":"follow 73: tracking Roshan, bearing 4.7, 0.5 m (tof); nav arrived 0.54 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:14.818Z","lvl":"info","evt":"log","msg":"follow 74: tracking Roshan, bearing 4.2, 0.45 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:15.108Z","lvl":"info","evt":"log","msg":"follow 75: tracking Roshan, bearing 3.9, 0.53 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:15.285Z","lvl":"info","evt":"log","msg":"follow 76: tracking Roshan, bearing 2.8, 0.48 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:15.491Z","lvl":"info","evt":"log","msg":"follow 77: tracking Roshan, bearing 3.2, 0.45 m (tof); nav arrived 0.49 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:15.681Z","lvl":"info","evt":"log","msg":"follow 78: tracking Roshan, bearing 3.6, 0.44 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:15.850Z","lvl":"info","evt":"log","msg":"follow 79: tracking Roshan, bearing 5.6, 0.45 m (tof); nav arrived 0.44 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:16.147Z","lvl":"info","evt":"log","msg":"follow 80: tracking Roshan, bearing 3.0, 0.46 m (tof); nav arrived 0.45 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:16.324Z","lvl":"info","evt":"log","msg":"follow 81: tracking Roshan, bearing 4.1, 0.45 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:16.535Z","lvl":"info","evt":"log","msg":"follow 82: tracking Roshan, bearing 3.7, 0.6 m (tof); nav arrived 0.45 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:16.749Z","lvl":"info","evt":"log","msg":"follow 83: tracking Roshan, bearing 4.3, 0.45 m (tof); nav arrived 0.57 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:16.950Z","lvl":"info","evt":"log","msg":"follow 84: tracking Roshan, bearing 2.3, 0.45 m (tof); nav arrived 0.47 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:17.185Z","lvl":"info","evt":"log","msg":"follow 85: tracking Roshan, bearing 0.8, 0.58 m (tof); nav arrived 0.45 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:17.353Z","lvl":"info","evt":"log","msg":"follow 86: tracking Roshan, bearing 4.4, 0.43 m (tof); nav arrived 0.56 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:17.580Z","lvl":"info","evt":"log","msg":"follow 87: tracking Roshan, bearing 3.6, 0.43 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:17.749Z","lvl":"info","evt":"log","msg":"follow 88: tracking Roshan, bearing 2.4, 0.43 m (tof); nav arrived 0.43 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:17.920Z","lvl":"info","evt":"log","msg":"follow 89: tracking Roshan, bearing 6.0, 0.55 m (tof); nav arrived 0.43 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:18.104Z","lvl":"info","evt":"log","msg":"follow 90: tracking Roshan, bearing 4.1, 0.59 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:18.297Z","lvl":"info","evt":"log","msg":"follow 91: tracking Roshan, bearing 4.0, 0.45 m (tof); nav arrived 0.58 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:18.452Z","lvl":"info","evt":"log","msg":"follow 92: tracking Roshan, bearing 4.1, 0.54 m (tof); nav arrived 0.47 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:18.632Z","lvl":"info","evt":"log","msg":"follow 93: tracking Roshan, bearing 3.4, 0.56 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:18.826Z","lvl":"info","evt":"log","msg":"follow 94: tracking Roshan, bearing 4.4, 0.5 m (tof); nav arrived 0.55 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:18.997Z","lvl":"info","evt":"log","msg":"follow 95: tracking Roshan, bearing 3.7, 0.48 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:19.168Z","lvl":"info","evt":"log","msg":"follow 96: tracking Roshan, bearing 3.2, 0.44 m (tof); nav arrived 0.49 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:19.322Z","lvl":"info","evt":"log","msg":"follow 97: tracking Roshan, bearing 3.4, 0.48 m (tof); nav arrived 0.45 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:19.481Z","lvl":"info","evt":"log","msg":"follow 98: tracking Roshan, bearing 4.1, 0.45 m (tof); nav arrived 0.47 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:19.678Z","lvl":"info","evt":"log","msg":"follow 99: tracking Roshan, bearing 2.0, 0.45 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:19.862Z","lvl":"info","evt":"log","msg":"follow 100: tracking Roshan, bearing 5.1, 0.45 m (tof); nav arrived 0.45 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:20.025Z","lvl":"info","evt":"log","msg":"follow 101: tracking Roshan, bearing 2.4, 0.45 m (tof); nav arrived 0.45 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:20.202Z","lvl":"info","evt":"log","msg":"follow 102: tracking Roshan, bearing 4.3, 0.46 m (tof); nav arrived 0.45 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:20.375Z","lvl":"info","evt":"log","msg":"follow 103: tracking Roshan, bearing 4.9, 0.48 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:20.524Z","lvl":"info","evt":"log","msg":"follow 104: tracking Roshan, bearing 5.0, 0.44 m (tof); nav arrived 0.48 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:20.739Z","lvl":"info","evt":"log","msg":"follow 105: tracking Roshan, bearing 2.9, 0.46 m (tof); nav arrived 0.45 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:20.941Z","lvl":"info","evt":"log","msg":"follow 106: tracking Roshan, bearing 2.5, 0.46 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:21.086Z","lvl":"info","evt":"log","msg":"follow 107: tracking Roshan, bearing 4.5, 0.43 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:21.250Z","lvl":"info","evt":"log","msg":"follow 108: tracking Roshan, bearing 0.1, 0.42 m (tof); nav arrived 0.44 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:21.412Z","lvl":"info","evt":"log","msg":"follow 109: tracking Roshan, bearing -1.0, 0.42 m (tof); nav arrived 0.42 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:21.583Z","lvl":"info","evt":"log","msg":"follow 110: tracking Roshan, bearing 5.4, 0.41 m (tof); nav arrived 0.42 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:21.774Z","lvl":"info","evt":"log","msg":"follow 111: tracking Roshan, bearing -0.8, 0.41 m (tof); nav arrived 0.41 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:21.961Z","lvl":"info","evt":"log","msg":"follow 112: tracking Roshan, bearing 3.6, 0.41 m (tof); nav arrived 0.41 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:22.150Z","lvl":"info","evt":"log","msg":"follow 113: tracking Roshan, bearing 5.6, 0.56 m (tof); nav arrived 0.41 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:22.315Z","lvl":"info","evt":"log","msg":"follow 114: tracking Roshan, bearing 4.6, 0.61 m (tof); nav arrived 0.53 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:22.513Z","lvl":"info","evt":"log","msg":"follow 115: tracking Roshan, bearing 3.6, 0.51 m (tof); nav arrived 0.59 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:22.687Z","lvl":"info","evt":"log","msg":"follow 116: tracking Roshan, bearing 4.0, 0.49 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:22.955Z","lvl":"info","evt":"log","msg":"follow 117: tracking Roshan, bearing 3.7, 0.46 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:23.144Z","lvl":"info","evt":"log","msg":"follow 118: tracking Roshan, bearing 2.5, 0.46 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:23.352Z","lvl":"info","evt":"log","msg":"follow 119: tracking Roshan, bearing 3.6, 0.46 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:23.548Z","lvl":"info","evt":"log","msg":"follow 120: tracking Roshan, bearing 2.7, 0.44 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:23.697Z","lvl":"info","evt":"log","msg":"follow 121: tracking Roshan, bearing 5.5, 0.44 m (tof); nav arrived 0.44 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:23.874Z","lvl":"info","evt":"log","msg":"follow 122: tracking Roshan, bearing 4.7, 0.47 m (tof); nav arrived 0.44 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:24.035Z","lvl":"info","evt":"log","msg":"follow 123: tracking Roshan, bearing 1.5, 0.46 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:24.229Z","lvl":"info","evt":"log","msg":"follow 124: tracking Roshan, bearing 4.7, 0.53 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:24.423Z","lvl":"info","evt":"log","msg":"follow 125: tracking Roshan, bearing 2.0, 0.52 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:24.603Z","lvl":"info","evt":"log","msg":"follow 126: tracking Roshan, bearing 3.1, 0.45 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:24.765Z","lvl":"info","evt":"log","msg":"follow 127: tracking Roshan, bearing 2.9, 0.47 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:24.922Z","lvl":"info","evt":"log","msg":"follow 128: tracking Roshan, bearing -1.2, 0.42 m (tof); nav arrived 0.47 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:25.087Z","lvl":"info","evt":"log","msg":"follow 129: tracking Roshan, bearing 3.4, 0.43 m (tof); nav arrived 0.43 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:25.269Z","lvl":"info","evt":"log","msg":"follow 130: tracking Roshan, bearing 2.0, 0.47 m (tof); nav arrived 0.43 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:25.450Z","lvl":"info","evt":"log","msg":"follow 131: tracking Roshan, bearing 2.2, 0.47 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:25.612Z","lvl":"info","evt":"log","msg":"follow 132: tracking Roshan, bearing 0.9, 0.47 m (tof); nav arrived 0.47 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:25.757Z","lvl":"info","evt":"log","msg":"follow 133: tracking Roshan, bearing 4.6, 0.6 m (tof); nav arrived 0.47 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:25.970Z","lvl":"info","evt":"log","msg":"follow 134: tracking Roshan, bearing 1.0, 0.59 m (tof); nav arrived 0.56 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:26.132Z","lvl":"info","evt":"log","msg":"follow 135: tracking Roshan, bearing 4.1, 0.54 m (tof); nav arrived 0.59 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:26.301Z","lvl":"info","evt":"log","msg":"follow 136: tracking Roshan, bearing 1.8, 0.51 m (tof); nav arrived 0.55 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:26.494Z","lvl":"info","evt":"log","msg":"follow 137: tracking Roshan, bearing -0.6, 0.45 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:26.682Z","lvl":"info","evt":"log","msg":"follow 138: tracking Roshan, bearing -1.1, 0.55 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:26.854Z","lvl":"info","evt":"log","msg":"follow 139: tracking Roshan, bearing -3.8, 0.5 m (tof); nav arrived 0.53 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:27.023Z","lvl":"info","evt":"log","msg":"follow 140: tracking Roshan, bearing -8.4, 0.62 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:27.197Z","lvl":"info","evt":"log","msg":"follow 141: tracking Roshan, bearing -7.7, 0.53 m (tof); nav arrived 0.59 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:27.378Z","lvl":"info","evt":"log","msg":"follow 142: tracking Roshan, bearing -9.1, 0.52 m (tof); nav arrived 0.54 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:27.546Z","lvl":"info","evt":"log","msg":"follow 143: tracking Roshan, bearing -7.0, 0.5 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:27.722Z","lvl":"info","evt":"log","msg":"follow 144: tracking Roshan, bearing 2.7, 0.54 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:27.846Z","lvl":"info","evt":"log","msg":"follow 145: tracking Roshan, bearing -7.0, 0.52 m (tof); nav arrived 0.53 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:28.067Z","lvl":"info","evt":"log","msg":"follow 146: tracking Roshan, bearing -7.3, 0.52 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:28.244Z","lvl":"info","evt":"log","msg":"follow 147: tracking Roshan, bearing -6.9, 0.53 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:28.411Z","lvl":"info","evt":"log","msg":"follow 148: tracking Roshan, bearing -7.2, 0.52 m (tof); nav arrived 0.53 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:28.595Z","lvl":"info","evt":"log","msg":"follow 149: tracking Roshan, bearing -6.4, 0.51 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:28.760Z","lvl":"info","evt":"log","msg":"follow 150: tracking Roshan, bearing -5.8, 0.51 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:28.971Z","lvl":"info","evt":"log","msg":"follow 151: tracking Roshan, bearing -6.0, 0.5 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:29.234Z","lvl":"info","evt":"log","msg":"follow 152: tracking Roshan, bearing -4.9, 0.5 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:29.389Z","lvl":"info","evt":"log","msg":"follow 153: tracking Roshan, bearing -5.7, 0.52 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:29.641Z","lvl":"info","evt":"log","msg":"follow 154: tracking Roshan, bearing -3.8, 0.55 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:29.799Z","lvl":"info","evt":"log","msg":"follow 155: tracking Roshan, bearing -6.3, 0.54 m (tof); nav arrived 0.55 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:29.977Z","lvl":"info","evt":"log","msg":"follow 156: tracking Roshan, bearing -7.6, 0.51 m (tof); nav arrived 0.54 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:30.175Z","lvl":"info","evt":"log","msg":"follow 157: tracking Roshan, bearing -6.8, 0.56 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:30.341Z","lvl":"info","evt":"log","msg":"follow 158: tracking Roshan, bearing -5.8, 0.52 m (tof); nav arrived 0.55 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:30.537Z","lvl":"info","evt":"log","msg":"follow 159: tracking Roshan, bearing -6.3, 0.51 m (tof); nav arrived 0.53 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:30.693Z","lvl":"info","evt":"log","msg":"follow 160: tracking Roshan, bearing -6.5, 0.5 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:30.919Z","lvl":"info","evt":"log","msg":"follow 161: tracking Roshan, bearing -6.2, 0.53 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:31.063Z","lvl":"info","evt":"log","msg":"follow 162: tracking Roshan, bearing -6.5, 0.51 m (tof); nav arrived 0.53 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:31.214Z","lvl":"info","evt":"log","msg":"follow 163: tracking Roshan, bearing 2.2, 0.53 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:31.375Z","lvl":"info","evt":"log","msg":"follow 164: tracking Roshan, bearing -6.0, 0.49 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:31.517Z","lvl":"info","evt":"log","msg":"follow 165: tracking Roshan, bearing 1.9, 0.54 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:31.628Z","lvl":"info","evt":"log","msg":"follow 166: holding Roshan, bearing None, None m (None); nav arrived 0.53 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:31.872Z","lvl":"info","evt":"log","msg":"follow 167: tracking Roshan, bearing -6.2, 0.5 m (tof); nav arrived 0.53 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:32.000Z","lvl":"info","evt":"log","msg":"follow 168: tracking Roshan, bearing -5.8, 0.49 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:32.130Z","lvl":"info","evt":"log","msg":"follow 169: tracking Roshan, bearing -7.9, 0.51 m (tof); nav arrived 0.49 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:32.377Z","lvl":"info","evt":"log","msg":"follow 170: tracking Roshan, bearing -7.2, 0.5 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:32.523Z","lvl":"info","evt":"log","msg":"follow 171: tracking Roshan, bearing -4.0, 0.5 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:32.682Z","lvl":"info","evt":"log","msg":"follow 172: tracking Roshan, bearing -4.3, 0.51 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:32.922Z","lvl":"info","evt":"log","msg":"follow 173: tracking Roshan, bearing -4.1, 0.51 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:33.110Z","lvl":"info","evt":"log","msg":"follow 174: tracking Roshan, bearing -2.4, 0.51 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:33.310Z","lvl":"info","evt":"log","msg":"follow 175: tracking Roshan, bearing -4.2, 0.51 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:33.486Z","lvl":"info","evt":"log","msg":"follow 176: tracking Roshan, bearing -3.9, 0.52 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:33.658Z","lvl":"info","evt":"log","msg":"follow 177: tracking Roshan, bearing -6.0, 0.52 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:33.836Z","lvl":"info","evt":"log","msg":"follow 178: tracking Roshan, bearing -5.7, 0.52 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:33.989Z","lvl":"info","evt":"log","msg":"follow 179: tracking Roshan, bearing -3.9, 0.52 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:34.156Z","lvl":"info","evt":"log","msg":"follow 180: tracking Roshan, bearing -4.6, 0.52 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:34.358Z","lvl":"info","evt":"log","msg":"follow 181: tracking Roshan, bearing -3.3, 0.51 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:34.541Z","lvl":"info","evt":"log","msg":"follow 182: tracking Roshan, bearing -6.0, 0.53 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:34.704Z","lvl":"info","evt":"log","msg":"follow 183: tracking Roshan, bearing -4.9, 0.51 m (tof); nav arrived 0.53 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:34.886Z","lvl":"info","evt":"log","msg":"follow 184: tracking Roshan, bearing -5.3, 0.52 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:35.066Z","lvl":"info","evt":"log","msg":"follow 185: tracking Roshan, bearing -5.0, 0.51 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:35.227Z","lvl":"info","evt":"log","msg":"follow 186: tracking Roshan, bearing -5.0, 0.51 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:35.407Z","lvl":"info","evt":"log","msg":"follow 187: tracking Roshan, bearing -5.2, 0.51 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:35.589Z","lvl":"info","evt":"log","msg":"follow 188: tracking Roshan, bearing -5.5, 0.5 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:35.775Z","lvl":"info","evt":"log","msg":"follow 189: tracking Roshan, bearing -5.4, 0.5 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:35.950Z","lvl":"info","evt":"log","msg":"follow 190: tracking Roshan, bearing 8.2, 0.53 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:36.095Z","lvl":"info","evt":"log","msg":"follow 191: tracking Roshan, bearing -6.0, 0.5 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:36.251Z","lvl":"info","evt":"log","msg":"follow 192: tracking Roshan, bearing -5.4, 0.52 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:36.456Z","lvl":"info","evt":"log","msg":"follow 193: tracking Roshan, bearing -3.7, 0.51 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:36.679Z","lvl":"info","evt":"log","msg":"follow 194: tracking Roshan, bearing 8.9, 0.52 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:36.870Z","lvl":"info","evt":"log","msg":"follow 195: tracking Roshan, bearing 8.1, 0.52 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:37.090Z","lvl":"info","evt":"log","msg":"follow 196: tracking Roshan, bearing -5.4, 0.51 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:37.271Z","lvl":"info","evt":"log","msg":"follow 197: tracking Roshan, bearing -5.2, 0.52 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:37.503Z","lvl":"info","evt":"log","msg":"follow 198: tracking Roshan, bearing 10.8, 0.52 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:37.693Z","lvl":"info","evt":"log","msg":"follow 199: tracking Roshan, bearing -4.2, 0.51 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:37.881Z","lvl":"info","evt":"log","msg":"follow 200: tracking Roshan, bearing -6.1, 0.51 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:38.027Z","lvl":"info","evt":"log","msg":"follow 201: tracking Roshan, bearing -4.3, 0.51 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:38.171Z","lvl":"info","evt":"log","msg":"follow 202: tracking Roshan, bearing 8.5, 0.51 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:38.308Z","lvl":"info","evt":"log","msg":"follow 203: tracking Roshan, bearing -3.8, 0.62 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:38.553Z","lvl":"info","evt":"log","msg":"follow 204: tracking Roshan, bearing -5.5, 0.5 m (tof); nav arrived 0.59 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:38.694Z","lvl":"info","evt":"log","msg":"follow 205: holding Roshan, bearing None, None m (None); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:38.868Z","lvl":"info","evt":"log","msg":"follow 206: tracking Roshan, bearing -6.7, 0.5 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:39.078Z","lvl":"info","evt":"log","msg":"follow 207: tracking Roshan, bearing -5.3, 0.49 m (tof); nav arrived 0.50 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:39.254Z","lvl":"info","evt":"log","msg":"follow 208: tracking Roshan, bearing 3.8, 0.51 m (tof); nav arrived 0.49 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:39.400Z","lvl":"info","evt":"log","msg":"follow 209: tracking Roshan, bearing -2.2, 0.43 m (tof); nav arrived 0.51 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:39.601Z","lvl":"info","evt":"log","msg":"follow 210: holding Roshan, bearing None, None m (None); nav arrived 0.45 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:39.818Z","lvl":"info","evt":"log","msg":"follow 211: tracking Roshan, bearing 11.9, 0.74 m (tof); nav arrived 0.45 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:39.932Z","lvl":"info","evt":"log","msg":"follow 212: holding Roshan, bearing None, None m (None); nav arrived 0.72 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:40.124Z","lvl":"info","evt":"log","msg":"follow 213: holding Roshan, bearing None, None m (None); nav arrived 0.72 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:40.251Z","lvl":"info","evt":"log","msg":"follow 214: holding Roshan, bearing None, None m (None); nav arrived 0.72 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:40.364Z","lvl":"info","evt":"log","msg":"follow 215: searching Roshan, bearing None, None m (None); nav arrived 0.72 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:40.367Z","lvl":"info","evt":"log","msg":"follow 215: lost, going to where they were last seen","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:40.491Z","lvl":"info","evt":"log","msg":"follow 216: searching Roshan, bearing None, None m (None); nav idle 0.72 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:41.838Z","lvl":"info","evt":"log","msg":"follow 217: tracking Roshan, bearing 73.4, 0.8 m (tof); nav idle 0.72 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:41.992Z","lvl":"info","evt":"log","msg":"follow 218: tracking Roshan, bearing 73.8, 0.82 m (tof); nav driving 0.80 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:42.224Z","lvl":"info","evt":"log","msg":"follow 219: tracking Roshan, bearing 73.9, 0.82 m (tof); nav driving 0.81 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:42.474Z","lvl":"info","evt":"log","msg":"follow 220: tracking Roshan, bearing 19.7, 0.56 m (tof); nav driving 0.82 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:42.746Z","lvl":"info","evt":"log","msg":"follow 221: tracking Roshan, bearing 77.1, 0.95 m (tof); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:42.884Z","lvl":"info","evt":"log","msg":"follow 222: holding Roshan, bearing None, None m (None); nav driving 0.85 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:43.021Z","lvl":"info","evt":"log","msg":"follow 223: tracking Roshan, bearing 73.5, 1.04 m (tof); nav driving 0.85 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:43.277Z","lvl":"info","evt":"log","msg":"follow 224: tracking Roshan, bearing 70.6, 0.86 m (tof); nav driving 1.00 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:43.480Z","lvl":"info","evt":"log","msg":"follow 225: tracking Roshan, bearing 5.3, 1.87 m (width); nav driving 0.86 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:43.708Z","lvl":"info","evt":"log","msg":"follow 226: tracking Roshan, bearing 58.3, 1.07 m (tof); nav driving 0.84 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:43.911Z","lvl":"info","evt":"log","msg":"follow 227: tracking Roshan, bearing 53.5, 1.16 m (tof); nav driving 1.00 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:44.078Z","lvl":"info","evt":"log","msg":"follow 228: tracking Roshan, bearing 51.3, 1.84 m (tof); nav driving 1.07 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:44.322Z","lvl":"info","evt":"log","msg":"follow 229: tracking Roshan, bearing 49.5, 0.91 m (tof); nav driving 1.52 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:44.557Z","lvl":"info","evt":"log","msg":"follow 230: tracking Roshan, bearing 48.0, 0.86 m (tof); nav driving 0.93 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:44.844Z","lvl":"info","evt":"log","msg":"follow 231: tracking Roshan, bearing 52.9, 0.83 m (tof); nav driving 0.81 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:45.083Z","lvl":"info","evt":"log","msg":"follow 232: tracking Roshan, bearing 54.7, 0.84 m (tof); nav driving 0.76 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:45.367Z","lvl":"info","evt":"log","msg":"follow 233: tracking Roshan, bearing 48.7, 0.76 m (tof); nav driving 0.79 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:45.538Z","lvl":"info","evt":"log","msg":"follow 234: tracking Roshan, bearing 47.8, 0.71 m (tof); nav driving 0.74 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:45.761Z","lvl":"info","evt":"log","msg":"follow 235: tracking Roshan, bearing 43.3, 0.66 m (tof); nav driving 0.68 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:45.951Z","lvl":"info","evt":"log","msg":"follow 236: tracking Roshan, bearing 36.3, 0.65 m (tof); nav driving 0.62 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:46.122Z","lvl":"info","evt":"log","msg":"follow 237: tracking Roshan, bearing 37.0, 0.69 m (tof); nav driving 0.61 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:46.289Z","lvl":"info","evt":"log","msg":"follow 238: tracking Roshan, bearing 30.6, 0.63 m (tof); nav driving 0.63 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:46.470Z","lvl":"info","evt":"log","msg":"follow 239: tracking Roshan, bearing 30.1, 0.6 m (tof); nav driving 0.58 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:46.633Z","lvl":"info","evt":"log","msg":"follow 240: tracking Roshan, bearing 24.7, 0.61 m (tof); nav arrived 0.56 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:46.795Z","lvl":"info","evt":"log","msg":"follow 241: tracking Roshan, bearing 21.7, 0.59 m (tof); nav arrived 0.58 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:47.083Z","lvl":"info","evt":"log","msg":"follow 242: tracking Roshan, bearing 26.0, 0.58 m (tof); nav arrived 0.58 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:47.283Z","lvl":"info","evt":"log","msg":"follow 243: tracking Roshan, bearing 21.7, 0.58 m (tof); nav arrived 0.59 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:47.476Z","lvl":"info","evt":"log","msg":"follow 244: tracking Roshan, bearing 22.2, 0.57 m (tof); nav arrived 0.60 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:47.684Z","lvl":"info","evt":"log","msg":"follow 245: tracking Roshan, bearing 25.1, 0.57 m (tof); nav arrived 0.58 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:47.885Z","lvl":"info","evt":"log","msg":"follow 246: tracking Roshan, bearing 28.9, 0.61 m (tof); nav arrived 0.58 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:48.173Z","lvl":"info","evt":"log","msg":"follow 247: tracking Roshan, bearing 32.0, 0.6 m (tof); nav arrived 0.61 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:48.302Z","lvl":"info","evt":"log","msg":"follow 248: tracking Roshan, bearing 47.5, 0.73 m (tof); nav arrived 0.61 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:48.514Z","lvl":"info","evt":"log","msg":"follow 249: tracking Roshan, bearing 50.4, 0.74 m (tof); nav arrived 0.68 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:48.719Z","lvl":"info","evt":"log","msg":"follow 250: tracking Roshan, bearing 47.7, 0.78 m (tof); nav arrived 0.73 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:48.899Z","lvl":"info","evt":"log","msg":"follow 251: tracking Roshan, bearing 42.6, 1.0 m (tof); nav driving 0.77 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:49.150Z","lvl":"info","evt":"log","msg":"follow 252: tracking Roshan, bearing 39.5, 1.66 m (tof); nav driving 0.94 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:49.301Z","lvl":"info","evt":"log","msg":"follow 253: tracking Roshan, bearing 29.5, 1.52 m (tof); nav driving 1.50 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:49.474Z","lvl":"info","evt":"log","msg":"follow 254: tracking Roshan, bearing 32.1, 1.59 m (tof); nav driving 1.48 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:49.708Z","lvl":"info","evt":"log","msg":"follow 255: tracking Roshan, bearing 29.3, 1.69 m (tof); nav driving 1.52 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:49.894Z","lvl":"info","evt":"log","msg":"follow 256: tracking Roshan, bearing 27.1, 1.72 m (tof); nav driving 1.57 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:50.086Z","lvl":"info","evt":"log","msg":"follow 257: tracking Roshan, bearing 28.6, 1.36 m (tof); nav driving 1.60 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:50.258Z","lvl":"info","evt":"log","msg":"follow 258: tracking Roshan, bearing 30.9, 1.79 m (tof); nav driving 1.35 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:50.418Z","lvl":"info","evt":"log","msg":"follow 259: tracking Roshan, bearing 31.9, 1.71 m (tof); nav driving 1.59 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:50.614Z","lvl":"info","evt":"log","msg":"follow 260: tracking Roshan, bearing 31.0, 1.56 m (tof); nav driving 1.60 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:50.770Z","lvl":"info","evt":"log","msg":"follow 261: tracking Roshan, bearing 30.5, 1.62 m (tof); nav driving 1.51 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:50.921Z","lvl":"info","evt":"log","msg":"follow 262: tracking Roshan, bearing 28.6, 1.47 m (tof); nav driving 1.54 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:51.135Z","lvl":"info","evt":"log","msg":"follow 263: tracking Roshan, bearing 28.2, 1.48 m (tof); nav driving 1.44 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:51.325Z","lvl":"info","evt":"log","msg":"follow 264: tracking Roshan, bearing 34.3, 1.0 m (tof); nav driving 1.40 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:51.483Z","lvl":"info","evt":"log","msg":"follow 265: tracking Roshan, bearing 31.2, 1.31 m (tof); nav driving 1.02 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:51.664Z","lvl":"info","evt":"log","msg":"follow 266: tracking Roshan, bearing 34.0, 1.13 m (tof); nav driving 1.18 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:51.895Z","lvl":"info","evt":"log","msg":"follow 267: tracking Roshan, bearing 28.5, 1.36 m (tof); nav driving 1.07 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:52.061Z","lvl":"info","evt":"log","msg":"follow 268: tracking Roshan, bearing 30.4, 1.43 m (tof); nav driving 1.22 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:52.306Z","lvl":"info","evt":"log","msg":"follow 269: tracking Roshan, bearing 30.5, 1.24 m (tof); nav driving 1.30 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:52.506Z","lvl":"info","evt":"log","msg":"follow 270: tracking Roshan, bearing 32.4, 1.03 m (tof); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:52.722Z","lvl":"info","evt":"log","msg":"follow 271: tracking Roshan, bearing 32.5, 1.41 m (tof); nav driving 1.01 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:52.860Z","lvl":"info","evt":"log","msg":"follow 272: tracking Roshan, bearing 33.5, 1.41 m (tof); nav driving 1.27 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:53.021Z","lvl":"info","evt":"log","msg":"follow 273: tracking Roshan, bearing 30.2, 1.11 m (tof); nav driving 1.32 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:53.233Z","lvl":"info","evt":"log","msg":"follow 274: tracking Roshan, bearing 27.7, 0.91 m (tof); nav driving 1.12 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:53.403Z","lvl":"info","evt":"log","msg":"follow 275: tracking Roshan, bearing 27.2, 1.61 m (tof); nav driving 0.86 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:53.593Z","lvl":"info","evt":"log","msg":"follow 276: tracking Roshan, bearing 25.3, 1.04 m (tof); nav driving 1.29 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:53.766Z","lvl":"info","evt":"log","msg":"follow 277: tracking Roshan, bearing 34.2, 0.93 m (tof); nav driving 1.01 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:53.932Z","lvl":"info","evt":"log","msg":"follow 278: tracking Roshan, bearing 32.2, 1.09 m (tof); nav driving 0.90 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:54.051Z","lvl":"info","evt":"log","msg":"follow 279: tracking Roshan, bearing 31.0, 0.95 m (tof); nav driving 0.98 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:54.281Z","lvl":"info","evt":"log","msg":"follow 280: tracking Roshan, bearing 33.2, 0.79 m (tof); nav driving 0.93 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:54.463Z","lvl":"info","evt":"log","msg":"follow 281: tracking Roshan, bearing 32.7, 0.75 m (tof); nav driving 0.78 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:54.605Z","lvl":"info","evt":"log","msg":"follow 282: tracking Roshan, bearing 29.2, 0.89 m (tof); nav driving 0.73 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:54.806Z","lvl":"info","evt":"log","msg":"follow 283: tracking Roshan, bearing 31.7, 0.88 m (floor); nav driving 0.80 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:54.971Z","lvl":"info","evt":"log","msg":"follow 284: tracking Roshan, bearing 30.6, 0.91 m (floor); nav driving 0.81 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:55.134Z","lvl":"info","evt":"log","msg":"follow 285: tracking Roshan, bearing 29.4, 2.56 m (tof); nav driving 0.84 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:55.332Z","lvl":"info","evt":"log","msg":"follow 286: holding Roshan, bearing None, None m (None); nav driving 0.80 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:55.545Z","lvl":"info","evt":"log","msg":"follow 287: tracking Roshan, bearing 25.1, 1.37 m (tof); nav driving 0.77 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:55.666Z","lvl":"info","evt":"log","msg":"follow 288: tracking Roshan, bearing 18.8, 0.74 m (tof); nav driving 1.27 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:55.855Z","lvl":"info","evt":"log","msg":"follow 289: tracking Roshan, bearing 15.9, 1.3 m (tof); nav driving 0.85 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:56.014Z","lvl":"info","evt":"log","msg":"follow 290: holding Roshan, bearing None, None m (None); nav driving 1.13 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:56.180Z","lvl":"info","evt":"log","msg":"follow 291: holding Roshan, bearing None, None m (None); nav driving 1.10 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:56.402Z","lvl":"warn","evt":"log","msg":"reflex: something 0.21 m from the sensor, ahead","src":"robot_core.nav.reflex"}
+{"ts":"2026-11-19T19:10:56.406Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 242)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T19:10:56.407Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T19:10:56.422Z","lvl":"info","evt":"log","msg":"follow 292: tracking Roshan, bearing 8.9, 2.64 m (tof); nav driving 1.06 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:56.574Z","lvl":"info","evt":"log","msg":"follow 293: tracking Roshan, bearing 10.5, 1.83 m (tof); nav tripped something 0.21 m from the sensor, ahead","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:56.749Z","lvl":"info","evt":"log","msg":"follow 294: tracking Roshan, bearing 7.8, 1.68 m (floor); nav tripped something 0.21 m from the sensor, ahead","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:56.903Z","lvl":"info","evt":"log","msg":"follow 295: tracking Roshan, bearing 10.4, 1.52 m (tof); nav tripped something 0.21 m from the sensor, ahead","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:57.041Z","lvl":"info","evt":"log","msg":"follow 296: holding Roshan, bearing None, None m (None); nav driving 1.57 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:57.219Z","lvl":"info","evt":"log","msg":"follow 297: tracking Roshan, bearing 11.2, 1.14 m (tof); nav driving 1.57 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:57.433Z","lvl":"info","evt":"log","msg":"follow 298: tracking Roshan, bearing 10.6, 1.25 m (tof); nav driving 1.20 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:57.612Z","lvl":"info","evt":"log","msg":"follow 299: tracking Roshan, bearing 18.0, 4.01 m (floor); nav driving 1.23 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:57.738Z","lvl":"info","evt":"log","msg":"follow 300: holding Roshan, bearing None, None m (None); nav driving 1.25 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:57.952Z","lvl":"info","evt":"log","msg":"follow 301: holding Roshan, bearing None, None m (None); nav driving 1.23 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:58.067Z","lvl":"info","evt":"log","msg":"follow 302: holding Roshan, bearing None, None m (None); nav driving 1.22 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:58.186Z","lvl":"info","evt":"log","msg":"follow 303: searching Roshan, bearing None, None m (None); nav driving 1.22 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:58.188Z","lvl":"info","evt":"log","msg":"follow 303: lost, going to where they were last seen","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:58.373Z","lvl":"info","evt":"log","msg":"follow 304: searching Roshan, bearing None, None m (None); nav driving 1.21 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:58.561Z","lvl":"info","evt":"log","msg":"follow 305: searching Roshan, bearing None, None m (None); nav driving 1.20 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:58.699Z","lvl":"info","evt":"log","msg":"follow 306: searching Roshan, bearing None, None m (None); nav driving 1.20 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:58.834Z","lvl":"info","evt":"log","msg":"follow 307: searching Roshan, bearing None, None m (None); nav driving 1.19 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:59.003Z","lvl":"info","evt":"log","msg":"follow 308: searching Roshan, bearing None, None m (None); nav driving 1.19 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:59.148Z","lvl":"info","evt":"log","msg":"follow 309: searching Roshan, bearing None, None m (None); nav driving 1.19 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:59.297Z","lvl":"info","evt":"log","msg":"follow 310: searching Roshan, bearing None, None m (None); nav driving 1.19 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:59.400Z","lvl":"info","evt":"log","msg":"follow 311: searching Roshan, bearing None, None m (None); nav driving 1.20 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:10:59.599Z","lvl":"info","evt":"log","msg":"follow 312: gone Roshan, bearing None, None m (None); nav driving 1.21 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T19:11:01.013Z","lvl":"info","evt":"task.end","task":"follow","ok":true,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-19T19:11:01.018Z","lvl":"info","evt":"gesture","name":"yes","text_only":true}
+{"ts":"2026-11-19T19:11:01.022Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-19T19:11:01.057Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-19T19:11:01.132Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:300 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-19T19:11:01.144Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:260 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-19T19:11:01.660Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-19T19:11:01.661Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
