@@ -34,6 +34,8 @@ import time
 from collections import deque
 from typing import Callable, List, Optional, Tuple
 
+import numpy as np
+
 from robot_core import status
 from robot_core.nav import dwa
 from robot_core.nav.aim import GimbalAim
@@ -53,6 +55,7 @@ STUCK_NEAR_M = 0.40             # ...while something this near straight ahead...
 STUCK_STILL_M = 0.025           # ...came no nearer than this: slipping against it
 CLIMB_DEG = 12.0                # nose up this far since it started moving: climbing something
 BACK_OFF_M = 0.10
+TURN_BACK_M = 0.05              # backing off to make room to turn on the spot
 AHEAD_STALE_S = 1.2             # driving with the way ahead unseen this long: glance at it, slow meanwhile
 AHEAD_CONE_DEG = 28.0           # a grid taken with the head this near the direction of travel saw the way (ToF: +-30)
 ARRIVE_M, RESUME_M = 0.08, 0.25 # arrived within keep + ARRIVE_M; set off again only past keep + RESUME_M, so a
@@ -309,13 +312,18 @@ class LocalNav:
         res = dwa.plan((here[0], here[1], here[2], v_meas, w_meas), target, self.costmap.clearance,
                        self.params, stop_at_m=stop_at)
         v, w = res.v, res.w
+        tb = dwa.wrap(math.atan2(target[1] - here[1], target[0] - here[0]) - here[2])   # the way, from here
         if not res.blocked and v < 0.02:                  # only turning on the spot is safe: turn properly, toward the
-            tb = dwa.wrap(math.atan2(target[1] - here[1], target[0] - here[0]) - here[2])    # way, not a 0.03 rad/s
-            w = dwa.face(tb) or (0.6 if abs(w) < 0.3 else w)   # creep the tracks cannot do (Nov 19: it sat 5 s)
+            w = dwa.face(tb) or (0.6 if abs(w) < 0.3 else w)   # way, not a 0.03 rad/s creep the tracks cannot do
         if res.blocked:
+            # Toward the same point as above, never a blind turn to the left: the two disagreeing spun it on the
+            # spot in a doorway until it lost the person (Nov 19). Blocked with the way straight ahead: back off.
             self._plan_t, self._local_t = 0.0, -1e9       # plan a way round now (the Mac's and our own)
-            w = dwa.face(bearing) if abs(bearing) > math.radians(20) else 0.6   # turn to look for a way
-            self.state, self.detail = "blocked", "no safe arc: turning to look"
+            w = dwa.face(tb) if abs(tb) > math.radians(20) else 0.0
+            if not w and self._recover is None and float(self.costmap.clearance(
+                    [here[0] - 0.1 * math.cos(here[2])], [here[1] - 0.1 * math.sin(here[2])])[0]) > self.params.radius_m:
+                self._recover, self._recover_from, self._back_m = "back", (here, now), TURN_BACK_M
+            self.state, self.detail = "blocked", "no safe arc: turning toward the way" if w else "no safe arc: backing off"
         else:
             self.state, self.detail = "driving", f"{dist:.2f} m to go"
         if v > 0.02 and now - self._ahead_t > AHEAD_STALE_S:     # not looked where it is going lately
@@ -325,15 +333,15 @@ class LocalNav:
         if self.reflex.tripped():
             v = 0.0
             self.state, self.detail = "tripped", self.reflex.why
-        if v < 0.02 and w != 0.0 and self._recover is None:   # turning on the spot swings the square's corners out
-            cl = self.costmap.clearance([here[0], here[0] - 0.1 * math.cos(here[2])],      # to the full radius:
-                                        [here[1], here[1] - 0.1 * math.sin(here[2])])     # too close for that, so
-            slack = self.costmap.res                      # where a hit lands is good to about a cell
-            if cl[0] < self.params.radius_m + slack and cl[1] > cl[0]:   # back off first if that is roomier
-                self._recover, self._recover_from = "back", (here, now)   # (the sim's corner hits, Nov 19)
-                v = w = 0.0
-            elif cl[0] < self.params.radius_m + slack / 2:  # no room to turn and none behind: hold still
-                v = w = 0.0
+        if v < 0.02 and w != 0.0 and self._recover is None and self._turn_hits(here, w):
+            # Turning on the spot would swing a corner of the square into something: back off a little if
+            # there is room behind, else hold still. (A margin test here backed it off 1.5 s at a time in
+            # every doorway, Nov 19; this checks the square itself.)
+            behind = float(self.costmap.clearance([here[0] - 0.1 * math.cos(here[2])],
+                                                  [here[1] - 0.1 * math.sin(here[2])])[0])
+            if behind > self.params.radius_m:
+                self._recover, self._recover_from, self._back_m = "back", (here, now), TURN_BACK_M
+            v = w = 0.0
         if self._trips_seen != self.reflex.trips:         # the brake holds /cmd_vel off until a zero command
             self._trips_seen = self.reflex.trips
             v = w = 0.0
@@ -347,6 +355,20 @@ class LocalNav:
         self.aim.update(now, v, w, focus_pan, near)
 
     # ------------------------------------------------------------- planning
+
+    def _turn_hits(self, here, w: float, dt: float = 0.4) -> bool:
+        """Would turning on the spot at w for dt sweep the square footprint into an occupied cell?"""
+        half = self.params.radius_m / math.sqrt(2.0)                    # half the square's side
+        pad = self.costmap.res * 0.71 + 0.03                            # a cell's half diagonal, and 3 cm: the
+                                                                        # face beside a corner is often unmapped
+        near = [p for p in self.costmap.points() if math.dist(p, here[:2]) < self.params.radius_m + pad]
+        for th in np.linspace(here[2], here[2] + w * dt, 6):
+            c, s = math.cos(th), math.sin(th)
+            for x, y in near:
+                dx, dy = x - here[0], y - here[1]
+                if max(abs(dx * c + dy * s), abs(-dx * s + dy * c)) < half + pad:
+                    return True
+        return False
 
     def _detour(self, here, goal, path, radius: float) -> bool:
         """The Mac's path is over twice as long as the straight line (plus 0.5 m), and the straight
@@ -411,17 +433,18 @@ class LocalNav:
             self.costmap.add_obstacle(at, [(0.22, y / 20.0) for y in range(-3, 4)])
             self._stuck.reset()
             self._moving_since = None
-            self._recover = "back"
+            self._recover, self._back_m = "back", BACK_OFF_M
             self._recover_from = (at, self.clock())
             self.state, self.detail = "stuck", why
 
     def _do_recover(self, here: Pose) -> None:
         """Back off BACK_OFF_M (slowly, watching the reflex), then hand back to DWA."""
         start, t0 = self._recover_from
-        gone = math.hypot(here[0] - start[0], here[1] - start[1]) if start else BACK_OFF_M
+        want = getattr(self, "_back_m", BACK_OFF_M)
+        gone = math.hypot(here[0] - start[0], here[1] - start[1]) if start else want
         behind = float(self.costmap.clearance([here[0] - 0.12 * math.cos(here[2])],
                                               [here[1] - 0.12 * math.sin(here[2])])[0])
-        if gone >= BACK_OFF_M or self.clock() - t0 > 3.0 or behind < self.params.radius_m:   # no room behind
+        if gone >= want or self.clock() - t0 > 3.0 or behind < self.params.radius_m:   # no room behind
             self._recover = None
             self._send(0.0, 0.0)
             self._plan_t = 0.0

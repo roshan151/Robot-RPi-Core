@@ -46,7 +46,7 @@ from robot_core.explore import ExploreConfig, Explorer
 from robot_core.odometry import Pose2D
 from robot_core.sensors.camera import Camera
 from robot_core.sensors.gimbal import from_params
-from robot_core.sensors.head import Head, HeadGeometry
+from robot_core.sensors.head import Head, HeadGeometry, parse_self_zones
 from robot_core import terrain
 from robot_core.sensors import tof8x8
 from robot_core.sensors.tfluna import TFLuna
@@ -196,6 +196,7 @@ class ExplorerNode(Node):
         p("camera_index", 0)
         p("head_height_m", 0.25)
         p("pan_axis_x_m", 0.05)
+        p("tof_self_zones", "")
         p("hfov_deg", 66.0)
         p("pwm_chip", 0)
         p("pan_channel", 1)
@@ -232,7 +233,8 @@ class ExplorerNode(Node):
             height_m=float(v("head_height_m")), pan_axis_x_m=float(v("pan_axis_x_m")),
             hfov_deg=float(v("hfov_deg")), drive_tilt_deg=float(v("drive_tilt_deg")),
             tof_perpendicular=bool(v("tof_perpendicular")), tilt_offset_deg=float(v("head_tilt_offset_deg")),
-            pan_axis_y_m=float(v("tof_from_right_m")) - float(v("robot_width_m")) / 2.0),
+            pan_axis_y_m=float(v("tof_from_right_m")) - float(v("robot_width_m")) / 2.0,
+            self_zones=parse_self_zones(v("tof_self_zones"))),
             pitch=lambda: self._pitch(),
             terrain_params=terrain.params_from({n: v(n) for n in ("h_max_m", "flat_tol_m", "min_landing_m", "max_drop_m", "robot_width_m",
                                                              "plan_clearance_m", "floor_auto_level", "floor_holes_are_drops",

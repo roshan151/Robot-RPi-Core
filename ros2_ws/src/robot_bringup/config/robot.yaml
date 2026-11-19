@@ -193,6 +193,9 @@
     head_height_m: 0.22        # MEASURED 2026-11-18: ToF height above the floor, head level
     tof_from_right_m: 0.10     # MEASURED 2026-11-18: ToF centre from the robot's right side (centre = robot_width_m / 2)
     pan_axis_x_m: 0.0          # 2026-11-19: the gimbal pan axis is at the robot centre
+    tof_self_zones: "7,0:0.22 7,1:0.15 7,2:0.15 7,3:0.15 6,0:0.30"   # ToF zones (row,col: metres) that see the
+                               # robot itself: nearer readings there are ignored. 2026-11-19 door run: (7,0) read
+                               # 0.10-0.17, (6,0) 0.20-0.25, (7,1..3) 0.06-0.11 with nothing there; they braked it
     hfov_deg: 80.0             # USB HD: measured 2026-11-10 (1 m of tape = 764 px at 1.5 m). The lens bends
                                # (fisheye-like): ~105 at the edges, but the angle maths uses the centre. V2 was 66
     pwm_chip: 0                # Pi 4: 0. Pi 5: 2

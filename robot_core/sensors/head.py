@@ -25,7 +25,7 @@ from __future__ import annotations
 import bisect
 import math
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional, Sequence, Tuple
 
 from .. import terrain
@@ -49,6 +49,18 @@ class HeadGeometry:
     pan_axis_y_m: float = 0.0         # ToF left of the robot's centre line (negative: to the right)
     self_range_m: float = 0.15        # ToF returns nearer than this are the robot itself (Nov 18: the front-mounted
                                       # TF-Luna in the bottom-left zones at 8-12 cm read as a 15 cm box ahead)
+    self_zones: dict = field(default_factory=dict)   # {(row, col): metres}: zones that see part of the robot
+                                      # further out than self_range_m; nearer than that there is the robot
+
+
+def parse_self_zones(text) -> dict:
+    """robot.yaml tof_self_zones, "row,col:metres ..." -> {(row, col): metres}."""
+    out = {}
+    for item in str(text or "").split():
+        rc, m = item.split(":")
+        r, c = (int(v) for v in rc.split(","))
+        out[(r, c)] = float(m)
+    return out
 
 
 @dataclass(frozen=True)
@@ -162,6 +174,7 @@ class Head:
         the head keeps moving. `pitch_deg` None: the IMU's now. `min_range_m`: nearer readings
         are dropped as the robot itself (default geom.self_range_m)."""
         near = self.geom.self_range_m if min_range_m is None else min_range_m
+        own = self.geom.self_zones if min_range_m is None else {}
         pan, tilt = math.radians(pan_deg), math.radians(tilt_deg)
         tilt += math.radians(self.geom.tilt_offset_deg)
         if pitch_deg is None:
@@ -182,7 +195,7 @@ class Head:
                            fwd * math.sin(body) + up * math.cos(body))
                 along = math.sqrt(1.0 + ty * ty + tz * tz)                      # ray length per metre of depth
                 d = rows[r][c]
-                if d is not None and d < near:
+                if d is not None and d < max(near, own.get((r, c), 0.0)):
                     continue                                                    # its own body: no reading
                 if d is not None:
                     depth = d if self.geom.tof_perpendicular else d / along
