@@ -28,7 +28,7 @@ import numpy as np
 
 @dataclass
 class DwaParams:
-    max_v: float = 0.22            # m/s (the velocity loop's limit is 0.25)
+    max_v: float = 0.25            # robot.yaml velocity_max_mps            # m/s (the velocity loop's limit is 0.25)
     max_w: float = 1.0             # rad/s
     acc_v: float = 0.4             # m/s^2, as the drivetrain's velocity_accel_mps2
     acc_w: float = 2.0             # rad/s^2

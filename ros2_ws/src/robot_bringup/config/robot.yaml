@@ -112,6 +112,8 @@
     # if true, debug mode: every camera frame and ToF grid a task collects goes to the Mac
     # (Vision-And-Planning POST /v1/debug/frame, for Monitoring-Service to show)
     debug_mode: true          # on while debugging follow and the ToF overlay; false for normal runs
+    follow_bump_g: 1.5         # follow: a jolt counts as hitting something only past this (the drivetrain
+                               # reports any jolt over 0.8 g, which the tracks reach on a floor at full speed)
 
 /explorer:
   ros__parameters:

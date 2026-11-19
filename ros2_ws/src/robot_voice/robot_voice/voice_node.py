@@ -24,6 +24,7 @@ import asyncio
 import logging
 import math
 import os
+import re
 import subprocess
 import threading
 import time
@@ -237,12 +238,26 @@ def main(args=None) -> None:
     # The robot's pitch (IMU, via the drivetrain node): ToF projection and climb detection in follow.
     from robot_interfaces.msg import MotionHealth
 
+    bump_g = float(node.declare_parameter("follow_bump_g", 1.5).value)   # robot.yaml /voice
+    _bump_log = [0.0]
+
     def _on_health(m) -> None:
         _pitch[0] = m.pitch_deg if m.imu_known else None
-        # A bump, a drop, or the drivetrain braking a stuck move (stalled, slipping, climbing:
-        # "tilted"): follow treats them all as hitting something it did not see.
+        # A drop, or the drivetrain braking a stuck move (stalled, slipping, climbing: "tilted"): follow
+        # treats them as hitting something it did not see. A jolt ("bumped") only when it is well above
+        # floor vibration: the tracks shake past the drivetrain's 0.8 g at full speed, which braked
+        # follow every 2 s (Nov 19; the drivetrain itself reports jolts and does not stop on them).
+        hit = m.state in ("drop", "stalled", "slipping", "tilted")
+        if m.state == "bumped":
+            g = re.search(r"jolt of ([0-9.]+) g", m.reason or "")
+            hit = g is not None and float(g.group(1)) >= bump_g
         if m.state in ("bumped", "drop", "stalled", "slipping", "tilted"):
-            _bump_t[0] = time.monotonic()
+            now = time.monotonic()
+            if hit:
+                _bump_t[0] = now
+            if now - _bump_log[0] > 1.0:                    # what fired, for the logs (not every tick)
+                _bump_log[0] = now
+                robot_log.event("follow.health", state=m.state, reason=m.reason, braked=hit)
 
     from rclpy.callback_groups import ReentrantCallbackGroup
     topics = ReentrantCallbackGroup()        # never held back by a slow callback elsewhere

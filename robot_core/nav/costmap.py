@@ -207,6 +207,15 @@ class RollingCostmap:
             out[ok] = field[ix[ok], iy[ok]]
             return out
 
+    def seen_free(self, pose, ahead_m: float) -> bool:
+        """Every cell on the way straight ahead of `pose` for ahead_m was seen free (not just unknown)."""
+        n = max(2, int(ahead_m / (self.res / 2.0)))
+        f = np.linspace(0.15, ahead_m, n)
+        ix, iy = self._cells(pose[0] + f * math.cos(pose[2]), pose[1] + f * math.sin(pose[2]))
+        with self._lock:
+            ok = self._inside(ix, iy)
+            return bool(ok.all() and (self.lo[ix, iy] < -0.3).all())
+
     def line_clear(self, a: XY, b: XY, radius_m: float) -> bool:
         n = max(2, int(math.dist(a, b) / (self.res / 2.0)) + 1)
         xs, ys = np.linspace(a[0], b[0], n), np.linspace(a[1], b[1], n)

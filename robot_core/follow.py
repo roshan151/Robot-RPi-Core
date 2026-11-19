@@ -29,6 +29,7 @@ from __future__ import annotations
 import logging
 import math
 import time
+from collections import deque
 from typing import Callable, Optional, Tuple
 
 from robot_core import debug_upload, settings, status, task_cancel
@@ -42,7 +43,9 @@ log = logging.getLogger(__name__)
 
 LAST_SEEN_S = 30.0              # where they were last seen is worth going to / a search hint this long
 LOST_KEEP_M = 0.3               # lost: go to this far short of where they were last seen
-LOST_GO_S = 8.0                 # ...for at most this long before the head search takes over
+LOST_GO_S = 10.0                # ...for at most this long before the head search takes over
+LOST_AHEAD_M = (0.5, 1.2)       # walking when lost: go this much further along their way (by their speed)
+LOST_FACE_S = 2.0               # then turn to face the way they went, for at most this long
 WALK_MPS = 0.6                  # how fast a tracked person may have moved, for the tracker's doubt
 PERSON_CLEAR_M = 0.35           # round the person: their legs, not an obstacle
 
@@ -65,6 +68,16 @@ class PersonTracker:
         self.t = 0.0
         self.rejected = 0
         self.odd: Optional[Tuple[float, float]] = None
+        self.trail: deque = deque(maxlen=30)              # (t, xy) after each reading: which way they walk
+
+    def walking(self) -> Optional[Tuple[float, float, float]]:
+        """(unit x, unit y, m/s) of how they moved over their last ~2 s seen, or None if standing."""
+        pts = [p for p in self.trail if self.trail and self.trail[-1][0] - p[0] <= 2.0]
+        if len(pts) < 3 or pts[-1][0] - pts[0][0] < 0.5:
+            return None
+        dx, dy = pts[-1][1][0] - pts[0][1][0], pts[-1][1][1] - pts[0][1][1]
+        dist, dt = math.hypot(dx, dy), pts[-1][0] - pts[0][0]
+        return (dx / dist, dy / dist, dist / dt) if dist / dt > 0.15 else None
 
     def update(self, here: Pose, bearing_deg: float, dist_m: float, sigma_m: Optional[float],
                t: float) -> None:
@@ -73,6 +86,7 @@ class PersonTracker:
         r = max(0.03, sigma_m if sigma_m else 0.3 * dist_m) ** 2
         if self.xy is None:
             self.xy, self.var, self.t = z, r, t
+            self.trail.append((t, z))
             return
         var = self.var + (WALK_MPS * max(0.0, t - self.t)) ** 2
         gap = math.hypot(z[0] - self.xy[0], z[1] - self.xy[1])
@@ -83,10 +97,13 @@ class PersonTracker:
                 self.rejected, self.odd = 1, z
                 return
             self.xy, self.var, self.t, self.rejected = z, r, t, 0
+            self.trail.clear()                            # somewhere new: no walk across the jump
+            self.trail.append((t, z))
             return
         k = var / (var + r)
         self.xy = (self.xy[0] + k * (z[0] - self.xy[0]), self.xy[1] + k * (z[1] - self.xy[1]))
         self.var, self.t, self.rejected = (1.0 - k) * var, t, 0
+        self.trail.append((t, self.xy))
 
 
 def _wrap(a: float) -> float:
@@ -145,6 +162,8 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
     last_seen: Optional[Tuple[float, float]] = None       # (heading of the person in the odom frame, when)
     lost_go: Optional[float] = None                       # when it set off to where they were last seen
     lost_done = False                                     # went there already, this loss
+    lost_xy = lost_dir = None                             # where to go when lost, and which way they walked
+    lost_face: Optional[float] = None                     # when it began turning to face their way
     t0, seq, last_frame = clock(), 0, 0
     try:
         while clock() - t0 < seconds and not task_cancel.requested():
@@ -172,7 +191,7 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
             if state == "tracking" and here and res.get("bearing_deg") is not None:
                 b, d = res["bearing_deg"], res.get("distance_m") or rng
                 last_seen = (here[2] + math.radians(b), time.monotonic())
-                lost_go, lost_done = None, False
+                lost_go, lost_done, lost_face = None, False, None
                 nav.release_head()
                 if res.get("distance_from") == "near":    # they fill the frame: close enough, face them
                     a = here[2] + math.radians(b)
@@ -186,17 +205,31 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
             elif state == "searching" and res.get("locked") and not lost_done and tracker.xy is not None \
                     and last_seen and time.monotonic() - last_seen[1] < LAST_SEEN_S:
                 # Lost them: go to where they were last seen (round a corner, through a door) first.
+                # Walking when lost (round a corner): further on, the way they were going; the head looks
+                # there. Then turn to face that way, and only then hand over to the head search (Nov 19:
+                # it stopped where they were last seen and stood, while they had walked on round the wall).
+                now = time.monotonic()
                 if lost_go is None:
-                    lost_go = time.monotonic()
-                    log.info("follow %d: lost, going to where they were last seen", seq)
+                    lost_go, lost_dir = now, tracker.walking()
+                    ahead = min(LOST_AHEAD_M[1], max(LOST_AHEAD_M[0], lost_dir[2] * 1.5)) if lost_dir else 0.0
+                    lost_xy = (tracker.xy[0] + (lost_dir[0] * ahead if lost_dir else 0.0),
+                               tracker.xy[1] + (lost_dir[1] * ahead if lost_dir else 0.0))
+                    log.info("follow %d: lost, going to where they were last seen%s", seq,
+                             f" and {ahead:.1f} m on, the way they walked" if lost_dir else "")
                     status.detail("going where last seen")
                     nav.release_head()
+                    nav.set_focus(lost_xy, 0.1)
+                if lost_face is None and (nav.arrived() or now - lost_go > LOST_GO_S):
+                    lost_face = now
                     nav.set_focus(None)
-                if nav.arrived() or time.monotonic() - lost_go > LOST_GO_S:
+                if lost_face is None:
+                    nav.set_goal(lost_xy, keep_m=LOST_KEEP_M, face=False)
+                elif lost_dir and here and now - lost_face < LOST_FACE_S and abs(
+                        _wrap(math.atan2(lost_dir[1], lost_dir[0]) - here[2])) > math.radians(15):
+                    nav.set_goal((here[0] + lost_dir[0], here[1] + lost_dir[1]), keep_m=1.0)   # turn, stay
+                else:
                     lost_done = True
                     nav.set_goal(None)
-                else:
-                    nav.set_goal(tracker.xy, keep_m=LOST_KEEP_M, face=False)
             elif state == "searching":
                 look = res.get("head") or [0, 0]          # the Mac's search sweep: the robot stands, the head looks
                 nav.set_goal(None)

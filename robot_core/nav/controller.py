@@ -60,7 +60,8 @@ AHEAD_STALE_S = 1.2             # driving with the way ahead unseen this long: g
 AHEAD_CONE_DEG = 28.0           # a grid taken with the head this near the direction of travel saw the way (ToF: +-30)
 ARRIVE_M, RESUME_M = 0.08, 0.25 # arrived within keep + ARRIVE_M; set off again only past keep + RESUME_M, so a
                                 # person standing still (their range wobbles) is not chased back and forth
-BLIND_MPS = 0.08                # top speed while the way ahead has not been seen
+BLIND_MPS = 0.08                # top speed while the way ahead has not been seen...
+SEEN_MPS = 0.18                 # ...or this, where the map remembers it as free (the head is on the person)
 
 
 class PoseFix:
@@ -327,7 +328,7 @@ class LocalNav:
         else:
             self.state, self.detail = "driving", f"{dist:.2f} m to go"
         if v > 0.02 and now - self._ahead_t > AHEAD_STALE_S:     # not looked where it is going lately
-            v = min(v, BLIND_MPS)
+            v = min(v, SEEN_MPS if self.costmap.seen_free(here, 0.6) else BLIND_MPS)
             if now >= self.aim.glance_until:
                 self.aim.glance(now, math.degrees(self.aim.k_w * w))
         if self.reflex.tripped():
