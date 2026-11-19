@@ -173,7 +173,8 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
             seq += 1
             h, w = frame.main.shape[:2]
             grid = head.lidar.grid()
-            rng = range_in_box(grid, res.get("bbox"), w, h, head.geom.hfov_deg) if grid else None
+            rng = range_in_box(grid, res.get("bbox"), w, h, head.geom.hfov_deg,
+                               head.geom.tof_pan_offset_deg, head.geom.tof_tilt_offset_deg) if grid else None
             hint = None                                   # where they were last seen, from here (+ left)
             if last_seen and here and time.monotonic() - last_seen[1] < LAST_SEEN_S:
                 hint = round(math.degrees(_wrap(last_seen[0] - here[2])), 1)
@@ -182,7 +183,9 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                 img, seq, pan_deg=frame.pan_deg, hfov_deg=head.geom.hfov_deg,
                 tilt_deg=frame.tilt_deg + head.geom.tilt_offset_deg,     # the REAL tilt: the head looks up at 0
                 camera_height_m=head.geom.height_m, range_m=rng,
-                tof_grid=grid.rows if grid is not None else None, hint_deg=hint, pose=here)
+                tof_grid=grid.rows if grid is not None else None, hint_deg=hint, pose=here,
+                tof_pan_offset_deg=head.geom.tof_pan_offset_deg,
+                tof_tilt_offset_deg=head.geom.tof_tilt_offset_deg)
             state = res["state"]
             log.info("follow %d: %s %s, bearing %s, %s m (%s); nav %s %s", seq, state, res.get("target") or "-",
                      res.get("bearing_deg"), res.get("distance_m"), res.get("distance_from"), nav.state, nav.detail)

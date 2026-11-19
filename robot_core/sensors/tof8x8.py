@@ -315,6 +315,10 @@ def range_in_box(grid: Optional[Grid], box: Sequence[float], width: int, height:
     is in front of whatever is behind it. None when no zone on it has a range."""
     if grid is None or not box:
         return None
+    if tof_pan_offset_deg is None:
+        tof_pan_offset_deg = 0.0
+    if tof_tilt_offset_deg is None:
+        tof_tilt_offset_deg = 0.0
     f = (width / 2.0) / math.tan(math.radians(hfov_deg) / 2.0)
     left = math.degrees(math.atan2(width / 2.0 - box[0], f))
     right = math.degrees(math.atan2(width / 2.0 - box[2], f))
