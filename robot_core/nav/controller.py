@@ -54,7 +54,9 @@ STUCK_STILL_M = 0.025           # ...came no nearer than this: slipping against 
 CLIMB_DEG = 12.0                # nose up this far since it started moving: climbing something
 BACK_OFF_M = 0.10
 AHEAD_STALE_S = 1.2             # driving with the way ahead unseen this long: glance at it, slow meanwhile
-AHEAD_CONE_DEG = 20.0           # a grid taken with the head this near the direction of travel saw the way
+AHEAD_CONE_DEG = 28.0           # a grid taken with the head this near the direction of travel saw the way (ToF: +-30)
+ARRIVE_M, RESUME_M = 0.08, 0.25 # arrived within keep + ARRIVE_M; set off again only past keep + RESUME_M, so a
+                                # person standing still (their range wobbles) is not chased back and forth
 BLIND_MPS = 0.08                # top speed while the way ahead has not been seen
 
 
@@ -126,11 +128,11 @@ class LocalNav:
         self.head, self.motion, self.clock = head, motion, clock
         self.fix = PoseFix(pose)
         self.twist = twist
-        self.params = params or dwa.DwaParams(radius_m=math.hypot(p.width_m / 2.0, 0.14))
+        self.params = params or dwa.DwaParams(radius_m=math.hypot(p.width_m / 2.0, p.width_m / 2.0))   # square
         self.costmap = RollingCostmap(flat_tol_m=max(p.h_max_m, p.flat_tol_m), body_m=p.body_m)
         self.cmd = (0.0, 0.0)
-        self.reflex = Reflex(head, motion, lambda: self.cmd, self.fix, bumped,
-                             half_width_m=p.width_m / 2.0, clock=clock)
+        self.reflex = Reflex(head, motion, lambda: self.cmd, self.fix, bumped, front_m=p.width_m / 2.0,
+                             back_m=p.width_m / 2.0, half_width_m=p.width_m / 2.0, clock=clock)
         self.aim = GimbalAim(head.gimbal, tilt_deg)
         self.planner, self.plan_every = planner, plan_every_s
         self.period, self.goal_timeout = 1.0 / hz, goal_timeout_s
@@ -277,7 +279,7 @@ class LocalNav:
             return
         dist = math.hypot(goal[0] - here[0], goal[1] - here[1])
         bearing = dwa.wrap(math.atan2(goal[1] - here[1], goal[0] - here[0]) - here[2])
-        if dist <= keep + 0.08:                           # there: face it and stand
+        if dist <= keep + (RESUME_M if self.state == "arrived" else ARRIVE_M):   # there: face it and stand
             w = dwa.face(bearing) if face_goal else 0.0
             self._send(0.0, w)
             self.state, self.detail = "arrived", f"{dist:.2f} m from the goal"
@@ -304,6 +306,9 @@ class LocalNav:
         res = dwa.plan((here[0], here[1], here[2], v_meas, w_meas), target, self.costmap.clearance,
                        self.params, stop_at_m=stop_at)
         v, w = res.v, res.w
+        if not res.blocked and v < 0.02:                  # only turning on the spot is safe: turn properly, toward the
+            tb = dwa.wrap(math.atan2(target[1] - here[1], target[0] - here[0]) - here[2])    # way, not a 0.03 rad/s
+            w = dwa.face(tb) or (0.6 if abs(w) < 0.3 else w)   # creep the tracks cannot do (Nov 19: it sat 5 s)
         if res.blocked:
             self._plan_t, self._local_t = 0.0, -1e9       # plan a way round now (the Mac's and our own)
             w = dwa.face(bearing) if abs(bearing) > math.radians(20) else 0.6   # turn to look for a way
@@ -317,6 +322,15 @@ class LocalNav:
         if self.reflex.tripped():
             v = 0.0
             self.state, self.detail = "tripped", self.reflex.why
+        if v < 0.02 and w != 0.0 and self._recover is None:   # turning on the spot swings the square's corners out
+            cl = self.costmap.clearance([here[0], here[0] - 0.1 * math.cos(here[2])],      # to the full radius:
+                                        [here[1], here[1] - 0.1 * math.sin(here[2])])     # too close for that, so
+            slack = self.costmap.res                      # where a hit lands is good to about a cell
+            if cl[0] < self.params.radius_m + slack and cl[1] > cl[0]:   # back off first if that is roomier
+                self._recover, self._recover_from = "back", (here, now)   # (the sim's corner hits, Nov 19)
+                v = w = 0.0
+            elif cl[0] < self.params.radius_m + slack / 2:  # no room to turn and none behind: hold still
+                v = w = 0.0
         if self._trips_seen != self.reflex.trips:         # the brake holds /cmd_vel off until a zero command
             self._trips_seen = self.reflex.trips
             v = w = 0.0
@@ -389,7 +403,9 @@ class LocalNav:
         """Back off BACK_OFF_M (slowly, watching the reflex), then hand back to DWA."""
         start, t0 = self._recover_from
         gone = math.hypot(here[0] - start[0], here[1] - start[1]) if start else BACK_OFF_M
-        if gone >= BACK_OFF_M or self.clock() - t0 > 3.0:
+        behind = float(self.costmap.clearance([here[0] - 0.12 * math.cos(here[2])],
+                                              [here[1] - 0.12 * math.sin(here[2])])[0])
+        if gone >= BACK_OFF_M or self.clock() - t0 > 3.0 or behind < self.params.radius_m:   # no room behind
             self._recover = None
             self._send(0.0, 0.0)
             self._plan_t = 0.0

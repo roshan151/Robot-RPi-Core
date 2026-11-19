@@ -70,7 +70,7 @@ def theta_star(free: np.ndarray, start: Tuple[int, int], goal: Tuple[int, int],
     return None
 
 
-def local_path(costmap, start: XY, goal: XY, radius_m: float, margin_m: float = 0.12,
+def local_path(costmap, start: XY, goal: XY, radius_m: float, margin_m: float = 0.06,
                thin_margin_m: float = 0.04) -> Optional[List[XY]]:
     """Waypoints from start to goal (or to the window's edge toward it) on the costmap, world xy;
     the first is the start. None: no way within the window."""

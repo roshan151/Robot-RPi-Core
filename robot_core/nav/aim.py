@@ -27,7 +27,7 @@ from typing import Optional
 
 class GimbalAim:
     def __init__(self, gimbal, tilt_deg: float, k_w: float = 0.8, sweep_deg: float = 45.0,
-                 sweep_period_s: float = 4.0, focus_slack_deg: float = 22.0, max_pan_deg: float = 80.0,
+                 sweep_period_s: float = 4.0, focus_slack_deg: float = 15.0, max_pan_deg: float = 80.0,
                  speed_dps: Optional[float] = None) -> None:
         self.gimbal, self.tilt = gimbal, tilt_deg
         self.k_w, self.sweep, self.period = k_w, sweep_deg, sweep_period_s

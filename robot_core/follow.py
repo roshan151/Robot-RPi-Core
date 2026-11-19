@@ -64,6 +64,7 @@ class PersonTracker:
         self.var = 0.0
         self.t = 0.0
         self.rejected = 0
+        self.odd: Optional[Tuple[float, float]] = None
 
     def update(self, here: Pose, bearing_deg: float, dist_m: float, sigma_m: Optional[float],
                t: float) -> None:
@@ -76,10 +77,12 @@ class PersonTracker:
         var = self.var + (WALK_MPS * max(0.0, t - self.t)) ** 2
         gap = math.hypot(z[0] - self.xy[0], z[1] - self.xy[1])
         if gap > 3.0 * math.sqrt(var + r) + 0.3:
-            if self.rejected < 1:
-                self.rejected += 1
+            # Twice running, at the same new place: it is real, start again there. Odd readings that
+            # disagree with each other (a range flipping between the person and the wall) are not.
+            if self.rejected < 1 or math.hypot(z[0] - self.odd[0], z[1] - self.odd[1]) > 0.3 + 0.2 * dist_m:
+                self.rejected, self.odd = 1, z
                 return
-            self.xy, self.var, self.t, self.rejected = z, r, t, 0     # twice: it is real, start again there
+            self.xy, self.var, self.t, self.rejected = z, r, t, 0
             return
         k = var / (var + r)
         self.xy = (self.xy[0] + k * (z[0] - self.xy[0]), self.xy[1] + k * (z[1] - self.xy[1]))
@@ -132,7 +135,7 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
     nav = LocalNav(head, motion, pose, twist=twist, bumped=bumped, tilt_deg=_nav_tilt(head))
     nav.planner = _planner(vision, nav.params.radius_m)
     stream = FrameStream(camera, head.gimbal, nav.pose, send=getattr(vision, "nav_frame", None),
-                         tilt_offset_deg=head.geom.tilt_offset_deg).start()
+                         tilt_offset_deg=head.geom.tilt_offset_deg, tof=head.lidar.grid).start()
     nav.start()
     nav.look(0.0, settings.FOLLOW_TILT_DEG)              # face height until locked on
     status.timer(f"follow {name}".strip(), seconds)

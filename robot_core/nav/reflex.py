@@ -123,13 +123,14 @@ class Reflex:
             return
         self._last_grid_t = g.t
         at = self._at(g.t - SENSOR_LAG_S) or (pan, tilt, self.pose())
-        zones = self.head.project(g.rows, at[0], at[1], min_range_m=0.02)
+        # Nearer than self_range_m is the robot itself: the bottom-left zones read its own body at 7-9 cm
+        # in a fifth of all grids (Nov 19), and braking for them stopped it every second or two.
+        zones = self.head.project(g.rows, at[0], at[1])
         why = self.danger(zones)
         if why:
             self.trip(why)
         with self._lock:                                  # the costmap does not want the robot's own body
-            self._grids.append((g.t, at[2], [z for z in zones if z[5] >= self.head.geom.self_range_m
-                                             and not self._own(z[2], z[3])], g.rows, at[0]))
+            self._grids.append((g.t, at[2], [z for z in zones if not self._own(z[2], z[3])], g.rows, at[0]))
 
     def _own(self, x: float, y: float) -> bool:
         return -self.back <= x <= self.front and abs(y) <= self.half

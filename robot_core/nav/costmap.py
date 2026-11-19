@@ -36,6 +36,8 @@ class RollingCostmap:
     TOP, BOTTOM = 3.5, -2.0
     OCC = 0.6                       # occupied above this (one solid hit, or two weak ones)
     FAR = 9.0                       # "no obstacle anywhere near"
+    LOW = 0.065                     # tan(half a zone): how far a zone's lower edge is below its centre, per metre
+    SHARP_M = 0.6                   # hits nearer than this count in full; further, by SHARP_M / d (zone width)
 
     def __init__(self, size_m: float = 4.0, res_m: float = 0.05, tau_s: float = 60.0,
                  recentre_m: float = 0.5, flat_tol_m: float = 0.03, body_m: float = 0.24) -> None:
@@ -94,18 +96,21 @@ class RollingCostmap:
         if pose is None or not zones:
             return 0
         top = (self.body if top_m is None else top_m) + 0.05
-        hx, hy, rx, ry, clear_end = [], [], [], [], []
+        hx, hy, hw, rx, ry, clear_end = [], [], [], [], [], []
         for _, _, x, y, h, d in zones:
             if h is None or (max_d is not None and d >= max_d):
                 continue
-            hit = self.flat_tol < h < top
+            # A zone reports the nearest floor in its cone too: its lower edge, which projected along the centre
+            # stands d * 0.065 above the floor (6 cm a metre out: the scattered phantom cells on Nov 19's map).
+            hit = self.flat_tol < h - self.LOW * d and h < top
             if hit:
                 hx.append(x)
                 hy.append(y)
+                hw.append(min(1.0, self.SHARP_M / max(d, 1e-3)))   # far zones are wide: weaker evidence
             if h <= self.body + 0.05:
                 rx.append(x)
                 ry.append(y)
-                clear_end.append(not hit)
+                clear_end.append(h <= self.flat_tol)   # floor for sure; between that and a hit: leave the cell be
         c, s = math.cos(pose[2]), math.sin(pose[2])
         world = lambda bx, by: (pose[0] + c * np.asarray(bx) - s * np.asarray(by),      # noqa: E731
                                 pose[1] + s * np.asarray(bx) + c * np.asarray(by))
@@ -114,7 +119,11 @@ class RollingCostmap:
             if t is not None:
                 self._decay(t)
             hit_ix, hit_iy = self._cells(*world(hx, hy)) if hx else (np.zeros(0, int), np.zeros(0, int))
-            hit_lin = set((hit_ix * self.n + hit_iy)[self._inside(hit_ix, hit_iy)].tolist())
+            inside = self._inside(hit_ix, hit_iy)
+            hit_w = {}
+            for cell, wgt in zip((hit_ix * self.n + hit_iy)[inside].tolist(), np.asarray(hw)[inside].tolist()):
+                hit_w[cell] = max(wgt, hit_w.get(cell, 0.0))
+            hit_lin = set(hit_w)
             if rx:                                            # free space along the rays
                 sx, sy = world([sensor_xy[0]], [sensor_xy[1]])
                 ex, ey = world(rx, ry)
@@ -135,8 +144,8 @@ class RollingCostmap:
                 v[lin] = np.maximum(self.BOTTOM, v[lin] - self.MISS)
             if hit_lin:
                 v = self.lo.reshape(-1)
-                idx = np.fromiter(hit_lin, int)
-                v[idx] = np.minimum(self.TOP, v[idx] + self.HIT)
+                idx = np.fromiter(hit_w, int)
+                v[idx] = np.minimum(self.TOP, v[idx] + self.HIT * np.fromiter(hit_w.values(), float))
             self._field = None
         return len(hx)
 

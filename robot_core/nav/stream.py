@@ -5,7 +5,7 @@ robot's pose and the gimbal's angles at that instant; whoever needs a frame (fol
 `latest()` instead of capturing its own, so the camera has one owner. Another thread sends
 each frame to the Mac (POST /v1/nav/frame) as JPEG with its timestamp, pose and pan/tilt:
 ORB-SLAM3 needs a steady stream, and the pose and pan/tilt are what turn its camera poses
-into robot poses and give them metric scale. Sending never holds up capture: a frame that
+into robot poses. The ToF grid nearest the capture goes too: its metric ranges give SLAM its scale. Sending never holds up capture: a frame that
 finds the previous one still on its way is dropped. With no Mac, frames are just not sent.
 """
 
@@ -21,11 +21,13 @@ log = logging.getLogger(__name__)
 
 class FrameStream:
     def __init__(self, camera, gimbal, pose: Callable[[], Optional[tuple]], send=None,
-                 hz: float = 10.0, long_edge: int = 640, quality: int = 70, tilt_offset_deg: float = 0.0) -> None:
-        """`send(jpeg, t, pose, pan, tilt)`: hand a frame to the Mac (VisionClient.nav_frame), or None.
+                 hz: float = 10.0, long_edge: int = 640, quality: int = 70, tilt_offset_deg: float = 0.0,
+                 tof=None) -> None:
+        """`send(jpeg, t, pose, pan, tilt, tof)`: hand a frame to the Mac (VisionClient.nav_frame), or None.
+        `tof()`: the latest ToF grid (tof8x8.Grid) or None; sent as its rows and its age at capture.
         The tilt sent is the REAL one: the gimbal's plus `tilt_offset_deg` (how far up it looks at 0)."""
         self.tilt_offset = tilt_offset_deg
-        self.camera, self.gimbal, self.pose, self.send = camera, gimbal, pose, send
+        self.camera, self.gimbal, self.pose, self.send, self.tof = camera, gimbal, pose, send, tof
         self.period, self.long_edge, self.quality = 1.0 / hz, long_edge, quality
         self._latest: Optional[Tuple] = None                  # (frame, pose)
         self._cond = threading.Condition()
@@ -66,6 +68,7 @@ class FrameStream:
             try:
                 frame = self.camera.capture(self.gimbal)
                 pose = self.pose()
+                grid = self.tof() if self.tof is not None else None
                 fails = 0
             except Exception as exc:                             # noqa: BLE001
                 fails += 1
@@ -79,7 +82,7 @@ class FrameStream:
             if self.send is not None:
                 if self._slot is not None:
                     self.dropped += 1
-                self._slot = (frame, pose)
+                self._slot = (frame, pose, grid)
                 self._slot_ev.set()
             self._stop.wait(max(0.0, self.period - (time.monotonic() - t0)))
 
@@ -92,10 +95,11 @@ class FrameStream:
             item, self._slot = self._slot, None
             if item is None or time.monotonic() < quiet_until:
                 continue
-            frame, pose = item
+            frame, pose, grid = item
+            tof = None if grid is None else {"rows": grid.rows, "age_s": round(grid.t - frame.t_capture, 3)}
             try:
                 self.send(jpeg(frame.main, self.long_edge, self.quality), frame.t_capture, pose,
-                          frame.pan_deg, frame.tilt_deg + self.tilt_offset)
+                          frame.pan_deg, frame.tilt_deg + self.tilt_offset, tof)
                 self.sent += 1
             except Exception as exc:                             # noqa: BLE001 — the Mac is optional
                 self.failed += 1

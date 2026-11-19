@@ -37,15 +37,17 @@ class DwaParams:
     dt: float = 0.1
     nv: int = 9
     nw: int = 25
-    radius_m: float = 0.19         # the footprint as a circle (half the 0.255 x 0.28 m diagonal)
-    margin_m: float = 0.12         # an arc must keep this clear beyond the radius: head-on, the ToF then stays
-                                   # 26 cm from what is ahead, outside the reflex's 25 cm
+    radius_m: float = 0.177        # the footprint as a circle: half the 25 x 25 cm diagonal
+    margin_m: float = 0.04         # an arc must keep this clear beyond the radius (sideways the 0.177 m circle
+                                   # is already 5 cm wider than the 25 cm square): ~0.5 m gaps are passable
+    nose_m: float = 0.10           # ...and a point this far ahead of the centre must keep nose_clear_m clear, so
+    nose_clear_m: float = 0.17     # head-on it stays 0.27 m from what is ahead (the reflex brakes at 0.25)
     clear_cap_m: float = 0.5       # clearance beyond radius + this counts no better
     w_progress: float = 1.0
     w_heading: float = 0.4
     w_clear: float = 0.5
     w_speed: float = 0.2
-    slow_m: float = 0.6            # within this of the target, top speed falls with distance
+    slow_m: float = 0.4            # within this of the target, top speed falls with distance
 
 
 @dataclass
@@ -87,7 +89,12 @@ def plan(state: Sequence[float], target: Sequence[float], clearance_fn, p: DwaPa
     V, W = (a.ravel() for a in np.meshgrid(vs1, ws1, indexing="ij"))
     xs, ys, ths = arcs(x, y, th, V, W, p.horizon_s, p.dt)
     clear = clearance_fn(xs.ravel(), ys.ravel()).reshape(xs.shape) - p.radius_m
+    # The nose: head-on is where the reflex looks, so it must stay further from things ahead than to the side.
+    nose = clearance_fn((xs + p.nose_m * np.cos(ths)).ravel(), (ys + p.nose_m * np.sin(ths)).ravel()).reshape(xs.shape)
+    clear = np.minimum(clear, nose - p.nose_clear_m + p.margin_m)
     here = float(clearance_fn(np.array([x]), np.array([y]))[0]) - p.radius_m
+    here = min(here, float(clearance_fn(np.array([x + p.nose_m * math.cos(th)]),
+                                        np.array([y + p.nose_m * math.sin(th)]))[0]) - p.nose_clear_m + p.margin_m)
     # Starting inside the margin (stopped close to something): an arc may not get any closer.
     need = min(p.margin_m, here - 1e-3)
     minclear = clear.min(axis=1)
@@ -118,7 +125,7 @@ def plan(state: Sequence[float], target: Sequence[float], clearance_fn, p: DwaPa
     return DwaResult(float(V[i]), float(W[i]), False, float(minclear[i]), int(ok.sum()))
 
 
-def face(heading_err: float, max_w: float = 0.8, gain: float = 1.5, deadband: float = math.radians(6)) -> float:
+def face(heading_err: float, max_w: float = 0.8, gain: float = 1.5, deadband: float = math.radians(10)) -> float:
     """Turn rate (rad/s, + left) to face something heading_err (rad, + left) off: standing still."""
     if abs(heading_err) < deadband:
         return 0.0

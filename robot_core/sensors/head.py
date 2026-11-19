@@ -160,7 +160,7 @@ class Head:
         """`_zones()` for any grid's `rows` taken at gimbal (pan_deg, tilt_deg), without waiting:
         what the nav stack calls with the head's angles at the moment the grid was measured, as
         the head keeps moving. `pitch_deg` None: the IMU's now. `min_range_m`: nearer readings
-        are dropped as the robot itself (default geom.self_range_m; the reflex wants them all)."""
+        are dropped as the robot itself (default geom.self_range_m)."""
         near = self.geom.self_range_m if min_range_m is None else min_range_m
         pan, tilt = math.radians(pan_deg), math.radians(tilt_deg)
         tilt += math.radians(self.geom.tilt_offset_deg)

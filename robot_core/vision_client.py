@@ -129,10 +129,13 @@ class VisionClient:
 
     # ---------------------------------------------------------- navigation
 
-    def nav_frame(self, jpeg: bytes, t: float, pose, pan_deg: float, tilt_deg: float) -> dict:
+    def nav_frame(self, jpeg: bytes, t: float, pose, pan_deg: float, tilt_deg: float, tof=None) -> dict:
         """One frame of the camera stream, for the Mac's visual SLAM: its capture time (the Pi's
-        monotonic clock), the odometry pose then, and where the head pointed."""
+        monotonic clock), the odometry pose then, where the head pointed, and the ToF grid nearest
+        it ({"rows", "age_s"}: grid time minus capture time), whose ranges give SLAM its scale."""
         data = {"t": round(t, 4), "pan_deg": round(pan_deg, 2), "tilt_deg": round(tilt_deg, 2)}
+        if tof is not None:
+            data["tof"] = json.dumps(tof, separators=(",", ":"))
         if pose is not None:
             data["pose"] = json.dumps([round(float(v), 4) for v in pose])
         return self._call("POST", "/v1/nav/frame", timeout=2.0, data=data,
