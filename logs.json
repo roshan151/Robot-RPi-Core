@@ -5842,3 +5842,635 @@
 {"ts":"2026-11-19T16:15:57.598Z","lvl":"warn","evt":"estop","reason":"motion health: tilted","dropped":[],"interrupted":null}
 {"ts":"2026-11-19T16:15:58.031Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
 {"ts":"2026-11-19T16:15:58.033Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-19T16:20:03.283Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":245.16,"repeats":2}
+{"ts":"2026-11-19T16:20:04.651Z","lvl":"info","evt":"voice.heard","text":"Raben"}
+{"ts":"2026-11-19T16:20:04.664Z","lvl":"info","evt":"voice.say","text":"(model speech discarded \u2014 robot answers by moving)","bytes_dropped":2}
+{"ts":"2026-11-19T16:20:04.665Z","lvl":"info","evt":"voice.say","text":"<no","spoken":false}
+{"ts":"2026-11-19T16:20:04.851Z","lvl":"info","evt":"voice.say","text":"speech>{pause}","spoken":false}
+{"ts":"2026-11-19T16:20:07.412Z","lvl":"info","evt":"voice.heard","text":"gone left"}
+{"ts":"2026-11-19T16:20:07.416Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-90},"ok":true,"queued":true,"op":"turn","value":-90.0}
+{"ts":"2026-11-19T16:20:07.417Z","lvl":"info","evt":"log","msg":"tool turn({'degrees': -90}) -> {'ok': True, 'queued': True, 'op': 'turn', 'value': -90.0} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T16:20:07.427Z","lvl":"debug","evt":"move.start","job":10,"op":"left","val":90.0}
+{"ts":"2026-11-19T16:20:09.047Z","lvl":"info","evt":"move.done","job":10,"op":"left","val":90.0,"dur":1.621}
+{"ts":"2026-11-19T16:20:09.852Z","lvl":"info","evt":"move.done","op":"held","val":27.7,"dur":0.505,"heading_err":-0.4,"detail":null}
+{"ts":"2026-11-19T16:20:19.700Z","lvl":"info","evt":"voice.heard","text":"Robert Tonright"}
+{"ts":"2026-11-19T16:20:19.704Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":90},"ok":true,"queued":true,"op":"turn","value":90.0}
+{"ts":"2026-11-19T16:20:19.705Z","lvl":"info","evt":"log","msg":"tool turn({'degrees': 90}) -> {'ok': True, 'queued': True, 'op': 'turn', 'value': 90.0} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T16:20:19.717Z","lvl":"debug","evt":"move.start","job":11,"op":"right","val":90.0}
+{"ts":"2026-11-19T16:20:21.376Z","lvl":"info","evt":"move.done","job":11,"op":"right","val":90.0,"dur":1.659}
+{"ts":"2026-11-19T16:20:22.332Z","lvl":"info","evt":"move.done","op":"held","val":-62.1,"dur":0.655,"heading_err":1.5,"detail":null}
+{"ts":"2026-11-19T16:20:30.174Z","lvl":"info","evt":"voice.heard","text":"Klagenfurt"}
+{"ts":"2026-11-19T16:20:34.629Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":2.06,"repeats":7}
+{"ts":"2026-11-19T16:20:34.631Z","lvl":"info","evt":"voice.heard","text":"Klagenfurt"}
+{"ts":"2026-11-19T16:20:41.815Z","lvl":"info","evt":"voice.heard","text":"Klagenfurt"}
+{"ts":"2026-11-19T16:20:41.826Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
+{"ts":"2026-11-19T16:20:41.827Z","lvl":"info","evt":"log","msg":"tool drive({'meters': 1}) -> {'ok': True, 'queued': True, 'op': 'drive', 'value': 1.0} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T16:20:43.301Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v9-vel-noluna built Nov 18 2026 14:52:53","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T16:20:43.353Z","lvl":"info","evt":"move.failed","op":"held","val":1.0,"dur":1.518,"heading_err":2.1,"detail":"RuntimeError: Arduino reset mid-command \u2014 external reset pin (normal when the serial port is opened via DTR; mid-move it means electrical noise reached the RESET pin); brown-out (the Arduino's 5V rail sagged below ~2.7V \u2014 something is dragging down or coupling into the 5V supply)"}
+{"ts":"2026-11-19T16:20:53.173Z","lvl":"info","evt":"voice.heard","text":"Robin goes straight."}
+{"ts":"2026-11-19T16:20:53.202Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
+{"ts":"2026-11-19T16:20:53.205Z","lvl":"info","evt":"log","msg":"tool drive({'meters': 1}) -> {'ok': True, 'queued': True, 'op': 'drive', 'value': 1.0} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T16:20:59.468Z","lvl":"info","evt":"move.done","op":"held","val":1.0,"dur":6.253,"heading_err":1.0,"detail":null}
+{"ts":"2026-11-19T16:21:05.127Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":2.61,"repeats":5}
+{"ts":"2026-11-19T16:21:05.130Z","lvl":"info","evt":"voice.heard","text":"Robin Tunney left by 10\u00b0."}
+{"ts":"2026-11-19T16:21:05.134Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-10},"ok":true,"queued":true,"op":"turn","value":-10.0}
+{"ts":"2026-11-19T16:21:05.135Z","lvl":"info","evt":"log","msg":"tool turn({'degrees': -10}) -> {'ok': True, 'queued': True, 'op': 'turn', 'value': -10.0} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T16:21:05.147Z","lvl":"debug","evt":"move.start","job":12,"op":"left","val":10.0}
+{"ts":"2026-11-19T16:21:05.710Z","lvl":"warn","evt":"log","msg":"left(10.0\u00b0): high left-right sync error \u2014 \u0394L=74 \u0394R=120 diff=46 (38.3%), RIGHT wheel leads","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-19T16:21:05.710Z","lvl":"warn","evt":"log","msg":"left(10.0\u00b0): not yet enough history to classify (need 4 moves). If the lead alternates it is drift; if it stays on one side it is a fixed bias and no gain change will help.","src":"robot_core.drivetrain.client"}
+{"ts":"2026-11-19T16:21:05.711Z","lvl":"info","evt":"move.done","job":12,"op":"left","val":10.0,"dur":0.564}
+{"ts":"2026-11-19T16:21:08.090Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 right commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-19T16:21:08.096Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 252)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T16:21:08.097Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T16:21:08.178Z","lvl":"info","evt":"move.cancelled","op":"held","val":-57.0,"dur":2.167,"heading_err":-2.1,"detail":"interrupted by stop"}
+{"ts":"2026-11-19T16:21:12.885Z","lvl":"info","evt":"voice.heard","text":"Robin go straight."}
+{"ts":"2026-11-19T16:21:12.889Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":1},"ok":true,"queued":true,"op":"drive","value":1.0}
+{"ts":"2026-11-19T16:21:12.890Z","lvl":"info","evt":"log","msg":"tool drive({'meters': 1}) -> {'ok': True, 'queued': True, 'op': 'drive', 'value': 1.0} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T16:21:18.819Z","lvl":"info","evt":"move.done","op":"held","val":1.0,"dur":5.913,"heading_err":-0.8,"detail":null}
+{"ts":"2026-11-19T16:21:24.795Z","lvl":"info","evt":"voice.heard","text":"Robin Tunney 180\u00b0"}
+{"ts":"2026-11-19T16:21:24.998Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":180},"ok":true,"queued":true,"op":"turn","value":180.0}
+{"ts":"2026-11-19T16:21:24.999Z","lvl":"info","evt":"log","msg":"tool turn({'degrees': 180}) -> {'ok': True, 'queued': True, 'op': 'turn', 'value': 180.0} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T16:21:25.007Z","lvl":"debug","evt":"move.start","job":13,"op":"right","val":180.0}
+{"ts":"2026-11-19T16:21:27.276Z","lvl":"info","evt":"move.done","job":13,"op":"right","val":180.0,"dur":2.269}
+{"ts":"2026-11-19T16:21:36.111Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":10.88,"repeats":4}
+{"ts":"2026-11-19T16:21:39.145Z","lvl":"info","evt":"voice.heard","text":"Ramen, Robert Shutdown"}
+{"ts":"2026-11-19T16:21:39.153Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 253)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T16:21:39.154Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T16:21:39.204Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T16:21:39.549Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-19T16:21:39.550Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-19T16:21:39.550Z","lvl":"info","evt":"log","msg":"tool shutdown({}) -> {'ok': True, 'note': 'powering off in 4 seconds; stop cancels'} in 0.40s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T16:21:43.719Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 254)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T16:21:43.722Z","lvl":"warn","evt":"estop","reason":"shutdown","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T16:21:43.725Z","lvl":"info","evt":"log","msg":"motion executor stopped","src":"robot_core.motion_executor"}
+{"ts":"2026-11-19T16:18:03.104Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-19T16:18:03.827Z","lvl":"info","evt":"session.start","mode":"ros","pid":1672,"log":"logs.json","debug":true}
+{"ts":"2026-11-19T16:18:04.511Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T16:18:06.425Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v9-vel-noluna built Nov 18 2026 14:52:53","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T16:18:06.426Z","lvl":"info","evt":"log","msg":"Connected on /dev/ttyUSB0 (boot frame received)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T16:18:06.479Z","lvl":"info","evt":"log","msg":"motion executor started","src":"robot_core.motion_executor"}
+{"ts":"2026-11-19T16:18:08.181Z","lvl":"info","evt":"log","msg":"drivetrain ready on /dev/ttyUSB0 (limit 5.0 m, velocity on)","src":"robot_drivetrain"}
+{"ts":"2026-11-19T16:18:08.833Z","lvl":"info","evt":"log","msg":"debug mode: uploading sensor data to http://roshans-mac-mini.local:8080/v1/debug/frame, session 20261119-101808","src":"robot_core.debug_upload"}
+{"ts":"2026-11-19T16:18:08.978Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T16:18:08.980Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T16:18:09.058Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-19T16:18:11.815Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-19T16:18:11.816Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-19T17:34:56.993Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 241)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:34:57.002Z","lvl":"warn","evt":"estop","reason":"shutdown","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:34:57.004Z","lvl":"info","evt":"log","msg":"motion executor stopped","src":"robot_core.motion_executor"}
+{"ts":"2026-11-19T17:43:37.410Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-19T17:43:38.149Z","lvl":"info","evt":"session.start","mode":"ros","pid":3270,"log":"logs.json","debug":true}
+{"ts":"2026-11-19T17:43:38.532Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:40.363Z","lvl":"info","evt":"log","msg":"debug mode: uploading sensor data to http://roshans-mac-mini.local:8080/v1/debug/frame, session 20261119-114340","src":"robot_core.debug_upload"}
+{"ts":"2026-11-19T17:43:40.443Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v9-vel-noluna built Nov 18 2026 14:52:53","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:40.444Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v9-vel-noluna built Nov 18 2026 14:52:53","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:40.445Z","lvl":"info","evt":"log","msg":"Connected on /dev/ttyUSB0 (boot frame received)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:40.495Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v9-vel-noluna built Nov 18 2026 14:52:53","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:40.495Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v9-vel-noluna built Nov 18 2026 14:52:53","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:40.497Z","lvl":"info","evt":"log","msg":"motion executor started","src":"robot_core.motion_executor"}
+{"ts":"2026-11-19T17:43:41.871Z","lvl":"info","evt":"log","msg":"drivetrain ready on /dev/ttyUSB0 (limit 5.0 m, velocity on)","src":"robot_drivetrain"}
+{"ts":"2026-11-19T17:43:42.033Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:42.035Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:43:42.067Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-19T17:43:44.778Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-19T17:43:44.782Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-19T17:43:46.880Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.79}
+{"ts":"2026-11-19T17:43:49.212Z","lvl":"info","evt":"voice.heard","text":"Rabin, follow me."}
+{"ts":"2026-11-19T17:43:49.225Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-19T17:43:49.226Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'follow'}) -> {'ok': True, 'starting': 'follow', 'note': 'session closing; it reopens when the task ends'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T17:43:49.316Z","lvl":"info","evt":"task.start","task":"follow","name":"","_unregistered":true}
+{"ts":"2026-11-19T17:43:49.322Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 241)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:49.323Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:43:49.562Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-19T17:43:49.643Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:49.647Z","lvl":"warn","evt":"log","msg":"gimbal: servo supply OFF - head frozen, moves refused","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:49.963Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-19T17:43:50.335Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:51.811Z","lvl":"info","evt":"log","msg":"follow 1: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:51.814Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.019Z","lvl":"info","evt":"log","msg":"follow 2: tracking Roshan, bearing -16.9, 2.67 m (tof); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:52.102Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.147Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.201Z","lvl":"info","evt":"log","msg":"follow 3: tracking Roshan, bearing -17.0, 0.77 m (tof); nav driving 2.67 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:52.235Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.242Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.362Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.402Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.439Z","lvl":"info","evt":"log","msg":"follow 4: tracking Roshan, bearing -16.9, 0.77 m (tof); nav driving 2.67 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:52.465Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.500Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.544Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.627Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.679Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.745Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.760Z","lvl":"info","evt":"log","msg":"follow 5: tracking Roshan, bearing -16.9, 0.77 m (tof); nav driving 0.77 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:52.793Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.888Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:52.922Z","lvl":"info","evt":"log","msg":"follow 6: tracking Roshan, bearing -16.8, 2.65 m (tof); nav driving 0.77 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:53.095Z","lvl":"info","evt":"log","msg":"follow 7: tracking Roshan, bearing -16.8, 0.76 m (tof); nav driving 0.77 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:53.201Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:53.298Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:53.313Z","lvl":"info","evt":"log","msg":"follow 8: tracking Roshan, bearing -16.8, 2.67 m (tof); nav driving 0.76 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:53.400Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:53.497Z","lvl":"info","evt":"log","msg":"follow 9: tracking Roshan, bearing -16.9, 0.77 m (tof); nav driving 0.76 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:53.509Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:53.548Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:53.607Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:53.652Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:53.700Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:53.751Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:53.762Z","lvl":"info","evt":"log","msg":"follow 10: tracking Roshan, bearing -16.9, 2.61 m (tof); nav driving 0.77 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:53.801Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:53.851Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:53.901Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:53.925Z","lvl":"info","evt":"log","msg":"follow 11: tracking Roshan, bearing -16.8, 2.76 m (tof); nav driving 0.77 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:53.970Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.049Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.077Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 straight commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-19T17:43:54.082Z","lvl":"warn","evt":"log","msg":"reflex: the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.nav.reflex"}
+{"ts":"2026-11-19T17:43:54.092Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 242)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:54.095Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:43:54.101Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 243)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:54.104Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.105Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:43:54.122Z","lvl":"info","evt":"log","msg":"follow 12: tracking Roshan, bearing -16.9, 2.76 m (tof); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:54.179Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.225Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.303Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.328Z","lvl":"info","evt":"log","msg":"follow 13: tracking Roshan, bearing -16.8, 2.66 m (tof); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:54.366Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.428Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.450Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.492Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.516Z","lvl":"info","evt":"log","msg":"follow 14: tracking Roshan, bearing -16.9, 2.66 m (tof); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:54.541Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.599Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.691Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.746Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.778Z","lvl":"info","evt":"log","msg":"follow 15: tracking Roshan, bearing -16.4, 2.66 m (tof); nav driving 2.67 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:54.841Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.943Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:54.964Z","lvl":"info","evt":"log","msg":"follow 16: tracking Roshan, bearing -15.8, 2.61 m (tof); nav driving 2.66 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:55.167Z","lvl":"info","evt":"log","msg":"follow 17: tracking Roshan, bearing -15.5, 0.78 m (tof); nav driving 2.63 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:55.203Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.294Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.347Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.350Z","lvl":"info","evt":"log","msg":"follow 18: tracking Roshan, bearing -15.2, 0.76 m (tof); nav driving 2.63 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:55.437Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.502Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.544Z","lvl":"info","evt":"log","msg":"follow 19: tracking Roshan, bearing -15.1, 0.76 m (tof); nav driving 0.76 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:55.556Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.603Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.656Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.710Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.786Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.791Z","lvl":"info","evt":"log","msg":"follow 20: tracking Roshan, bearing -15.0, 0.79 m (tof); nav driving 0.76 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:55.815Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.856Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.906Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.960Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:55.972Z","lvl":"info","evt":"log","msg":"follow 21: tracking Roshan, bearing -16.7, 2.68 m (tof); nav driving 0.79 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:56.008Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:56.060Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:56.108Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:56.160Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:56.208Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:56.217Z","lvl":"info","evt":"log","msg":"follow 22: tracking Roshan, bearing -17.5, 0.76 m (tof); nav driving 0.79 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:56.266Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:56.309Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:56.360Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:56.399Z","lvl":"info","evt":"log","msg":"follow 23: tracking Roshan, bearing -18.4, 0.78 m (tof); nav driving 0.76 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:56.463Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:56.514Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:56.564Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:56.600Z","lvl":"info","evt":"log","msg":"follow 24: tracking Roshan, bearing -18.9, 0.83 m (tof); nav driving 0.78 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:56.713Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:56.774Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 straight commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-19T17:43:56.783Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 244)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:56.785Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:43:56.789Z","lvl":"warn","evt":"log","msg":"reflex: the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.nav.reflex"}
+{"ts":"2026-11-19T17:43:56.796Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 245)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:56.797Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:43:56.814Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:56.868Z","lvl":"info","evt":"log","msg":"follow 25: tracking Roshan, bearing -18.9, 0.84 m (tof); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:56.882Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.025Z","lvl":"info","evt":"log","msg":"follow 26: tracking Roshan, bearing -17.2, 1.41 m (tof); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:57.074Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.168Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.261Z","lvl":"info","evt":"log","msg":"follow 27: tracking Roshan, bearing -16.1, 1.97 m (tof); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:57.290Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.319Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.424Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.443Z","lvl":"info","evt":"log","msg":"follow 28: tracking Roshan, bearing -14.6, 1.97 m (tof); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:57.470Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.519Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.573Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.620Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.622Z","lvl":"info","evt":"log","msg":"follow 29: tracking Roshan, bearing -14.5, 0.86 m (tof); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:57.678Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.721Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.770Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.821Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.870Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:57.897Z","lvl":"info","evt":"log","msg":"follow 30: tracking Roshan, bearing -13.7, 1.2 m (tof); nav driving 1.91 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:57.972Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:58.021Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:58.082Z","lvl":"info","evt":"log","msg":"follow 31: tracking Roshan, bearing -14.3, 1.13 m (tof); nav driving 1.25 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:58.123Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:58.211Z","lvl":"info","evt":"log","msg":"follow 32: tracking Roshan, bearing -14.8, 1.13 m (tof); nav driving 1.16 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:58.238Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:58.437Z","lvl":"info","evt":"log","msg":"follow 33: tracking Roshan, bearing -15.0, 1.13 m (tof); nav driving 1.14 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:58.483Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:58.656Z","lvl":"info","evt":"log","msg":"follow 34: tracking Roshan, bearing -15.0, 1.13 m (tof); nav driving 1.13 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:58.862Z","lvl":"info","evt":"log","msg":"follow 35: tracking Roshan, bearing -13.8, 1.13 m (tof); nav driving 1.13 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:59.033Z","lvl":"info","evt":"log","msg":"follow 36: tracking Roshan, bearing -13.4, 1.13 m (tof); nav driving 1.13 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:59.039Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:59.226Z","lvl":"info","evt":"log","msg":"follow 37: tracking Roshan, bearing -13.2, 1.13 m (tof); nav driving 1.13 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:59.490Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:59.496Z","lvl":"info","evt":"log","msg":"follow 38: tracking Roshan, bearing -12.7, 1.13 m (tof); nav driving 1.13 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:59.541Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:59.596Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:59.644Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:59.675Z","lvl":"info","evt":"log","msg":"follow 39: tracking Roshan, bearing -11.7, 1.13 m (tof); nav driving 1.13 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:59.696Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:59.744Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:59.773Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 straight commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-19T17:43:59.785Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 246)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:59.786Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:43:59.791Z","lvl":"warn","evt":"log","msg":"reflex: the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.nav.reflex"}
+{"ts":"2026-11-19T17:43:59.797Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:59.799Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 247)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:43:59.803Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:43:59.852Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:59.883Z","lvl":"info","evt":"log","msg":"follow 40: tracking Roshan, bearing -10.8, 1.14 m (tof); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:43:59.901Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:59.954Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:43:59.999Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.052Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.055Z","lvl":"info","evt":"log","msg":"follow 41: tracking Roshan, bearing -9.2, 1.03 m (tof); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:00.148Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.201Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.249Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.255Z","lvl":"info","evt":"log","msg":"follow 42: tracking Roshan, bearing -7.9, 0.8 m (tof); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:00.314Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.354Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.403Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.462Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.508Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.549Z","lvl":"info","evt":"log","msg":"follow 43: tracking Roshan, bearing -8.9, 0.92 m (tof); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:00.558Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.610Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.660Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.714Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.730Z","lvl":"info","evt":"log","msg":"follow 44: tracking Roshan, bearing -5.2, 0.75 m (tof); nav driving 0.91 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:00.759Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.819Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.862Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.922Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:00.934Z","lvl":"info","evt":"log","msg":"follow 45: tracking Roshan, bearing 0.9, 0.77 m (tof); nav driving 0.78 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:00.964Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.011Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.062Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.110Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.133Z","lvl":"info","evt":"log","msg":"follow 46: tracking Roshan, bearing 5.0, 0.82 m (tof); nav driving 0.77 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:01.169Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.247Z","lvl":"info","evt":"log","msg":"follow 47: holding Roshan, bearing None, None m (None); nav driving 0.81 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:01.264Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.465Z","lvl":"info","evt":"log","msg":"follow 48: tracking Roshan, bearing 19.6, 0.77 m (tof); nav driving 0.81 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:01.520Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.568Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.617Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.626Z","lvl":"info","evt":"log","msg":"follow 49: tracking Roshan, bearing 29.8, 1.01 m (tof); nav driving 0.77 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:01.691Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.724Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.770Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.775Z","lvl":"info","evt":"log","msg":"follow 50: holding Roshan, bearing None, None m (None); nav driving 0.94 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:01.832Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.881Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.922Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.977Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:01.983Z","lvl":"info","evt":"log","msg":"follow 51: tracking Roshan, bearing 31.2, 1.11 m (tof); nav driving 0.94 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:02.022Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.080Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.110Z","lvl":"info","evt":"log","msg":"follow 52: holding Roshan, bearing None, None m (None); nav driving 1.09 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:02.132Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.183Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.248Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.272Z","lvl":"info","evt":"log","msg":"follow 53: tracking Roshan, bearing 35.5, 5.0 m (floor); nav driving 1.09 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:02.292Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.338Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.390Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.437Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.497Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.508Z","lvl":"info","evt":"log","msg":"follow 54: tracking Roshan, bearing 36.9, 5.47 m (floor); nav driving 1.13 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:02.588Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.638Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.650Z","lvl":"info","evt":"log","msg":"follow 55: holding Roshan, bearing None, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:02.695Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.745Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.773Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 straight commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-19T17:44:02.776Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 248)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:44:02.779Z","lvl":"warn","evt":"log","msg":"reflex: the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.nav.reflex"}
+{"ts":"2026-11-19T17:44:02.780Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:44:02.789Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.790Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 249)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:44:02.792Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:44:02.791Z","lvl":"info","evt":"log","msg":"follow 56: holding Roshan, bearing None, None m (None); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:02.839Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:02.930Z","lvl":"info","evt":"log","msg":"follow 57: holding Roshan, bearing None, None m (None); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:02.949Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:03.044Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:03.113Z","lvl":"info","evt":"log","msg":"follow 58: searching Roshan, bearing None, None m (None); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:03.117Z","lvl":"info","evt":"log","msg":"follow 58: lost, going to where they were last seen","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:03.146Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:03.258Z","lvl":"info","evt":"log","msg":"follow 59: searching Roshan, bearing None, None m (None); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:03.384Z","lvl":"info","evt":"log","msg":"follow 60: searching Roshan, bearing None, None m (None); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:03.558Z","lvl":"info","evt":"log","msg":"follow 61: searching Roshan, bearing None, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:03.652Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:03.746Z","lvl":"info","evt":"log","msg":"follow 62: tracking Roshan, bearing 38.0, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:03.766Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:03.853Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:03.908Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:03.914Z","lvl":"info","evt":"log","msg":"follow 63: holding Roshan, bearing None, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:03.954Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.007Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.055Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.081Z","lvl":"info","evt":"log","msg":"follow 64: holding Roshan, bearing None, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:04.107Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.170Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.205Z","lvl":"info","evt":"log","msg":"follow 65: holding Roshan, bearing None, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:04.211Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.259Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.311Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.324Z","lvl":"info","evt":"log","msg":"follow 66: searching Roshan, bearing None, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:04.325Z","lvl":"info","evt":"log","msg":"follow 66: lost, going to where they were last seen","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:04.357Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.412Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.458Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.493Z","lvl":"info","evt":"log","msg":"follow 67: searching Roshan, bearing None, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:04.509Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.562Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.608Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.658Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.680Z","lvl":"info","evt":"log","msg":"follow 68: searching Roshan, bearing None, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:04.714Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.759Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.810Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.812Z","lvl":"info","evt":"log","msg":"follow 69: searching Roshan, bearing None, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:04.862Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.911Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:04.924Z","lvl":"info","evt":"log","msg":"follow 70: searching Roshan, bearing None, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:05.025Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:05.123Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:05.129Z","lvl":"info","evt":"log","msg":"follow 71: searching Roshan, bearing None, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:05.264Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:05.267Z","lvl":"info","evt":"log","msg":"follow 72: searching Roshan, bearing None, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:05.437Z","lvl":"info","evt":"log","msg":"follow 73: searching Roshan, bearing None, None m (None); nav driving 1.17 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:05.472Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 straight commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-19T17:44:05.480Z","lvl":"warn","evt":"log","msg":"reflex: the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.nav.reflex"}
+{"ts":"2026-11-19T17:44:05.485Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 251)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:44:05.489Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:44:05.490Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 251)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:44:05.500Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:44:05.530Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:05.567Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:05.619Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:05.651Z","lvl":"info","evt":"log","msg":"follow 74: searching Roshan, bearing None, None m (None); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:05.716Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:05.768Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:05.818Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:05.837Z","lvl":"info","evt":"log","msg":"follow 75: searching Roshan, bearing None, None m (None); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:05.867Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:05.966Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:05.990Z","lvl":"info","evt":"log","msg":"follow 76: gone Roshan, bearing None, None m (None); nav tripped the drivetrain felt something (bump, stall, slip or climb)","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:06.063Z","lvl":"warn","evt":"log","msg":"gimbal: head servos have no power - switch the servo supply on - move ignored","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:06.617Z","lvl":"info","evt":"task.end","task":"follow","ok":true,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-19T17:44:06.618Z","lvl":"info","evt":"gesture","name":"yes","text_only":true}
+{"ts":"2026-11-19T17:44:06.619Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-19T17:44:06.658Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-19T17:44:06.732Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:300 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-19T17:44:06.743Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:260 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-19T17:44:07.278Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-19T17:44:07.279Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-19T17:44:09.041Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-19T17:44:09.041Z","lvl":"info","evt":"log","msg":"tool stop({}) -> {'ok': True, 'stopped': True} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T17:44:09.044Z","lvl":"info","evt":"voice.heard","text":"cancel follow"}
+{"ts":"2026-11-19T17:44:09.045Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 252)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:44:09.046Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:44:09.402Z","lvl":"info","evt":"gesture","name":"yes","text_only":true}
+{"ts":"2026-11-19T17:44:09.403Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-19T17:44:09.405Z","lvl":"info","evt":"log","msg":"tool answer({'value': 'yes'}) -> {'ok': True, 'gestured': True, 'value': 'yes', 'jobs': []} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T17:44:15.786Z","lvl":"info","evt":"voice.heard","text":"Robin, follow me."}
+{"ts":"2026-11-19T17:44:15.791Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-19T17:44:15.792Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'follow'}) -> {'ok': True, 'starting': 'follow', 'note': 'session closing; it reopens when the task ends'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T17:44:15.882Z","lvl":"info","evt":"task.start","task":"follow","name":"","_unregistered":true}
+{"ts":"2026-11-19T17:44:15.885Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 253)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:44:15.886Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:44:15.959Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-19T17:44:16.017Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:44:16.282Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-19T17:44:17.210Z","lvl":"info","evt":"log","msg":"follow 1: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:17.370Z","lvl":"info","evt":"log","msg":"follow 2: tracking Roshan, bearing -13.8, 1.01 m (tof); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:17.556Z","lvl":"info","evt":"log","msg":"follow 3: tracking Roshan, bearing -14.2, 0.98 m (tof); nav driving 1.01 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:17.832Z","lvl":"info","evt":"log","msg":"follow 4: tracking Roshan, bearing -14.6, 0.98 m (tof); nav driving 0.99 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:17.990Z","lvl":"info","evt":"log","msg":"follow 5: tracking Roshan, bearing -18.2, 1.04 m (tof); nav driving 0.98 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:18.232Z","lvl":"info","evt":"log","msg":"follow 6: tracking Roshan, bearing -19.2, 1.1 m (tof); nav driving 0.99 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:18.409Z","lvl":"info","evt":"log","msg":"follow 7: holding Roshan, bearing None, None m (None); nav driving 1.03 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:18.620Z","lvl":"info","evt":"log","msg":"follow 8: tracking Roshan, bearing -16.8, 1.41 m (tof); nav driving 0.99 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:18.855Z","lvl":"info","evt":"log","msg":"follow 9: tracking Roshan, bearing -15.4, 1.37 m (tof); nav driving 1.29 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:19.017Z","lvl":"info","evt":"log","msg":"follow 10: tracking Roshan, bearing -15.3, 1.87 m (tof); nav driving 1.26 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:19.189Z","lvl":"info","evt":"log","msg":"follow 11: tracking Roshan, bearing -11.5, 0.92 m (tof); nav driving 1.60 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:19.410Z","lvl":"info","evt":"log","msg":"follow 12: tracking Roshan, bearing -10.2, 0.86 m (tof); nav driving 0.98 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:19.580Z","lvl":"info","evt":"log","msg":"follow 13: tracking Roshan, bearing -3.2, 1.09 m (tof); nav driving 0.79 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:19.805Z","lvl":"info","evt":"log","msg":"follow 14: tracking Roshan, bearing -3.7, 1.59 m (tof); nav driving 0.94 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:19.985Z","lvl":"info","evt":"log","msg":"follow 15: tracking Roshan, bearing 6.3, 1.82 m (tof); nav driving 1.39 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:20.126Z","lvl":"info","evt":"log","msg":"follow 16: tracking Roshan, bearing 9.7, 1.19 m (tof); nav driving 1.66 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:20.334Z","lvl":"info","evt":"log","msg":"follow 17: tracking Roshan, bearing 15.4, 1.31 m (tof); nav driving 1.30 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:20.514Z","lvl":"info","evt":"log","msg":"follow 18: tracking Roshan, bearing 27.6, 1.21 m (tof); nav driving 1.28 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:20.667Z","lvl":"info","evt":"log","msg":"follow 19: holding Roshan, bearing None, None m (None); nav driving 1.21 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:20.839Z","lvl":"warn","evt":"log","msg":"reflex: something 0.19 m from the sensor, ahead","src":"robot_core.nav.reflex"}
+{"ts":"2026-11-19T17:44:20.846Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 254)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:44:20.849Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:44:20.856Z","lvl":"info","evt":"log","msg":"follow 20: tracking Roshan, bearing 38.9, 1.47 m (floor); nav tripped something 0.19 m from the sensor, ahead","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:21.079Z","lvl":"info","evt":"log","msg":"follow 21: tracking Roshan, bearing 46.9, 1.72 m (floor); nav tripped something 0.19 m from the sensor, ahead","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:21.260Z","lvl":"info","evt":"log","msg":"follow 22: tracking Roshan, bearing 58.8, 1.22 m (tof); nav tripped something 0.19 m from the sensor, ahead","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:21.499Z","lvl":"info","evt":"log","msg":"follow 23: tracking Roshan, bearing 63.5, 1.21 m (tof); nav driving 1.26 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:21.699Z","lvl":"info","evt":"log","msg":"follow 24: tracking Roshan, bearing 73.7, 0.56 m (tof); nav driving 1.22 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:21.906Z","lvl":"info","evt":"log","msg":"follow 25: holding Roshan, bearing None, None m (None); nav driving 0.67 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:22.064Z","lvl":"info","evt":"log","msg":"follow 26: holding Roshan, bearing None, None m (None); nav driving 0.67 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:22.237Z","lvl":"info","evt":"log","msg":"follow 27: tracking Roshan, bearing 101.4, 0.52 m (tof); nav driving 0.67 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:22.429Z","lvl":"info","evt":"log","msg":"follow 28: tracking Roshan, bearing 106.0, 1.68 m (floor); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:22.648Z","lvl":"info","evt":"log","msg":"follow 29: tracking Roshan, bearing 112.1, 1.89 m (floor); nav arrived 0.52 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:22.804Z","lvl":"info","evt":"log","msg":"follow 30: holding Roshan, bearing None, None m (None); nav driving 1.14 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:23.035Z","lvl":"info","evt":"log","msg":"follow 31: holding Roshan, bearing None, None m (None); nav driving 1.14 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:23.205Z","lvl":"info","evt":"log","msg":"follow 32: holding Roshan, bearing None, None m (None); nav driving 1.14 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:23.330Z","lvl":"info","evt":"log","msg":"follow 33: searching Roshan, bearing None, None m (None); nav driving 1.14 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:23.331Z","lvl":"info","evt":"log","msg":"follow 33: lost, going to where they were last seen","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:23.477Z","lvl":"info","evt":"log","msg":"follow 34: searching Roshan, bearing None, None m (None); nav driving 1.14 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:23.616Z","lvl":"info","evt":"log","msg":"follow 35: searching Roshan, bearing None, None m (None); nav driving 1.14 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:23.809Z","lvl":"info","evt":"log","msg":"follow 36: searching Roshan, bearing None, None m (None); nav driving 1.15 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:24.087Z","lvl":"info","evt":"log","msg":"follow 37: searching Roshan, bearing None, None m (None); nav driving 1.18 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:24.255Z","lvl":"info","evt":"log","msg":"follow 38: searching Roshan, bearing None, None m (None); nav driving 1.19 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:24.392Z","lvl":"info","evt":"log","msg":"follow 39: searching Roshan, bearing None, None m (None); nav driving 1.21 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:24.548Z","lvl":"info","evt":"log","msg":"follow 40: searching Roshan, bearing None, None m (None); nav driving 1.21 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:24.723Z","lvl":"info","evt":"log","msg":"follow 41: searching Roshan, bearing None, None m (None); nav driving 1.23 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:24.804Z","lvl":"warn","evt":"log","msg":"reflex: something 0.12 m from the sensor, ahead","src":"robot_core.nav.reflex"}
+{"ts":"2026-11-19T17:44:24.810Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 255)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:44:24.811Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:44:24.900Z","lvl":"info","evt":"log","msg":"follow 42: gone Roshan, bearing None, None m (None); nav tripped something 0.12 m from the sensor, ahead","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:44:26.163Z","lvl":"info","evt":"task.end","task":"follow","ok":true,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-19T17:44:26.164Z","lvl":"info","evt":"gesture","name":"yes","text_only":true}
+{"ts":"2026-11-19T17:44:26.164Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-19T17:44:26.207Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-19T17:44:26.277Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:300 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-19T17:44:26.286Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:260 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-19T17:44:26.813Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-19T17:44:26.814Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-19T17:44:30.645Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":3.76,"repeats":4}
+{"ts":"2026-11-19T17:44:33.110Z","lvl":"info","evt":"voice.heard","text":"Raben, follow me."}
+{"ts":"2026-11-19T17:44:33.112Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-19T17:44:33.112Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'follow'}) -> {'ok': True, 'starting': 'follow', 'note': 'session closing; it reopens when the task ends'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T17:44:33.180Z","lvl":"info","evt":"task.start","task":"follow","name":"","_unregistered":true}
+{"ts":"2026-11-19T17:44:33.184Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:44:33.185Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:44:33.258Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-19T17:44:33.806Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-19T17:41:03.486Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-19T17:41:04.286Z","lvl":"info","evt":"session.start","mode":"ros","pid":1675,"log":"logs.json","debug":true}
+{"ts":"2026-11-19T17:41:05.097Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:41:07.012Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v9-vel-noluna built Nov 18 2026 14:52:53","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:41:07.013Z","lvl":"info","evt":"log","msg":"Connected on /dev/ttyUSB0 (boot frame received)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:41:07.065Z","lvl":"info","evt":"log","msg":"motion executor started","src":"robot_core.motion_executor"}
+{"ts":"2026-11-19T17:41:08.740Z","lvl":"info","evt":"log","msg":"drivetrain ready on /dev/ttyUSB0 (limit 5.0 m, velocity on)","src":"robot_drivetrain"}
+{"ts":"2026-11-19T17:41:09.570Z","lvl":"info","evt":"log","msg":"debug mode: uploading sensor data to http://roshans-mac-mini.local:8080/v1/debug/frame, session 20261119-114109","src":"robot_core.debug_upload"}
+{"ts":"2026-11-19T17:41:09.765Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:41:09.767Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:41:09.856Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-19T17:46:44.221Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-19T17:46:44.222Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-19T17:46:45.476Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.86}
+{"ts":"2026-11-19T17:46:46.847Z","lvl":"info","evt":"voice.heard","text":"look straight"}
+{"ts":"2026-11-19T17:46:46.855Z","lvl":"info","evt":"voice.say","text":"To respond, I need you to","spoken":false}
+{"ts":"2026-11-19T17:46:46.986Z","lvl":"info","evt":"voice.say","text":"address me by my name.","spoken":false}
+{"ts":"2026-11-19T17:46:50.452Z","lvl":"info","evt":"voice.heard","text":"Robin, look straight."}
+{"ts":"2026-11-19T17:46:50.560Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:46:50.563Z","lvl":"info","evt":"voice.tool","name":"look_straight","args":{},"ok":true,"pan":0.0,"tilt":0.0,"deltas":{"tilt":0.0,"pan":0.0}}
+{"ts":"2026-11-19T17:46:50.564Z","lvl":"info","evt":"log","msg":"tool look_straight({}) -> {'ok': True, 'pan': 0.0, 'tilt': 0.0, 'deltas': {'tilt': 0.0, 'pan': 0.0}} in 0.10s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T17:46:51.311Z","lvl":"info","evt":"voice.say","text":"<no speech","spoken":false}
+{"ts":"2026-11-19T17:46:51.460Z","lvl":"info","evt":"voice.say","text":"detected>","spoken":false}
+{"ts":"2026-11-19T17:46:54.917Z","lvl":"info","evt":"voice.heard","text":"Robin, follow me."}
+{"ts":"2026-11-19T17:46:54.919Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-19T17:46:54.920Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'follow'}) -> {'ok': True, 'starting': 'follow', 'note': 'session closing; it reopens when the task ends'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T17:46:55.060Z","lvl":"info","evt":"task.start","task":"follow","name":"","_unregistered":true}
+{"ts":"2026-11-19T17:46:55.063Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 241)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:46:55.064Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:46:55.166Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-19T17:46:55.564Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-19T17:46:55.568Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-19T17:46:57.857Z","lvl":"info","evt":"log","msg":"follow 1: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:46:57.986Z","lvl":"info","evt":"log","msg":"follow 2: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:46:59.347Z","lvl":"info","evt":"log","msg":"follow 3: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:46:59.473Z","lvl":"info","evt":"log","msg":"follow 4: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:00.640Z","lvl":"info","evt":"log","msg":"follow 5: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:00.847Z","lvl":"info","evt":"log","msg":"follow 6: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:01.905Z","lvl":"info","evt":"log","msg":"follow 7: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:02.080Z","lvl":"info","evt":"log","msg":"follow 8: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:04.256Z","lvl":"info","evt":"log","msg":"follow 9: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:04.438Z","lvl":"info","evt":"log","msg":"follow 10: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:06.755Z","lvl":"info","evt":"log","msg":"follow 11: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:06.950Z","lvl":"info","evt":"log","msg":"follow 12: tracking Roshan, bearing -84.2, 0.46 m (tof); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:07.174Z","lvl":"info","evt":"log","msg":"follow 13: tracking Roshan, bearing -84.2, 1.05 m (tof); nav arrived 0.46 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:07.350Z","lvl":"info","evt":"log","msg":"follow 14: tracking Roshan, bearing -84.3, 0.45 m (tof); nav driving 0.94 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:07.583Z","lvl":"info","evt":"log","msg":"follow 15: tracking Roshan, bearing -88.8, 0.62 m (tof); nav arrived 0.55 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:07.767Z","lvl":"info","evt":"log","msg":"follow 16: tracking Roshan, bearing -80.5, 1.71 m (tof); nav driving 0.61 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:07.934Z","lvl":"info","evt":"log","msg":"follow 17: tracking Roshan, bearing -78.1, 1.84 m (tof); nav driving 0.61 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:08.249Z","lvl":"info","evt":"log","msg":"follow 18: tracking Roshan, bearing -74.7, 1.89 m (tof); nav driving 1.84 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:08.417Z","lvl":"info","evt":"log","msg":"follow 19: holding Roshan, bearing None, None m (None); nav driving 1.87 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:08.638Z","lvl":"info","evt":"log","msg":"follow 20: tracking Roshan, bearing -61.1, 0.97 m (tof); nav driving 1.86 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:08.882Z","lvl":"info","evt":"log","msg":"follow 21: tracking Roshan, bearing -47.1, 0.99 m (tof); nav driving 0.98 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:09.066Z","lvl":"info","evt":"log","msg":"follow 22: tracking Roshan, bearing -40.5, 0.92 m (tof); nav driving 0.93 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:09.282Z","lvl":"info","evt":"log","msg":"follow 23: tracking Roshan, bearing -40.2, 0.91 m (tof); nav driving 0.86 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:09.456Z","lvl":"info","evt":"log","msg":"follow 24: tracking Roshan, bearing -39.6, 0.83 m (tof); nav driving 0.86 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:09.683Z","lvl":"info","evt":"log","msg":"follow 25: tracking Roshan, bearing -44.1, 0.81 m (tof); nav driving 0.77 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:09.882Z","lvl":"info","evt":"log","msg":"follow 26: tracking Roshan, bearing -42.9, 0.99 m (tof); nav driving 0.75 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:10.048Z","lvl":"info","evt":"log","msg":"follow 27: tracking Roshan, bearing -43.7, 0.94 m (tof); nav driving 0.91 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:10.209Z","lvl":"info","evt":"log","msg":"follow 28: tracking Roshan, bearing -51.5, 0.94 m (tof); nav driving 0.88 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:10.385Z","lvl":"info","evt":"log","msg":"follow 29: tracking Roshan, bearing -51.1, 0.92 m (tof); nav driving 0.87 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:10.579Z","lvl":"info","evt":"log","msg":"follow 30: tracking Roshan, bearing -51.7, 0.95 m (tof); nav driving 0.86 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:10.753Z","lvl":"info","evt":"log","msg":"follow 31: tracking Roshan, bearing -50.5, 0.67 m (tof); nav driving 0.91 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:10.932Z","lvl":"info","evt":"log","msg":"follow 32: tracking Roshan, bearing -48.6, 1.52 m (tof); nav driving 0.70 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:11.115Z","lvl":"info","evt":"log","msg":"follow 33: tracking Roshan, bearing -47.8, 1.02 m (tof); nav driving 0.67 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:11.401Z","lvl":"info","evt":"log","msg":"follow 34: tracking Roshan, bearing -45.7, 1.01 m (tof); nav driving 0.93 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:11.580Z","lvl":"info","evt":"log","msg":"follow 35: tracking Roshan, bearing -48.9, 0.97 m (tof); nav driving 0.94 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:11.777Z","lvl":"info","evt":"log","msg":"follow 36: tracking Roshan, bearing -53.7, 1.0 m (tof); nav driving 0.93 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:11.958Z","lvl":"info","evt":"log","msg":"follow 37: tracking Roshan, bearing -59.1, 0.9 m (tof); nav driving 0.94 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:12.123Z","lvl":"info","evt":"log","msg":"follow 38: tracking Roshan, bearing -55.9, 0.86 m (tof); nav driving 0.87 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:12.303Z","lvl":"info","evt":"log","msg":"follow 39: tracking Roshan, bearing -50.3, 0.88 m (tof); nav driving 0.82 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:12.502Z","lvl":"info","evt":"log","msg":"follow 40: tracking Roshan, bearing -68.1, 0.92 m (tof); nav driving 0.82 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:12.661Z","lvl":"info","evt":"log","msg":"follow 41: tracking Roshan, bearing -76.1, 0.72 m (tof); nav driving 0.87 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:12.860Z","lvl":"info","evt":"log","msg":"follow 42: tracking Roshan, bearing -75.0, 0.91 m (tof); nav driving 0.74 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:13.012Z","lvl":"info","evt":"log","msg":"follow 43: tracking Roshan, bearing -80.3, 1.07 m (tof); nav driving 0.86 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:13.177Z","lvl":"info","evt":"log","msg":"follow 44: tracking Roshan, bearing -87.5, 1.14 m (tof); nav driving 1.00 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:13.350Z","lvl":"info","evt":"log","msg":"follow 45: tracking Roshan, bearing -81.5, 0.98 m (tof); nav driving 1.09 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:13.512Z","lvl":"info","evt":"log","msg":"follow 46: tracking Roshan, bearing -74.5, 1.34 m (tof); nav driving 1.00 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:13.683Z","lvl":"info","evt":"log","msg":"follow 47: tracking Roshan, bearing -71.0, 0.7 m (tof); nav driving 1.22 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:13.874Z","lvl":"info","evt":"log","msg":"follow 48: tracking Roshan, bearing -67.2, 0.86 m (tof); nav driving 0.80 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:14.046Z","lvl":"info","evt":"log","msg":"follow 49: tracking Roshan, bearing -55.5, 0.81 m (tof); nav driving 0.83 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:14.253Z","lvl":"info","evt":"log","msg":"follow 50: tracking Roshan, bearing -51.2, 0.85 m (tof); nav driving 0.78 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:14.411Z","lvl":"info","evt":"log","msg":"follow 51: tracking Roshan, bearing -45.7, 1.04 m (tof); nav driving 0.79 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:14.583Z","lvl":"info","evt":"log","msg":"follow 52: tracking Roshan, bearing -43.7, 1.06 m (tof); nav driving 0.93 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:14.769Z","lvl":"info","evt":"log","msg":"follow 53: tracking Roshan, bearing -41.6, 0.99 m (tof); nav driving 0.99 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:14.994Z","lvl":"info","evt":"log","msg":"follow 54: tracking Roshan, bearing -37.2, 0.88 m (tof); nav driving 0.94 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:15.166Z","lvl":"info","evt":"log","msg":"follow 55: tracking Roshan, bearing -35.8, 0.96 m (tof); nav driving 0.85 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:15.338Z","lvl":"info","evt":"log","msg":"follow 56: tracking Roshan, bearing -34.0, 0.96 m (tof); nav driving 0.89 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:15.572Z","lvl":"info","evt":"log","msg":"follow 57: tracking Roshan, bearing -30.5, 1.14 m (tof); nav driving 0.89 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:15.732Z","lvl":"info","evt":"log","msg":"follow 58: tracking Roshan, bearing -23.6, 1.19 m (tof); nav driving 1.05 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:15.973Z","lvl":"info","evt":"log","msg":"follow 59: tracking Roshan, bearing -20.5, 1.04 m (tof); nav driving 1.12 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:16.180Z","lvl":"info","evt":"log","msg":"follow 60: tracking Roshan, bearing -14.8, 1.68 m (tof); nav driving 1.01 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:16.365Z","lvl":"info","evt":"log","msg":"follow 61: tracking Roshan, bearing -7.8, 1.6 m (tof); nav driving 1.43 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:16.590Z","lvl":"info","evt":"log","msg":"follow 62: tracking Roshan, bearing -7.5, 0.72 m (tof); nav driving 1.48 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:16.782Z","lvl":"info","evt":"log","msg":"follow 63: tracking Roshan, bearing -1.8, 0.69 m (tof); nav driving 1.45 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:17.023Z","lvl":"info","evt":"log","msg":"follow 64: tracking Roshan, bearing 1.7, 1.32 m (tof); nav driving 0.66 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:17.239Z","lvl":"info","evt":"log","msg":"follow 65: tracking Roshan, bearing 6.5, 1.39 m (tof); nav driving 1.12 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:17.365Z","lvl":"info","evt":"log","msg":"follow 66: tracking Roshan, bearing 12.6, 1.46 m (tof); nav driving 1.29 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:17.545Z","lvl":"info","evt":"log","msg":"follow 67: tracking Roshan, bearing 17.4, 1.45 m (tof); nav driving 1.35 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:17.739Z","lvl":"info","evt":"log","msg":"follow 68: tracking Roshan, bearing 20.1, 1.46 m (tof); nav driving 1.37 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:17.902Z","lvl":"info","evt":"log","msg":"follow 69: tracking Roshan, bearing 21.8, 1.34 m (tof); nav driving 1.40 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:18.094Z","lvl":"info","evt":"log","msg":"follow 70: tracking Roshan, bearing 28.6, 1.34 m (tof); nav driving 1.30 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:18.286Z","lvl":"info","evt":"log","msg":"follow 71: tracking Roshan, bearing 31.2, 1.34 m (tof); nav driving 1.28 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:18.446Z","lvl":"info","evt":"log","msg":"follow 72: tracking Roshan, bearing 37.5, 1.76 m (floor); nav driving 1.26 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:18.617Z","lvl":"info","evt":"log","msg":"follow 73: tracking Roshan, bearing 41.9, 1.9 m (floor); nav driving 1.32 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:18.824Z","lvl":"info","evt":"log","msg":"follow 74: tracking Roshan, bearing 46.6, 1.87 m (floor); nav driving 1.42 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:18.997Z","lvl":"info","evt":"log","msg":"follow 75: tracking Roshan, bearing 54.5, 1.95 m (floor); nav driving 1.53 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:19.296Z","lvl":"info","evt":"log","msg":"follow 76: holding Roshan, bearing None, None m (None); nav driving 1.63 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:19.396Z","lvl":"info","evt":"log","msg":"follow 77: holding Roshan, bearing None, None m (None); nav driving 1.63 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:19.429Z","lvl":"warn","evt":"log","msg":"reflex: something 0.12 m from the sensor, ahead","src":"robot_core.nav.reflex"}
+{"ts":"2026-11-19T17:47:19.434Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 242)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:47:19.435Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-19T17:47:19.500Z","lvl":"info","evt":"log","msg":"follow 78: holding Roshan, bearing None, None m (None); nav tripped something 0.12 m from the sensor, ahead","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:19.731Z","lvl":"info","evt":"log","msg":"follow 79: searching Roshan, bearing None, None m (None); nav tripped something 0.12 m from the sensor, ahead","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:19.733Z","lvl":"info","evt":"log","msg":"follow 79: lost, going to where they were last seen","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:19.862Z","lvl":"info","evt":"log","msg":"follow 80: searching Roshan, bearing None, None m (None); nav tripped something 0.12 m from the sensor, ahead","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:19.997Z","lvl":"info","evt":"log","msg":"follow 81: searching Roshan, bearing None, None m (None); nav tripped something 0.12 m from the sensor, ahead","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:20.170Z","lvl":"info","evt":"log","msg":"follow 82: searching Roshan, bearing None, None m (None); nav driving 1.63 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:20.318Z","lvl":"info","evt":"log","msg":"follow 83: searching Roshan, bearing None, None m (None); nav driving 1.63 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:20.465Z","lvl":"info","evt":"log","msg":"follow 84: searching Roshan, bearing None, None m (None); nav driving 1.63 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:20.606Z","lvl":"info","evt":"log","msg":"follow 85: searching Roshan, bearing None, None m (None); nav driving 1.63 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:20.805Z","lvl":"info","evt":"log","msg":"follow 86: searching Roshan, bearing None, None m (None); nav driving 1.64 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:20.940Z","lvl":"info","evt":"log","msg":"follow 87: searching Roshan, bearing None, None m (None); nav driving 1.64 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:21.086Z","lvl":"info","evt":"log","msg":"follow 88: gone Roshan, bearing None, None m (None); nav driving 1.66 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-19T17:47:23.178Z","lvl":"info","evt":"task.end","task":"follow","ok":true,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-19T17:47:23.179Z","lvl":"info","evt":"gesture","name":"yes","text_only":true}
+{"ts":"2026-11-19T17:47:23.179Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-19T17:47:23.213Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-19T17:47:23.288Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:300 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-19T17:47:23.299Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:260 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-19T17:47:23.827Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-19T17:47:23.828Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-19T17:47:26.337Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.86,"repeats":5}
+{"ts":"2026-11-19T17:47:26.341Z","lvl":"info","evt":"voice.heard","text":"Robin cancel follow."}
+{"ts":"2026-11-19T17:47:26.345Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true}
+{"ts":"2026-11-19T17:47:26.349Z","lvl":"info","evt":"log","msg":"tool stop({}) -> {'ok': True, 'stopped': True} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-19T17:47:26.359Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 243)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-19T17:47:26.361Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
