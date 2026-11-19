@@ -338,7 +338,12 @@ class LocalNav:
                        self.params, stop_at_m=stop_at)
         v, w = res.v, res.w
         tb = dwa.wrap(math.atan2(target[1] - here[1], target[0] - here[0]) - here[2])   # the way, from here
-        if not res.blocked and v < 0.02:                  # only turning on the spot is safe: turn properly, toward the
+        if abs(tb) > math.radians(28.0) and not res.blocked:
+            # Target is significantly off-heading: pivot in place to face it first,
+            # rather than driving wide forward arcs that saturate the gimbal and chase its tail.
+            v = 0.0
+            w = dwa.face(tb) or (math.copysign(0.7, tb) if abs(w_meas) < 0.3 else w_meas)
+        elif not res.blocked and v < 0.02:                # only turning on the spot is safe: turn properly, toward the
             w = dwa.face(tb) or (0.6 if abs(w) < 0.3 else w)   # way, not a 0.03 rad/s creep the tracks cannot do
         if res.blocked:
             # Toward the same point as above, never a blind turn to the left: the two disagreeing spun it on the
@@ -359,12 +364,10 @@ class LocalNav:
             v = 0.0
             self.state, self.detail = "tripped", self.reflex.why
         if v < 0.02 and w != 0.0 and self._recover is None and self._turn_hits(here, w):
-            # Turning on the spot would swing a corner of the square into something: back off a little if
-            # there is room behind, else hold still. (A margin test here backed it off 1.5 s at a time in
-            # every doorway, Nov 19; this checks the square itself.)
+            # In a doorway or pass, do not trigger repeated back-off oscillations if heading towards the path
             behind = float(self.costmap.clearance([here[0] - 0.1 * math.cos(here[2])],
                                                   [here[1] - 0.1 * math.sin(here[2])])[0])
-            if behind > self.params.radius_m:
+            if abs(tb) > math.radians(45.0) and behind > self.params.radius_m:
                 self._recover, self._recover_from, self._back_m = "back", (here, now), TURN_BACK_M
             v = w = 0.0
         self._send(v, w)
@@ -381,8 +384,7 @@ class LocalNav:
     def _turn_hits(self, here, w: float, dt: float = 0.4) -> bool:
         """Would turning on the spot at w for dt sweep the square footprint into an occupied cell?"""
         half = self.params.radius_m / math.sqrt(2.0)                    # half the square's side
-        pad = self.costmap.res * 0.71 + 0.03                            # a cell's half diagonal, and 3 cm: the
-                                                                        # face beside a corner is often unmapped
+        pad = self.costmap.res * 0.4 + 0.015                            # realistic corner sweep margin (~3.5 cm)
         near = [p for p in self.costmap.points() if math.dist(p, here[:2]) < self.params.radius_m + pad]
         for th in np.linspace(here[2], here[2] + w * dt, 6):
             c, s = math.cos(th), math.sin(th)

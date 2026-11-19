@@ -233,6 +233,8 @@ class ExplorerNode(Node):
             height_m=float(v("head_height_m")), pan_axis_x_m=float(v("pan_axis_x_m")),
             hfov_deg=float(v("hfov_deg")), drive_tilt_deg=float(v("drive_tilt_deg")),
             tof_perpendicular=bool(v("tof_perpendicular")), tilt_offset_deg=float(v("head_tilt_offset_deg")),
+            tof_pan_offset_deg=float(v("tof_pan_offset_deg") if self.has_parameter("tof_pan_offset_deg") else 0.0),
+            tof_tilt_offset_deg=float(v("tof_tilt_offset_deg") if self.has_parameter("tof_tilt_offset_deg") else 0.0),
             pan_axis_y_m=float(v("tof_from_right_m")) - float(v("robot_width_m")) / 2.0,
             self_zones=parse_self_zones(v("tof_self_zones"))),
             pitch=lambda: self._pitch(),

@@ -139,12 +139,23 @@ class Reflex:
         return -self.back <= x <= self.front and abs(y) <= self.half
 
     def danger(self, zones) -> str:
-        """Why to brake now, or "": a zone nearer than stop_m where the robot is going."""
+        """Why to brake now, or "": a zone nearer than stop_m where the robot is going.
+        Floor and near-ground returns under the nose/tracks must never trip an emergency stop."""
         v, w = self.command()
-        for _, _, x, y, h, d in zones:
+        for r, c, x, y, h, d in zones:
             if d >= self.stop_m or self._own(x, y):
                 continue
-            if h is not None and h <= 0.03:               # the floor itself, close under the nose
+            # Row 7 looks directly down at the floor immediately ahead/under the nose; never brake on it
+            if r >= 7:
+                continue
+            # Floor, ground undulations, and climbable sills (<= 6 cm) are not collision obstacles
+            if h is not None and h <= 0.06:
+                continue
+            # A reading with no verified height (glancing/unfitted ground return) is not an emergency hazard
+            if h is None:
+                continue
+            # For row 6 at a steep downward glance, require solid height above ground (> 8 cm)
+            if r == 6 and h <= 0.08:
                 continue
             if v > 0.02 and x > 0.0 and abs(y) <= self.half + self.margin:
                 return f"something {d:.2f} m from the sensor, ahead"

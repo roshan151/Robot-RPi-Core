@@ -306,7 +306,8 @@ class Tof8x8:
 
 
 def range_in_box(grid: Optional[Grid], box: Sequence[float], width: int, height: int,
-                 hfov_deg: float) -> Optional[float]:
+                 hfov_deg: float, tof_pan_offset_deg: float = 0.0,
+                 tof_tilt_offset_deg: float = 0.0) -> Optional[float]:
     """Median range of the zones whose centres fall inside a camera box
     (x1, y1, x2, y2 in pixels of a width x height frame). The sensor sits beside
     the camera and looks the same way. A box too small to hold any zone's centre (a
@@ -326,6 +327,8 @@ def range_in_box(grid: Optional[Grid], box: Sequence[float], width: int, height:
             if grid.rows[r][c] is None:
                 continue
             up, lf = zone_angles(r, c)
+            up += tof_tilt_offset_deg
+            lf += tof_pan_offset_deg
             if right <= lf <= left and bottom <= up <= top:
                 good.append(grid.rows[r][c])
             elif right - half < lf < left + half and bottom - half < up < top + half:

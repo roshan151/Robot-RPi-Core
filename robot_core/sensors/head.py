@@ -47,6 +47,8 @@ class HeadGeometry:
     tof_perpendicular: bool = True    # ToF ranges are distances to the sensor's plane, not along each ray
     tilt_offset_deg: float = 0.0      # how far up the head really looks at tilt 0 (+10 = 10 deg up)
     pan_axis_y_m: float = 0.0         # ToF left of the robot's centre line (negative: to the right)
+    tof_pan_offset_deg: float = 0.0   # ToF sensor pan offset relative to camera (+ is left)
+    tof_tilt_offset_deg: float = 0.0  # ToF sensor tilt offset relative to camera (+ is up)
     self_range_m: float = 0.15        # ToF returns nearer than this are the robot itself (Nov 18: the front-mounted
                                       # TF-Luna in the bottom-left zones at 8-12 cm read as a 15 cm box ahead)
     self_zones: dict = field(default_factory=dict)   # {(row, col): metres}: zones that see part of the robot
@@ -175,8 +177,8 @@ class Head:
         are dropped as the robot itself (default geom.self_range_m)."""
         near = self.geom.self_range_m if min_range_m is None else min_range_m
         own = self.geom.self_zones if min_range_m is None else {}
-        pan, tilt = math.radians(pan_deg), math.radians(tilt_deg)
-        tilt += math.radians(self.geom.tilt_offset_deg)
+        pan = math.radians(pan_deg + self.geom.tof_pan_offset_deg)
+        tilt = math.radians(tilt_deg + self.geom.tilt_offset_deg + self.geom.tof_tilt_offset_deg)
         if pitch_deg is None:
             pitch_deg = (self.pitch() if self.pitch else 0.0) or 0.0
         body = math.radians(pitch_deg)
