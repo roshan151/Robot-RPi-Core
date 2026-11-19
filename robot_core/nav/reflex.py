@@ -29,6 +29,8 @@ import time
 from collections import deque
 from typing import Callable, List, Optional, Tuple
 
+from robot_core import debug_upload
+
 log = logging.getLogger(__name__)
 
 SENSOR_LAG_S = 0.1          # a grid describes the scene about this long before it arrives
@@ -111,6 +113,7 @@ class Reflex:
     def tick(self) -> None:
         now = self.clock()
         pan, tilt = self.head.gimbal.angles()
+        debug_upload.note_gimbal(pan, tilt)               # debug mode: every upload says where the head was
         with self._lock:
             self._hist.append((now, pan, tilt, self.pose()))
         if self.bumped is not None and (self.bumped() or 0.0) > max(self._t0, self.tripped_until - self.hold_s):

@@ -46,6 +46,7 @@ _stop = threading.Event()
 _frame = None                # camera Frame (sensors/camera.py)
 _jpeg = None                 # (frame seq, JPEG bytes) the task encoded for the Mac
 _tof = None                  # (time.monotonic(), rows in metres / None)
+_gimbal = None               # (pan, tilt) the head pointed at most recently (note_gimbal)
 _events: deque = deque(maxlen=EVENT_QUEUE)   # (jpeg or None, note dict, rows or None, frame seq or None)
 _cfg: dict = {}
 
@@ -93,6 +94,14 @@ def offer_tof(t: float, rows) -> None:
         _new.set()
 
 
+def note_gimbal(pan: float, tilt: float) -> None:
+    """Where the head points now (the nav reflex calls it 50 times a second): sent with every
+    upload, so a ToF grid without a camera frame can still be placed (Monitoring-Service --nav)."""
+    global _gimbal
+    if _on:
+        _gimbal = (pan, tilt)
+
+
 def offer_event(jpeg: Optional[bytes], note: dict, rows=None, seq: Optional[int] = None) -> None:
     """Queue one step's record (never dropped while there is room): its JPEG, a small dict
     of what happened (`note`), the ToF grid it used, and its camera frame seq."""
@@ -132,6 +141,7 @@ def _loop() -> None:
             meta = {"session": _cfg["session"], "n": n, "kind": "event",
                     "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
                     "geometry": _cfg["geometry"], "note": note, "frame": {"seq": seq} if seq else None,
+                    "gimbal": [round(v, 1) for v in _gimbal] if _gimbal else None,
                     "tof": {"age_ms": 0, "rows": _rows(rows)} if rows else None}
             try:
                 if _cfg["extras"]:
@@ -163,7 +173,8 @@ def _loop() -> None:
         n += 1
         meta = {"session": _cfg["session"], "n": n,
                 "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
-                "geometry": _cfg["geometry"], "frame": None, "tof": None}
+                "geometry": _cfg["geometry"], "frame": None, "tof": None,
+                "gimbal": [round(v, 1) for v in _gimbal] if _gimbal else None}
         files = {}
         try:
             if new_frame:
