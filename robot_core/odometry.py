@@ -223,6 +223,10 @@ class MotionHealth:
                                               max_dip_deg below where the move started, and
                                               fast; driving backwards, the tail. Not held:
                                               it stops the move at once)
+    Nose rising on a drive       → TILTED    (climbing something: a wall, a chair base. The front
+                                              rises more than max_climb_deg above where the
+                                              move started; Nov 19 the tracks climbed a wall
+                                              to 34 deg with the encoders still counting)
     A jolt while moving          → BUMPED    (hit something; reported, not stopped on)
     Tracks turning, gyro still   → SLIPPING  (on a turn the gyro sees what the camera may not)
 
@@ -244,6 +248,7 @@ class MotionHealth:
         bump_g: float = 0.8,
         max_dip_deg: float = 8.0,
         dip_window_s: float = 0.5,
+        max_climb_deg: float = 12.0,
     ) -> None:
         self.start_grace_s, self.stall_s, self.slip_s, self.pushed_s = (
             start_grace_s, stall_s, slip_s, pushed_s)
@@ -251,6 +256,7 @@ class MotionHealth:
         self.visual_max_age_s = visual_max_age_s
         self.max_pitch_deg, self.max_roll_deg, self.bump_g = max_pitch_deg, max_roll_deg, bump_g
         self.max_dip_deg, self.dip_window_s = max_dip_deg, dip_window_s
+        self.max_climb_deg = max_climb_deg
         self._dip_ref: Optional[float] = None     # pitch when the drive started
         self._pitches: list = []                  # (t, pitch) over the last dip_window_s
         self._op: Optional[str] = None
@@ -339,6 +345,8 @@ class MotionHealth:
         recent = max(sign * (p - pitch) for _, p in self._pitches)
         if fall > self.max_dip_deg and recent > self.max_dip_deg / 2.0:
             return (f"{'nose' if sign > 0 else 'tail'} dropped {fall:.0f} deg on a drive: over an edge?")
+        if -fall > self.max_climb_deg:
+            return (f"{'nose' if sign > 0 else 'tail'} rose {-fall:.0f} deg on a drive: climbing something?")
         return ""
 
     def _fold_drift(self, start: OdomState, end: OdomState) -> None:
@@ -351,14 +359,3 @@ class MotionHealth:
 
 # --------------------------------------------------------------------------
 # Turn correction (needs the gyro)
-# --------------------------------------------------------------------------
-
-def turn_correction(goal_ccw_deg: float, turned_ccw_deg: float, tolerance_deg: float = 2.0,
-                    max_deg: float = 30.0) -> Optional[tuple]:
-    """After a turn: what is still owed, as ("left" | "right", degrees), or None
-    when it landed within tolerance. An error larger than `max_deg` is not a slip
-    to trim off (a blocked turn, a robot picked up): None, and the caller reports it."""
-    err = goal_ccw_deg - turned_ccw_deg
-    if abs(err) <= tolerance_deg or abs(err) > max_deg:
-        return None
-    return ("left" if err > 0 else "right", abs(err))

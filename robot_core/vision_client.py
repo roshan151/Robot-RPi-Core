@@ -105,7 +105,7 @@ class VisionClient:
     def follow_step(self, jpeg: bytes, seq: int, pan_deg: float = 0.0, tilt_deg: float = 0.0,
                     hfov_deg: float = 66.0, camera_height_m: float = 0.25,
                     range_m: Optional[float] = None, tof_grid=None, tof_fov_deg: float = 60.0,
-                    hint_deg: Optional[float] = None) -> dict:
+                    hint_deg: Optional[float] = None, pose=None) -> dict:
         """Where the person is and how to move: turn `turn_deg` (+ right), then drive `drive_m`.
         tof_grid: the 8x8 ToF's rows (metres, None = no range; row 0 the top, column 0 the
         left, as the camera sees), for the Mac to range every person in view. hint_deg:
@@ -119,11 +119,33 @@ class VisionClient:
             data["tof_fov_deg"] = tof_fov_deg
         if hint_deg is not None:
             data["hint_deg"] = hint_deg
+        if pose is not None:                              # lets the Mac put what the camera sees on its map
+            data["pose"] = json.dumps([round(float(v), 4) for v in pose])
         return self._call("POST", "/v1/follow/step", timeout=20.0, data=data,
                           files={"image": ("f.jpg", jpeg, "image/jpeg")})
 
     def follow_stop(self) -> dict:
         return self._call("POST", "/v1/follow/stop")
+
+    # ---------------------------------------------------------- navigation
+
+    def nav_frame(self, jpeg: bytes, t: float, pose, pan_deg: float, tilt_deg: float) -> dict:
+        """One frame of the camera stream, for the Mac's visual SLAM: its capture time (the Pi's
+        monotonic clock), the odometry pose then, and where the head pointed."""
+        data = {"t": round(t, 4), "pan_deg": round(pan_deg, 2), "tilt_deg": round(tilt_deg, 2)}
+        if pose is not None:
+            data["pose"] = json.dumps([round(float(v), 4) for v in pose])
+        return self._call("POST", "/v1/nav/frame", timeout=2.0, data=data,
+                          files={"image": ("f.jpg", jpeg, "image/jpeg")})
+
+    def nav_plan(self, pose, goal, radius_m: float, local: Optional[dict] = None) -> Optional[list]:
+        """Waypoints [(x, y), ...] from `pose` to `goal` in the odometry frame (the Mac plans with
+        Theta* on its global map, corrected by visual SLAM), or None when it finds no way. `local`:
+        the Pi's rolling costmap (RollingCostmap.snapshot), folded into the global map first."""
+        body = {"pose": [float(v) for v in pose], "goal": [float(v) for v in goal],
+                "radius_m": radius_m, "local": local}
+        out = self._call("POST", "/v1/nav/plan", timeout=3.0, ok_404=True, json=body)
+        return None if not out or not out.get("path") else [tuple(p) for p in out["path"]]
 
     # -------------------------------------------------------------- plants
 

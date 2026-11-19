@@ -1,92 +1,50 @@
 """Follow an enrolled person, as a job the voice agent runs with its session closed.
 
-A stop-and-go loop with all the thinking on the Mac (Vision-Microservice
-`follow.py`, see docs/FOLLOW-DESIGN.md):
+Two loops, at their own rates:
 
-    capture -> POST /v1/follow/step -> aim head -> turn turn_deg -> drive drive_m -> repeat
+  * perception (this module, as fast as the Mac answers, ~2-4 Hz): the newest camera frame
+    (nav.stream, which also streams every frame to the Mac for visual SLAM) goes to
+    POST /v1/follow/step; the Mac finds the person and says where they are (bearing in the
+    robot's frame, distance with how sure it is). `PersonTracker` places them in the
+    odometry frame and smooths that; the result becomes the nav goal ("stop FOLLOW_KEEP_M
+    short of them") and the head's focus.
+  * navigation (nav.LocalNav, 20 Hz, on its own): rolling costmap from every ToF grid, DWA
+    toward the goal along the Mac's Theta* waypoints, the 50 Hz reflex, and the gimbal kept on
+    the person with a little look-ahead and sweep so the costmap keeps learning the way.
+    See docs/FOLLOW-DESIGN.md and robot_core/nav/.
 
-While searching the robot stays put and only the head sweeps (`head` in the
-answer: pan, tilt above FOLLOW_TILT_DEG).
+Identity, locking and searching are the Mac's (vision_service/follow.py). Lost: the robot
+goes to where they were last seen (once per loss), then stands while the head does the
+Mac's search sweep. "near" (they fill the frame) means close: the robot stands and faces
+them. Ends when the Mac says the person is gone, after `seconds`, or when the task is
+cancelled ("stop" to the cancel-only voice session, or the task/stop service). Returns True
+if it locked onto the person at all.
 
-With the 8x8 ToF on the head (docs/TERRAIN-DESIGN.md, docs/FOLLOW-DESIGN.md):
-
-  * the whole grid goes to the Mac with each frame, which ranges every person in
-    view by the zones on them (distance, and a check on who is who);
-  * before a drive, the path: something nearer than the person, at any height up
-    to the robot's own, in the tracking view (#4), then the floor (#1, #3): only
-    flat floor is driven. A box, a step, a drop (stairs down, a table edge) or a
-    floor the sensor cannot read (unless drive_on_unknown_floor) ends the drive
-    `stop_short_m` before it: the robot drives part of the way instead of not at all;
-  * the floor is looked at as little as possible: floor seen clear in the last few
-    seconds, still ahead on the same line, is not looked at again, and the tracking
-    view's own lower rows are tried before the head glances down.
-
-With the robot's pose (odometry, gyro heading when the IMU is fitted), `pose`:
-
-  * once lost, the Mac is told where the person was last seen, in the robot's
-    present frame, and searches there first (#5).
-
-With `bumped` (the drivetrain's motion health): a jolt during a drive is something
-the ToF did not see (glass, a thin chair leg). The drive is stopped, and no drive is
-tried again until the robot has turned away by FOLLOW_BUMP_TURN_DEG (#7).
-
-The robot stands still while the Mac decides; the person is expected to walk
-slowly. The head looks straight ahead at FOLLOW_TILT_DEG while it finds them,
-high enough to see a standing person's face from ~1.3 m (the face is what
-locks on). Once locked on it drops to FOLLOW_TRACK_TILT_DEG: from then on they
-are tracked by their clothes, and a lower view keeps their feet on the floor in
-frame for the distance. A search (they were lost) looks from FOLLOW_TILT_DEG
-again. Plain functions over injected parts — no ROS, no audio.
-
-Ends when the Mac says the person is gone (lost, then a full head sweep),
-after `seconds`, or when the task is cancelled (`task_cancel`: "stop" to the
-cancel-only voice session, or the task/stop service). Returns True if it locked
-onto the person at all.
+Needs the 8x8 ToF on the head and the drivetrain's velocity mode (firmware -vel): without
+them there is no safe way to drive among obstacles, and follow says so and stops.
 """
 
 from __future__ import annotations
 
 import logging
-import dataclasses
 import math
 import time
-from dataclasses import dataclass
 from typing import Callable, Optional, Tuple
 
-from robot_core import debug_upload, local_plan, settings, status, task_cancel, terrain
+from robot_core import debug_upload, settings, status, task_cancel
+from robot_core.nav.controller import LocalNav
+from robot_core.nav.stream import FrameStream
 from robot_core.sensors.camera import jpeg
 from robot_core.sensors.tof8x8 import range_in_box
 from robot_core.vision_client import VisionClient, VisionError
 
 log = logging.getLogger(__name__)
 
-MOVE_TIMEOUT_S = 30.0
-MIN_DRIVE_M = 0.08              # a drive cut shorter than this is not worth making
-RECHECK_S = 5.0                 # a hazard on the way seen longer ago than this is looked at again
-MARGIN_M = 0.2                  # the floor must be clear this far past the end of a drive
-FLOOR_MEMORY_S = 10.0           # floor seen clear is trusted this long: people and pets move
-LAST_SEEN_S = 30.0              # where they were last seen is a search hint this long
-FOLLOW_BUMP_TURN_DEG = 20.0     # after a bump, no drive until the robot has turned this far
-PERSON_CLEAR_M = 0.35           # the person's own legs are not a hazard to remember
-VIEW_TOP_M = 1.0                # tracking view: anything up to this high in the path is in the way. The head
-                                # looks up at the person, so a wall shows only above the robot (Nov 18: walls
-                                # at 0.3-0.8 m high were taken for table tops it passes under)
-BUMP_WALL = [(0.3, y / 10.0) for y in range(-4, 5)]   # a bump: something 0.8 m wide across the front, not a post
-DETOUR_LEGS = 3                 # legs of a way round driven per step before looking for the person
-DETOUR_MAX_TURN_DEG = 100.0     # a way round that starts by turning further (behind it, unseen) is not taken
-GLIDE_TURN_GAIN = 0.8           # gliding: turn rate (rad/s) per radian the person is off to the side
-GLIDE_MAX_TURN = 0.8            # rad/s
-GLIDE_DEADBAND_DEG = 3.0        # nearer ahead than this: no turning
-GLIDE_MAX_BEARING_DEG = 30.0    # further to the side: turn in place first
-GLIDE_SPEED_GAIN = 0.4          # forward speed (m/s) per metre of clear path: slows as it closes in
-GLIDE_SPIN_DEG = 8.0            # not driving and further off than this: a counted turn (tracks scrub
-                                # turning on the spot; a slow velocity spin barely moves)
-
-TURN_DEADBAND_DEG = 8.0         # tracked person nearer ahead than this: no turn
-TURN_GAIN = 0.7                 # turn this share of the camera's bearing: an uncalibrated turn can come
-                                # out up to ~2x on small angles, and a share of it settles instead of swinging
-DRIVE_MAX_BEARING_DEG = 25.0    # further to the side: turn first, drive next frame
+LAST_SEEN_S = 30.0              # where they were last seen is worth going to / a search hint this long
+LOST_KEEP_M = 0.3               # lost: go to this far short of where they were last seen
+LOST_GO_S = 8.0                 # ...for at most this long before the head search takes over
 WALK_MPS = 0.6                  # how fast a tracked person may have moved, for the tracker's doubt
+PERSON_CLEAR_M = 0.35           # round the person: their legs, not an obstacle
 
 Pose = Tuple[float, float, float]   # x, y (m), heading (rad, CCW) in the odometry frame
 
@@ -94,17 +52,14 @@ Pose = Tuple[float, float, float]   # x, y (m), heading (rad, CCW) in the odomet
 class PersonTracker:
     """Where the person stands, in the odometry frame, from the Mac's measurements.
 
-    Each tracking answer places them from the robot's pose when the frame was taken
-    (the robot stands still while the Mac answers, so that is the pose read just after
-    the capture): `distance_m` along `bearing_deg`. Readings are combined by how sure
-    each is (distance_sigma_m: a ToF range counts for far more than a box-size guess),
-    and the estimate's doubt grows by WALK_MPS for every second it is not seen, so a
-    person who walked on is taken at their new place. A reading far outside the doubt
-    (a lookalike, a bad range) is ignored once; twice running, it is believed.
-    The robot then turns to face the estimate and drives a leg toward it."""
+    Each tracking answer places them from the robot's pose when the frame was taken:
+    `distance_m` along `bearing_deg`. Readings are combined by how sure each is
+    (distance_sigma_m: a ToF range counts for far more than a box-size guess), and the
+    estimate's doubt grows by WALK_MPS for every second it is not seen, so a person who
+    walked on is taken at their new place. A reading far outside the doubt (a lookalike, a
+    bad range) is ignored once; twice running, it is believed."""
 
-    def __init__(self, keep_m: float, max_leg_m: float) -> None:
-        self.keep_m, self.max_leg_m = keep_m, max_leg_m
+    def __init__(self) -> None:
         self.xy: Optional[Tuple[float, float]] = None
         self.var = 0.0
         self.t = 0.0
@@ -120,340 +75,53 @@ class PersonTracker:
             return
         var = self.var + (WALK_MPS * max(0.0, t - self.t)) ** 2
         gap = math.hypot(z[0] - self.xy[0], z[1] - self.xy[1])
-        if gap > 3.0 * math.sqrt(var + r) + 0.3 and self.rejected < 1:
-            self.rejected += 1
-            return
         if gap > 3.0 * math.sqrt(var + r) + 0.3:
+            if self.rejected < 1:
+                self.rejected += 1
+                return
             self.xy, self.var, self.t, self.rejected = z, r, t, 0     # twice: it is real, start again there
             return
         k = var / (var + r)
         self.xy = (self.xy[0] + k * (z[0] - self.xy[0]), self.xy[1] + k * (z[1] - self.xy[1]))
         self.var, self.t, self.rejected = (1.0 - k) * var, t, 0
 
-    def move(self, now: Pose) -> Optional[Tuple[float, float, float]]:
-        """(turn_deg + right, drive_m, distance_m) toward the estimate from `now`, or None."""
-        if self.xy is None:
-            return None
-        dx, dy = self.xy[0] - now[0], self.xy[1] - now[1]
-        dist = math.hypot(dx, dy)
-        bearing = math.degrees(_wrap(math.atan2(dy, dx) - now[2]))       # + left
-        turn = -bearing if abs(bearing) > TURN_DEADBAND_DEG else 0.0
-        left = bearing + turn                                             # after the turn
-        drive = min(dist - self.keep_m, self.max_leg_m) \
-            if dist - self.keep_m >= MIN_DRIVE_M and abs(left) <= DRIVE_MAX_BEARING_DEG else 0.0
-        return round(turn, 1), round(max(0.0, drive), 2), round(dist, 2)
-
 
 def _wrap(a: float) -> float:
     return math.atan2(math.sin(a), math.cos(a))
 
 
-def _move(motion, fn, value: float, bumped: Optional[Callable[[], float]] = None) -> bool:
-    """Send one turn/drive and wait for it to finish: the next frame must be
-    taken standing still. True if the robot was bumped during it (then stopped)."""
-    if task_cancel.requested():
-        return False
-    t0 = time.monotonic()
-    res = fn(value)
-    if not res.get("ok"):
-        raise RuntimeError(f"move refused: {res.get('error')}")
-    deadline = t0 + MOVE_TIMEOUT_S
-    hit = lambda: bool(bumped) and (bumped() or 0.0) >= t0       # noqa: E731
-    while motion.busy():
-        if task_cancel.requested():
-            return False                             # the canceller braked; follow() ends
-        if hit():
-            motion.stop()
-            return True
-        if time.monotonic() > deadline:
-            raise RuntimeError("move timed out")
-        time.sleep(0.1)
-    if hit():                                        # bumped as it ended: brake all the same
-        motion.stop()
-        return True
-    return False
+def _planner(vision: VisionClient, radius_m: float):
+    """The Mac's global planner as LocalNav wants it: (pose, goal, local costmap) -> waypoints."""
+    def plan(pose, goal, local):
+        return vision.nav_plan(pose, goal, radius_m, local)
+    return plan
 
 
-@dataclass
-class _Seen:
-    """Floor seen clear: from `start` (a Pose) for `clear_m` straight ahead, at time `t`."""
-    start: Pose
-    clear_m: float
-    t: float
-
-    def left(self, pose: Optional[Pose], now: float) -> float:
-        """How much of it is still ahead of the robot; 0 once it no longer applies
-        (too old, turned off its line, or moved aside)."""
-        if pose is None or now - self.t > FLOOR_MEMORY_S:
-            return 0.0
-        x0, y0, th0 = self.start
-        dx, dy = pose[0] - x0, pose[1] - y0
-        along = dx * math.cos(th0) + dy * math.sin(th0)
-        side = -dx * math.sin(th0) + dy * math.cos(th0)
-        if abs(_wrap(pose[2] - th0)) > math.radians(8.0) or abs(side) > 0.08 or along < -0.05:
-            return 0.0
-        return max(0.0, self.clear_m - along)
-
-
-def _shorten(pts, p: terrain.Params, want_m: float) -> Tuple[float, Optional[str]]:
-    """How much of `want_m` may be driven over the floor `pts` (with MARGIN_M clear
-    after it): all of it, part of the way (up to `stop_short_m` before the first thing
-    in the way), or nothing. And why it is short, if it is."""
-    reach, why = want_m, None
-    for _ in range(4):
-        if reach < MIN_DRIVE_M:
-            return 0.0, why
-        t = terrain.classify(pts, p, reach + MARGIN_M)
-        if terrain.may_drive(t, p):
-            return reach, why
-        why = terrain.why_not(t)
-        if t.distance_m is None:                     # unknown floor: no distance to stop short of
-            return 0.0, why
-        reach = round(min(reach - p.cell_m, t.distance_m - p.stop_short_m), 2)
-    return 0.0, why
-
-
-def _turned(zones, turn_deg: float):
-    """Zones seen before a turn of `turn_deg` (+ right), as they lie after it."""
-    a = math.radians(turn_deg)                       # a right turn moves everything left (CCW)
-    c, s = math.cos(a), math.sin(a)
-    return [(r, col, x * c - y * s, x * s + y * c, h, d) for r, col, x, y, h, d in zones]
-
-
-def _in_the_way(zones, p: terrain.Params, person_m: Optional[float]) -> Optional[float]:
-    """The nearest thing in the robot's path in the tracking view: ahead of it, within
-    the path's width, higher than a step it could climb and lower than the robot
-    (a table top it passes under does not count), and nearer than the person by 0.3 m
-    (so not the person). None without the person's range: their legs would count."""
-    xs = [x for x, _ in _way_points(zones, p, person_m)]
-    return min(xs) if xs else None
-
-
-def _view_params(p: terrain.Params) -> terrain.Params:
-    """The tracking view's rules: the path as wide as the robot plus the planner's gap each
-    side (Nov 18: 2.5 cm each side let it clip a wall corner), and up to VIEW_TOP_M high."""
-    return dataclasses.replace(p, corridor_m=max(p.corridor_m, p.width_m + 2.0 * p.clearance_m),
-                               body_m=max(p.body_m, VIEW_TOP_M))
-
-
-def _felt(hazards, pose) -> None:
-    """Bumped into something the ToF did not see: remember a wall across the front, kept
-    even when the view looks clear (it looked clear before the bump too)."""
-    if hazards is not None and pose is not None:
-        hazards.add(pose, BUMP_WALL, felt=True)
-
-
-def _way_points(zones, p: terrain.Params, person_m: Optional[float]):
-    """(x, y) of the tracking-view zones that `_in_the_way` counts."""
-    if not zones or person_m is None:
-        return []
-    p = _view_params(p)
-    return [(x, y) for _, _, x, y, h, d in zones
-            if h is not None and x > p.near_m and abs(y) <= p.corridor_m / 2.0
-            and max(p.h_max_m, p.flat_tol_m) < h < p.body_m + 0.05 and d < person_m - 0.3]
-
-
-def _levelled(zones, p: terrain.Params):
-    """The tracking view's zones with heights measured from the floor in front (as the
-    floor scan's): floor noise on the near rows must not read as something in the way."""
-    if not zones or not p.auto_level:
-        return zones
-    lv, fit = terrain.level([(x, y, h) for _, _, x, y, h, _ in zones])
-    if fit is None:
-        return zones
-    return [(r, c, x, y, h2, d) for (r, c, x, y, _, d), (_, _, h2) in zip(zones, lv)]
-
-
-def _radius(p: terrain.Params) -> float:
-    """How far the robot's middle keeps from a hazard when planning: half the path, plus a gap
-    (the ToF sees only an obstacle's near side, so its far side needs room too)."""
-    return local_plan.radius(p)
-
-
-def _remember(hazards, pose: Optional[Pose], pts_base, person_xy) -> None:
-    if hazards is None or pose is None or not pts_base:
-        return
-    hazards.add(pose, pts_base)
-    if person_xy is not None:
-        hazards.forget_near(person_xy, PERSON_CLEAR_M)
-
-
-def _plan_drive(head, want_m: float, zones, person_m: Optional[float], seen: Optional[_Seen],
-                pose: Optional[Pose], now: float, hazards=None, person_xy=None,
-                check_known: bool = True, watched: bool = False) -> Tuple[float, Optional[str], Optional[_Seen]]:
-    """How far to drive of `want_m`: (metres, why short or None, floor now known clear).
-    `zones` is the tracking view, already turned to the heading the drive starts from.
-    `hazards` (local_plan.Hazards): what made earlier drives unsafe; a drive into one is
-    refused without looking again (unless `check_known` is False: a leg of a way round
-    that was planned round them), and what this check finds is added to it.
-    `watched`: the drive will be watched as it goes (_drive): it may run past the floor
-    seen now, and the far look is not needed.
-    Without the 8x8 ToF: all of it, unchecked, as before."""
-    if not head or not getattr(head, "has_grid", False) or task_cancel.requested():
-        return want_m, None, seen
-    p = head.terrain
-    limit, why = want_m, None
-    # Something remembered on the way: seen in the last RECHECK_S, refused without looking again;
-    # older, looked at again (Nov 18: one false reading refused every drive for two minutes), and
-    # a fresh look that finds the way clear forgets it.
-    recheck = False
-    if check_known and hazards is not None and pose is not None:
-        end = (pose[0] + limit * math.cos(pose[2]), pose[1] + limit * math.sin(pose[2]))
-        if not local_plan.line_clear(pose[:2], end, hazards.points(RECHECK_S), _radius(p)):
-            return 0.0, "known hazard", seen
-        recheck = not local_plan.line_clear(pose[:2], end, hazards.points(), _radius(p))
-    near = _in_the_way(zones, p, person_m)           # anything up to the robot's height (#4)
-    if near is not None:                             # all of it across the view, not just the path
-        _remember(hazards, pose, local_plan.hazards_from_floor(
-            [(x, y, h) for _, _, x, y, h, d in zones if d < person_m - 0.3], _view_params(p)), person_xy)
-    if recheck:
-        if not zones or near is not None:            # nothing new seen to clear it
-            return 0.0, "known hazard", seen
-        for i in range(int(limit / 0.1) + 1):        # the tracking view sees the way clear now
-            hazards.forget_near((pose[0] + i * 0.1 * math.cos(pose[2]), pose[1] + i * 0.1 * math.sin(pose[2])),
-                                _radius(p))
-        if not local_plan.line_clear(pose[:2], end, hazards.points(), _radius(p)):
-            return 0.0, "known hazard", seen         # what it bumped into is still there
-        log.info("follow: way seen clear for %.2f m: remembered hazards there forgotten", limit)
-    if near is not None and near - p.stop_short_m < limit:
-        limit, why = max(0.0, round(near - p.stop_short_m, 2)), f"in the way at {near:.2f} m"
-    if limit < MIN_DRIVE_M:
-        return 0.0, why, seen
-
-    # The floor is not judged here: drops are the TF-Luna's (the drivetrain brakes, reported as a
-    # bump), and the head never looks down (Nov 18: ToF floor checks refused clear floor every time).
-    return limit, why, seen
-
-
-def _watching(head) -> bool:
-    """Can the floor be watched while driving (the 8x8 ToF on a real Head)?"""
-    return bool(head) and getattr(head, "has_grid", False) and hasattr(head, "floor_profile") \
-        and hasattr(head, "drive_pose")
-
-
-def _drive(head, motion, go_m: float, bumped, hazards, pose, person_xy, seq: int) -> bool:
-    """Drive `go_m`; True if bumped (as _move), the TF-Luna's drop brake included."""
-    return _move(motion, motion.drive, go_m, bumped)   # the head stays on the person
-
-
-def _glide_tilt(head) -> float:
-    """The head angle while gliding: level (plus FOLLOW_GLIDE_TILT_DEG) in reality, i.e.
-    after the head's own upward tilt at its straight position."""
-    return settings.FOLLOW_GLIDE_TILT_DEG - getattr(head.geom, "tilt_offset_deg", 0.0)
-
-
-def _glide_step(head, motion, res: dict, rng, here, pose, hazards, seen, gliding: bool, seq: int):
-    """B: one frame of following by steering (motion.velocity). Turn toward the person
-    in proportion to their bearing; drive at a speed set by the clear path ahead, judged
-    on this frame's grid (the head held level sees the floor 0.5-1.3 m ahead and the
-    person both); nothing to drive and only a turn left: turn in place. Returns (gliding,
-    seen), or None when the way ahead is blocked: the caller stops and falls back to a
-    step (and a way round) this frame."""
-    p = head.terrain
-    person = res.get("distance_m") or rng
-    bearing = res["bearing_deg"]                      # + left, as the head
-    w = 0.0 if abs(bearing) < GLIDE_DEADBAND_DEG else \
-        max(-GLIDE_MAX_TURN, min(GLIDE_MAX_TURN, GLIDE_TURN_GAIN * math.radians(bearing)))
-    v, clear = 0.0, 0.0
-    want = min(person - settings.FOLLOW_KEEP_M, settings.FOLLOW_MAX_DRIVE_M) if person else 0.0
-    person_xy = None
-    if here and person:
-        a = here[2] + math.radians(bearing)
-        person_xy = (here[0] + person * math.cos(a), here[1] + person * math.sin(a))
-    if want >= MIN_DRIVE_M and abs(bearing) <= GLIDE_MAX_BEARING_DEG:
-        if not gliding:                               # from standing: the floor right in front first
-            go, _, seen = _plan_drive(head, want, [], person, seen, pose(), time.monotonic(), hazards,
-                                      person_xy, watched=True)
-            if go < MIN_DRIVE_M:
-                motion.velocity(0.0, 0.0)
-                return None
-        zones = _levelled(head.zones(), p)
-        pts = [(x, y, h) for _, _, x, y, h, _ in zones]
-        _remember(hazards, pose(), local_plan.hazards_from_floor(
-            pts, p, (head.geom.pan_axis_x_m, head.geom.height_m)), person_xy)
-        clear, why = _shorten(pts, p, want)
-        near = _in_the_way(zones, p, person)
-        if near is not None:
-            clear, why = min(clear, near - p.stop_short_m), f"in the way at {near:.2f} m"
-        at = pose()
-        if at is not None and hazards is not None and not local_plan.line_clear(
-                at[:2], (at[0] + clear * math.cos(at[2]), at[1] + clear * math.sin(at[2])),
-                hazards.points(), _radius(p)):
-            clear, why = 0.0, "known hazard"
-        if clear < MIN_DRIVE_M:
-            motion.velocity(0.0, 0.0)
-            log.info("follow %d: glide stopped, path %s", seq, why)
-            status.detail(f"path {why}")
-            return None
-        v = min(settings.FOLLOW_GLIDE_MAX_MPS, GLIDE_SPEED_GAIN * clear)
-    if v == 0.0:                                      # turning only: on the spot, as a step does
-        motion.velocity(0.0, 0.0)
-        if abs(bearing) >= GLIDE_SPIN_DEG:
-            turn = res.get("turn_deg") or round(-0.6 * bearing, 1)
-            log.info("follow %d: glide turn %+.0f deg on the spot", seq, turn)
-            _move(motion, motion.turn, turn)
-        return False, seen
-    motion.velocity(v, w)
-    log.info("follow %d: glide %.2f m/s, turn %+.0f deg/s (clear %.2f m)", seq, v, math.degrees(w), clear)
-    status.detail(f"following {person or 0:.1f} m")
-    return (v > 0.0 or w != 0.0), seen
-
-
-def _detour(head, motion, hazards, want_m: float, person_xy, pose, bumped, seq: int) -> Optional[_Seen]:
-    """The straight drive is blocked: plan a way round what is known (local_plan) and
-    drive its first leg, checked like any drive; then face the person again so the next
-    frame sees them. Returns the floor now known clear (None)."""
-    here = pose()
-    if here is None:
-        return None
-    p = head.terrain
-    goal = (here[0] + want_m * math.cos(here[2]), here[1] + want_m * math.sin(here[2]))
-    path = local_plan.plan(here[:2], goal, hazards.points(), _radius(p))
-    if not path or len(path) < 2:
-        log.info("follow %d: no way round (%d hazard points known)", seq, len(hazards.points()))
-        status.detail("no way round")
-        return None
-    if abs(local_plan.leg(here, path[1])[0]) > DETOUR_MAX_TURN_DEG:
-        log.info("follow %d: way round starts behind the robot: not taken", seq)
-        status.detail("no way round ahead")
-        return None
-    log.info("follow %d: detour, %d legs via %s", seq, len(path) - 1,
-             [(round(x, 2), round(y, 2)) for x, y in path[1:]])
-    status.detail("going round")
-    for wp in path[1:DETOUR_LEGS + 1]:                # each leg: turn, check the floor, drive
-        if task_cancel.requested():
-            return None
-        at = pose() or here
-        turn, dist = local_plan.leg(at, wp)
-        if abs(turn) > 3.0:
-            _move(motion, motion.turn, round(turn, 1))
-        want = round(min(dist, settings.FOLLOW_MAX_DRIVE_M), 2)
-        go, short, _ = _plan_drive(head, want, [], None, None, pose(), time.monotonic(), hazards, person_xy,
-                                   check_known=False, watched=_watching(head))
-        if short:
-            log.info("follow %d: detour leg %.2f of %.2f m, path %s", seq, go, want, short)
-        if go > 0.0 and _drive(head, motion, go, bumped, hazards, pose, person_xy, seq):
-            _felt(hazards, pose())
-            break
-        if go < want - 0.02:                          # something new on the way round: re-plan next step
-            break
-    if person_xy is not None:                         # look at them again for the next frame
-        back, _ = local_plan.leg(pose() or here, person_xy)
-        if abs(back) > 8.0:
-            _move(motion, motion.turn, round(back, 1))
-    return None
+def _nav_tilt(head) -> float:
+    """The head angle while driving: FOLLOW_NAV_TILT_DEG above the real horizon (the head
+    looks tilt_offset_deg up at its straight position). Level, the camera sees the person's
+    body and the ToF the floor from ~0.4 m out, up past the robot's height."""
+    return settings.FOLLOW_NAV_TILT_DEG - getattr(head.geom, "tilt_offset_deg", 0.0)
 
 
 def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
            seconds: float = settings.FOLLOW_SECONDS,
            clock: Callable[[], float] = time.monotonic,
            pose: Optional[Callable[[], Optional[Pose]]] = None,
-           bumped: Optional[Callable[[], float]] = None) -> bool:
+           bumped: Optional[Callable[[], float]] = None,
+           twist: Optional[Callable[[], Optional[Tuple[float, float]]]] = None) -> bool:
     """Follow `name` (empty: whichever enrolled person is seen first).
 
     `pose()`: the robot's (x, y, heading) in the odometry frame, or None (unknown).
-    `bumped()`: time.monotonic() of the last bump the drivetrain reported (0: none)."""
+    `bumped()`: time.monotonic() of the last bump/stall/slip/climb the drivetrain reported.
+    `twist()`: the measured (v m/s, w rad/s), or None."""
     pose = pose or (lambda: None)
+    if not (head and getattr(head, "has_grid", False) and getattr(motion, "can_glide", lambda: False)()):
+        why = "needs the 8x8 ToF and velocity firmware"
+        log.warning("follow failed: %s", why)
+        status.error("F02", why)
+        status.result("follow failed")
+        return False
     if vision.follow_start(name) is None:
         why = f"{name or 'nobody'} not enrolled"
         log.warning("follow failed: %s", why)
@@ -461,149 +129,91 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
         status.detail(why)
         status.result("follow failed")
         return False
-    lidar = getattr(head, "lidar", None) if head else None
-    if head:
-        head.gimbal.move_to(0.0, settings.FOLLOW_TILT_DEG, wait=True)
-        head.gimbal.wait_settled()
+    nav = LocalNav(head, motion, pose, twist=twist, bumped=bumped, tilt_deg=_nav_tilt(head))
+    nav.planner = _planner(vision, nav.params.radius_m)
+    stream = FrameStream(camera, head.gimbal, nav.pose, send=getattr(vision, "nav_frame", None),
+                         tilt_offset_deg=head.geom.tilt_offset_deg).start()
+    nav.start()
+    nav.look(0.0, settings.FOLLOW_TILT_DEG)              # face height until locked on
     status.timer(f"follow {name}".strip(), seconds)
     res: dict = {}
-    why = ""                                          # why the follow failed, if it did
-    seen: Optional[_Seen] = None                      # floor known clear (#3)
-    last_seen: Optional[Tuple[float, float]] = None   # (heading of the person in the odom frame, when) (#5)
-    owed_turn = 0.0                                   # degrees still to turn away after a bump (#7)
-    hazards = local_plan.Hazards() if head and getattr(head, "has_grid", False) else None   # what blocked drives
-    glide = settings.FOLLOW_GLIDE and _watching(head) and getattr(motion, "can_glide", lambda: False)()
-    gliding, glide_t = False, 0.0                     # moving under motion.velocity right now, since
-    tracker = PersonTracker(settings.FOLLOW_KEEP_M, settings.FOLLOW_MAX_DRIVE_M)   # the Pi decides the moves
-    if glide:
-        log.info("follow: gliding (velocity mode)")
-    t0, seq = clock(), 0
+    why = ""
+    tracker = PersonTracker()
+    last_seen: Optional[Tuple[float, float]] = None       # (heading of the person in the odom frame, when)
+    lost_go: Optional[float] = None                       # when it set off to where they were last seen
+    lost_done = False                                     # went there already, this loss
+    t0, seq, last_frame = clock(), 0, 0
     try:
         while clock() - t0 < seconds and not task_cancel.requested():
-            frame = camera.capture(head.gimbal) if head else camera.capture()
-            here = pose()                             # where the robot is for this frame
+            frame, here = stream.latest(newer_than=last_frame)
+            last_frame = frame.seq
             seq += 1
-            grid = None
-            if lidar is not None and hasattr(lidar, "grid"):     # 8x8 ToF: the zones on the person
-                h, w = frame.main.shape[:2]
-                grid = lidar.grid()
-                rng: Optional[float] = range_in_box(grid, res.get("bbox"), w, h, head.geom.hfov_deg)
-            else:
-                rng = lidar.read(n=5, timeout=0.5) if lidar else None
-            hint = None                               # where they were last seen, from here (+ left)
+            h, w = frame.main.shape[:2]
+            grid = head.lidar.grid()
+            rng = range_in_box(grid, res.get("bbox"), w, h, head.geom.hfov_deg) if grid else None
+            hint = None                                   # where they were last seen, from here (+ left)
             if last_seen and here and time.monotonic() - last_seen[1] < LAST_SEEN_S:
                 hint = round(math.degrees(_wrap(last_seen[0] - here[2])), 1)
             img = jpeg(frame.main, settings.FACE_WIRE_LONG_EDGE)
             res = vision.follow_step(
-                img, seq,
-                pan_deg=frame.pan_deg, tilt_deg=frame.tilt_deg,
-                hfov_deg=head.geom.hfov_deg if head else 66.0,
-                camera_height_m=head.geom.height_m if head else 0.25, range_m=rng,
-                tof_grid=grid.rows if grid is not None else None, hint_deg=hint)
-            log.info("follow %d: %s %s, bearing %s, %s m (%s), turn %s, drive %s", seq, res["state"],
-                     res.get("target") or "-", res.get("bearing_deg"), res.get("distance_m"),
-                     res.get("distance_from"), res.get("turn_deg"), res.get("drive_m"))
-            status.detail(f"{res['state']} {res.get('distance_m') or ''}")
-            if res["state"] == "gone":
+                img, seq, pan_deg=frame.pan_deg, hfov_deg=head.geom.hfov_deg,
+                tilt_deg=frame.tilt_deg + head.geom.tilt_offset_deg,     # the REAL tilt: the head looks up at 0
+                camera_height_m=head.geom.height_m, range_m=rng,
+                tof_grid=grid.rows if grid is not None else None, hint_deg=hint, pose=here)
+            state = res["state"]
+            log.info("follow %d: %s %s, bearing %s, %s m (%s); nav %s %s", seq, state, res.get("target") or "-",
+                     res.get("bearing_deg"), res.get("distance_m"), res.get("distance_from"), nav.state, nav.detail)
+            status.detail(f"{state} {res.get('distance_m') or ''}")
+            if state == "gone":
                 break
-            if res["state"] == "tracking" and here and res.get("bearing_deg") is not None:
-                last_seen = (here[2] + math.radians(res["bearing_deg"]), time.monotonic())
-                d = res.get("distance_m") or rng
-                if d and res.get("distance_from") != "near":
-                    tracker.update(here, res["bearing_deg"], d, res.get("distance_sigma_m"), time.monotonic())
-                    mv = None if glide else tracker.move(pose() or here)   # gliding steers by itself
-                    if mv:
-                        # The TURN comes from this frame's bearing (relative to the robot, so a heading
-                        # that is off or late cannot make it chase a spot where nobody is: Nov 18, it
-                        # spun on the spot); the tracker's smoothed DISTANCE sizes the leg.
-                        b = res["bearing_deg"]
-                        turn = round(-TURN_GAIN * b, 1) if abs(b) > TURN_DEADBAND_DEG else 0.0
-                        drive = round(min(mv[2] - settings.FOLLOW_KEEP_M, settings.FOLLOW_MAX_DRIVE_M), 2) \
-                            if mv[2] - settings.FOLLOW_KEEP_M >= MIN_DRIVE_M and abs(b + turn) <= DRIVE_MAX_BEARING_DEG \
-                            else 0.0
-                        res = {**res, "turn_deg": turn, "drive_m": drive, "distance_m": mv[2]}
-                        log.info("follow %d: bearing %+.0f, tracked at %.2f m: turn %+.0f, drive %.2f",
-                                 seq, b, mv[2], turn, drive)
-            # The Mac drives only to 1.2 m from them; the Pi goes on to FOLLOW_KEEP_M (same 25 deg rule,
-            # judged after this frame's turn: Nov 18, 29 deg off meant turn and never drive).
+            if state == "tracking" and here and res.get("bearing_deg") is not None:
+                b, d = res["bearing_deg"], res.get("distance_m") or rng
+                last_seen = (here[2] + math.radians(b), time.monotonic())
+                lost_go, lost_done = None, False
+                nav.release_head()
+                if res.get("distance_from") == "near":    # they fill the frame: close enough, face them
+                    a = here[2] + math.radians(b)
+                    spot = (here[0] + math.cos(a), here[1] + math.sin(a))
+                    nav.set_goal(spot, keep_m=1.0)
+                    nav.set_focus(spot, PERSON_CLEAR_M)
+                elif d:
+                    tracker.update(here, b, d, res.get("distance_sigma_m"), time.monotonic())
+                    nav.set_goal(tracker.xy, keep_m=settings.FOLLOW_KEEP_M)
+                    nav.set_focus(tracker.xy, PERSON_CLEAR_M)
+            elif state == "searching" and res.get("locked") and not lost_done and tracker.xy is not None \
+                    and last_seen and time.monotonic() - last_seen[1] < LAST_SEEN_S:
+                # Lost them: go to where they were last seen (round a corner, through a door) first.
+                if lost_go is None:
+                    lost_go = time.monotonic()
+                    log.info("follow %d: lost, going to where they were last seen", seq)
+                    status.detail("going where last seen")
+                    nav.release_head()
+                    nav.set_focus(None)
+                if nav.arrived() or time.monotonic() - lost_go > LOST_GO_S:
+                    lost_done = True
+                    nav.set_goal(None)
+                else:
+                    nav.set_goal(tracker.xy, keep_m=LOST_KEEP_M, face=False)
+            elif state == "searching":
+                look = res.get("head") or [0, 0]          # the Mac's search sweep: the robot stands, the head looks
+                nav.set_goal(None)
+                if res.get("turn_deg") and here:          # they were behind it: turn that way (+ right)
+                    a = here[2] - math.radians(res["turn_deg"])
+                    nav.set_goal((here[0] + math.cos(a), here[1] + math.sin(a)), keep_m=1.0)
+                nav.look(look[0], settings.FOLLOW_TILT_DEG + look[1])
             debug_upload.offer_event(img, {                 # debug mode: this frame, the Mac's answer, the decision
-                "task": "follow", "seq": seq, "state": res["state"], "target": res.get("target"),
+                "task": "follow", "seq": seq, "state": state, "target": res.get("target"),
                 "bearing_deg": res.get("bearing_deg"), "distance_m": res.get("distance_m"),
-                "distance_from": res.get("distance_from"), "turn_deg": res["turn_deg"], "drive_m": res["drive_m"],
-                "range_m": rng, "pose": here, "pose_now": pose(), "head": res.get("head"),
-                "busy": motion.busy()}, grid.rows if grid is not None else None, getattr(frame, "seq", None))
-            near_m, drive_m = res.get("distance_m") or rng, res["drive_m"]
-            if res["state"] == "tracking" and near_m \
-                    and abs((res.get("bearing_deg") or 0.0) + res["turn_deg"]) <= DRIVE_MAX_BEARING_DEG \
-                    and near_m - settings.FOLLOW_KEEP_M >= MIN_DRIVE_M:
-                drive_m = max(drive_m, round(min(near_m - settings.FOLLOW_KEEP_M, settings.FOLLOW_MAX_DRIVE_M), 2))
-            zones = []                                # the tracking view, for the path check (#3, #4)
-            if drive_m and head and getattr(head, "has_grid", False):
-                zones = _levelled(head.zones(), head.terrain)
-            look = res.get("head")
-            if head and look:
-                tracking = res.get("locked") and res["state"] in ("tracking", "holding")
-                base = settings.FOLLOW_TILT_DEG if not tracking else settings.FOLLOW_TRACK_TILT_DEG
-                if glide and tracking:
-                    base = _glide_tilt(head)
-                fast = getattr(head.gimbal, "fast_dps", None) if res["state"] == "searching" else None
-                head.gimbal.move_to(look[0], base + look[1], speed_dps=fast, wait=True)   # search: quicker, still ramped
-                head.gimbal.wait_settled()
-            if glide and gliding and bumped and (bumped() or 0.0) >= glide_t:
-                motion.velocity(0.0, 0.0)             # hit something the ToF did not see (#7)
-                log.warning("follow %d: bumped while gliding; stopped", seq)
-                status.detail("bumped: something unseen")
-                _felt(hazards, pose())
-                gliding, seen, owed_turn = False, None, FOLLOW_BUMP_TURN_DEG
-            if glide and res["state"] == "tracking" and res.get("locked") and res.get("bearing_deg") is not None \
-                    and owed_turn <= 0.0:
-                done = _glide_step(head, motion, res, rng, here, pose, hazards, seen, gliding, seq)
-                if done is not None:
-                    if done[0] and not gliding:
-                        glide_t = time.monotonic()
-                    gliding, seen = done
-                    continue
-                gliding = False                       # blocked: a step (and a way round) this frame
-            elif glide and gliding:
-                motion.velocity(0.0, 0.0)             # lost them, or turning away after a bump: stop
-                gliding = False
-            if res["turn_deg"]:
-                _move(motion, motion.turn, res["turn_deg"])
-                owed_turn = max(0.0, owed_turn - abs(res["turn_deg"]))
-            if drive_m and owed_turn > 0.0:
-                log.info("follow %d: drive skipped, bumped here: turn %.0f deg more first", seq, owed_turn)
-                status.detail("bumped: turn away first")
-            elif drive_m:
-                person = res.get("distance_m") or rng
-                want = drive_m                        # the Mac caps a step at 0.5 m: go up to keep distance
-                if person:
-                    want = round(max(want, min(person - settings.FOLLOW_KEEP_M, settings.FOLLOW_MAX_DRIVE_M)), 2)
-                person_xy = None                      # where they stand, in the odometry frame
-                if here and person and res.get("bearing_deg") is not None:
-                    a = here[2] + math.radians(res["bearing_deg"])
-                    person_xy = (here[0] + person * math.cos(a), here[1] + person * math.sin(a))
-                go, short, seen = _plan_drive(head, want, _turned(zones, res["turn_deg"]),
-                                              person, seen, pose(), time.monotonic(), hazards, person_xy,
-                                              watched=_watching(head))
-                if short:
-                    log.info("follow %d: drive %.2f of %.2f m, path %s", seq, go, want, short)
-                    status.detail(f"path {short}")
-                if go > 0.0 and _drive(head, motion, go, bumped, hazards, pose, person_xy, seq):
-                    log.warning("follow %d: bumped into something the ToF did not see; stopped", seq)
-                    status.detail("bumped: something unseen")
-                    seen = None                   # the remembered wall makes the next drive go round it;
-                    _felt(hazards, pose())        # without a pose to remember it by, turn away first
-                    owed_turn = 0.0 if hazards is not None and pose() is not None else FOLLOW_BUMP_TURN_DEG
-                elif go <= 0.0 and short and hazards is not None:
-                    seen = _detour(head, motion, hazards, want, person_xy, pose, bumped, seq)
+                "distance_from": res.get("distance_from"), "range_m": rng, "pose": here, "pose_now": nav.pose(),
+                "goal": nav.goal, "nav": nav.state, "nav_detail": nav.detail, "cmd": nav.cmd,
+                "waypoints": nav.waypoints[:6], "reflex_trips": nav.reflex.trips, "head": res.get("head")},
+                grid.rows if grid is not None else None, frame.seq)
     except (VisionError, RuntimeError) as exc:       # RuntimeError: camera or drivetrain gave up
         log.warning("follow ended: %s", exc)
         why = f"vision error: {exc}" if isinstance(exc, VisionError) else str(exc)
     finally:
-        if glide:
-            motion.velocity(0.0, 0.0)
-        if motion.busy():
-            motion.stop()
+        nav.stop()
+        stream.stop()
         try:
             vision.follow_stop()
         except VisionError:

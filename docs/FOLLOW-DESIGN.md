@@ -16,6 +16,33 @@ records the simple first version. **It amends `VISION-DESIGN.md`** (§4.6
 > - Gyro turn corrections are off (`turn_trim: false`).
 > - The TF-Luna drop guard reports `drop`, which is treated like a bump.
 
+> **Superseded (Nov 19 2026): a hierarchical nav stack.** Follow no longer turns and drives legs.
+> The perception loop (`robot_core/follow.py`) only says where the person is; driving is the
+> nav stack's (`robot_core/nav/`, Pi) and the global planner's (`vision_service/nav_api.py`, Mac).
+> Parts 2-3 below describe the old stop-and-go loop and are kept for the Mac's identity logic,
+> which is unchanged.
+>
+> | Subsystem | Runs on | Code | Rate |
+> |---|---|---|---|
+> | Emergency reflex: a ToF zone under 25 cm where the robot is going, or a bump/stall/slip/climb from the drivetrain | Pi | `nav/reflex.py` | 50 Hz loop, reacts within 20 ms of each ToF grid (the SEN0628 gives ~5 grids/s on I2C) |
+> | Rolling costmap: 4 x 4 m, 5 cm, every ToF grid placed by the gimbal angle at measurement + odometry/gyro; rays clear, evidence fades | Pi | `nav/costmap.py` | every grid |
+> | DWA: (v, w) from the dynamic window round measured v and gyro w, arcs scored on progress, heading, clearance, speed | Pi | `nav/dwa.py`, `nav/controller.py` | 20 Hz, streamed as /cmd_vel |
+> | Local Theta* on the costmap: the fallback route when the Mac's waypoints are missing or older than 3 s (network fail-safe) | Pi | `nav/plan.py` | 2 Hz, own thread |
+> | Gimbal aim: look-ahead into the turn, +-45 deg sweep on straights, centred on the person while following; glance along the way when it has not been seen for 1.2 s (slowing to 0.08 m/s meanwhile) | Pi | `nav/aim.py` | 20 Hz targets, 50 Hz servo thread |
+> | Camera stream to the Mac (JPEG + pose + pan/real tilt) | Pi | `nav/stream.py` | 10 Hz |
+> | Global map (the Pi's costmap folded in, camera-detected furniture added) + Theta* waypoints | Mac | `nav_map.py`, `nav_api.py` | ~1 Hz per request |
+> | Visual SLAM: ORB-SLAM3 monocular; scale and level from odometry, camera-to-base through the gimbal; gives odom_to_map | Mac | `vslam.py` (install: `deploy/install_orbslam3_macos.sh`) | stream rate |
+>
+> Margins line up: DWA keeps the robot's centre 0.31 m (radius 0.19 + 0.12) from anything, so
+> head-on the ToF stays outside the reflex's 25 cm; a 0.75 m door is passable. Stuck (encoders
+> gaining while what is straight ahead does not get nearer, or nose up 12 deg) stops, takes the
+> slipped metres out of the pose and backs off 10 cm. Turns and straight drives are closed on the
+> gyro in the drivetrain (`turn_held`, `drive_heading_hold`); a held drive pushed 12 deg off its
+> heading, or a held turn the gyro sees going nowhere, is reported as "slipping". Encoder-counted
+> moves are for gestures only; the encoder sync-error diagnostics and counted turn trims are gone.
+> Follow needs the 8x8 ToF and velocity firmware; without them it says so and does not drive.
+> `replay_debug.py <debug session>` replays a recorded session through the stuck and reflex rules.
+
 ## Part 0 — What this changes in PLAN.md / VISION-DESIGN.md
 
 | Was | Now | Why |

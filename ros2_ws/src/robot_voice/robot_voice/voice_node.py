@@ -85,6 +85,7 @@ _motion = None                               # RosMotion, set in main(); follow 
 _pitch = [None]                              # the robot's nose-up angle from /motion_health; None = no IMU
 _pose = [None]                               # (x, y, heading) from /odom; None until the first message
 _bump_t = [0.0]                              # time.monotonic() of the last "bumped" in /motion_health
+_twist = [None]                              # (v m/s, w rad/s) from /odom; w is the gyro's with the IMU
 _explore_stop = None                         # explore/stop client, set in main()
 
 
@@ -155,7 +156,7 @@ def _run_task(task: str, name: str) -> bool:
         if task == "follow":
             from robot_core import follow
             return follow.follow(camera, vision, _motion, name, head=head,
-                                 pose=lambda: _pose[0], bumped=lambda: _bump_t[0])
+                                 pose=lambda: _pose[0], bumped=lambda: _bump_t[0], twist=lambda: _twist[0])
         return face_tasks.match(camera, vision, head=head) is not None
     finally:
         if gimbal:
@@ -232,12 +233,14 @@ def main(args=None) -> None:
 
     node.create_service(Trigger, "task/stop", _on_task_stop)
 
-    # The robot's pitch (IMU, via the drivetrain node), for the floor check in follow.
+    # The robot's pitch (IMU, via the drivetrain node): ToF projection and climb detection in follow.
     from robot_interfaces.msg import MotionHealth
 
     def _on_health(m) -> None:
         _pitch[0] = m.pitch_deg if m.imu_known else None
-        if m.state in ("bumped", "drop"):            # a drop under the TF-Luna: treated like a bump
+        # A bump, a drop, or the drivetrain braking a stuck move (stalled, slipping, climbing:
+        # "tilted"): follow treats them all as hitting something it did not see.
+        if m.state in ("bumped", "drop", "stalled", "slipping", "tilted"):
             _bump_t[0] = time.monotonic()
 
     from rclpy.callback_groups import ReentrantCallbackGroup
@@ -252,6 +255,7 @@ def main(args=None) -> None:
     def _on_odom(m) -> None:
         q = m.pose.pose.orientation
         _pose[0] = (m.pose.pose.position.x, m.pose.pose.position.y, 2.0 * math.atan2(q.z, q.w))
+        _twist[0] = (m.twist.twist.linear.x, m.twist.twist.angular.z)
         _pose_t[0] = time.monotonic()
 
     node.create_subscription(Odometry, "odom", _on_odom, 10, callback_group=topics)

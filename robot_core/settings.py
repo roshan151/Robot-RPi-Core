@@ -62,7 +62,6 @@ DEFAULT_SPEED_PERCENT = _env("ROBOT_DEFAULT_SPEED_PCT", "80.0", float)
 DEFAULT_TURN_DEGREES = _env("ROBOT_DEFAULT_TURN_DEG", "90", float)
 DEFAULT_MOVE_METERS = _env("ROBOT_DEFAULT_MOVE_M", "1.0", float)
 MAX_DRIVE_METERS = _env("ROBOT_MAX_DRIVE_M", "5.0", float)         # enforced in code, not the prompt
-ENCODER_SYNC_WARN_RATIO = _env("ROBOT_SYNC_WARN_RATIO", "0.10", float)   # left/right skew that logs a warning
 ENCODER_SETTLE_S = _env("ROBOT_ENCODER_SETTLE_S", "0.15", float)         # only for old firmware
 
 # --- Gemini (one API key for the Live session and the speech) -----------------
@@ -152,17 +151,9 @@ FACE_SEARCH_TILTS = (0.0, 30.0, 50.0)                            # never below l
 FACE_MIN_QUALITY = 0.6
 FOLLOW_SECONDS = _env("ROBOT_FOLLOW_S", "300", float)            # follow mode ends after this
 FOLLOW_TILT_DEG = _env("ROBOT_FOLLOW_TILT", "20", float)         # head tilt while finding them: the face
-FOLLOW_TRACK_TILT_DEG = _env("ROBOT_FOLLOW_TRACK_TILT", "10", float)  # once locked on: body and feet
 FOLLOW_KEEP_M = _env("ROBOT_FOLLOW_KEEP_M", "0.5", float)          # stop this far from the person (the Mac keeps 1.2)
-FOLLOW_MAX_DRIVE_M = _env("ROBOT_FOLLOW_MAX_DRIVE_M", "1.5", float)  # longest drive per step (the Mac caps at 0.5);
-                                                                    # watched as it goes, so past the floor seen at the start
-FOLLOW_GLIDE = _flag("ROBOT_FOLLOW_GLIDE", "0")
-                                    # 1: follow by steering continuously (/cmd_vel, firmware v6) instead of legs.
-                                    # Off: with the ToF on the gimbal the path is only watched during a leg
-                                    # (head in the drive pose), not while the head is on the person
-FOLLOW_GLIDE_MAX_MPS = _env("ROBOT_FOLLOW_GLIDE_MAX_MPS", "0.2", float)   # gliding top speed
-FOLLOW_GLIDE_TILT_DEG = _env("ROBOT_FOLLOW_GLIDE_TILT", "0", float)       # gliding head angle above level: the
-                                    # camera sees the person and the ToF the floor 0.5-1.3 m ahead
+FOLLOW_NAV_TILT_DEG = _env("ROBOT_FOLLOW_NAV_TILT", "0", float)    # head angle above level while driving: the
+                                    # camera sees the person's body, the ToF the floor from ~0.4 m out
 FACE_MIN_SHOTS = 5
 # Long edge of frames sent for faces and follow. Faces need the pixels: with the
 # wide USB HD lens a 640 px frame leaves a face at 2 m ~18 px wide (useless), the

@@ -153,9 +153,20 @@ class Head:
         grid = self.lidar.grid(newer_than=time.monotonic())
         if grid is None:
             return []
-        pan, tilt = (math.radians(a) for a in self.gimbal.angles())
+        return self.project(grid.rows, *self.gimbal.angles())
+
+    def project(self, rows, pan_deg: float, tilt_deg: float, pitch_deg: Optional[float] = None,
+                min_range_m: Optional[float] = None):
+        """`_zones()` for any grid's `rows` taken at gimbal (pan_deg, tilt_deg), without waiting:
+        what the nav stack calls with the head's angles at the moment the grid was measured, as
+        the head keeps moving. `pitch_deg` None: the IMU's now. `min_range_m`: nearer readings
+        are dropped as the robot itself (default geom.self_range_m; the reflex wants them all)."""
+        near = self.geom.self_range_m if min_range_m is None else min_range_m
+        pan, tilt = math.radians(pan_deg), math.radians(tilt_deg)
         tilt += math.radians(self.geom.tilt_offset_deg)
-        body = math.radians((self.pitch() if self.pitch else 0.0) or 0.0)
+        if pitch_deg is None:
+            pitch_deg = (self.pitch() if self.pitch else 0.0) or 0.0
+        body = math.radians(pitch_deg)
         ox, oy, height = self.geom.pan_axis_x_m, self.geom.pan_axis_y_m, self.geom.height_m
         out = []
         for r in range(SIZE):
@@ -170,8 +181,8 @@ class Head:
                 fwd, up = (fwd * math.cos(body) - up * math.sin(body),          # the robot's pitch
                            fwd * math.sin(body) + up * math.cos(body))
                 along = math.sqrt(1.0 + ty * ty + tz * tz)                      # ray length per metre of depth
-                d = grid.rows[r][c]
-                if d is not None and d < self.geom.self_range_m:
+                d = rows[r][c]
+                if d is not None and d < near:
                     continue                                                    # its own body: no reading
                 if d is not None:
                     depth = d if self.geom.tof_perpendicular else d / along

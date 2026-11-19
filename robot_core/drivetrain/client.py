@@ -17,8 +17,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from collections import deque
-from typing import Any, Callable, Deque, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from .arduino_bridge import ArduinoBridge
 from robot_core import settings
@@ -30,16 +29,6 @@ logger = logging.getLogger(__name__)
 # telling an operator to tune TICKS_PER_CM after a bad turn sends them to
 # recalibrate the one constant that had no part in it.
 _TURN_DIRS = frozenset({"L", "R"})
-
-# How many recent moves the sync-bias detector remembers. Small on purpose:
-# long enough that a consistent bias separates from noise, short enough that
-# it re-converges within a few moves after a fix is applied.
-_BIAS_HISTORY = 6
-
-# A same-side lead on at least this many of the remembered moves is treated as
-# systematic rather than drift.
-_BIAS_CONSISTENT_N = 4
-
 
 def duty_from_percent(speed_percent: float) -> int:
     """Map 0–100 % speed to 0–255 PWM duty cycle."""
@@ -106,13 +95,6 @@ class SerialDrivetrain:
         # above, which the reader thread keeps overwriting from E frames.
         self._last_move_counts: Optional[tuple] = None
 
-        # Signed sync bias of recent moves: +1 left led, -1 right led.
-        # A P-only loop nulls random drift, so a bias that keeps the SAME sign
-        # across turns in both directions is not something a gain can fix —
-        # it means the correction is being applied to the wrong wheel, or one
-        # side's ticks do not mean the same distance as the other's.
-        self._bias: Deque[int] = deque(maxlen=_BIAS_HISTORY)
-
         # Default base speed used by intent (open-loop) commands.
         self._base_speed_pct: float = 60.0
 
@@ -170,8 +152,8 @@ class SerialDrivetrain:
 
         Uses encoder ticks — the Arduino stops when the tick target is
         reached regardless of battery voltage or terrain friction.
-        Logs a warning if either wheel stalls or if left/right drift
-        exceeds settings.ENCODER_SYNC_WARN_RATIO.
+        Logs a warning if either wheel stalls. (Left/right skew is no longer judged
+        here: driven straight, the gyro holds the heading; see drivetrain_node._held.)
 
         Args:
             meters: Distance in metres (must be > 0).
@@ -310,7 +292,6 @@ class SerialDrivetrain:
 
         Logs warnings (never raises) for:
           - A wheel that didn't move at all (wiring / encoder fault)
-          - Left-right sync error above settings.ENCODER_SYNC_WARN_RATIO
           - Actual travel significantly below the tick target (stall/slip)
         """
         logger.debug("%s → M:%s,%d,%d", label, direction, speed_pwm, ticks)
@@ -420,28 +401,6 @@ class SerialDrivetrain:
                 label, dL,
             )
 
-        # ── Sync error ───────────────────────────────────────────────────
-        if dL > 0 and dR > 0:
-            sync_err   = abs(dL - dR)
-            max_travel = max(dL, dR)
-            ratio      = sync_err / max_travel
-            lead       = "LEFT" if dL > dR else "RIGHT"
-
-            if ratio > settings.ENCODER_SYNC_WARN_RATIO:
-                self._bias.append(1 if dL > dR else -1)
-                logger.warning(
-                    "%s: high left-right sync error — "
-                    "ΔL=%d ΔR=%d diff=%d (%.1f%%), %s wheel leads",
-                    label, dL, dR, sync_err, ratio * 100, lead,
-                )
-                self._warn_sync_cause(label, lead)
-            else:
-                self._bias.clear()
-                logger.debug(
-                    "%s: sync OK — ΔL=%d ΔR=%d diff=%d (%.1f%%)",
-                    label, dL, dR, sync_err, ratio * 100,
-                )
-
         # ── Target coverage ──────────────────────────────────────────────
         avg_travel = (dL + dR) / 2.0
         if expected_ticks > 0:
@@ -467,55 +426,3 @@ class SerialDrivetrain:
                     "%s: coverage %.0f%% (target=%d ticks, actual avg=%.0f)",
                     label, coverage * 100, expected_ticks, avg_travel,
                 )
-
-    def _warn_sync_cause(self, label: str, lead: str) -> None:
-        """Say what a sync error actually means, once there is enough evidence.
-
-        The old message advised tuning `SYNC_KP/KI`. There is no KI — the
-        firmware loop is P-only, deliberately (drivetrain.ino: raising the gain
-        drove the DRV8871 into ILIM current-chopping, where more PWM makes a
-        wheel slower and the loop latches at full correction). Advice naming a
-        gain that does not exist sends the operator to edit a line they will
-        not find.
-
-        The useful distinction is drift vs bias:
-
-          * Drift alternates sign. A P loop nulls it; the gain is the lever.
-          * Bias keeps the SAME sign across turns in BOTH directions. No gain
-            fixes that. Either the correction reaches the wrong wheel — in
-            which case the loop is positive feedback and saturates at
-            SYNC_AUTHORITY_PCT, which is why such an error sits at a constant
-            magnitude and never converges — or one side's ticks do not measure
-            the same distance as the other's.
-        """
-        if len(self._bias) < _BIAS_CONSISTENT_N:
-            logger.warning(
-                "%s: not yet enough history to classify (need %d moves). "
-                "If the lead alternates it is drift; if it stays on one side "
-                "it is a fixed bias and no gain change will help.",
-                label, _BIAS_CONSISTENT_N,
-            )
-            return
-
-        same = sum(1 for b in self._bias if b == self._bias[-1])
-        if same < _BIAS_CONSISTENT_N:
-            logger.warning(
-                "%s: lead alternates over the last %d moves — genuine drift. "
-                "This is what SYNC_KP is for (drivetrain.ino; note the loop is "
-                "P-only, there is no KI). Raise it in small steps and watch "
-                "for the ILIM latch described beside the #define.",
-                label, len(self._bias),
-            )
-            return
-
-        logger.error(
-            "%s: %s wheel has led %d of the last %d moves — this is a fixed "
-            "bias, not drift, and SYNC_KP cannot correct it. Check, in order: "
-            "(1) motor channel swap — if straights track true but turns go the "
-            "WRONG WAY, the L/R driver outputs are crossed, which makes the "
-            "sync loop positive feedback that saturates at SYNC_AUTHORITY_PCT "
-            "(%d%%); (2) per-side tick scale — hand-roll each wheel 10 turns "
-            "and compare totals; unequal means encoder PPR or mounting, equal "
-            "means tyre diameter or traction.",
-            label, lead, same, len(self._bias), 20,
-        )

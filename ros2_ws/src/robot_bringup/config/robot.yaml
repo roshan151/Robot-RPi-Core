@@ -51,18 +51,20 @@
                                # needed, angles and turn rate are the same anywhere on the chassis
     imu_pitch_offset_deg: 6.3  # MEASURED 2026-11-18 (follow logs): pitch on flat floor, taken off every reading.
                                # calibrate.py imu measures it; 0 = none
-    # true: a turn that lands off by more than turn_tolerance_deg (by the gyro) has its last degrees
-    # finished slowly in velocity mode, stopped by the gyro (needs firmware -vel). Without -vel it is
-    # a counted correcting move, which overshot ~2x on a few degrees (8.8 asked, 14.4 turned, Nov 18)
-    turn_trim: true
+    # Turns and straight drives are closed on the gyro (velocity mode, firmware -vel): turn_held,
+    # drive_heading_hold. Encoder-counted moves are left for gestures only.
     turn_tolerance_deg: 2.0
     drive_heading_hold: true   # straight drives in velocity mode, steered back to their start heading by
                                # the gyro 10x a second (a slipping track or weaker motor no longer bends
                                # the path); distance from the encoders. false: counted moves as before
     drive_held_mps: 0.18       # held straight-drive speed (velocity_max_mps caps it)
     drive_heading_gain: 3.0    # turn rate (rad/s) per radian of heading error
+    turn_held: true            # turns closed on the gyro from the start (velocity mode), no counted turn first
+    drive_blocked_deg: 12.0    # a held drive pushed this far off its heading for drive_blocked_s is blocked
+    drive_blocked_s: 0.8       # (pivoting on a wall): stopped and reported as "slipping"
     max_pitch_deg: 25.0        # MEASURE: nose up/down beyond this is "tilted" and stops the move
     max_roll_deg: 20.0
+    max_climb_deg: 12.0        # the nose rising this far above where a drive started: climbing something, stop
     max_dip_deg: 8.0           # the nose falling this far below where a drive started, fast, stops it at once
                                # (going over an edge the ToF missed). Raise it if a bumpy floor trips it
 
