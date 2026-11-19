@@ -100,13 +100,16 @@ class Reflex:
         i = bisect.bisect_right([h[0] for h in hist], t) - 1
         return hist[max(0, i)][1:]
 
-    def trip(self, why: str) -> None:
+    def trip(self, why: str, count: bool = False) -> None:
+        """count: a trip even while one holds (the drivetrain braked on its own: the controller must send
+        the zero command that lets it drive again)."""
         now = self.clock()
         fresh = now >= self.tripped_until
         self.tripped_until = now + self.hold_s
         self.why = why
-        if fresh:
+        if fresh or count:
             self.trips += 1
+        if fresh:
             self.motion.stop()
             log.warning("reflex: %s", why)
 
@@ -117,7 +120,7 @@ class Reflex:
         with self._lock:
             self._hist.append((now, pan, tilt, self.pose()))
         if self.bumped is not None and (self.bumped() or 0.0) > max(self._t0, self.tripped_until - self.hold_s):
-            self.trip("the drivetrain felt something (bump, stall, slip or climb)")
+            self.trip("the drivetrain felt something (bump, stall, slip or climb)", count=True)
         g = self.head.lidar.grid() if hasattr(self.head.lidar, "grid") else None
         if g is None or g.t <= self._last_grid_t:
             return

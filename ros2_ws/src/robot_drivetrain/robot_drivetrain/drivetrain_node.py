@@ -706,7 +706,8 @@ class DrivetrainNode(Node):
             v = w = 0.0                              # gone quiet: ramp down and stop
         meas = self._wheel_mps
         meas = meas[:2] if meas is not None and now - meas[2] < 0.3 else None
-        pl, pr = ctrl.step(v, w, meas, 0.1)
+        ims = self._imu.state() if self._imu is not None else None
+        pl, pr = ctrl.step(v, w, meas, 0.1, yaw_rate=math.radians(ims.yaw_rate_dps) if ims is not None else None)
         if pl == 0 and pr == 0 and not self._vel_on:
             return
         try:

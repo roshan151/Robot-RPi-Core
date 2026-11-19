@@ -263,6 +263,10 @@ class LocalNav:
         if self._last_pose is not None:
             self._odo += math.hypot(here[0] - self._last_pose[0], here[1] - self._last_pose[1])
         self._last_pose = here
+        if self._trips_seen != self.reflex.trips:         # the brake holds /cmd_vel off until a zero command: send
+            self._trips_seen = self.reflex.trips          # it first, whatever the state (Nov 19: tripped while
+            self._send(0.0, 0.0)                          # "arrived", it never sent one, the drivetrain stayed held,
+            return                                        # and the body stood while the head followed them away)
         with self._lock:
             goal, keep, face_goal, goal_t, focus = self.goal, self.keep_m, self.face_goal, self.goal_t, self.focus
         if self._recover:
@@ -290,7 +294,7 @@ class LocalNav:
             self._moving_since = None
             self.aim.update(now, 0.0, w, focus_pan)
             return
-        self._maybe_plan(now, here, goal)
+        self._maybe_plan(now, here, goal, keep)
         radius = self.params.radius_m + self.params.margin_m
         fresh = self.waypoints and self.wp_goal is not None and math.dist(self.wp_goal, goal) < 0.6 \
             and now - self._wp_t < GLOBAL_FRESH_S
@@ -343,9 +347,6 @@ class LocalNav:
             if behind > self.params.radius_m:
                 self._recover, self._recover_from, self._back_m = "back", (here, now), TURN_BACK_M
             v = w = 0.0
-        if self._trips_seen != self.reflex.trips:         # the brake holds /cmd_vel off until a zero command
-            self._trips_seen = self.reflex.trips
-            v = w = 0.0
         self._send(v, w)
         status.detail(f"nav {self.state}")
         self._watch_stuck(now, here, v, ahead)
@@ -384,15 +385,21 @@ class LocalNav:
         end = (here[0] + k * (goal[0] - here[0]), here[1] + k * (goal[1] - here[1]))
         return self.costmap.line_clear(tuple(here[:2]), end, radius)
 
-    def _maybe_plan(self, now: float, here: Pose, goal: Tuple[float, float]) -> None:
+    def _maybe_plan(self, now: float, here: Pose, goal: Tuple[float, float], keep: float = 0.0) -> None:
         if self.planner is None or self._planning or now - self._plan_t < self.plan_every:
             return
         self._plan_t, self._planning = now, True
         local = self.costmap.snapshot()
+        # Ask for a way to keep_m short of the goal, as it will stop there: a person in a doorway stands
+        # within a robot's width of the frame, and the way to their very spot went round through the next
+        # room, so it turned away from them (Nov 19).
+        d = math.dist(here[:2], goal)
+        k = max(0.0, d - keep) / d if d > 1e-6 else 1.0
+        aim = (here[0] + k * (goal[0] - here[0]), here[1] + k * (goal[1] - here[1]))
 
         def work() -> None:
             try:
-                path = self.planner(here, goal, local)
+                path = self.planner(here, aim, local)
                 if path:
                     self.waypoints, self.wp_goal, self._wp_t = [tuple(p) for p in path], goal, self.clock()
             except Exception as exc:                     # noqa: BLE001 — the Mac is optional: carry on locally
