@@ -239,8 +239,12 @@ class LocalNav:
         return ahead
 
     def _measured(self) -> Tuple[float, float]:
-        m = self.twist() if self.twist else None
-        return m if m is not None else self.cmd
+        """The (v, w) the dynamic window is centred on: the last command. The drivetrain's velocity
+        loop ramps to each command at the accelerations DWA assumes, so the command is where the
+        robot is headed. The measured twist is not used for it: /odom's gyro turn rate came out up
+        to 2x the real one (Nov 19), the window then held only right turns, and the robot turned
+        on past the person it was following until it lost them."""
+        return self.cmd
 
     def tick(self) -> None:
         now = self.clock()

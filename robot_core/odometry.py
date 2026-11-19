@@ -103,6 +103,7 @@ class DiffDriveOdometry:
         self.swap_sides = swap_sides
         self._kd, self._kt, self._kh, self._kg = k_distance, k_turn, k_heading_per_m, k_gyro
         self._last_yaw: Optional[float] = None
+        self._last_t: Optional[float] = None        # host time of the last sample (the gyro's clock)
         self._w_wheels = 0.0
         self._lock = threading.Lock()
         self._last: Optional[tuple] = None          # (left, right, fw_ms)
@@ -129,7 +130,7 @@ class DiffDriveOdometry:
                 # First sample, or the Arduino rebooted (millis went back):
                 # re-baseline rather than integrate a jump from/to zero.
                 self._last = (total_left, total_right, fw_ms)
-                self._last_yaw = yaw
+                self._last_yaw, self._last_t = yaw, t_host
                 self._v = self._w = self._w_wheels = 0.0
                 return self._state()
             dl = (total_left - self._last[0]) / self.ticks_per_m
@@ -141,14 +142,20 @@ class DiffDriveOdometry:
             dth = (dr - dl) / self.wheelbase_m
             self._w_wheels = dth / dt
             k_turn = self._kt
+            w_now = dth / dt
             if yaw is not None and self._last_yaw is not None:
                 dth, k_turn = yaw - self._last_yaw, self._kg
-            self._last_yaw = yaw
+                # The gyro's heading is read on the Pi's clock as each sample arrives, so its rate is
+                # over host time, not the firmware's dt: frames that arrive bunched made it spike to
+                # ~2x the real turn rate (Nov 19).
+                w_now = dth / max(1e-3, t_host - (self._last_t if self._last_t is not None else t_host - dt))
+            self._last_yaw, self._last_t = yaw, t_host
             mid = self._pose.theta + dth / 2.0
             self._pose = Pose2D(self._pose.x + d * math.cos(mid),
                                 self._pose.y + d * math.sin(mid),
                                 wrap(self._pose.theta + dth))
-            self._v, self._w = d / dt, dth / dt
+            self._v = d / dt
+            self._w = 0.7 * self._w + 0.3 * w_now            # light smoothing: one late frame is not a spin
             self._dist += abs(d)
             self._var_th += (k_turn * dth) ** 2 + (self._kh * abs(d)) ** 2
             self._var_xy += (self._kd * d) ** 2 + (abs(d) ** 2) * self._var_th
