@@ -17,13 +17,19 @@ on the Pi) and these turn them into robot.yaml values.
   turn_fit      a commanded turn and the gyro's measured one -> ticks_per_degree
   reverse_trim  how much the forward-running track led in turns -> REVERSE_TRIM_PCT
   centre_change the pulse change that moves a servo's zero by `deg`
+  door_fit      the robot still before a doorway, the head stepped: the wall line through
+                the ToF points, and along it the door (the widest stretch with no wall
+                points that rays went through): each edge per look, its spread, the width
+  door_turn_fit the same door seen after turns: the gyro scale that puts it in one place
 """
 
 from __future__ import annotations
 
 import math
 import statistics
-from typing import Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
+
+import numpy as np
 
 
 def pan_zero(samples: Sequence[Tuple[float, float]]) -> Tuple[float, float]:
@@ -133,3 +139,95 @@ def centre_zone(rows) -> Optional[float]:
     """Median of the 4 centre zones of an 8x8 grid (None if they are all empty)."""
     v = [rows[r][c] for r in (3, 4) for c in (3, 4) if rows[r][c] is not None]
     return statistics.median(v) if v else None
+
+
+def door_fit(looks: Sequence[Sequence[Tuple[float, float]]], half_w_m: float = 0.125,
+             wall_tol_m: float = 0.06, beyond_m: float = 0.25) -> dict:
+    """looks: per head position, the ToF points (x forward, y left, metres, robot frame) on things standing up.
+    The wall the door is in is the line x = a + b*y through most points (the robot roughly square to it). Along
+    it, u (+ left; 0 where the robot's straight-ahead line meets it) and v (+ beyond the wall). The door is the
+    widest stretch with no wall points that has points beyond it (rays went through). Each edge is also found
+    look by look (a wall point next to points beyond it), so its spread shows how much one look can be off."""
+    pts = np.array([p for look in looks for p in look], float).reshape(-1, 2)
+    if len(pts) < 20:
+        raise ValueError("too few ToF points: is the wall within 2 m and the head level?")
+    x, y = pts[:, 0], pts[:, 1]
+    a, b = float(np.percentile(x, 25)), 0.0              # the wall is the nearer surface (the room beyond: further)
+    for tol in (0.15, 0.10, wall_tol_m, wall_tol_m):
+        keep = np.abs(x - (a + b * y)) < tol
+        if keep.sum() < 10:
+            raise ValueError("no wall found: face the robot roughly square to the wall with the door")
+        b, a = (float(v) for v in np.polyfit(y[keep], x[keep], 1))
+    n = math.hypot(1.0, b)
+
+    def uv(px, py):
+        px, py = np.asarray(px, float), np.asarray(py, float)
+        return ((px - a) * b + py) / n, (px - a - b * py) / n
+
+    u, v = uv(x, y)
+    wall, beyond = np.sort(u[np.abs(v) < wall_tol_m]), u[v > beyond_m]
+    gaps = [(wall[i], wall[i + 1]) for i in range(len(wall) - 1) if wall[i + 1] - wall[i] > 0.2]
+    gaps = [(g, int(((beyond > g[0]) & (beyond < g[1])).sum())) for g in gaps]
+    gaps = [g for g in gaps if g[1] >= 3]
+    if not gaps:
+        raise ValueError("no door found: no stretch of the wall that rays went through")
+    (u_r, u_l), _ = max(gaps, key=lambda g: (g[1], g[0][1] - g[0][0]))
+    per = {"left": [], "right": []}
+    for look in looks:                                   # each edge as one look sees it
+        if len(look) < 3:
+            continue
+        lu, lv = uv(*np.array(look, float).T)
+        w, bu = lu[np.abs(lv) < wall_tol_m], lu[lv > beyond_m]
+        for side, sign, ref in (("left", 1.0, u_l), ("right", -1.0, u_r)):
+            near = w[(np.abs(w - ref) < 0.3) & (sign * (w - (u_r + u_l) / 2.0) > 0)]
+            if not len(near):
+                continue
+            edge = float(near.min() if sign > 0 else near.max())          # the wall point nearest the opening
+            if ((sign * (edge - bu) > 0) & (sign * (edge - bu) < 0.25)).any():   # with the room beyond seen next to it
+                per[side].append(edge)
+
+    def stat(vals, ref):
+        if not vals:
+            return {"median_m": round(float(ref), 3), "spread_m": None, "looks": 0}
+        vv = np.array(vals)
+        return {"median_m": round(float(np.median(vv)), 3), "spread_m": round(float(np.percentile(vv, 90) -
+                np.percentile(vv, 10)), 3), "looks": len(vv), "min_m": round(float(vv.min()), 3),
+                "max_m": round(float(vv.max()), 3)}
+    left, right = stat(per["left"], u_l), stat(per["right"], u_r)
+    worst = (left.get("min_m", u_l) - right.get("max_m", u_r))     # what a map keeping every look's edge would hold
+    ang = math.atan(b)
+    foot = lambda uu: (a + b * uu / n, uu / n)       # noqa: E731 — the point on the wall at u
+    return {"width_m": round(left["median_m"] - right["median_m"], 3), "width_worst_m": round(float(worst), 3),
+            "left": left, "right": right, "centre_u_m": round((left["median_m"] + right["median_m"]) / 2.0, 3),
+            "wall_m": round(a / n, 3), "wall_angle_deg": round(math.degrees(ang), 1),
+            "clear_left_m": round(left["median_m"] - half_w_m / math.cos(ang), 3),
+            "clear_right_m": round(-right["median_m"] - half_w_m / math.cos(ang), 3),
+            "edge_xy": {"left": [round(c, 3) for c in foot(left["median_m"])],
+                        "right": [round(c, 3) for c in foot(right["median_m"])]},
+            "points": int(len(pts))}
+
+
+def door_turn_fit(headings: Sequence[Tuple[float, Sequence[Sequence[Tuple[float, float]]]]],
+                  half_w_m: float = 0.125) -> dict:
+    """headings: (gyro yaw since the first, deg; the looks' points in the robot frame then). Rotated back by
+    k * yaw, the door must land in one place: the k that makes it is the gyro's scale (1.0: right)."""
+    def mismatch(k: float) -> Optional[float]:
+        edges = []
+        for yaw, looks in headings:
+            t = math.radians(k * yaw)
+            c, s = math.cos(t), math.sin(t)
+            rot = [[(c * px - s * py, s * px + c * py) for px, py in look] for look in looks]
+            try:
+                f = door_fit(rot, half_w_m)
+            except ValueError:
+                return None
+            edges.append(f["edge_xy"]["left"] + f["edge_xy"]["right"])
+        e = np.array(edges)
+        return float(np.mean(np.std(e, axis=0)))
+    ks: List[Tuple[float, float]] = [(k, m) for k in np.arange(0.6, 1.41, 0.02) if (m := mismatch(float(k))) is not None]
+    if not ks:
+        raise ValueError("the door was not found after the turns")
+    best = min(ks, key=lambda km: km[1])
+    at1 = next((m for k, m in ks if abs(k - 1.0) < 1e-6), None)
+    return {"gyro_scale": round(float(best[0]), 2), "spread_m": round(best[1], 3),
+            "spread_at_1_m": None if at1 is None else round(at1, 3)}

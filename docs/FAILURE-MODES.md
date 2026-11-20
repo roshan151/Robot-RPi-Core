@@ -22,7 +22,7 @@ Tests and tools (Monitoring-Service, from the Mac, no robot needed except where 
 | Tool | What it does |
 |---|---|
 | `test_replay.py` | Replays saved debug sessions (`scenarios/replay/`) through today's code: Mac range rules, Pi tracker, planner on the recorded maps, steering. `--save NAME --session S` freezes a new one. |
-| `test_scenarios.py` | The real nav stack in simulated rooms (box, door, trap, lookaway, sudden, follow, doorway, doorway2, doorleaf, corridor, nook, cable, wedge, ledge, glass, behind, chair) with pass rules and pictures. |
+| `test_scenarios.py` | The real nav stack in simulated rooms (box, door, trap, lookaway, sudden, follow, doorway, doorway2, doorleaf, corridor, nook, cable, wedge, ledge, glass, door20, corner20, behind, chair) with pass rules and pictures. |
 | `scorecard.py` | Scores any recorded session against fixed limits (`session_checks.LIMITS`); `--compare` against another. |
 | `test_software.py` / `test_hardware.py` | End to end on the Mac and on the robot. |
 
@@ -89,6 +89,8 @@ in follow's debug note; the scorecard reads both.
 | A turn held by a leg it cannot see (gyro still, tracks turning) | Nov 20 (simulator) | `_watch_turn`: commanded at least 0.3 rad/s, gyro below 0.1 for 0.7 s; rule `turn_blocked` | brake; mark the leading corner; back off 10 cm, then turn (turning the other way hits it with another corner) | test_scenarios wedge |
 | Nose rides up on a ledge it cannot see and stops; the odometry counts on | Nov 20 (simulator) | nose up 6° above the floor's level (median pitch over 10 s) for 0.5 s; was 12° at once from where it set off | encoder metres since are taken out; marked; backs off; goes round | test_scenarios ledge |
 | Bumps something it cannot see (glass) again beside the mark | Nov 20 (simulator) | `_failed`: rule `same_approach` (within 0.3 m and 30° of an earlier failure) | backs off 15 cm before turning; the bump mark is 0.5 m wide; two failures within 0.6 m are joined into one line, 0.3 m past each end | test_scenarios glass |
+| A door the person walked through maps too narrow for the Mac (ToF cones draw the frame into it); the robot takes the Mac's long way round and loses them | Nov 20 (18-27 s) | | **not fixed**: passage handling (EXPLORE-PLAN phase C) | test_scenarios door20 (known), replay follow-20261120 |
+| Swings left-right beside a wall corner 0.2 m off: the Mac's 0.17 m step aside is dropped as reached; the line on is at DWA's limit | Nov 20 (68-82 s) | rule `pivot_flip` | **not fixed**: phase C | test_scenarios corner20 (known), replay follow-20261120 (1 flip left) |
 | Person-ignore circle erases a real obstacle | Nov 19 | | person placed by refused/accepted ranges only (see Perception) | test_replay `pi_placed_too_near` |
 
 ## Mac: SLAM, planning service, network

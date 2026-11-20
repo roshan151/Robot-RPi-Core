@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import base64
 import json
+import math
 import re
 import socket
 import statistics
@@ -145,7 +146,8 @@ class Rig:
         m = re.search(r"#define\s+REVERSE_TRIM_PCT\s+(-?\d+)", FIRMWARE.read_text()) if FIRMWARE.exists() else None
         keys_ex = ("pan_center_us", "tilt_center_us", "pan_us_per_deg", "tilt_us_per_deg", "pan_invert", "tilt_invert",
                    "head_height_m", "head_tilt_offset_deg", "hfov_deg", "tof_range_scale", "tof_range_offset_m",
-                   "tof_tilt", "tof_flip_rows", "tof_flip_cols", "tof_perpendicular", "tof_fitted", "head_backlash_deg")
+                   "tof_tilt", "tof_flip_rows", "tof_flip_cols", "tof_perpendicular", "tof_fitted", "head_backlash_deg",
+                   "robot_width_m", "tof_pan_offset_deg", "pan_axis_x_m")
         keys_dt = ("ticks_per_cm", "ticks_per_degree", "odom_swap_sides", "imu_fitted", "imu_axes",
                    "tfluna_floor_cm", "drop_guard")
         return {"host": socket.gethostname(), "repo": str(REPO),
@@ -266,9 +268,9 @@ class Rig:
         ratio = statistics.mean(corners) / c if c and None not in corners else None
         return {"centre_m": c, "corner_ratio": None if ratio is None else round(ratio, 3)}
 
-    def cmd_pan_sweep(self) -> dict:
+    def cmd_pan_sweep(self, lo: int = -30, hi: int = 30, step: int = 3) -> dict:
         samples = []
-        for a in range(-30, 31, 3):
+        for a in range(int(lo), int(hi) + 1, int(step)):
             self.look(float(a), 0.0)
             samples.append((a, self.centre(4)))
             progress(f"pan {a:+d}: {samples[-1][1]}")
@@ -279,9 +281,9 @@ class Rig:
         return {"pan_zero_deg": round(p0, 2), "wall_m": round(d, 3), "samples": samples,
                 "pan_center_us": round(cur + us)}
 
-    def cmd_tilt_sweep(self) -> dict:
+    def cmd_tilt_sweep(self, lo: int = -42, hi: int = -14, step: int = 3) -> dict:
         samples = []
-        for cmd in range(-42, -13, 3):                      # commanded; true = commanded + head_tilt_offset_deg
+        for cmd in range(int(lo), int(hi) + 1, int(step)):  # commanded; true = commanded + head_tilt_offset_deg
             true = cmd + self.offset
             self.look(0.0, true)
             samples.append((true, self.centre(4)))
@@ -392,6 +394,88 @@ class Rig:
         oled.stop()
         return {"shown": True}
 
+    # ---------------------------------------------------------------- the door: what the ToF makes of a doorway
+
+    def head(self):
+        """The head's geometry from robot.yaml, for projecting zones (no hardware: project() is pure)."""
+        from robot_core import terrain
+        from robot_core.sensors.head import Head, HeadGeometry, parse_self_zones
+        p = self.ex
+        return Head(None, None, None, HeadGeometry(
+            height_m=float(p.get("head_height_m", 0.25)), hfov_deg=float(p.get("hfov_deg", 66.0)),
+            pan_axis_x_m=float(p.get("pan_axis_x_m", 0.05)),
+            tof_perpendicular=bool(p.get("tof_perpendicular", True)),
+            tilt_offset_deg=self.offset, tof_pan_offset_deg=float(p.get("tof_pan_offset_deg", 0.0)),
+            tof_tilt_offset_deg=float(p.get("tof_tilt_offset_deg", 0.0)),
+            pan_axis_y_m=float(p.get("tof_from_right_m", 0.125)) - float(p.get("robot_width_m", 0.25)) / 2.0,
+            self_zones=parse_self_zones(p.get("tof_self_zones"))), pitch=lambda: 0.0, terrain_params=terrain.params_from(p))
+
+    def points(self, head, rows, pan: float, tilt_cmd: float, yaw_deg: float = 0.0) -> list:
+        """ToF points on things standing up (5 cm to 1.5 m high), robot frame, as the robot itself would place
+        them (calibrated ranges, its own geometry); rotated by yaw_deg (the turn test)."""
+        sc, off = float(self.ex.get("tof_range_scale", 1.0)), float(self.ex.get("tof_range_offset_m", 0.0))
+        fixed = [[None if v is None else sc * v + off for v in row] for row in rows]
+        c, s = math.cos(math.radians(yaw_deg)), math.sin(math.radians(yaw_deg))
+        return [(round(c * z[2] - s * z[3], 4), round(s * z[2] + c * z[3], 4))
+                for z in head.project(fixed, pan, tilt_cmd, pitch_deg=0.0) if z[4] is not None and 0.05 < z[4] < 1.5]
+
+    def cmd_door_steps(self, lo: float = -45, hi: float = 45, step: float = 5, dwell_s: float = 0.5,
+                       grids: int = 3, tilt_deg: float = 0.0, pan_shift: float = 0.0) -> dict:
+        """Step-and-hold: the head to each pan, held dwell_s, then `grids` grids each (not merged: a zone that
+        flickers between a door jamb and the room beyond is what we are measuring)."""
+        head, tilt_cmd, looks = self.head(), float(tilt_deg) - self.offset, []
+        pans = [float(lo) + i * float(step) for i in range(int((float(hi) - float(lo)) / float(step)) + 1)]
+        for pan in pans:
+            p = max(-90.0, min(81.0, pan + float(pan_shift)))
+            self.look(p, float(tilt_deg))
+            time.sleep(float(dwell_s))
+            t = time.monotonic()
+            for _ in range(int(grids)):
+                g = self.tof().grid(newer_than=t, timeout=2.0)
+                if g is None:
+                    break
+                t = g.t
+                looks.append({"pan": p, "rows": [list(r) for r in g.rows], "pts": self.points(head, g.rows, p, tilt_cmd)})
+            progress(f"pan {p:+.0f}")
+        self.look(0.0, 0.0)
+        return {"looks": looks, "half_w_m": float(self.ex.get("robot_width_m", 0.25)) / 2.0}
+
+    def cmd_door_sweep(self, lo: float = -45, hi: float = 45, dps: float = 30.0, tilt_deg: float = 0.0) -> dict:
+        """One sweep each way at dps, as the robot sweeps while driving: each grid placed at the head angle the
+        gimbal reports when it arrives (the commanded one: the servos have no feedback), as the robot does."""
+        head, tilt_cmd, looks, g0 = self.head(), float(tilt_deg) - self.offset, [], self.gimbal()
+        for a, b in ((lo, hi), (hi, lo)):
+            self.look(float(a), float(tilt_deg))
+            g0.move_to(float(b), tilt_cmd, speed_dps=float(dps), wait=False)
+            t, t0 = time.monotonic(), time.monotonic()
+            while time.monotonic() - t0 < abs(float(b) - float(a)) / float(dps) + 0.5:
+                g = self.tof().grid(newer_than=t, timeout=0.5)
+                if g is None:
+                    continue
+                t = g.t
+                pan = float(g0.angles()[0])
+                looks.append({"pan": pan, "rows": [list(r) for r in g.rows], "pts": self.points(head, g.rows, pan, tilt_cmd)})
+        self.look(0.0, 0.0)
+        return {"looks": looks, "half_w_m": float(self.ex.get("robot_width_m", 0.25)) / 2.0}
+
+    def cmd_door_turn(self, turn_deg: float = 60, lo: float = -30, hi: float = 30, step: float = 5,
+                      dwell_s: float = 0.5, grids: int = 2) -> dict:
+        """Facing the door: turn left turn_deg, back, right turn_deg, back. After each turn the head turns the other
+        way by what the gyro says, so the door stays in view; its points are put back by the gyro's yaw."""
+        if self.imu() is None:
+            raise RuntimeError("no IMU (imu_fitted false): the turn test needs the gyro")
+        y0, heads = self.yaw(), []
+        for op, value in ((None, 0), ("left", turn_deg), ("right", turn_deg), ("right", turn_deg), ("left", turn_deg)):
+            if op:
+                self.cmd_move(op, float(value))
+            yaw = (self.yaw() - y0 + 180.0) % 360.0 - 180.0
+            r = self.cmd_door_steps(lo, hi, step, dwell_s, grids, pan_shift=-yaw)
+            heads.append({"yaw_deg": round(yaw, 2), "looks": r["looks"]})
+            progress(f"gyro yaw {yaw:+.1f}")
+        fit = calibrate.door_turn_fit([(h["yaw_deg"], [lk["pts"] for lk in h["looks"]]) for h in heads],
+                                      float(self.ex.get("robot_width_m", 0.25)) / 2.0)
+        return {"heads": heads, "fit": fit}
+
     def cmd_head_moves(self) -> dict:
         """Left, right, up, down and back, slowly: the person watches the directions."""
         for name, pan, tilt in (("left", 45, 0), ("right", -45, 0), ("up", 0, 25), ("down", 0, -25), ("centre", 0, 0)):
@@ -409,6 +493,8 @@ class Rig:
                                       float(self.dt.get("ticks_per_degree", settings.TICKS_PER_DEGREE)))
         if kind == "trim":
             return calibrate.reverse_trim(data["ratios"], data["current"])
+        if kind == "door":
+            return calibrate.door_fit(data["looks"], float(data.get("half_w_m", 0.125)))
         raise ValueError(f"unknown fit {kind}")
 
 

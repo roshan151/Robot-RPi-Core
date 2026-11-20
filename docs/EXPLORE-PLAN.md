@@ -26,7 +26,7 @@ to `FAILURE-MODES.md` as each phase lands.
 |---|---|
 | A (stuck rooms only) | done: the sim has odometry separate from the truth, a gyro, IMU pitch, and terrain the ToF cannot see (slip lines, thin legs, ledges, glass) |
 | B | done in `LocalNav` (follow has it): rooms `cable`, `wedge`, `ledge`, `glass` were red, now green; 17/17 rooms, 4/4 replays; each new behaviour turns its room red when undone |
-| C to F | not started |
+| C to F | not started. Two real failures are waiting for C as known tests: `door20` and `corner20` (Nov 20 follow, below) |
 
 ---
 
@@ -110,6 +110,87 @@ both modes.
      point. Reversing only over ground it has just driven is the one safe reverse, since there
      is no rear sensor.
   5. **Remember** the gap as `tried(heading)` and go to the recovery ladder (3.4).
+
+### 3.2b Phase C, detailed (Nov 20, after the follow run debug/20261120-114136)
+
+**Why it turned left at the door.** The robot did not pick left; it followed the Mac's path.
+- The 0.75 m door mapped 0.5 m wide. The Mac plans 0.27-0.29 m clear of walls, so the door was shut and its path
+  went left, round the end of the wall.
+- The robot's own head was on the person, through the door: its ToF was looking right.
+- `LocalNav._detour` throws a Mac detour away and goes direct only if all three hold:
+  - the goal is at least 0.7 m away: it was 0.70 m;
+  - the straight line clears the robot's 0.217 m by the costmap: the narrowed jamb was in it;
+  - the line was seen free.
+  So the Mac's way round stood.
+- Nothing used the strongest evidence there was: the person had just walked through. A person needs about 0.45 m;
+  the robot is 0.25 m wide.
+
+**C0. Measure the ToF width error before fixing it.** The logs do not settle it:
+- From one pose and pan, the jamb's edge zone flickers by one to two zones between frames (0.44 / 0.53 / 0.61 m).
+- Hits sit inside the doorway after the person left it.
+- The gyro heading was never cross-checked: visual tracking did not run.
+
+Tried on Nov 20 and taken out, as unproven and breaking `box` and `doorway2`:
+- placing edge zones at the cone's border;
+- weighting edge hits down.
+
+So, first:
+- **A `calibrate_and_apply.py gap` mode.** The robot stands 1.0 m square in front of a doorway of known width (yours:
+  0.75 m). The head sweeps slowly 3 times; the mode prints the width from each frame, its bias and scatter, and the
+  width on the map.
+- **Then the same doorway with the robot turning 90° each way between sweeps.** That is the gyro heading scale
+  check: the same door must land in the same place.
+- **The ToF pan offset.** `tof_pan_offset_deg` is still 0.0 (`calibrate.py align` never run).
+
+Then fix the cause the numbers show (edge handling, gyro scale, pan offset). Gate: the doorway maps within 5 cm of
+its real width.
+
+**C1. The person's trail is free space (follow).**
+- Where the tracked person's feet have been (ToF-ranged tracker points, sigma under 0.15 m), cells within 0.15 m are
+  marked seen free in the Pi costmap, and so in the Mac's map through the fold.
+- A later hit, or a bump, puts an obstacle back.
+- When the Mac's path is over 1.5 times the trail from here plus 0.3 m, the robot follows the trail instead: what
+  the person walked through, a 0.25 m robot fits.
+- `_detour`'s 0.7 m minimum goes; 0.3 m.
+- Test: `door20` (known today) goes green.
+
+**C2. Passages by the rectangle** (3.2 above):
+- The Mac's corridor layer gives straight passage legs with a measured width.
+- DWA uses the two-circle footprint (0.146 m circles at plus and minus 7 cm) on a passage leg only, and the circle
+  everywhere else. Tried everywhere on Nov 20, it broke 3 to 5 rooms; on passage legs only, it cannot.
+- The near waypoint that is the Mac's step aside from a corner is kept unless the line on clears DWA's radius.
+- Test: `corner20` (known) goes green; P1, P3.
+
+**C3. Try, and when stuck take another way.** A try is the 3.2 manoeuvre: stage, line up, 0.06 m/s straight with the
+heading held on the gyro. It aborts on any of:
+
+| What | Seen by |
+|---|---|
+| a turn that is not happening, or the body twisting over 8° uncommanded (a corner caught on one side) | gyro |
+| the encoders going on while the ToF ahead or the pose does not change (slipping, wedged) | encoders and ToF (the gyro cannot see forward motion) |
+| the nose or a side rising | IMU pitch / roll |
+| a bump or stall | drivetrain |
+| under 5 cm in 2 s | displacement |
+
+After an abort:
+1. **Back out** in reverse along its breadcrumbs, over ground it has just driven.
+2. **Mark the passage `tried` with that heading.** This goes in the Pi's learned layer and to the Mac as closed
+   cells for that passage.
+3. **Ask the Mac to plan again with it closed.** Another way is taken when there is one.
+4. **No other way:** one more try, lined up 10 cm toward the side that did not touch.
+5. **After 2 tries:** `closed (tried)`. Explore drops that frontier until the end-of-run revisit; follow waits at
+   the last-seen spot, then searches.
+
+The rule `same_approach` (built in phase B) must stay at 0.
+
+Tests, new:
+- **P2-alt:** a 0.27 m gap that measures 0.30. It tries once, backs out, and takes the other door 2 m further on.
+- **P6 snag:** a 0.32 m gap with an unseen leg at one jamb. The twist on the gyro aborts it, then the second try
+  passes.
+- **Follow variants of both:** the person walks through.
+
+Order: C0 (the measurement, with the robot), C1, C2, then C3. Each lands with its rooms green, the others still
+green, and its mutation checks red when undone.
 
 ### 3.3 Stuck detection: one detector, all signals (fixes G3, G4, G5)
 
@@ -236,7 +317,23 @@ and a picture per room: truth, map, coverage, plants with σ ellipses.
 
 ### 4.2 Scenarios and pass rules
 
-**Passages** (run in explore, and in follow with the person walking through):
+**Passages** (run in explore, and in follow with the person walking through). Already written, from the Nov 20 follow
+(debug/20261120-114136), as known failures in `test_scenarios.py`:
+- **`door20`:** the person walks out of a corner door that maps 0.5 m wide. The Mac needs 0.27-0.29 m from any wall,
+  so its path goes round the long way and the robot follows it, left, away from them. DWA alone (0.217 m) could
+  have driven the door.
+- **`corner20`:** a wall corner 0.2 m to the robot's right, the person past it. The Mac's 0.17 m step aside is dropped
+  as reached (`target_on_path`, `reached_m` 0.25). The line on passes the corner at exactly DWA's limit, so DWA veers
+  left and the pivot turns it right, for 14 s.
+
+Tried on Nov 20 and taken out:
+- **Keeping a near waypoint unless the way on is clear:** fixed `door20`, made `corner20` worse. The robot then turns on
+  the spot 0.2 m from the corner and the turn reflex trips.
+- **A two-circle footprint in DWA:** fixed both, but broke 3 to 5 other rooms. It lets the robot drive closer
+  everywhere, not only through passages.
+
+Phase C must keep the circle for open driving and turning, and use the rectangle only on a straight passage leg
+the Mac marks.
 
 | Name | Room | Pass |
 |---|---|---|
@@ -331,7 +428,7 @@ New `test_hardware.py` modes, each run against measured truth:
 | 0 | Fix the tilt servo (hardware); camera checkerboard calibration | fixture heights within 3 cm by hand |
 | A | `explore_sim.py`: world, terrain, IMU, camera and plant models; every scenario written, baseline recorded red | the harness runs; baselines saved |
 | B | `StuckDetector` plus the recovery ladder in `LocalNav` (follow gets it at once) | S1 to S5 in follow |
-| C | The passage layer (Mac) plus the try manoeuvre (Pi) | P1 to P4 |
+| C | 3.2b: C0 measure the ToF width (robot), C1 the person's trail, C2 passages by the rectangle, C3 try and take another way | door20, corner20, P1 to P4, P2-alt, P6 |
 | D | Explore on `LocalNav`; height-aware costmap; frontier order; done-report; camera-seen layer | C1 to C6, S1 to S5 in explore, M7 |
 | E | The plant pipeline: undistortion, SAM 2 masks, joint solve, σ gate | M1 to M6 |
 | F | Real robot: Part 5 modes; freeze explore replays | Part 1 real targets |
