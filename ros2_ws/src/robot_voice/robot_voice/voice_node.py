@@ -218,11 +218,15 @@ def main(args=None) -> None:
     executor.add_node(node)
     spin_thread = threading.Thread(target=executor.spin, daemon=True,
                                    name="rclpy-spin")
-    spin_thread.start()
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     motion = RosMotion(node, loop)
+    # Spin only once the action clients exist: an ActionClient is handed to the executor before it has
+    # finished building itself, and a spin already running then reads it half-made and dies ("'ActionClient'
+    # object has no attribute '_lock'", Nov 20). The voice went on without ROS: no /odom, so every follow
+    # failed its odometry check, and move results never came back.
+    spin_thread.start()
     global _motion, _explore_stop
     _motion = motion
 
