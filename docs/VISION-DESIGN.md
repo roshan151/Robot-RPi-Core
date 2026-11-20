@@ -619,6 +619,12 @@ This is how you tune `APPROACH_STANDOFF_M`, the match threshold, `MIN_INLIERS` a
 tracker parameters without spending the robot's time, and it is the single
 highest-leverage item in this document for development speed.
 
+> **As built (Nov 2026), in Monitoring-Service.** The robot's debug sessions are the
+> recordings: `test_replay.py` replays saved ones (`scenarios/replay/`) through today's
+> follow, tracker, planner and steering code; `test_scenarios.py` drives the real nav
+> stack through simulated rooms with pass rules; `scorecard.py` scores any session
+> against fixed limits. What each guards against is in `FAILURE-MODES.md` (PLAN §8 rule 10).
+
 ---
 
 ## Part 9 — Phases, and what they depend on

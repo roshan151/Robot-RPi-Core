@@ -35,6 +35,7 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
 from robot_core import robot_log, settings, speech, status, task_cancel
+from robot_core.reading import Latest
 from robot_core.live.agent import run_live_agent
 from robot_core.head_look import HeadLook
 from robot_display.link import connect
@@ -84,10 +85,9 @@ def _open_head():
 head_look = HeadLook(_open_head)
 _motion = None                               # RosMotion, set in main(); follow drives with it
 _pitch = [None]                              # the robot's nose-up angle from /motion_health; None = no IMU
-_pose = [None]                               # (x, y, heading) from /odom; None until the first message
+_odom = Latest("odom", frame="odom")         # (x, y, heading) from /odom, stamped: get() is None once stale
 _bump_t = [0.0]                              # time.monotonic() of the last "bumped" in /motion_health
 _twist = [None]                              # (v m/s, w rad/s) from /odom; w is the gyro's with the IMU
-_pose_t = [0.0]                              # time.monotonic() of the last /odom
 POSE_STALE_S = 1.0                           # /odom comes at 10 Hz: older than this, the pose is not known
 _explore_stop = None                         # explore/stop client, set in main()
 
@@ -162,7 +162,7 @@ def _run_task(task: str, name: str) -> bool:
         if task == "follow":
             from robot_core import follow
             return follow.follow(camera, vision, _motion, name, head=head,
-                                 pose=lambda: _pose[0] if time.monotonic() - _pose_t[0] < POSE_STALE_S else None,
+                                 pose=lambda: _odom.get(POSE_STALE_S),
                                  bumped=lambda: _bump_t[0], twist=lambda: _twist[0])
         return face_tasks.match(camera, vision, head=head) is not None
     finally:
@@ -202,7 +202,7 @@ def main(args=None) -> None:
             True, ex.get("vision_url") or settings.VISION_SERVICE_BASE_URL,
             geometry={"camera_hfov_deg": float(ex.get("hfov_deg", 66.0)), "tof_fov_deg": 60.0,
                       "tof_on": "gimbal"},
-            extras=lambda: {"pose": _pose[0], "pitch_deg": _pitch[0]})
+            extras=lambda: {"pose": _odom.get(POSE_STALE_S), "pitch_deg": _pitch[0]})
     connect(node)                        # after setup(): status + warnings go to the OLED
     status.task("voice")
 
@@ -271,18 +271,17 @@ def main(args=None) -> None:
     # Where the robot is (encoders, gyro heading with the IMU): follow's floor memory and search hint.
     from nav_msgs.msg import Odometry
 
-    _pose_t[0], _odom_warned = time.monotonic(), [False]   # when /odom last came; warned already?
+    _odom_warned, _odom_t0 = [False], time.monotonic()      # warned already? (and since when we have waited)
 
     def _on_odom(m) -> None:
         q = m.pose.pose.orientation
-        _pose[0] = (m.pose.pose.position.x, m.pose.pose.position.y, 2.0 * math.atan2(q.z, q.w))
+        _odom.set((m.pose.pose.position.x, m.pose.pose.position.y, 2.0 * math.atan2(q.z, q.w)))
         _twist[0] = (m.twist.twist.linear.x, m.twist.twist.angular.z)
-        _pose_t[0] = time.monotonic()
 
     node.create_subscription(Odometry, "odom", _on_odom, 10, callback_group=topics)
 
     def _odom_watch() -> None:               # follow and explore steer by this pose: say when it stops
-        quiet = time.monotonic() - _pose_t[0]
+        quiet = min(_odom.age(), time.monotonic() - _odom_t0)
         if quiet > 5.0 and not _odom_warned[0]:
             _odom_warned[0] = True
             robot_log.event("voice.diag", logging.WARNING,

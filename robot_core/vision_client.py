@@ -73,8 +73,8 @@ class VisionClient:
     def _files(jpegs: Sequence[bytes], field: str = "images") -> list:
         return [(field, (f"{i}.jpg", b, "image/jpeg")) for i, b in enumerate(jpegs)]
 
-    def health(self) -> dict:
-        return self._call("GET", "/healthz")
+    def health(self, timeout: Optional[float] = None) -> dict:
+        return self._call("GET", "/healthz", timeout=timeout)
 
     # ----------------------------------------------------------- detection
 
@@ -147,12 +147,15 @@ class VisionClient:
         return self._call("POST", "/v1/nav/frame", timeout=2.0, data=data,
                           files={"image": ("f.jpg", jpeg, "image/jpeg")})
 
-    def nav_plan(self, pose, goal, radius_m: float, local: Optional[dict] = None) -> Optional[list]:
+    def nav_plan(self, pose, goal, radius_m: float, local: Optional[dict] = None, target=None) -> Optional[list]:
         """Waypoints [(x, y), ...] from `pose` to `goal` in the odometry frame (the Mac plans with
         Theta* on its global map, corrected by visual SLAM), or None when it finds no way. `local`:
-        the Pi's rolling costmap (RollingCostmap.snapshot), folded into the global map first."""
+        the Pi's rolling costmap (RollingCostmap.snapshot), folded into the global map first. `target`:
+        what the goal is for (the person it stops short of): the Mac keeps the goal on its side of walls."""
         body = {"pose": [float(v) for v in pose], "goal": [float(v) for v in goal],
                 "radius_m": radius_m, "local": local}
+        if target is not None:
+            body["target"] = [float(v) for v in target[:2]]
         out = self._call("POST", "/v1/nav/plan", timeout=3.0, ok_404=True, json=body)
         return None if not out or not out.get("path") else [tuple(p) for p in out["path"]]
 

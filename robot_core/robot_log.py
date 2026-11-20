@@ -97,6 +97,10 @@ EVENTS = {
     "power.flag",        # throttled / freq capped / too hot (live firmware flags)
     "power.earlier",     # a dip happened before the watcher started (sticky flag)
     "power.lastdip",     # the note a previous boot left behind
+    # health and rule breaks (robot_core/health.py, robot_core/rules.py, docs/FAILURE-MODES.md)
+    "health.preflight",  # what was checked before a task started, and what failed
+    "health.mode",       # a running task went normal / degraded / stop, and why
+    "rule",              # something that should never happen did (rule=..., throttled per rule)
 }
 
 _LEVEL_NAME = {

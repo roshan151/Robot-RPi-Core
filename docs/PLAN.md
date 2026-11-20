@@ -893,6 +893,21 @@ timeout, and a policy of dropping new work rather than queueing it. A queue in
 front of a slow link turns a wifi hiccup into the robot acting on
 three-second-old data.
 
+**9. Unknown is not free.** A map cell is occupied, seen free, or unknown. Treating
+unknown as free is fine for a short DWA arc (the gimbal sweeps, the reflex brakes);
+it is wrong for deciding that a straight line is open, which needs
+`RollingCostmap.known_free_line`. Twice in one day (Nov 19) a straight line through an
+unseen wall beat the planner's way round through a doorway.
+
+**10. Failure modes first, a test for every incident, health before motion.** Before
+a module is built, its inputs' failure modes (missing, stale, plausible-but-wrong,
+wrong object) and its hardware's (reset, power off, slow) go in
+`docs/FAILURE-MODES.md`. Every incident gets a test that fails without the fix: a
+saved session in Monitoring-Service `test_replay.py` or a simulated room in
+`test_scenarios.py`. Tasks check their inputs before moving (`robot_core/health.py`
+preflight) and run under a watchdog with defined degraded modes; rule breaks are
+counted (`robot_core/rules.py`) and every debug session can be scored (`scorecard.py`).
+
 ---
 
 ## Part 9 — Things that will bite you

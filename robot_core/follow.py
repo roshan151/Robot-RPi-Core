@@ -32,7 +32,8 @@ import time
 from collections import deque
 from typing import Callable, Optional, Tuple
 
-from robot_core import debug_upload, settings, status, task_cancel
+from robot_core import debug_upload, health, settings, status, task_cancel
+from robot_core.rules import rules
 from robot_core.nav.controller import LocalNav
 from robot_core.nav.stream import FrameStream
 from robot_core.sensors.camera import jpeg
@@ -50,7 +51,8 @@ NEAR_M = 0.7                    # seen within FOLLOW_KEEP_M + this, but the way 
 WALK_MPS = 0.6                  # how fast a tracked person may have moved, for the tracker's doubt
 PERSON_CLEAR_M = 0.35           # round the person: their legs, not an obstacle
 RANGE_JUMP_M = 0.4              # a ToF range this much nearer than the tracked person is something in front of them
-NO_POSE_S = 3.0                 # no fresh odometry this long: stop following rather than steer blind
+TOF_PAIR_S = 0.35               # a ToF grid further than this in time from the camera frame does not range its boxes
+WALK_MAX_MPS = 1.5              # nobody moves faster: a tracked jump beyond this (+0.5 m) is rule goal_jump
 
 Pose = Tuple[float, float, float]   # x, y (m), heading (rad, CCW) in the odometry frame
 
@@ -109,14 +111,28 @@ class PersonTracker:
         self.trail.append((t, self.xy))
 
 
+def refuse_range(tracker: PersonTracker, here: Optional[Pose], d: Optional[float],
+                 source: Optional[str]) -> Optional[str]:
+    """Why the Pi will not take range `d` (m, found by `source`) as the person's distance, or None.
+    A ToF/range reading RANGE_JUMP_M nearer than where they are tracked hit something between the
+    robot and them: nobody steps 0.4 m nearer in one frame (Nov 19: believed twice, it moved the
+    person onto a chair leg). Monitoring-Service test_replay.py runs recorded sessions through this."""
+    if d is None or here is None or tracker.xy is None or source not in ("tof", "range"):
+        return None
+    td = math.dist(here[:2], tracker.xy)
+    if d < td - RANGE_JUMP_M:
+        return f"{source} {d:.2f} m refused: tracked at {td:.2f} m (something in front of them)"
+    return None
+
+
 def _wrap(a: float) -> float:
     return math.atan2(math.sin(a), math.cos(a))
 
 
 def _planner(vision: VisionClient, radius_m: float):
-    """The Mac's global planner as LocalNav wants it: (pose, goal, local costmap) -> waypoints."""
-    def plan(pose, goal, local):
-        return vision.nav_plan(pose, goal, radius_m, local)
+    """The Mac's global planner as LocalNav wants it: (pose, goal, local costmap, target) -> waypoints."""
+    def plan(pose, goal, local, target=None):
+        return vision.nav_plan(pose, goal, radius_m, local, target=target)
     return plan
 
 
@@ -145,14 +161,16 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
         status.error("F02", why)
         status.result("follow failed")
         return False
-    if not getattr(head.gimbal, "powered", lambda: True)():
-        # Nov 19: servo supply off, the head stayed frozen, the ToF saw the person and the wall in turn and the
-        # robot stalled into things 5 times in 12 s. Without the head there is no way to see the path.
-        why = "head servos have no power"
-        log.warning("follow failed: %s", why)
-        status.error("F02", why)
+    # Everything it steers by, checked at once before anything moves (Nov 19: it started with the servos
+    # unpowered, and twice with odometry dead after an Arduino reset). robot_core/health.py.
+    bad = health.failed(health.preflight(head=head, pose=pose, vision=vision))
+    if bad:
+        log.warning("follow failed: %s", bad)
+        status.error("F02", bad)
+        status.detail(bad)
         status.result("follow failed")
         return False
+    rules.reset()
     if vision.follow_start(name) is None:
         why = f"{name or 'nobody'} not enrolled"
         log.warning("follow failed: %s", why)
@@ -161,7 +179,7 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
         status.result("follow failed")
         return False
     nav = LocalNav(head, motion, pose, twist=twist, bumped=bumped, tilt_deg=_nav_tilt(head))
-    nav.planner = _planner(vision, nav.params.radius_m)
+    nav.planner = _planner(vision, nav.plan_radius_m)
     stream = FrameStream(camera, head.gimbal, nav.pose, send=getattr(vision, "nav_frame", None),
                          tilt_offset_deg=head.geom.tilt_offset_deg, tof=head.lidar.grid).start()
     nav.start()
@@ -176,26 +194,25 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
     lost_xy = lost_dir = None                             # where to go when lost, and which way they walked
     lost_face: Optional[float] = None                     # when it began turning to face their way
     t0, seq, last_frame = clock(), 0, 0
-    pose_ok_t = clock()                                   # when there last was a fresh odometry pose
+    watchdog = health.Watchdog(head, nav.pose)
     try:
         while clock() - t0 < seconds and not task_cancel.requested():
             frame, here = stream.latest(newer_than=last_frame)
             last_frame = frame.seq
             seq += 1
-            if here is not None:
-                pose_ok_t = clock()
-            elif clock() - pose_ok_t > NO_POSE_S:
-                # Nov 19: /odom stopped, the pose froze, and nav kept "driving" toward a person it placed from a
-                # heading that no longer changed: the head sat at its +81 deg limit while the body never turned.
-                raise RuntimeError(f"no odometry for {NO_POSE_S:.0f} s (drivetrain telemetry stopped)")
             h, w = frame.main.shape[:2]
             grid = head.lidar.grid()
+            pair_s = None if grid is None else round(grid.t - frame.t_capture, 3)
+            if pair_s is not None and abs(pair_s) > TOF_PAIR_S:
+                rules.broke("grid_unpaired", pair_s=pair_s)   # the boxes are in this frame, the ranges from another moment
+                grid = None
             rng = range_in_box(grid, res.get("bbox"), w, h, head.geom.hfov_deg,
                                head.geom.tof_pan_offset_deg, head.geom.tof_tilt_offset_deg) if grid else None
             hint = None                                   # where they were last seen, from here (+ left)
             if last_seen and here and time.monotonic() - last_seen[1] < LAST_SEEN_S:
                 hint = round(math.degrees(_wrap(last_seen[0] - here[2])), 1)
             img = jpeg(frame.main, settings.FACE_WIRE_LONG_EDGE)
+            t_call = time.monotonic()
             res = vision.follow_step(
                 img, seq, pan_deg=frame.pan_deg, hfov_deg=head.geom.hfov_deg,
                 tilt_deg=frame.tilt_deg + head.geom.tilt_offset_deg,     # the REAL tilt: the head looks up at 0
@@ -203,6 +220,12 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                 tof_grid=grid.rows if grid is not None else None, hint_deg=hint, pose=here,
                 tof_pan_offset_deg=head.geom.tof_pan_offset_deg,
                 tof_tilt_offset_deg=head.geom.tof_tilt_offset_deg)
+            mac_s = time.monotonic() - t_call
+            if mac_s > health.MAC_SLOW_S:
+                rules.broke("mac_slow", s=round(mac_s, 2))
+            mode, reasons = watchdog.update(mac_s)
+            if mode == "stop":                            # odometry gone, servos off: say why and end
+                raise RuntimeError("; ".join(reasons))
             state = res["state"]
             gated = None                                  # a ToF range the Pi refused this step (debug record)
             log.info("follow %d: %s %s, bearing %s, %s m (%s); nav %s %s%s", seq, state, res.get("target") or "-",
@@ -213,11 +236,11 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                 break
             if state == "tracking" and here and res.get("bearing_deg") is not None:
                 b, d = res["bearing_deg"], res.get("distance_m") or rng
-                if d and tracker.xy is not None and res.get("distance_from") in ("tof", "range") \
-                        and d < math.dist(here[:2], tracker.xy) - RANGE_JUMP_M:
+                why_r = refuse_range(tracker, here, d, res.get("distance_from"))
+                if why_r:
                     gated = (round(d, 2), round(math.dist(here[:2], tracker.xy), 2))
-                    log.info("follow %d: %s %.2f m refused: tracked at %.2f m (something in front of them)",
-                             seq, res.get("distance_from"), *gated)
+                    log.info("follow %d: %s", seq, why_r)
+                    rules.broke("range_refused", d=gated[0], tracked=gated[1], source=res.get("distance_from"))
                     # The ToF zones under last frame's box hit something between us and them (a chair leg, the
                     # door frame): nobody steps 0.4 m nearer in one frame. Believed twice, it moved the person onto
                     # the obstacle, nav "arrived" 0.2 m from it and the person-ignore circle erased it from the
@@ -232,7 +255,13 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                     nav.set_goal(spot, keep_m=1.0)
                     nav.set_focus(spot, PERSON_CLEAR_M)
                 elif d:
+                    before, t_before = tracker.xy, tracker.t
                     tracker.update(here, b, d, res.get("distance_sigma_m"), time.monotonic())
+                    if before is not None:
+                        jump, dt = math.dist(before, tracker.xy), max(0.0, tracker.t - t_before)
+                        if jump > WALK_MAX_MPS * dt + 0.5:
+                            rules.broke("goal_jump", jump_m=round(jump, 2), dt_s=round(dt, 2),
+                                        source=res.get("distance_from"))
                     # Stand and face only a person standing still beside something; one walking on (through a
                     # door, round a corner) is followed the long way round, or they are lost behind it.
                     nav.set_goal(tracker.xy, keep_m=settings.FOLLOW_KEEP_M,
@@ -273,6 +302,10 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                     a = here[2] - math.radians(res["turn_deg"])
                     nav.set_goal((here[0] + math.cos(a), here[1] + math.sin(a)), keep_m=1.0)
                 nav.look(look[0], settings.FOLLOW_TILT_DEG + look[1])
+            if mode == "degraded" and any(r.startswith("no ToF") for r in reasons):
+                nav.set_goal(None)                        # no obstacle sensing: stand rather than drive blind
+                if nav.cmd[0] > 0.02:
+                    rules.broke("tof_stale", why=reasons[0])
             debug_upload.offer_event(img, {                 # debug mode: this frame, the Mac's answer, the decision
                 "task": "follow", "seq": seq, "state": state, "target": res.get("target"),
                 "bearing_deg": res.get("bearing_deg"), "distance_m": res.get("distance_m"),
@@ -283,7 +316,8 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                 "tracker": None if tracker.xy is None else {"xy": [round(v, 3) for v in tracker.xy],
                                                             "sigma": round(math.sqrt(tracker.var), 3),
                                                             "walking": tracker.walking()},
-                "nav_source": nav.source, "marked": nav.marked[-3:]},
+                "nav_source": nav.source, "marked": nav.marked[-3:],
+                "rules": rules.snapshot(), "health": [mode, reasons], "grid_pair_s": pair_s, "mac_s": round(mac_s, 3)},
                 grid.rows if grid is not None else None, frame.seq)
     except (VisionError, RuntimeError) as exc:       # RuntimeError: camera or drivetrain gave up
         log.warning("follow ended: %s", exc)

@@ -38,6 +38,7 @@ import numpy as np
 
 from robot_core import status
 from robot_core.nav import dwa
+from robot_core.rules import rules
 from robot_core.nav.aim import GimbalAim
 from robot_core.nav.costmap import RollingCostmap
 from robot_core.nav.plan import local_path
@@ -64,6 +65,8 @@ BLIND_MPS = 0.08                # top speed while the way ahead has not been see
 SEEN_MPS = 0.18                 # ...or this, where the map remembers it as free (the head is on the person)
 PIVOT_FOCUS_W = 0.55            # turn rate pivoting while the camera is on someone: 0.8 rad/s blurred the frames
                                 # and the person was missed 9 frames in 16 at a doorway (Nov 19)
+NO_PROGRESS_S, NO_PROGRESS_M = 4.0, 0.05   # "driving" this long without moving this far: wedged
+PLAN_EXTRA_M = 0.025            # extra room asked beyond DWA radius + margin (the planner adds its own 0.05, else 0.03)
 
 
 def _length(here, path, goal) -> float:
@@ -141,6 +144,10 @@ class LocalNav:
         self.fix = PoseFix(pose)
         self.twist = twist
         self.params = params or dwa.DwaParams(radius_m=math.hypot(p.width_m / 2.0, p.width_m / 2.0))   # square
+        # What the global planner is asked to keep clear: DWA's radius + margin + PLAN_EXTRA_M. Planned with DWA's
+        # bare radius, the Mac's path hugged a wall 0.22 m off past a door frame, DWA (which also wants room at the
+        # nose) could not follow it, and the robot stood turning in the doorway (test_scenarios doorway).
+        self.plan_radius_m = self.params.radius_m + self.params.margin_m + PLAN_EXTRA_M
         self.costmap = RollingCostmap(flat_tol_m=max(p.h_max_m, p.flat_tol_m), body_m=p.body_m)
         self.cmd = (0.0, 0.0)
         self.reflex = Reflex(head, motion, lambda: self.cmd, self.fix, bumped, front_m=p.width_m / 2.0,
@@ -167,6 +174,9 @@ class LocalNav:
         self._trips_seen = 0
         self._ahead_t = -1e9                          # when a grid last looked along the way it is going
         self.marked: List[Tuple[float, float]] = []    # odom xy of what the reflex braked for (debug record)
+        self._pivot_sign, self._flips = 0, deque()    # rule pivot_flip: turn-on-the-spot direction changes
+        self._blocked_since: Optional[float] = None   # rule blocked_long
+        self._progress: Optional[Tuple[float, Tuple[float, float]]] = None   # (since when, where) it last moved
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._thread: Optional[threading.Thread] = None
@@ -271,6 +281,8 @@ class LocalNav:
         here = self.fix()
         if here is None:
             self._send(0.0, 0.0)
+            if self.state != "no pose" and self.goal is not None:
+                rules.broke("pose_stale", state=self.state)
             self.state, self.detail = "no pose", "waiting for odometry"
             return
         if self._last_pose is not None:
@@ -283,6 +295,8 @@ class LocalNav:
                 self._plan_t, self._local_t = 0.0, -1e9   # the head was on the person and the map never had it
                 c, s = math.cos(here[2]), math.sin(here[2])
                 at = [(round(here[0] + c * x - s * y, 2), round(here[1] + s * x + c * y, 2)) for x, y in hits]
+                if any(math.dist(m, at[len(at) // 2]) < 0.3 for m in self.marked):
+                    rules.broke("trip_repeat", at=at[len(at) // 2], why=self.reflex.why)
                 self.marked = (self.marked + [at[len(at) // 2]])[-20:]
                 log.info("nav: marked what it braked for (%s) at %s, replanning", self.reflex.why, at[len(at) // 2])
             self._trips_seen = self.reflex.trips          # it first, whatever the state (Nov 19: tripped while
@@ -344,7 +358,9 @@ class LocalNav:
             self._moving_since = None
             self.aim.update(now, 0.0, w, focus_pan)
             return
-        target = dwa.target_on_path(here, path, self.costmap.clearance, radius,
+        # Skipping ahead to a later waypoint needs PLAN_EXTRA_M + 0.025 more room than DWA's margin: with the bare margin
+        # the straight line to it cut a door-frame corner and the robot wedged there (test_scenarios doorway).
+        target = dwa.target_on_path(here, path, self.costmap.clearance, radius + PLAN_EXTRA_M + 0.025,
                                     seen_fn=self._seen_line) if path else None
         if target is None or math.dist(target, goal) < 0.1:   # the goal itself: stop keep_m short of it
             target, stop_at = goal, keep
@@ -361,7 +377,9 @@ class LocalNav:
             max_w = PIVOT_FOCUS_W if focus is not None else 0.8
             w = dwa.face(tb, max_w=max_w) or (math.copysign(min(0.7, max_w), tb) if abs(w_meas) < 0.3 else w_meas)
         elif not res.blocked and v < 0.02:                # only turning on the spot is safe: turn properly, toward the
-            w = dwa.face(tb) or (0.6 if abs(w) < 0.3 else w)   # way, not a 0.03 rad/s creep the tracks cannot do
+            # way, not a 0.03 rad/s creep the tracks cannot do. Toward the target's side: a fixed +0.6 (always left)
+            # with the target nearly ahead turned it away, then back, 64 times in a doorway (test_scenarios doorway).
+            w = dwa.face(tb) or (math.copysign(0.6, tb) if abs(w) < 0.3 else w)
         if res.blocked:
             # Toward the same point as above, never a blind turn to the left: the two disagreeing spun it on the
             # spot in a doorway until it lost the person (Nov 19). Blocked with the way straight ahead: back off.
@@ -373,6 +391,7 @@ class LocalNav:
             self.state, self.detail = "blocked", "no safe arc: turning toward the way" if w else "no safe arc: backing off"
         else:
             self.state, self.detail = "driving", f"{dist:.2f} m to go"
+            self._watch_progress(now, here, dist)
         if v > 0.02 and now - self._ahead_t > AHEAD_STALE_S:     # not looked where it is going lately
             v = min(v, SEEN_MPS if self.costmap.seen_free(here, 0.6) else BLIND_MPS)
             if now >= self.aim.glance_until:
@@ -387,6 +406,7 @@ class LocalNav:
             if abs(tb) > math.radians(45.0) and behind > self.params.radius_m:
                 self._recover, self._recover_from, self._back_m = "back", (here, now), TURN_BACK_M
             v = w = 0.0
+        self._watch_rules(now, here, v, w)
         self._send(v, w)
         status.detail(f"nav {self.state}")
         self._watch_stuck(now, here, v, ahead)
@@ -400,8 +420,43 @@ class LocalNav:
 
     def _seen_line(self, a, b) -> bool:
         """Every cell on the straight line a -> b was seen free."""
-        d = math.dist(a, b)
-        return d < 0.2 or self.costmap.seen_free((a[0], a[1], math.atan2(b[1] - a[1], b[0] - a[0])), d)
+        return self.costmap.known_free_line(a, b)
+
+    def _watch_progress(self, now: float, here: Pose, dist: float) -> None:
+        """In "driving" but not NO_PROGRESS_M from where it was NO_PROGRESS_S ago: wedged (Nov 19 sim: against a
+        door-frame corner no arc met the margin and it turned on the spot for 40 s). Back off and plan again.
+        Measured by where it is, not by the distance to the goal: the way round can first lead away."""
+        if self._progress is None or math.dist(here[:2], self._progress[1]) > NO_PROGRESS_M:
+            self._progress = (now, tuple(here[:2]))
+            return
+        if now - self._progress[0] > NO_PROGRESS_S and self._recover is None:
+            behind = float(self.costmap.clearance([here[0] - 0.12 * math.cos(here[2])],
+                                                  [here[1] - 0.12 * math.sin(here[2])])[0])
+            rules.broke("no_progress", at=[round(here[0], 2), round(here[1], 2)], to_go=round(dist, 2))
+            if behind > self.params.radius_m:
+                self._recover, self._recover_from, self._back_m = "back", (here, now), BACK_OFF_M
+            self._plan_t, self._local_t = 0.0, -1e9
+            self._progress = (now, tuple(here[:2]))
+
+    def _watch_rules(self, now: float, here: Pose, v: float, w: float) -> None:
+        """pivot_flip: turning on the spot changed direction twice in 2 s; blocked_long: no safe arc for 3 s."""
+        if v < 0.02 and abs(w) > 0.25:
+            s = 1 if w > 0 else -1
+            if self._pivot_sign and s != self._pivot_sign:
+                self._flips.append(now)
+                while self._flips and now - self._flips[0] > 2.0:
+                    self._flips.popleft()
+                if len(self._flips) >= 2:
+                    rules.broke("pivot_flip", at=[round(here[0], 2), round(here[1], 2)], detail=self.detail)
+                    self._flips.clear()
+            self._pivot_sign = s
+        if self.state == "blocked":
+            self._blocked_since = self._blocked_since or now
+            if now - self._blocked_since > 3.0:
+                rules.broke("blocked_long", at=[round(here[0], 2), round(here[1], 2)])
+                self._blocked_since = now
+        else:
+            self._blocked_since = None
 
     def _turn_hits(self, here, w: float, dt: float = 0.4) -> bool:
         """Would turning on the spot at w for dt sweep the square footprint into an occupied cell?"""
@@ -424,7 +479,10 @@ class LocalNav:
         length = _length(here, path, goal)
         loc = self.local_wps
         if loc and loc is not path and math.dist(loc[-1], goal) < 0.6 and length > 1.5 * _length(here, loc, goal) + 0.3:
-            return True
+            # Our own Theta* plans through unknown cells as if free: its shorter way only counts if we SAW it free.
+            pts = [tuple(here[:2])] + [tuple(p[:2]) for p in loc[1:]]
+            if all(self.costmap.known_free_line(a, b) for a, b in zip(pts, pts[1:])):
+                return True
         direct = math.dist(here[:2], goal)
         if length <= 2.0 * direct + 0.5 or direct < 0.7:
             return False
@@ -450,7 +508,7 @@ class LocalNav:
 
         def work() -> None:
             try:
-                path = self.planner(here, aim, local)
+                path = self.planner(here, aim, local, goal)   # goal: the person, so the aim stays on their side
                 if path:
                     self.waypoints, self.wp_goal, self._wp_t = [tuple(p) for p in path], goal, self.clock()
             except Exception as exc:                     # noqa: BLE001 — the Mac is optional: carry on locally

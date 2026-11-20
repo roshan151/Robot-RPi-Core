@@ -12,8 +12,12 @@ into the odometry frame (encoders for distance, the gyro for heading), and folde
   * evidence fades with time (`tau_s`): the odometry frame drifts.
 
 The grid is re-centred on the robot in whole cells whenever it strays `recentre_m` from
-the middle; what falls off the edge is forgotten. Unknown cells count as free: DWA only
-plans a couple of metres ahead, the gimbal sweeps, and the reflex brakes on anything near.
+the middle; what falls off the edge is forgotten. Each cell is one of three states: occupied
+(lo > OCC), seen free (lo < FREE) or unknown (between). `clearance()` treats unknown as free,
+which is right for DWA's short arcs (the gimbal sweeps, the reflex brakes, speed is capped where
+the way is unseen) and WRONG for deciding a straight line is open: use `known_free_line()` for
+that (Nov 19: twice, a straight line through an unseen wall was taken over the planner's way
+round through a doorway).
 
 `clearance(xs, ys)` is the distance (m) from each point to the nearest occupied cell (from
 a distance transform, recomputed lazily after updates), which is what DWA scores against.
@@ -35,6 +39,7 @@ class RollingCostmap:
     HIT, MISS = 0.9, 0.4            # evidence per reading
     TOP, BOTTOM = 3.5, -2.0
     OCC = 0.6                       # occupied above this (one solid hit, or two weak ones)
+    FREE = -0.3                     # seen free below this; between FREE and OCC: unknown
     FAR = 9.0                       # "no obstacle anywhere near"
     LOW = 0.065                     # tan(half a zone): how far a zone's lower edge is below its centre, per metre
     SHARP_M = 0.6                   # hits nearer than this count in full; further, by SHARP_M / d (zone width)
@@ -214,9 +219,16 @@ class RollingCostmap:
         ix, iy = self._cells(pose[0] + f * math.cos(pose[2]), pose[1] + f * math.sin(pose[2]))
         with self._lock:
             ok = self._inside(ix, iy)
-            return bool(ok.all() and (self.lo[ix, iy] < -0.3).all())
+            return bool(ok.all() and (self.lo[ix, iy] < self.FREE).all())
+
+    def known_free_line(self, a: XY, b: XY) -> bool:
+        """Every cell on the straight line a -> b was SEEN free (unknown is not free here)."""
+        d = math.dist(a, b)
+        return d < 0.2 or self.seen_free((a[0], a[1], math.atan2(b[1] - a[1], b[0] - a[0])), d)
 
     def line_clear(self, a: XY, b: XY, radius_m: float) -> bool:
+        """Nothing KNOWN within radius_m of the line; unknown cells pass. Pair with known_free_line
+        when the answer decides that a way is open."""
         n = max(2, int(math.dist(a, b) / (self.res / 2.0)) + 1)
         xs, ys = np.linspace(a[0], b[0], n), np.linspace(a[1], b[1], n)
         return bool(np.all(self.clearance(xs, ys) >= radius_m))
