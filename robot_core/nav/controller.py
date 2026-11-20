@@ -164,6 +164,7 @@ class LocalNav:
         self._recover: Optional[str] = None
         self._trips_seen = 0
         self._ahead_t = -1e9                          # when a grid last looked along the way it is going
+        self.marked: List[Tuple[float, float]] = []    # odom xy of what the reflex braked for (debug record)
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._thread: Optional[threading.Thread] = None
@@ -274,6 +275,14 @@ class LocalNav:
             self._odo += math.hypot(here[0] - self._last_pose[0], here[1] - self._last_pose[1])
         self._last_pose = here
         if self._trips_seen != self.reflex.trips:         # the brake holds /cmd_vel off until a zero command: send
+            hits, self.reflex.hits = self.reflex.hits, []
+            if hits:                                      # remember what it braked for and plan round it: it drove
+                self.costmap.add_obstacle(here, hits)     # back into the same thing 4 times in 8 s (Nov 19), as
+                self._plan_t, self._local_t = 0.0, -1e9   # the head was on the person and the map never had it
+                c, s = math.cos(here[2]), math.sin(here[2])
+                at = [(round(here[0] + c * x - s * y, 2), round(here[1] + s * x + c * y, 2)) for x, y in hits]
+                self.marked = (self.marked + [at[len(at) // 2]])[-20:]
+                log.info("nav: marked what it braked for (%s) at %s, replanning", self.reflex.why, at[len(at) // 2])
             self._trips_seen = self.reflex.trips          # it first, whatever the state (Nov 19: tripped while
             self._send(0.0, 0.0)                          # "arrived", it never sent one, the drivetrain stayed held,
             return                                        # and the body stood while the head followed them away)
@@ -316,6 +325,10 @@ class LocalNav:
         if fresh and self._detour(here, goal, self.waypoints, radius):
             fresh = False                                 # the Mac goes the long way round something our
             self.detail = "Mac path is a detour: going direct"   # costmap does not have (Nov 19: a phantom)
+            if now - getattr(self, "_detour_log_t", -1e9) > 2.0:   # say so in logs.json, not every tick
+                self._detour_log_t = now
+                log.info("nav: Mac path %.2f m vs %.2f m direct (seen free): going direct",
+                         _length(here, self.waypoints, goal), math.dist(here[:2], goal))
         if fresh:
             path, self.source = self.waypoints, "global"
         else:                                             # no word from the Mac: plan on the costmap
@@ -408,7 +421,11 @@ class LocalNav:
             return False
         k = (direct - 0.45) / direct                      # up to 0.45 m short: the person's own legs are there
         end = (here[0] + k * (goal[0] - here[0]), here[1] + k * (goal[1] - here[1]))
-        return self.costmap.line_clear(tuple(here[:2]), end, radius)
+        # Clear must mean SEEN clear: with the head on the person the way is mostly unknown, which line_clear
+        # takes as free, so the Mac's way round (through the passage) was thrown away for a blind straight line.
+        ang = math.atan2(goal[1] - here[1], goal[0] - here[0])
+        return self.costmap.line_clear(tuple(here[:2]), end, radius) and \
+            self.costmap.seen_free((here[0], here[1], ang), math.dist(here[:2], end))
 
     def _maybe_plan(self, now: float, here: Pose, goal: Tuple[float, float], keep: float = 0.0) -> None:
         if self.planner is None or self._planning or now - self._plan_t < self.plan_every:

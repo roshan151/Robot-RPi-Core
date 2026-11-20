@@ -87,6 +87,8 @@ _pitch = [None]                              # the robot's nose-up angle from /m
 _pose = [None]                               # (x, y, heading) from /odom; None until the first message
 _bump_t = [0.0]                              # time.monotonic() of the last "bumped" in /motion_health
 _twist = [None]                              # (v m/s, w rad/s) from /odom; w is the gyro's with the IMU
+_pose_t = [0.0]                              # time.monotonic() of the last /odom
+POSE_STALE_S = 1.0                           # /odom comes at 10 Hz: older than this, the pose is not known
 _explore_stop = None                         # explore/stop client, set in main()
 
 
@@ -160,7 +162,8 @@ def _run_task(task: str, name: str) -> bool:
         if task == "follow":
             from robot_core import follow
             return follow.follow(camera, vision, _motion, name, head=head,
-                                 pose=lambda: _pose[0], bumped=lambda: _bump_t[0], twist=lambda: _twist[0])
+                                 pose=lambda: _pose[0] if time.monotonic() - _pose_t[0] < POSE_STALE_S else None,
+                                 bumped=lambda: _bump_t[0], twist=lambda: _twist[0])
         return face_tasks.match(camera, vision, head=head) is not None
     finally:
         if gimbal:
@@ -268,7 +271,7 @@ def main(args=None) -> None:
     # Where the robot is (encoders, gyro heading with the IMU): follow's floor memory and search hint.
     from nav_msgs.msg import Odometry
 
-    _pose_t, _odom_warned = [time.monotonic()], [False]   # when /odom last came; warned already?
+    _pose_t[0], _odom_warned = time.monotonic(), [False]   # when /odom last came; warned already?
 
     def _on_odom(m) -> None:
         q = m.pose.pose.orientation

@@ -43,6 +43,14 @@ records the simple first version. **It amends `VISION-DESIGN.md`** (§4.6
 > Follow needs the 8x8 ToF and velocity firmware; without them it says so and does not drive.
 > `replay_debug.py <debug session>` replays a recorded session through the stuck and reflex rules.
 
+> **Amended (Nov 19 2026, evening): fixes from the follow logs.**
+> - **Ranges in front of the person are refused.** Mac: a ToF zone landing within 8 cm of the floor is skipped; a range more than max(0.3 m, 3 sigma) nearer than where the box's bottom edge puts their feet is "something in front of them"; under 0.4 m the box must be tall and cut off at the top. The Pi's `range_m` (read on the previous frame's box) gets the same checks. Pi: a ToF/range reading 0.4 m nearer than the tracked person is skipped (`RANGE_JUMP_M`). Before this, one run had 39 such readings: the person was placed on the obstacle, nav "arrived" 0.2 m from it, and the person-ignore circle erased the obstacle from the costmap.
+> - **What the reflex brakes for goes into the costmap** (ToF zone, or just ahead of the nose for a bump/stall while driving forward) and a replan is asked for at once.
+> - **The Mac's longer way round is kept** unless the straight line was *seen* free (unknown cells no longer count as clear).
+> - **"Stand and face" when the way round is long** applies only to a person standing still; one walking on is followed round.
+> - **No stale pose:** `/odom` older than 1 s is no pose (nav stops); 3 s without one ends follow ("no odometry"). Follow refuses to start with the head servos unpowered.
+> - **Debugging:** logs.json now has `mac: <why>` on a follow line when the Mac passed over a ToF/range reading, the Pi's own refusals, every obstacle marked from a reflex trip, and the Mac's detours it drops. With debug_mode on, the event note adds `range_note`, `gated`, `tracker` (xy, sigma, walking), `near_m_used`, `nav_source`, `marked`; the Mac writes every step's working (each person's ToF range, zone counts, why refused, feet distance, who was picked and why) to `debug/<session>/nav/follow.jsonl` (Vision-And-Planning `nav_record.py`).
+
 ## Part 0 — What this changes in PLAN.md / VISION-DESIGN.md
 
 | Was | Now | Why |

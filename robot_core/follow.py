@@ -49,6 +49,8 @@ LOST_FACE_S = 2.0               # then turn to face the way they went, for at mo
 NEAR_M = 0.7                    # seen within FOLLOW_KEEP_M + this, but the way to them goes round something: face, stand
 WALK_MPS = 0.6                  # how fast a tracked person may have moved, for the tracker's doubt
 PERSON_CLEAR_M = 0.35           # round the person: their legs, not an obstacle
+RANGE_JUMP_M = 0.4              # a ToF range this much nearer than the tracked person is something in front of them
+NO_POSE_S = 3.0                 # no fresh odometry this long: stop following rather than steer blind
 
 Pose = Tuple[float, float, float]   # x, y (m), heading (rad, CCW) in the odometry frame
 
@@ -143,6 +145,14 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
         status.error("F02", why)
         status.result("follow failed")
         return False
+    if not getattr(head.gimbal, "powered", lambda: True)():
+        # Nov 19: servo supply off, the head stayed frozen, the ToF saw the person and the wall in turn and the
+        # robot stalled into things 5 times in 12 s. Without the head there is no way to see the path.
+        why = "head servos have no power"
+        log.warning("follow failed: %s", why)
+        status.error("F02", why)
+        status.result("follow failed")
+        return False
     if vision.follow_start(name) is None:
         why = f"{name or 'nobody'} not enrolled"
         log.warning("follow failed: %s", why)
@@ -166,11 +176,18 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
     lost_xy = lost_dir = None                             # where to go when lost, and which way they walked
     lost_face: Optional[float] = None                     # when it began turning to face their way
     t0, seq, last_frame = clock(), 0, 0
+    pose_ok_t = clock()                                   # when there last was a fresh odometry pose
     try:
         while clock() - t0 < seconds and not task_cancel.requested():
             frame, here = stream.latest(newer_than=last_frame)
             last_frame = frame.seq
             seq += 1
+            if here is not None:
+                pose_ok_t = clock()
+            elif clock() - pose_ok_t > NO_POSE_S:
+                # Nov 19: /odom stopped, the pose froze, and nav kept "driving" toward a person it placed from a
+                # heading that no longer changed: the head sat at its +81 deg limit while the body never turned.
+                raise RuntimeError(f"no odometry for {NO_POSE_S:.0f} s (drivetrain telemetry stopped)")
             h, w = frame.main.shape[:2]
             grid = head.lidar.grid()
             rng = range_in_box(grid, res.get("bbox"), w, h, head.geom.hfov_deg,
@@ -187,13 +204,25 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                 tof_pan_offset_deg=head.geom.tof_pan_offset_deg,
                 tof_tilt_offset_deg=head.geom.tof_tilt_offset_deg)
             state = res["state"]
-            log.info("follow %d: %s %s, bearing %s, %s m (%s); nav %s %s", seq, state, res.get("target") or "-",
-                     res.get("bearing_deg"), res.get("distance_m"), res.get("distance_from"), nav.state, nav.detail)
+            gated = None                                  # a ToF range the Pi refused this step (debug record)
+            log.info("follow %d: %s %s, bearing %s, %s m (%s); nav %s %s%s", seq, state, res.get("target") or "-",
+                     res.get("bearing_deg"), res.get("distance_m"), res.get("distance_from"), nav.state, nav.detail,
+                     f"; mac: {res['range_note']}" if res.get("range_note") else "")
             status.detail(f"{state} {res.get('distance_m') or ''}")
             if state == "gone":
                 break
             if state == "tracking" and here and res.get("bearing_deg") is not None:
                 b, d = res["bearing_deg"], res.get("distance_m") or rng
+                if d and tracker.xy is not None and res.get("distance_from") in ("tof", "range") \
+                        and d < math.dist(here[:2], tracker.xy) - RANGE_JUMP_M:
+                    gated = (round(d, 2), round(math.dist(here[:2], tracker.xy), 2))
+                    log.info("follow %d: %s %.2f m refused: tracked at %.2f m (something in front of them)",
+                             seq, res.get("distance_from"), *gated)
+                    # The ToF zones under last frame's box hit something between us and them (a chair leg, the
+                    # door frame): nobody steps 0.4 m nearer in one frame. Believed twice, it moved the person onto
+                    # the obstacle, nav "arrived" 0.2 m from it and the person-ignore circle erased it from the
+                    # costmap (Nov 19: 39 such readings in one run). Skip it; the next box/floor range will do.
+                    d = None
                 last_seen = (here[2] + math.radians(b), time.monotonic())
                 lost_go, lost_done, lost_face = None, False, None
                 nav.release_head()
@@ -204,7 +233,10 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                     nav.set_focus(spot, PERSON_CLEAR_M)
                 elif d:
                     tracker.update(here, b, d, res.get("distance_sigma_m"), time.monotonic())
-                    nav.set_goal(tracker.xy, keep_m=settings.FOLLOW_KEEP_M, near_m=NEAR_M)
+                    # Stand and face only a person standing still beside something; one walking on (through a
+                    # door, round a corner) is followed the long way round, or they are lost behind it.
+                    nav.set_goal(tracker.xy, keep_m=settings.FOLLOW_KEEP_M,
+                                 near_m=NEAR_M if tracker.walking() is None else 0.0)
                     nav.set_focus(tracker.xy, PERSON_CLEAR_M)
             elif state == "searching" and res.get("locked") and not lost_done and tracker.xy is not None \
                     and last_seen and time.monotonic() - last_seen[1] < LAST_SEEN_S:
@@ -246,7 +278,12 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                 "bearing_deg": res.get("bearing_deg"), "distance_m": res.get("distance_m"),
                 "distance_from": res.get("distance_from"), "range_m": rng, "pose": here, "pose_now": nav.pose(),
                 "goal": nav.goal, "nav": nav.state, "nav_detail": nav.detail, "cmd": nav.cmd,
-                "waypoints": nav.waypoints[:6], "reflex_trips": nav.reflex.trips, "head": res.get("head")},
+                "waypoints": nav.waypoints[:6], "reflex_trips": nav.reflex.trips, "head": res.get("head"),
+                "range_note": res.get("range_note"), "gated": gated, "near_m_used": nav.near_m,
+                "tracker": None if tracker.xy is None else {"xy": [round(v, 3) for v in tracker.xy],
+                                                            "sigma": round(math.sqrt(tracker.var), 3),
+                                                            "walking": tracker.walking()},
+                "nav_source": nav.source, "marked": nav.marked[-3:]},
                 grid.rows if grid is not None else None, frame.seq)
     except (VisionError, RuntimeError) as exc:       # RuntimeError: camera or drivetrain gave up
         log.warning("follow ended: %s", exc)

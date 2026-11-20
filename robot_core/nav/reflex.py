@@ -53,6 +53,7 @@ class Reflex:
         self.tripped_until = 0.0
         self.why = ""
         self.trips = 0
+        self.hits: List[Tuple[float, float]] = []        # where (robot frame) the last trip found something
         self._stop = threading.Event()
         self._thread: Optional[threading.Thread] = None
         self._lock = threading.Lock()
@@ -120,6 +121,8 @@ class Reflex:
         with self._lock:
             self._hist.append((now, pan, tilt, self.pose()))
         if self.bumped is not None and (self.bumped() or 0.0) > max(self._t0, self.tripped_until - self.hold_s):
+            if self.command()[0] > 0.02:                  # driving forward into it: it is just ahead of the nose
+                self.hits = [(self.front + 0.06, y / 20.0) for y in range(-2, 3)]
             self.trip("the drivetrain felt something (bump, stall, slip or climb)", count=True)
         g = self.head.lidar.grid() if hasattr(self.head.lidar, "grid") else None
         if g is None or g.t <= self._last_grid_t:
@@ -158,7 +161,9 @@ class Reflex:
             if r == 6 and h <= 0.08:
                 continue
             if v > 0.02 and x > 0.0 and abs(y) <= self.half + self.margin:
+                self.hits = [(x, y)]
                 return f"something {d:.2f} m from the sensor, ahead"
             if abs(w) > 0.1 and math.hypot(x, y) <= math.hypot(self.front, self.half) + self.margin:
+                self.hits = [(x, y)]
                 return f"something {d:.2f} m from the sensor, in the way of the turn"
         return ""
