@@ -46,7 +46,9 @@ from robot_core.explore import ExploreConfig, Explorer
 from robot_core.odometry import Pose2D
 from robot_core.sensors.camera import Camera
 from robot_core.sensors.gimbal import from_params
-from robot_core.sensors.head import Head, HeadGeometry
+from robot_core.sensors.head import Head, HeadGeometry, parse_self_zones
+from robot_core import terrain
+from robot_core.sensors import tof8x8
 from robot_core.sensors.tfluna import TFLuna
 from robot_core.sensors.visual_motion import VisualMotionEstimator
 from robot_core.vision_client import VisionClient
@@ -54,7 +56,7 @@ from robot_display.link import connect
 from robot_interfaces.action import Drive, Turn
 from robot_interfaces.msg import MotionHealth, VisualMotion
 
-STUCK_STATES = ("stalled", "slipping")
+STUCK_STATES = ("stalled", "slipping", "tilted", "drop")    # drop: the TF-Luna guard braked
 
 
 def _wait(future, timeout: float):
@@ -90,6 +92,7 @@ class RosBase:
         self._health = m
         if m.state in STUCK_STATES:
             self._stuck_at = time.monotonic()
+            self._stuck_why = m.state
 
     def wait_ready(self, timeout: float = 30.0) -> bool:
         deadline = time.monotonic() + timeout
@@ -102,22 +105,33 @@ class RosBase:
     def odom(self) -> Pose2D:
         return self._odom or Pose2D()
 
-    def _run(self, client, goal, timeout: float) -> str:
+    def _run(self, client, goal, timeout: float, watch=None) -> str:
+        """`watch()`: called while the move runs (it paces itself, e.g. one ToF grid);
+        True cancels the move and the answer is "blocked"."""
         t0 = time.monotonic()
         handle = _wait(client.send_goal_async(goal), 5.0)
         if handle is None or not handle.accepted:
             return "rejected"
-        res = _wait(handle.get_result_async(), timeout)
+        fut = handle.get_result_async()
+        blocked = False
+        while watch is not None and not fut.done() and time.monotonic() - t0 < timeout:
+            if watch():
+                blocked = True
+                _wait(handle.cancel_goal_async(), 2.0)
+                break
+        res = _wait(fut, max(1.0, timeout - (time.monotonic() - t0)))
         time.sleep(0.25)                   # let /odom catch up (10 Hz telemetry)
+        if blocked:
+            return "blocked"
         if res is None:
             return "timeout"
         status = res.result.status
         if status != "done" and self._stuck_at >= t0:
-            return "stuck"                 # drivetrain_node braked on motion health
+            return "drop" if getattr(self, "_stuck_why", "") == "drop" else "stuck"   # braked on motion health
         return status
 
-    def drive(self, meters: float) -> str:
-        return self._run(self._drive, Drive.Goal(meters=float(meters)), 30.0)
+    def drive(self, meters: float, watch=None) -> str:
+        return self._run(self._drive, Drive.Goal(meters=float(meters)), 30.0, watch)
 
     def turn_ccw(self, radians: float) -> str:
         deg = math.degrees(radians)
@@ -151,12 +165,38 @@ class ExplorerNode(Node):
         p("autostart", True)
         p("tfluna_port", "/dev/serial0")
         p("tfluna_fitted", True)
+        # 8x8 ToF on the head (robot_core/sensors/tof8x8.py): replaces the TF-Luna as the
+        # range sensor and gives the floor check its grid. Wiring: README.
+        p("tof_fitted", False)
+        p("tof_port", "")
+        p("tof_bus", 1)
+        p("tof_addr", 0x33)
+        p("tof_tilt", 0)
+        p("tof_flip_rows", False)
+        p("tof_flip_cols", False)
+        p("tof_perpendicular", True)
+        p("drive_tilt_deg", -30.0)
+        p("head_tilt_offset_deg", 0.0)
+        p("h_max_m", 0.03)
+        p("flat_tol_m", 0.015)
+        p("min_landing_m", 0.20)
+        p("max_drop_m", 0.03)
+        p("path_width_m", 0.30)
+        p("robot_width_m", 0.25)
+        p("tof_from_right_m", 0.125)
+        p("plan_clearance_m", 0.08)
+        p("floor_auto_level", False)
+        p("floor_holes_are_drops", True)
+        p("drive_on_unknown_floor", False)
+        p("robot_height_m", 0.30)
+        p("stop_short_m", 0.25)
         p("camera_main_size", [1920, 1080])
         p("camera_inverted", True)
         p("camera_backend", "auto")
         p("camera_index", 0)
         p("head_height_m", 0.25)
         p("pan_axis_x_m", 0.05)
+        p("tof_self_zones", "")
         p("hfov_deg", 66.0)
         p("pwm_chip", 0)
         p("pan_channel", 1)
@@ -168,26 +208,39 @@ class ExplorerNode(Node):
         p("pan_invert", False)
         p("tilt_invert", False)
         p("servo_speed_dps", 30.0)
+        p("servo_fast_dps", 120.0)
         p("servo_min_us", 500.0)
         p("servo_max_us", 2400.0)
         p("hold_on_close", True)
         p("servo_power_gpio", 0)
         v = lambda name: self.get_parameter(name).value
 
-        if not v("tfluna_fitted"):
+        if not (v("tof_fitted") or v("tfluna_fitted")):
             # The map, plant ranging and the floor check before every step all
-            # come from the TF-Luna; without it the robot would drive blind.
-            raise SystemExit("explore needs the TF-Luna (robot.yaml tfluna_fitted: false)")
+            # come from the range sensor; without one the robot would drive blind.
+            raise SystemExit("explore needs a range sensor (robot.yaml tof_fitted / tfluna_fitted are both false)")
         self.gimbal = from_params({n: v(n) for n in (
             "pwm_chip", "pan_channel", "tilt_channel", "pan_center_us", "tilt_center_us",
-            "pan_us_per_deg", "tilt_us_per_deg", "pan_invert", "tilt_invert", "servo_speed_dps",
+            "pan_us_per_deg", "tilt_us_per_deg", "pan_invert", "tilt_invert", "servo_speed_dps", "servo_fast_dps",
             "servo_min_us", "servo_max_us", "hold_on_close", "servo_power_gpio")})
-        self.lidar = TFLuna(v("tfluna_port"))
+        if v("tof_fitted"):
+            self.lidar = tof8x8.from_params({n: v(n) for n in ("tof_port", "tof_bus", "tof_addr", "tof_tilt", "tof_flip_rows", "tof_flip_cols")})
+        else:
+            self.lidar = TFLuna(v("tfluna_port"))
         self.camera = Camera(main_size=tuple(v("camera_main_size")), inverted=bool(v("camera_inverted")),
                              backend=v("camera_backend"), index=int(v("camera_index")))
         self.head = Head(self.gimbal, self.lidar, self.camera, HeadGeometry(
             height_m=float(v("head_height_m")), pan_axis_x_m=float(v("pan_axis_x_m")),
-            hfov_deg=float(v("hfov_deg"))))
+            hfov_deg=float(v("hfov_deg")), drive_tilt_deg=float(v("drive_tilt_deg")),
+            tof_perpendicular=bool(v("tof_perpendicular")), tilt_offset_deg=float(v("head_tilt_offset_deg")),
+            tof_pan_offset_deg=float(v("tof_pan_offset_deg") if self.has_parameter("tof_pan_offset_deg") else 0.0),
+            tof_tilt_offset_deg=float(v("tof_tilt_offset_deg") if self.has_parameter("tof_tilt_offset_deg") else 0.0),
+            pan_axis_y_m=float(v("tof_from_right_m")) - float(v("robot_width_m")) / 2.0,
+            self_zones=parse_self_zones(v("tof_self_zones"))),
+            pitch=lambda: self._pitch(),
+            terrain_params=terrain.params_from({n: v(n) for n in ("h_max_m", "flat_tol_m", "min_landing_m", "max_drop_m", "robot_width_m",
+                                                             "plan_clearance_m", "floor_auto_level", "floor_holes_are_drops",
+                                                             "drive_on_unknown_floor", "robot_height_m", "stop_short_m")}))
         self.vision = VisionClient(v("vision_url")) if v("vision_url") else VisionClient()
 
         self.base = RosBase(self)
@@ -282,6 +335,11 @@ class ExplorerNode(Node):
         resp.success = True
         resp.message = "stopping after the current step; the map will be saved"
         return resp
+
+    def _pitch(self) -> Optional[float]:
+        """The robot's nose-up angle from the IMU (via /motion_health), None without one."""
+        m = getattr(getattr(self, "base", None), "_health", None)
+        return m.pitch_deg if m is not None and m.imu_known else None
 
     def destroy_node(self) -> bool:
         self._stop.set()

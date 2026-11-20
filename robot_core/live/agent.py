@@ -44,6 +44,16 @@ from robot_core import task_cancel
 from robot_core import audio_route
 from robot_core.live.tools import RobotTools, declarations
 
+_tools: Optional[RobotTools] = None          # the running agent's tools, for start_task
+
+
+def start_task(task: str, name: str = "") -> Dict[str, Any]:
+    """Queue a task (follow, explore...) from outside the conversation, e.g. the voice node's task/follow
+    service: the same queue the run_task tool uses, so it runs exactly as if asked by voice."""
+    if _tools is None:
+        return {"ok": False, "error": "the voice agent is not running"}
+    return _tools._run_task(task, name)
+
 logger = logging.getLogger(__name__)
 
 SEND_SAMPLE_RATE = 16000     # uplink: what the Live API expects
@@ -509,6 +519,7 @@ class LiveAgent:
                             modality=settings.LIVE_RESPONSE_MODALITY,
                             resumed=self.resumed_from is not None)
             self.connected = True
+            status.sound("online")           # buzzer: listening, waiting for a command
 
             # Spoken BEFORE the microphone opens, so it cannot be streamed to
             # the model as if the operator had said it. Blocking, and the guard
@@ -584,11 +595,15 @@ async def _run_supervised(tools: RobotTools) -> None:
                 backoff = settings.LIVE_RECONNECT_BACKOFF_S
                 continue
             robot_log.event("session.stop", reason="live session closed")
+            status.sound("offline")          # buzzer: no voice until the robot is restarted
             return
         except asyncio.CancelledError:
             raise
         except Exception as e:
             _on_failure(tools, agent, e)
+            if tools.pending is not None:    # started from a service while the session was failing: run it now
+                await _run_task(tools)
+                continue
             robot_log.event("voice.diag", **await asyncio.to_thread(_drop_diagnostics))
             # Resume after a drop; but a resume that never connected (handle expired or
             # refused) is retried as a fresh session, not treated as a bad configuration.
@@ -617,7 +632,14 @@ async def _run_supervised(tools: RobotTools) -> None:
                 )
                 raise
 
-        await asyncio.sleep(backoff)
+        for _ in range(int(backoff * 10)):   # a task started from a service does not wait out the backoff
+            if tools.pending is not None:
+                break
+            await asyncio.sleep(0.1)
+        if tools.pending is not None:
+            await _run_task(tools)
+            backoff = settings.LIVE_RECONNECT_BACKOFF_S
+            continue
         backoff = min(backoff * 2, settings.LIVE_RECONNECT_MAX_S)
 
 
@@ -654,7 +676,7 @@ async def _run_task(tools: RobotTools) -> None:
     await tools.dispatch("answer", {"value": "yes" if ok or cancelled else "no"})
     # Let the gesture finish before the microphone reopens, and drop its move
     # results so the next session is not told about them.
-    for _ in range(100):
+    for _ in range(15):                      # 3 s at most (Nov 18: a lost move result held it 20 s)
         if not tools.motion.busy():
             break
         await asyncio.sleep(0.2)
@@ -746,7 +768,8 @@ def run_live_agent(motion, task_runner=None, head=None) -> None:
     `task_runner(task, name) -> bool` runs the jobs `run_task` asks for
     (enroll_face, match_face, explore); without one the tool refuses.
     """
-    tools = RobotTools(motion, task_runner, head)
+    global _tools
+    tools = _tools = RobotTools(motion, task_runner, head)
     try:
         asyncio.run(_run_supervised(tools))
     except KeyboardInterrupt:

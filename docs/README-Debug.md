@@ -8,8 +8,8 @@ journalctl -b -1 -e --no-pager | tail -40   # last lines of the previous boot, i
 
 vcgencmd get_throttled
 rpicam-hello -t 5000 --nopreview                 # camera alone
-python tests/hardware/check_camera.py            # camera alone, through our code
-python tests/hardware/check_camera.py head       # opens the head, then moves it
+python calibrate.py check     # on the Mac, in Monitoring-Service: camera through our code (+ the rest)
+python calibrate.py head      # moves the head (directions, zero)
 
 2. Check camera detection
    rpicam-hello --list-cameras

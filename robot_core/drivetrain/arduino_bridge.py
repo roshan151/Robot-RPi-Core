@@ -124,6 +124,10 @@ class ArduinoBridge:
         self.resets_seen = 0
         self.warnings_seen = 0
         self.firmware_build: Optional[str] = None
+        # TF-Luna on the Arduino (firmware v7 `-luna`, last field of E frames): cm, or None
+        # (no sensor or a weak reading), and time.monotonic() of that reading.
+        self.tfluna_cm: Optional[int] = None
+        self.tfluna_t = 0.0
 
         logger.info("Opening serial port %s @ %d baud", port, baud)
         self._ser = serial.Serial(port=port, baudrate=baud, timeout=timeout)
@@ -213,6 +217,16 @@ class ArduinoBridge:
     def set_speed_pwm(self, value: int) -> None:
         v = max(0, min(255, int(value)))
         self._transact("V", str(v))
+
+    def wheels(self, left_pwm: int, right_pwm: int) -> None:
+        """Firmware v6 (`-vel`): signed PWM per PHYSICAL wheel, -255..255, streamed by
+        a speed loop. The firmware ramps to it and soft-stops if none arrives for 300 ms."""
+        l, r = (max(-255, min(255, int(v))) for v in (left_pwm, right_pwm))
+        self._transact("T", str(l), str(r), retries=1, ack_timeout=0.2)
+
+    @property
+    def supports_velocity(self) -> bool:
+        return "-vel" in (self.firmware_build or "")
 
     def stop(self) -> None:
         """Send stop with a short budget — safe to call during teardown.
@@ -475,6 +489,9 @@ class ArduinoBridge:
                 if self._on_odometry and len(msg.args) >= 5:
                     self._on_odometry(int(msg.args[2]), int(msg.args[3]),
                                       int(msg.args[4]))
+                if len(msg.args) >= 6:
+                    cm = int(msg.args[5])
+                    self.tfluna_cm, self.tfluna_t = (cm if cm >= 0 else None), time.monotonic()
             except ValueError:
                 pass                        # corrupt-but-valid-checksum: drop
             return

@@ -8,9 +8,6 @@ ros2_ws/build/
 ros2_ws/install/
 ros2_ws/log/
 
-# Runtime artefacts
-logs.json
-logs.json.*
 .env
 
 # Maps are build artefacts of scan mode (Phase 7); keep the ones you mean to.

@@ -207,10 +207,13 @@ class AxisConfig:
     center_us: float = 1500.0       # the start position — trim per servo
     us_per_deg: float = 2000.0 / 180.0
     invert: bool = False            # flip if +angle moves the wrong way
-    max_speed_dps: float = 30.0     # cruise speed (deg/s): slow and deliberate
+    max_speed_dps: float = 30.0     # the speed ceiling (deg/s): no move goes faster
+    cruise_dps: Optional[float] = None   # a move that asks for no speed goes this fast (None: the ceiling)
     accel_dps2: float = 180.0
     min_us: float = 500.0           # hard electrical limits: no trim or angle can push a pulse
     max_us: float = 2400.0          # outside these (an SG90 just buzzes against its end stop)
+    backlash_deg: float = 0.0       # >0: every target is reached moving UP (a move down goes this far
+                                    # past it first), so the gears' slop always sits on the same side
 
 
 PAN_DEFAULT = AxisConfig(channel=1, min_deg=-90.0, max_deg=90.0)     # GPIO13
@@ -223,8 +226,9 @@ class _Axis:
         self.pos = 0.0          # commanded angle right now (deg)
         self.vel = 0.0
         self.target = 0.0
-        self.speed = cfg.max_speed_dps
+        self.speed = cfg.cruise_dps or cfg.max_speed_dps
         self.last_us = 0.0      # the pulse last written: one frame may not jump far from it
+        self.after = None       # with backlash: the real target, reached from below after `target`
         # The angles this servo can really reach: inside min_deg..max_deg AND
         # inside the min_us..max_us pulse window around this centre. Clamping to
         # this keeps the reported angle honest - a pulse silently cut short would
@@ -238,6 +242,19 @@ class _Axis:
     def clamp(self, deg: float) -> float:
         return max(self.lo, min(self.hi, deg))
 
+    def aim(self, deg: float) -> None:
+        """Set the target; a move down with backlash_deg goes past it, then comes back up."""
+        want, b = self.clamp(deg), self.cfg.backlash_deg
+        below = self.clamp(want - b)
+        if b > 0 and want < self.goal() - 1e-6 and below < want:
+            self.target, self.after = below, want
+        else:
+            self.target, self.after = want, None
+
+    def goal(self) -> float:
+        """Where the axis ends up once the move is done."""
+        return self.target if self.after is None else self.after
+
     def pulse(self) -> float:
         sign = -1.0 if self.cfg.invert else 1.0
         us = self.cfg.center_us + sign * self.pos * self.cfg.us_per_deg
@@ -248,6 +265,9 @@ class _Axis:
         err = self.target - self.pos
         if abs(err) < 1e-3 and abs(self.vel) < 1e-3:
             self.pos, self.vel = self.target, 0.0
+            if self.after is not None:              # past it: now come back up to the real target
+                self.target, self.after = self.after, None
+                return True
             return False
         a = self.cfg.accel_dps2
         # Fastest speed from which we can still stop at the target.
@@ -402,13 +422,19 @@ class Gimbal:
         with self._lock:
             for ax, want in ((self.pan, pan), (self.tilt, tilt)):
                 if want is not None:
-                    ax.target = ax.clamp(want)
-                    ax.speed = min(speed_dps or ax.cfg.max_speed_dps, ax.cfg.max_speed_dps)    # servo_speed_dps is a hard ceiling
+                    ax.aim(want)
+                    ax.speed = min(speed_dps or ax.cfg.cruise_dps or ax.cfg.max_speed_dps,
+                                   ax.cfg.max_speed_dps)     # the ceiling (servo_fast_dps) is hard
             self._moving = True
-            target = (self.pan.target, self.tilt.target)
+            target = (self.pan.goal(), self.tilt.goal())
         if wait:
             self.wait(timeout)
         return target
+
+    @property
+    def fast_dps(self) -> float:
+        """The fastest a move may ask for (robot.yaml servo_fast_dps): still ramped, never a snap."""
+        return self.pan.cfg.max_speed_dps
 
     def wait(self, timeout: float = 10.0) -> bool:
         with self._arrived:
@@ -537,7 +563,7 @@ class Gimbal:
                 moving = False
                 for ax in (self.pan, self.tilt):
                     if not powered:
-                        ax.target, ax.vel = ax.pos, 0.0     # nothing is following the pulses: forget the order
+                        ax.target, ax.vel, ax.after = ax.pos, 0.0, None   # nothing follows the pulses: forget it
                     elif ax.step(dt):
                         moving = True
                         self._write(ax)
@@ -571,20 +597,21 @@ def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float
     """A Gimbal from the `/explorer` parameters in robot.yaml (channels, centre
     trims, us-per-degree, inversion, speed). Pan is always ±90°; callers may narrow the tilt
     range — the face tasks pass tilt_min=0 so the head never looks below level."""
-    speed = float(p.get("servo_speed_dps", 30.0))
+    speed = float(p.get("servo_speed_dps", 30.0))                       # every ordinary move
+    ceiling = max(speed, float(p.get("servo_fast_dps", speed)))       # moves that ask for more (follow's search)
     lo_us, hi_us = float(p.get("servo_min_us", 500.0)), float(p.get("servo_max_us", 2400.0))
     pin = int(p.get("servo_power_gpio") or 0)
     return Gimbal(
         pan=AxisConfig(channel=int(p.get("pan_channel", 1)), min_deg=PAN_DEFAULT.min_deg, max_deg=PAN_DEFAULT.max_deg,
                        center_us=float(p.get("pan_center_us", 1500.0)),
                        us_per_deg=float(p.get("pan_us_per_deg", PAN_DEFAULT.us_per_deg)),
-                       invert=bool(p.get("pan_invert", False)), max_speed_dps=speed,
-                       min_us=lo_us, max_us=hi_us),
+                       invert=bool(p.get("pan_invert", False)), max_speed_dps=ceiling, cruise_dps=speed,
+                       min_us=lo_us, max_us=hi_us, backlash_deg=float(p.get("head_backlash_deg", 0.0))),
         tilt=AxisConfig(channel=int(p.get("tilt_channel", 0)), min_deg=tilt_min, max_deg=tilt_max,
                         center_us=float(p.get("tilt_center_us", 1500.0)),
                         us_per_deg=float(p.get("tilt_us_per_deg", TILT_DEFAULT.us_per_deg)),
-                        invert=bool(p.get("tilt_invert", False)), max_speed_dps=speed,
-                        min_us=lo_us, max_us=hi_us),
+                        invert=bool(p.get("tilt_invert", False)), max_speed_dps=ceiling, cruise_dps=speed,
+                        min_us=lo_us, max_us=hi_us, backlash_deg=float(p.get("head_backlash_deg", 0.0))),
         backend=backend, chip=int(p.get("pwm_chip", 0)),
         hold_on_close=bool(p.get("hold_on_close", True)),
         state_path=_state_file(p) if backend == "hardware" else None,

@@ -1,4 +1,4 @@
-"""Owns the OLED and the power watcher; draws whatever the other nodes publish."""
+"""Owns the OLED, the buzzer and the power watcher; draws (and sounds) whatever the other nodes publish."""
 
 import json
 
@@ -6,7 +6,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from robot_core import battery, robot_log, status
+from robot_core import battery, buzzer, robot_log, status
 from robot_core.oled import Oled, open_device
 from robot_core.power import PowerMonitor
 from robot_display.link import TOPIC
@@ -15,9 +15,16 @@ from robot_display.link import TOPIC
 class DisplayNode(Node):
     def __init__(self) -> None:
         super().__init__("display")
-        for name, default in (("dc_pin", 25), ("rst_pin", 17), ("spi_bus", 0), ("spi_cs", 0)):
+        for name, default in (("dc_pin", 25), ("rst_pin", 17), ("spi_bus", 0), ("spi_cs", 0), ("buzzer_pin", 0)):
             self.declare_parameter(name, default)
         p = lambda n: self.get_parameter(n).value                          # noqa: E731
+        self.buzzer = None
+        if p("buzzer_pin"):
+            try:
+                self.buzzer = buzzer.Buzzer(buzzer.gpio_tone(p("buzzer_pin")))
+                self.buzzer.start()
+            except Exception as e:                                         # noqa: BLE001 — sounds are optional
+                self.get_logger().warning(f"no buzzer ({e})")
         self.create_subscription(String, TOPIC, self._on_msg, 50)
         self.oled = Oled(opener=lambda: open_device(p("dc_pin"), p("rst_pin"), p("spi_bus"), p("spi_cs")))
         try:
@@ -30,9 +37,12 @@ class DisplayNode(Node):
 
     def _on_msg(self, msg: String) -> None:
         try:
-            status.BOARD.apply(json.loads(msg.data))
+            m = json.loads(msg.data)
         except ValueError:
-            pass
+            return
+        status.BOARD.apply(m)
+        if self.buzzer:
+            self.buzzer.on_message(m)
 
 
 def main(args=None) -> None:
@@ -46,6 +56,8 @@ def main(args=None) -> None:
         pass
     finally:
         node.power.stop()
+        if node.buzzer:
+            node.buzzer.stop()
         node.oled.stop()
         node.destroy_node()
         if rclpy.ok():

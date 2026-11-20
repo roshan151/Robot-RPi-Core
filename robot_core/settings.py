@@ -62,7 +62,6 @@ DEFAULT_SPEED_PERCENT = _env("ROBOT_DEFAULT_SPEED_PCT", "80.0", float)
 DEFAULT_TURN_DEGREES = _env("ROBOT_DEFAULT_TURN_DEG", "90", float)
 DEFAULT_MOVE_METERS = _env("ROBOT_DEFAULT_MOVE_M", "1.0", float)
 MAX_DRIVE_METERS = _env("ROBOT_MAX_DRIVE_M", "5.0", float)         # enforced in code, not the prompt
-ENCODER_SYNC_WARN_RATIO = _env("ROBOT_SYNC_WARN_RATIO", "0.10", float)   # left/right skew that logs a warning
 ENCODER_SETTLE_S = _env("ROBOT_ENCODER_SETTLE_S", "0.15", float)         # only for old firmware
 
 # --- Gemini (one API key for the Live session and the speech) -----------------
@@ -152,7 +151,9 @@ FACE_SEARCH_TILTS = (0.0, 30.0, 50.0)                            # never below l
 FACE_MIN_QUALITY = 0.6
 FOLLOW_SECONDS = _env("ROBOT_FOLLOW_S", "300", float)            # follow mode ends after this
 FOLLOW_TILT_DEG = _env("ROBOT_FOLLOW_TILT", "20", float)         # head tilt while finding them: the face
-FOLLOW_TRACK_TILT_DEG = _env("ROBOT_FOLLOW_TRACK_TILT", "10", float)  # once locked on: body and feet
+FOLLOW_KEEP_M = _env("ROBOT_FOLLOW_KEEP_M", "0.5", float)          # stop this far from the person (the Mac keeps 1.2)
+FOLLOW_NAV_TILT_DEG = _env("ROBOT_FOLLOW_NAV_TILT", "0", float)    # head angle above level while driving: the
+                                    # camera sees the person's body, the ToF the floor from ~0.4 m out
 FACE_MIN_SHOTS = 5
 # Long edge of frames sent for faces and follow. Faces need the pixels: with the
 # wide USB HD lens a 640 px frame leaves a face at 2 m ~18 px wide (useless), the
@@ -166,6 +167,23 @@ FACE_EDGE_MARGIN = 0.02         # a shot is kept only with the whole face this f
 LOG_PATH = _env("ROBOT_LOG_PATH", "logs.json")
 LOG_MAX_BYTES = _env("ROBOT_LOG_MAX_BYTES", "2000000", int)
 LOG_BACKUPS = _env("ROBOT_LOG_BACKUPS", "3", int)
+ROBOT_YAML = _env("ROBOT_YAML", str(Path(__file__).resolve().parent.parent
+                                    / "ros2_ws/src/robot_bringup/config/robot.yaml"))
+
+
+def debug_mode():
+    """robot.yaml /voice debug_mode: True / False, or None when it cannot be read
+    (no file, no yaml: a standalone run), which keeps full logging and no uploads.
+    ROBOT_DEBUG_MODE=1 / 0 in the environment overrides the file (tests, one-off runs)."""
+    if os.environ.get("ROBOT_DEBUG_MODE") is not None:
+        return _flag("ROBOT_DEBUG_MODE")
+    try:
+        import yaml
+        with open(ROBOT_YAML) as f:
+            v = yaml.safe_load(f)["/voice"]["ros__parameters"].get("debug_mode")
+        return None if v is None else bool(v)
+    except Exception:                 # noqa: BLE001
+        return None
 
 # --- What the voice model is told ---------------------------------------------
 LIVE_SYSTEM_PROMPT = os.environ.get("ROBOT_LIVE_PROMPT", """\

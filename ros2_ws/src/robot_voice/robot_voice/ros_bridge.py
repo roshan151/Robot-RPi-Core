@@ -28,10 +28,15 @@ queue is what makes the agent closed-loop.
 from __future__ import annotations
 
 import asyncio
+import logging
 import threading
+import time
+from collections import deque
 from typing import Any, Dict, Optional
 
+from geometry_msgs.msg import Twist
 from rclpy.action import ActionClient
+from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
 from std_srvs.srv import Trigger
 
@@ -43,9 +48,13 @@ class RosMotion:
     def __init__(self, node: Node, loop: asyncio.AbstractEventLoop) -> None:
         self._node = node
         self._loop = loop
-        self._drive = ActionClient(node, Drive, "drive")
-        self._turn = ActionClient(node, Turn, "turn")
+        # Their own group: a callback blocked in the node's default group must not hold back
+        # move results (Nov 18: results never arrived, busy() stuck, follow froze after a turn).
+        cb = ReentrantCallbackGroup()
+        self._drive = ActionClient(node, Drive, "drive", callback_group=cb)
+        self._turn = ActionClient(node, Turn, "turn", callback_group=cb)
         self._estop = node.create_client(Trigger, "estop")
+        self._cmd_vel = node.create_publisher(Twist, "cmd_vel", 10)
 
         # Completed goals, for the agent to relay to the model.
         self.results: asyncio.Queue = asyncio.Queue()
@@ -54,6 +63,7 @@ class RosMotion:
         # it is why gesture bursts get dropped rather than queued: the second
         # "yes" arrives while the first still has steps outstanding.
         self._outstanding = 0
+        self._pending: deque = deque()       # (deadline, op, value) per move sent, oldest first
         self._lock = threading.Lock()
 
     # ------------------------------------------------------------------ #
@@ -81,7 +91,16 @@ class RosMotion:
     # ------------------------------------------------------------------ #
 
     def busy(self) -> bool:
+        """A move is out and its result has not come back. A move far past how long it can
+        take (expected time + grace) counts as finished, with a warning: a lost result must
+        not hold up follow or the voice session forever."""
         with self._lock:
+            now = time.monotonic()
+            while self._pending and self._pending[0][0] < now:
+                _, op, value = self._pending.popleft()
+                self._outstanding = max(0, self._outstanding - 1)
+                logging.getLogger(__name__).warning(
+                    "motion: no result for %s %.1f from the drivetrain: counted as finished", op, value)
             return self._outstanding > 0
 
     def drive(self, meters: float, *, gesture: bool = False) -> Dict[str, Any]:
@@ -91,6 +110,17 @@ class RosMotion:
     def turn(self, degrees: float, *, gesture: bool = False) -> Dict[str, Any]:
         goal = Turn.Goal(degrees=float(degrees), gesture=gesture)
         return self._send(self._turn, goal, "turn", float(degrees))
+
+    def can_glide(self) -> bool:
+        """The drivetrain listens on /cmd_vel: its firmware has the velocity mode (v6)."""
+        return self._cmd_vel.get_subscription_count() > 0
+
+    def velocity(self, v: float, w: float) -> None:
+        """Drive at v m/s forward and w rad/s (CCW, + left) until the next call. The
+        drivetrain stops on its own if none comes for velocity_timeout_s (0.6 s)."""
+        msg = Twist()
+        msg.linear.x, msg.angular.z = float(v), float(w)
+        self._cmd_vel.publish(msg)
 
     def stop(self) -> Dict[str, Any]:
         """Fire the e-stop and return. Deliberately does not await the reply.
@@ -112,8 +142,10 @@ class RosMotion:
               op: str, value: float) -> Dict[str, Any]:
         if not client.server_is_ready():
             return {"ok": False, "error": f"{op}: drivetrain is not running"}
+        expect = 1.0 + abs(value) / 40.0 if op == "turn" else 2.0 + abs(value) / 0.08   # 40 deg/s, 0.08 m/s
         with self._lock:
             self._outstanding += 1
+            self._pending.append((time.monotonic() + expect + 5.0, op, value))
         future = client.send_goal_async(goal)
         future.add_done_callback(lambda f: self._on_response(f, op, value))
         return {"ok": True, "queued": True, "op": op, "value": value}
@@ -144,7 +176,9 @@ class RosMotion:
 
     def _finish(self, op: str, value: float, status: str) -> None:
         with self._lock:
-            self._outstanding = max(0, self._outstanding - 1)
+            if self._pending:                # oldest first: results come back in order
+                self._pending.popleft()
+                self._outstanding = max(0, self._outstanding - 1)
         self._push({"op": op, "value": value, "status": status})
 
     def _push(self, event: Dict[str, Any]) -> None:

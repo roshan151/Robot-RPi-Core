@@ -42,12 +42,13 @@ def generate_launch_description():
                         "for `ros2 action send_goal` testing without a "
                         "microphone or an API key."),
 
-        Node(package="robot_display", executable="display_node", name="display",
+        Node(package="robot_display", executable="display_node", name="display", parameters=[params],
              output="screen", emulate_tty=True, respawn=True, respawn_delay=5.0),
         Node(
             package="robot_bringup",
             executable="bringup",
-            name="robot",
+            # No name=: it would rename every node in the process, and the drivetrain must stay
+            # /drivetrain for its section of robot.yaml (imu_fitted, ticks_per_cm, ...) to reach it.
             parameters=[params],
             output="screen",
             emulate_tty=True,

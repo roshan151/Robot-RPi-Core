@@ -22,11 +22,11 @@ ROS_PACKAGES=(   # the rospian repo has no ros-base bundle, so list what the rob
   ros-jazzy-ros2topic ros-jazzy-ros2service ros-jazzy-ros2pkg ros-jazzy-rmw-cyclonedds-cpp
 )
 OTHER_PACKAGES=(
-  curl gnupg git ca-certificates python3-venv
+  curl gnupg git ca-certificates python3-venv i2c-tools
   python3-picamera2 python3-libcamera python3-opencv python3-numpy python3-yaml   # camera + vision
   libportaudio2 alsa-utils pulseaudio-utils v4l-utils bluez pipewire pipewire-pulse pipewire-alsa wireplumber libspa-0.2-bluetooth  # audio, buds (pipewire-alsa routes PortAudio to the buds)
 )
-PIP_EXTRAS="voice,explore,oled"
+PIP_EXTRAS="voice,explore,oled,sensors"
 
 say() { printf '\n== %s\n' "$*"; }
 
@@ -125,6 +125,7 @@ grep -qxF "dtparam=audio=off" /boot/firmware/config.txt || echo "dtparam=audio=o
 sudo raspi-config nonint do_serial_cons 1     # 1 = no login shell on the serial port
 sudo raspi-config nonint do_serial_hw 0       # 0 = serial hardware on
 sudo raspi-config nonint do_spi 0              # 0 = SPI on (status OLED)
+sudo raspi-config nonint do_i2c 0              # 0 = I2C on (IMU and 8x8 ToF; the PiSugar uses it too)
 
 say "Boot service file (not started yet)"
 UID_NOW=$(id -u)
