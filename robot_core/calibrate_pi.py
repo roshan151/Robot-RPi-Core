@@ -411,13 +411,14 @@ class Rig:
             self_zones=parse_self_zones(p.get("tof_self_zones"))), pitch=lambda: 0.0, terrain_params=terrain.params_from(p))
 
     def points(self, head, rows, pan: float, tilt_cmd: float, yaw_deg: float = 0.0) -> list:
-        """ToF points on things standing up (5 cm to 1.5 m high), robot frame, as the robot itself would place
-        them (calibrated ranges, its own geometry); rotated by yaw_deg (the turn test)."""
+        """ToF points on things standing up (12 cm to 1.5 m high: the floor ahead reads up to 8 cm with a little
+        tilt), robot frame, as the robot itself would place them (calibrated ranges, its own geometry); rotated
+        by yaw_deg (the turn test)."""
         sc, off = float(self.ex.get("tof_range_scale", 1.0)), float(self.ex.get("tof_range_offset_m", 0.0))
         fixed = [[None if v is None else sc * v + off for v in row] for row in rows]
         c, s = math.cos(math.radians(yaw_deg)), math.sin(math.radians(yaw_deg))
         return [(round(c * z[2] - s * z[3], 4), round(s * z[2] + c * z[3], 4))
-                for z in head.project(fixed, pan, tilt_cmd, pitch_deg=0.0) if z[4] is not None and 0.05 < z[4] < 1.5]
+                for z in head.project(fixed, pan, tilt_cmd, pitch_deg=0.0) if z[4] is not None and 0.12 < z[4] < 1.5]
 
     def cmd_door_steps(self, lo: float = -45, hi: float = 45, step: float = 5, dwell_s: float = 0.5,
                        grids: int = 3, tilt_deg: float = 0.0, pan_shift: float = 0.0) -> dict:
@@ -494,7 +495,7 @@ class Rig:
         if kind == "trim":
             return calibrate.reverse_trim(data["ratios"], data["current"])
         if kind == "door":
-            return calibrate.door_fit(data["looks"], float(data.get("half_w_m", 0.125)))
+            return calibrate.door_fit(data["looks"], float(data.get("half_w_m", 0.125)), expect_m=data.get("expect_m"))
         raise ValueError(f"unknown fit {kind}")
 
 

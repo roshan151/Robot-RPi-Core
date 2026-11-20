@@ -142,17 +142,20 @@ def centre_zone(rows) -> Optional[float]:
 
 
 def door_fit(looks: Sequence[Sequence[Tuple[float, float]]], half_w_m: float = 0.125,
-             wall_tol_m: float = 0.06, beyond_m: float = 0.25) -> dict:
+             wall_tol_m: float = 0.06, beyond_m: float = 0.25, expect_m: Optional[float] = None,
+             front_m: float = 0.6) -> dict:
     """looks: per head position, the ToF points (x forward, y left, metres, robot frame) on things standing up.
     The wall the door is in is the line x = a + b*y through most points (the robot roughly square to it). Along
     it, u (+ left; 0 where the robot's straight-ahead line meets it) and v (+ beyond the wall). The door is the
-    widest stretch with no wall points that has points beyond it (rays went through). Each edge is also found
-    look by look (a wall point next to points beyond it), so its spread shows how much one look can be off."""
+    widest stretch with nothing on the wall's line or up to front_m in front of it (a side wall at a corner door,
+    a frame standing out) that has points beyond it (rays went through). Each edge is also found look by look,
+    so its spread shows how much one look can be off. expect_m: how far ahead the wall is (the placement): the fit
+    starts there, not at whatever is nearest (a side wall beside the robot pulled it in: Nov 20 calibration)."""
     pts = np.array([p for look in looks for p in look], float).reshape(-1, 2)
     if len(pts) < 20:
         raise ValueError("too few ToF points: is the wall within 2 m and the head level?")
     x, y = pts[:, 0], pts[:, 1]
-    a, b = float(np.percentile(x, 25)), 0.0              # the wall is the nearer surface (the room beyond: further)
+    a, b = (float(expect_m) if expect_m else float(np.percentile(x, 25))), 0.0   # else: the nearer surface
     for tol in (0.15, 0.10, wall_tol_m, wall_tol_m):
         keep = np.abs(x - (a + b * y)) < tol
         if keep.sum() < 10:
@@ -165,7 +168,8 @@ def door_fit(looks: Sequence[Sequence[Tuple[float, float]]], half_w_m: float = 0
         return ((px - a) * b + py) / n, (px - a - b * py) / n
 
     u, v = uv(x, y)
-    wall, beyond = np.sort(u[np.abs(v) < wall_tol_m]), u[v > beyond_m]
+    block = lambda uu, vv: uu[(vv < wall_tol_m) & (vv > -front_m)]   # noqa: E731 — what bounds the opening
+    wall, beyond = np.sort(block(u, v)), u[v > beyond_m]
     gaps = [(wall[i], wall[i + 1]) for i in range(len(wall) - 1) if wall[i + 1] - wall[i] > 0.2]
     gaps = [(g, int(((beyond > g[0]) & (beyond < g[1])).sum())) for g in gaps]
     gaps = [g for g in gaps if g[1] >= 3]
@@ -177,7 +181,7 @@ def door_fit(looks: Sequence[Sequence[Tuple[float, float]]], half_w_m: float = 0
         if len(look) < 3:
             continue
         lu, lv = uv(*np.array(look, float).T)
-        w, bu = lu[np.abs(lv) < wall_tol_m], lu[lv > beyond_m]
+        w, bu = block(lu, lv), lu[lv > beyond_m]
         for side, sign, ref in (("left", 1.0, u_l), ("right", -1.0, u_r)):
             near = w[(np.abs(w - ref) < 0.3) & (sign * (w - (u_r + u_l) / 2.0) > 0)]
             if not len(near):
@@ -192,9 +196,10 @@ def door_fit(looks: Sequence[Sequence[Tuple[float, float]]], half_w_m: float = 0
         vv = np.array(vals)
         return {"median_m": round(float(np.median(vv)), 3), "spread_m": round(float(np.percentile(vv, 90) -
                 np.percentile(vv, 10)), 3), "looks": len(vv), "min_m": round(float(vv.min()), 3),
-                "max_m": round(float(vv.max()), 3)}
+                "max_m": round(float(vv.max()), 3), "min2_m": round(float(np.sort(vv)[min(1, len(vv) - 1)]), 3),
+                "max2_m": round(float(np.sort(vv)[max(-2, -len(vv))]), 3)}
     left, right = stat(per["left"], u_l), stat(per["right"], u_r)
-    worst = (left.get("min_m", u_l) - right.get("max_m", u_r))     # what a map keeping every look's edge would hold
+    worst = (left.get("min2_m", u_l) - right.get("max2_m", u_r))   # the map: an edge seen twice (costmap LONE_W)
     ang = math.atan(b)
     foot = lambda uu: (a + b * uu / n, uu / n)       # noqa: E731 — the point on the wall at u
     return {"width_m": round(left["median_m"] - right["median_m"], 3), "width_worst_m": round(float(worst), 3),

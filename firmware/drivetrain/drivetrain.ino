@@ -289,6 +289,19 @@ bool luna_ok = false;
 
 bool busIdle() { return digitalRead(SDA) == HIGH && digitalRead(SCL) == HIGH; }
 
+// Is something really pulling this line up? Drive it low, let go: a pull-up brings it back high within
+// microseconds, a floating line (TF-Luna and its pull-ups unplugged) stays low. A floating line can read
+// high by chance, and then the first Wire call waits on a bus with nothing on it (Nov 20: TF-Luna removed,
+// the board went silent). Call before Wire.begin(), which takes the pins over.
+bool pulledUp(uint8_t pin) {
+  pinMode(pin, OUTPUT);
+  digitalWrite(pin, LOW);
+  delayMicroseconds(10);
+  pinMode(pin, INPUT);
+  delayMicroseconds(20);
+  return digitalRead(pin) == HIGH;
+}
+
 int readLuna() {
   if (!luna_ok || !busIdle()) return -1;
   Wire.beginTransmission(LUNA_ADDR);
@@ -683,6 +696,7 @@ void setup() {
 
   coastMotors();
 
+  bool luna_bus = pulledUp(SDA) && pulledUp(SCL);   // no pull-ups: no TF-Luna, never touch the bus
   Wire.begin();
   digitalWrite(SDA, LOW);           // internal pull-ups off: the TF-Luna is 3.3 V,
   digitalWrite(SCL, LOW);           // the external 4.7k pull-ups go to 3.3 V
@@ -691,7 +705,7 @@ void setup() {
 #endif                              // older cores (before 1.8.3) have no timeout: the boot check
                                     // and busIdle() below are what keep the loop from freezing
   delay(200);
-  if (busIdle()) {                  // pulled up and idle: ask once whether the TF-Luna is there
+  if (luna_bus && busIdle()) {      // pulled up and idle: ask once whether the TF-Luna is there
     Wire.beginTransmission(LUNA_ADDR);
     luna_ok = (Wire.endTransmission() == 0);
   }

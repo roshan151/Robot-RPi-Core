@@ -37,6 +37,12 @@ XY = Tuple[float, float]
 
 class RollingCostmap:
     HIT, MISS = 0.9, 0.4            # evidence per reading
+    LONE_W = 0.5                    # a hit with no neighbouring zone on the same surface counts this much: two to draw
+    #                                 it. One stray zone in ~2000 (a look at -10 deg) put a point inside a 0.70 m
+    #                                 doorway that a one-hit map kept: the door mapped 0.41 m (Nov 20 door calibration).
+    #                                 A real thing hits neighbouring zones at once (or sits on the grid's border, where a
+    #                                 wall's edge has fewer neighbours) and is drawn from one glance (with the
+    #                                 head on a person, one glance is all it gets: test_scenarios lookaway).
     TOP, BOTTOM = 3.5, -2.0
     OCC = 0.6                       # occupied above this (one solid hit, or two weak ones)
     FREE = -0.3                     # seen free below this; between FREE and OCC: unknown
@@ -102,16 +108,20 @@ class RollingCostmap:
             return 0
         top = (self.body if top_m is None else top_m) + 0.05
         hx, hy, hw, rx, ry, clear_end = [], [], [], [], [], []
-        for _, _, x, y, h, d in zones:
+        # A zone reports the nearest floor in its cone too: its lower edge, which projected along the centre
+        # stands d * 0.065 above the floor (6 cm a metre out: the scattered phantom cells on Nov 19's map).
+        is_hit = lambda h, d: h is not None and self.flat_tol < h - self.LOW * d and h < top   # noqa: E731
+        hits = {(r, c): d for r, c, _, _, h, d in zones if is_hit(h, d) and (max_d is None or d < max_d)}
+        for r, c, x, y, h, d in zones:
             if h is None or (max_d is not None and d >= max_d):
                 continue
-            # A zone reports the nearest floor in its cone too: its lower edge, which projected along the centre
-            # stands d * 0.065 above the floor (6 cm a metre out: the scattered phantom cells on Nov 19's map).
-            hit = self.flat_tol < h - self.LOW * d and h < top
+            hit = is_hit(h, d)
             if hit:
                 hx.append(x)
                 hy.append(y)
-                hw.append(min(1.0, self.SHARP_M / max(d, 1e-3)))   # far zones are wide: weaker evidence
+                lone = 0 < r < 7 and 0 < c < 7 and not any(hits.get((r + i, c + j), 99.0) < 1.5 * d
+                               for i in (-1, 0, 1) for j in (-1, 0, 1) if i or j)
+                hw.append(min(1.0, self.SHARP_M / max(d, 1e-3)) * (self.LONE_W if lone else 1.0))   # far: weaker
             if h <= self.body + 0.05:
                 rx.append(x)
                 ry.append(y)
