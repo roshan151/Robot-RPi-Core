@@ -28,7 +28,7 @@ records the simple first version. **It amends `VISION-DESIGN.md`** (§4.6
 > | Rolling costmap: 4 x 4 m, 5 cm, every ToF grid placed by the gimbal angle at measurement + odometry/gyro; rays clear, evidence fades | Pi | `nav/costmap.py` | every grid |
 > | DWA: (v, w) from the dynamic window round measured v and gyro w, arcs scored on progress, heading, clearance, speed | Pi | `nav/dwa.py`, `nav/controller.py` | 20 Hz, streamed as /cmd_vel |
 > | Local Theta* on the costmap: the fallback route when the Mac's waypoints are missing or older than 3 s (network fail-safe) | Pi | `nav/plan.py` | 2 Hz, own thread |
-> | Gimbal aim: look-ahead into the turn, +-45 deg sweep on straights, centred on the person while following; glance along the way when it has not been seen for 1.2 s (slowing to 0.08 m/s meanwhile) | Pi | `nav/aim.py` | 20 Hz targets, 50 Hz servo thread |
+> | Gimbal aim: look-ahead into the turn, +-45 deg sweep on straights, centred on the person while following; glance along the way when it has not been seen for 1.2 s (slowing to 0.12 m/s meanwhile, 0.25 m/s where the map has it seen free) | Pi | `nav/aim.py` | 20 Hz targets, 50 Hz servo thread |
 > | Camera stream to the Mac (JPEG + pose + pan/real tilt) | Pi | `nav/stream.py` | 10 Hz |
 > | Global map (the Pi's costmap folded in, camera-detected furniture added) + Theta* waypoints | Mac | `nav_map.py`, `nav_api.py` | ~1 Hz per request |
 > | Visual SLAM: ORB-SLAM3 monocular; scale and level from odometry, camera-to-base through the gimbal; gives odom_to_map | Mac | `vslam.py` (install: `deploy/install_orbslam3_macos.sh`) | stream rate |

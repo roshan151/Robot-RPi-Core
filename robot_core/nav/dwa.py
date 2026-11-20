@@ -106,7 +106,9 @@ def plan(state: Sequence[float], target: Sequence[float], clearance_fn, p: DwaPa
     if not ok.any():
         return DwaResult(0.0, 0.0, True, here, 0)
     d0 = math.hypot(target[0] - x, target[1] - y)
-    dend = np.hypot(target[0] - xs[:, -1], target[1] - ys[:, -1])
+    # Closest approach on the arc, not where it ends 2 s on: an end past the target scored as less progress, so near
+    # the target it slowed at every waypoint (test_scenarios trap: 31.7 s, now 23 s).
+    dend = np.hypot(target[0] - xs, target[1] - ys).min(axis=1)
     progress = d0 - dend
     bearing = np.arctan2(target[1] - ys[:, -1], target[0] - xs[:, -1]) - ths[:, -1]
     heading = 1.0 - np.abs(np.arctan2(np.sin(bearing), np.cos(bearing))) / math.pi

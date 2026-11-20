@@ -240,6 +240,21 @@ def main(args=None) -> None:
 
     node.create_service(Trigger, "task/stop", _on_task_stop)
 
+    # Start follow (whichever enrolled person it sees first) or explore without saying so, e.g. from
+    # Monitoring-Service test_software.py:   ros2 service call /task/follow std_srvs/srv/Trigger
+    from robot_core.live import agent as live_agent
+
+    def _task_starter(task: str):
+        def _on_start(_req, resp):
+            r = live_agent.start_task(task)
+            robot_log.event("task.request", task=task, by="service", ok=r.get("ok"), err=r.get("error"))
+            resp.success, resp.message = bool(r.get("ok")), r.get("note") or r.get("error") or ""
+            return resp
+        return _on_start
+
+    for _t in ("follow", "explore"):
+        node.create_service(Trigger, f"task/{_t}", _task_starter(_t))
+
     # The robot's pitch (IMU, via the drivetrain node): ToF projection and climb detection in follow.
     from robot_interfaces.msg import MotionHealth
 

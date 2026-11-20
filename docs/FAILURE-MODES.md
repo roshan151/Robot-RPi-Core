@@ -22,7 +22,7 @@ Tests and tools (Monitoring-Service, from the Mac, no robot needed except where 
 | Tool | What it does |
 |---|---|
 | `test_replay.py` | Replays saved debug sessions (`scenarios/replay/`) through today's code: Mac range rules, Pi tracker, planner on the recorded maps, steering. `--save NAME --session S` freezes a new one. |
-| `test_scenarios.py` | The real nav stack in simulated rooms (box, door, trap, lookaway, sudden, follow, doorway, doorway2, doorleaf, corridor, chair) with pass rules and pictures. |
+| `test_scenarios.py` | The real nav stack in simulated rooms (box, door, trap, lookaway, sudden, follow, doorway, doorway2, doorleaf, corridor, nook, cable, wedge, ledge, glass, behind, chair) with pass rules and pictures. |
 | `scorecard.py` | Scores any recorded session against fixed limits (`session_checks.LIMITS`); `--compare` against another. |
 | `test_software.py` / `test_hardware.py` | End to end on the Mac and on the robot. |
 
@@ -82,6 +82,13 @@ in follow's debug note; the scorecard reads both.
 | Brakes again for the same thing | Nov 19 (4 times in 8 s) | reflex hit marked in the costmap | replan at once | rule `trip_repeat` |
 | No safe arc for a long time | expected | `blocked_long` | backs off / turns toward the way | rule `blocked_long` |
 | Stands still "the way round is long" while the person walks on | Nov 19 | | only for a person standing still | scorecard `stood_way_round_long` |
+| Too tight to turn on the spot, no room behind by the radius test: spins into the walls | Nov 20 (simulator) | `_room_behind`: also room when narrower but seen free and wide enough for the body | backs out along seen-free ground in 5 cm steps, then turns | test_scenarios nook |
+| Creeps: 0.8 rad/s turns with nobody in frame, end-of-arc progress slowed it near every target | Nov 20 ("too cautious") | | 1.0 rad/s turns when not tracking (1.2 broke trap and sudden); progress is the arc's closest approach | test_scenarios behind (spin), trap (28 s limit) |
+| Tracks spin on a cable head-on; the odometry drives on, the robot does not | Nov 20 (simulator) | `StuckWatch`: something at most 2.5 m ahead, facing it (hit on both sides of the look), came no nearer at the same head angle while the encoders went 12 cm | slip taken out of the pose (measured from the oldest look); crosses again 45° off square (`_cross`); a second slip there: marked, routed round | test_scenarios cable |
+| Walls alongside read the same range while driving: false slip | Nov 20 (simulator) | the facing test | not counted | test_scenarios corridor |
+| A turn held by a leg it cannot see (gyro still, tracks turning) | Nov 20 (simulator) | `_watch_turn`: commanded at least 0.3 rad/s, gyro below 0.1 for 0.7 s; rule `turn_blocked` | brake; mark the leading corner; back off 10 cm, then turn (turning the other way hits it with another corner) | test_scenarios wedge |
+| Nose rides up on a ledge it cannot see and stops; the odometry counts on | Nov 20 (simulator) | nose up 6° above the floor's level (median pitch over 10 s) for 0.5 s; was 12° at once from where it set off | encoder metres since are taken out; marked; backs off; goes round | test_scenarios ledge |
+| Bumps something it cannot see (glass) again beside the mark | Nov 20 (simulator) | `_failed`: rule `same_approach` (within 0.3 m and 30° of an earlier failure) | backs off 15 cm before turning; the bump mark is 0.5 m wide; two failures within 0.6 m are joined into one line, 0.3 m past each end | test_scenarios glass |
 | Person-ignore circle erases a real obstacle | Nov 19 | | person placed by refused/accepted ranges only (see Perception) | test_replay `pi_placed_too_near` |
 
 ## Mac: SLAM, planning service, network

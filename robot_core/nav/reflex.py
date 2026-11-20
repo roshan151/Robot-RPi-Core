@@ -122,7 +122,8 @@ class Reflex:
             self._hist.append((now, pan, tilt, self.pose()))
         if self.bumped is not None and (self.bumped() or 0.0) > max(self._t0, self.tripped_until - self.hold_s):
             if self.command()[0] > 0.02:                  # driving forward into it: it is just ahead of the nose
-                self.hits = [(self.front + 0.06, y / 20.0) for y in range(-2, 3)]
+                self.hits = [(self.front + 0.06, y / 20.0) for y in range(-5, 6)]   # felt, not seen: as wide as
+                # the body and more, or it bumped the same unseen thing again beside the mark (test_scenarios glass)
             self.trip("the drivetrain felt something (bump, stall, slip or climb)", count=True)
         g = self.head.lidar.grid() if hasattr(self.head.lidar, "grid") else None
         if g is None or g.t <= self._last_grid_t:

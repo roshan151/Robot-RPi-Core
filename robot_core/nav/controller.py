@@ -54,16 +54,23 @@ STUCK_WINDOW_S = 0.8            # over this long the encoders went STUCK_MIN_ODO
 STUCK_MIN_ODO_M = 0.06
 STUCK_NEAR_M = 0.40             # ...while something this near straight ahead...
 STUCK_STILL_M = 0.025           # ...came no nearer than this: slipping against it
-CLIMB_DEG = 12.0                # nose up this far since it started moving: climbing something
+CLIMB_DEG = 6.0                 # nose up this far since it started moving, for CLIMB_HOLD_S: riding up on something
+CLIMB_HOLD_S = 0.5              # (12 deg at once missed a ledge it high-centred on at 8: test_scenarios ledge)
+STUCK_FAR_M, STUCK_FAR_WINDOW_S, STUCK_FAR_ODO_M = 2.5, 1.5, 0.12   # ...or anything up to 2.5 m ahead that came no
+#                                 nearer while the encoders went 12 cm in 1.5 s: tracks spinning on the floor (a cable)
+TURN_BLOCKED_S = 0.7            # turning on the spot with the gyro under 0.1 rad/s this long: a corner is held
+SAME_PLACE_M, SAME_HEADING_DEG = 0.3, 30.0   # a failure this near an earlier one, this near its heading: same approach
+JOIN_M = 0.6                    # two bumps / climbs this near: one thing, wider than either showed (glass, a ledge)
 BACK_OFF_M = 0.10
 TURN_BACK_M = 0.05              # backing off to make room to turn on the spot
 AHEAD_STALE_S = 1.2             # driving with the way ahead unseen this long: glance at it, slow meanwhile
 AHEAD_CONE_DEG = 28.0           # a grid taken with the head this near the direction of travel saw the way (ToF: +-30)
 ARRIVE_M, RESUME_M = 0.08, 0.25 # arrived within keep + ARRIVE_M; set off again only past keep + RESUME_M, so a
                                 # person standing still (their range wobbles) is not chased back and forth
-BLIND_MPS = 0.08                # top speed while the way ahead has not been seen...
-SEEN_MPS = 0.18                 # ...or this, where the map remembers it as free (the head is on the person)
+BLIND_MPS = 0.12                # top speed while the way ahead has not been seen...
+SEEN_MPS = 0.25                 # ...or this, where the map remembers it as free (the head is on the person)
 PIVOT_FOCUS_W = 0.55            # turn rate pivoting while the camera is on someone: 0.8 rad/s blurred the frames
+PIVOT_FREE_W = 1.0              # ...and with nobody to keep in frame (0.8 took 3.5 s to turn round; 1.2 broke trap and sudden)
                                 # and the person was missed 9 frames in 16 at a doorway (Nov 19)
 NO_PROGRESS_S, NO_PROGRESS_M = 4.0, 0.05   # "driving" this long without moving this far: wedged
 PLAN_EXTRA_M = 0.025            # extra room asked beyond DWA radius + margin (the planner adds its own 0.05, else 0.03)
@@ -101,27 +108,48 @@ class StuckWatch:
     def __init__(self) -> None:
         self.hist: deque = deque()
         self.phantom_m = 0.0
+        self.kind = ""                # "push" (against something near), "floor" (spinning on the floor), "climb"
+        self._climb: Optional[Tuple[float, Optional[float]]] = None   # (since when, odo then) the nose is up
 
     def reset(self) -> None:
         self.hist.clear()
+        self._climb = None
 
     def update(self, t: float, odo_m: Optional[float], centre_m: Optional[float],
-               rise_deg: Optional[float]) -> str:
+               rise_deg: Optional[float], pan: float = 0.0, facing: bool = True,
+               heading: Optional[float] = None) -> str:
+        """centre_m: how far ahead (robot x) what the ToF sees at head pan `pan` (deg) is; facing: those points spread
+        across the way, not along it (a wall alongside reads the same as the robot drives past it)."""
         if rise_deg is not None and rise_deg > CLIMB_DEG:
-            self.phantom_m = 0.0
-            return f"nose up {rise_deg:.0f} deg: climbing something"
-        if odo_m is None:
+            self._climb = self._climb or (t, odo_m)
+            if t - self._climb[0] >= CLIMB_HOLD_S:            # riding up: the encoder metres since are not real
+                self.phantom_m = max(0.0, (odo_m or 0.0) - (self._climb[1] or odo_m or 0.0))
+                self.kind = "climb"
+                return f"nose up {rise_deg:.0f} deg for {CLIMB_HOLD_S:.1f} s: riding up on something"
+        else:
+            self._climb = None
+        # Looks at the same head angle compared over time: the head sweeps while driving, so a straight-ahead range
+        # comes in bursts 2 s apart and two of them never fell one window apart (test_scenarios cable).
+        if odo_m is None or centre_m is None or abs(pan) > 45.0 or not facing:
             return ""
-        self.hist.append((t, odo_m, centre_m))
-        while len(self.hist) > 1 and t - self.hist[1][0] >= STUCK_WINDOW_S:
+        look = (t, odo_m, pan, centre_m, heading)
+        self.hist.append(look)
+        while self.hist and t - self.hist[0][0] > 5.0:
             self.hist.popleft()
-        t0, o0, c0 = self.hist[0]
-        if t - t0 < STUCK_WINDOW_S or c0 is None or centre_m is None:
-            return ""
-        went = odo_m - o0
-        if went >= STUCK_MIN_ODO_M and max(c0, centre_m) < STUCK_NEAR_M and abs(centre_m - c0) < STUCK_STILL_M:
-            self.phantom_m = max(0.0, went - max(0.0, c0 - centre_m))
-            return f"wheels went {went:.2f} m but {centre_m:.2f} m ahead stayed put: tracks slipping"
+        same = [h for h in self.hist if abs(h[2] - pan) <= 5.0 and
+                (heading is None or h[4] is None or abs(dwa.wrap(heading - h[4])) < math.radians(3.0))]
+        for window, min_odo, near in ((STUCK_WINDOW_S, STUCK_MIN_ODO_M, STUCK_NEAR_M),
+                                      (STUCK_FAR_WINDOW_S, STUCK_FAR_ODO_M, STUCK_FAR_M)):
+            old = [h for h in same if t - h[0] >= window]
+            if not old:
+                continue
+            _, o0, _, c0, _ = old[-1]                         # the newest look old enough decides
+            went = odo_m - o0
+            if went >= min_odo and max(c0, centre_m) < near and abs(centre_m - c0) < STUCK_STILL_M:
+                _, o1, _, c1, _ = same[0]                     # the oldest: all the slip since then
+                self.phantom_m = max(0.0, (odo_m - o1) - max(0.0, c1 - centre_m))
+                self.kind = "push" if max(c0, centre_m) < STUCK_NEAR_M else "floor"
+                return f"wheels went {went:.2f} m but {centre_m:.2f} m ahead stayed put: tracks slipping"
         return ""
 
 
@@ -177,6 +205,10 @@ class LocalNav:
         self._pivot_sign, self._flips = 0, deque()    # rule pivot_flip: turn-on-the-spot direction changes
         self._blocked_since: Optional[float] = None   # rule blocked_long
         self._progress: Optional[Tuple[float, Tuple[float, float]]] = None   # (since when, where) it last moved
+        self.failures: List[Tuple[float, float, float, str]] = []   # (x, y, heading, kind) of ways that did not work
+        self._pitches: deque = deque()                # (t, IMU pitch) over 10 s: the floor's level
+        self._via: Optional[Tuple[Tuple[float, float], float]] = None   # a point to go through first, and until when
+        self._turn_held: Optional[float] = None       # since when a turn on the spot has not turned (gyro)
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._thread: Optional[threading.Thread] = None
@@ -245,8 +277,8 @@ class LocalNav:
         self.cmd = (v, w)
         self.motion.velocity(v, w)
 
-    def _ingest(self, now: float) -> Optional[float]:
-        """Fold the new grids into the costmap; the latest straight-ahead range for StuckWatch."""
+    def _ingest(self, now: float) -> Optional[tuple]:
+        """Fold the new grids into the costmap; the latest (middle range, pan, facing) for StuckWatch."""
         ahead = None
         for t, pose, zones, rows, pan in self.reflex.take():
             with self._lock:
@@ -263,8 +295,18 @@ class LocalNav:
             travel = max(-45.0, min(45.0, math.degrees(self.aim.k_w * self.cmd[1])))
             if abs(pan - travel) <= AHEAD_CONE_DEG:
                 self._ahead_t = now
-            if abs(pan) < 10.0:                           # only a look straight ahead says how near the front is
-                ahead = centre_range(rows)
+            # What it sees where the head looks (6 deg either side), things standing on the floor: how far ahead
+            # (robot x) they are. A thing that stays put comes nearer by what the robot drives, whatever the pan.
+            # Facing: hits on both sides of the look, as far ahead. Walls alongside (a corridor) read the same from
+            # a moving robot and looked like slip (test_scenarios corridor); they are hit on one side, or unevenly.
+            sides: dict = {1: [], -1: []}
+            for z in zones:
+                off = math.degrees(dwa.wrap(math.atan2(z[3], z[2]) - math.radians(pan)))
+                if z[4] is not None and 0.04 < z[4] < 0.6 and 0.5 < abs(off) < 6.0:
+                    sides[1 if off > 0 else -1].append(z[2])
+            if sides[1] and sides[-1] and abs(pan) <= 45.0:
+                l, r = float(np.median(sides[1])), float(np.median(sides[-1]))
+                ahead = ((l + r) / 2.0, pan, abs(l - r) <= 0.08 + 0.05 * (l + r) / 2.0)
         return ahead
 
     def _measured(self) -> Tuple[float, float]:
@@ -297,6 +339,10 @@ class LocalNav:
                 at = [(round(here[0] + c * x - s * y, 2), round(here[1] + s * x + c * y, 2)) for x, y in hits]
                 if any(math.dist(m, at[len(at) // 2]) < 0.3 for m in self.marked):
                     rules.broke("trip_repeat", at=at[len(at) // 2], why=self.reflex.why)
+                if self.reflex.why.startswith("the drivetrain"):   # felt, not seen: a way that did not work
+                    self._failed(here, "bump", hits[len(hits) // 2], join=True)
+                    if self._room_behind(here, 0.15):     # off it before turning: turning against it rubbed it
+                        self._recover, self._recover_from, self._back_m = "back", (here, self.clock()), 0.15
                 self.marked = (self.marked + [at[len(at) // 2]])[-20:]
                 log.info("nav: marked what it braked for (%s) at %s, replanning", self.reflex.why, at[len(at) // 2])
             self._trips_seen = self.reflex.trips          # it first, whatever the state (Nov 19: tripped while
@@ -366,6 +412,11 @@ class LocalNav:
             target, stop_at = goal, keep
         else:
             stop_at = 0.0
+        if self._via is not None:                         # another approach: through this point first
+            if now > self._via[1] or math.dist(here[:2], self._via[0]) < 0.15:
+                self._via = None
+            else:
+                target, stop_at = self._via[0], 0.0
         res = dwa.plan((here[0], here[1], here[2], v_meas, w_meas), target, self.costmap.clearance,
                        self.params, stop_at_m=stop_at)
         v, w = res.v, res.w
@@ -374,7 +425,7 @@ class LocalNav:
             # Target is significantly off-heading: pivot in place to face it first,
             # rather than driving wide forward arcs that saturate the gimbal and chase its tail.
             v = 0.0
-            max_w = PIVOT_FOCUS_W if focus is not None else 0.8
+            max_w = PIVOT_FOCUS_W if focus is not None else PIVOT_FREE_W
             w = dwa.face(tb, max_w=max_w) or (math.copysign(min(0.7, max_w), tb) if abs(w_meas) < 0.3 else w_meas)
         elif not res.blocked and v < 0.02:                # only turning on the spot is safe: turn properly, toward the
             # way, not a 0.03 rad/s creep the tracks cannot do. Toward the target's side: a fixed +0.6 (always left)
@@ -385,8 +436,7 @@ class LocalNav:
             # spot in a doorway until it lost the person (Nov 19). Blocked with the way straight ahead: back off.
             self._plan_t, self._local_t = 0.0, -1e9       # plan a way round now (the Mac's and our own)
             w = dwa.face(tb) if abs(tb) > math.radians(20) else 0.0
-            if not w and self._recover is None and float(self.costmap.clearance(
-                    [here[0] - 0.1 * math.cos(here[2])], [here[1] - 0.1 * math.sin(here[2])])[0]) > self.params.radius_m:
+            if not w and self._recover is None and self._room_behind(here, 0.1):
                 self._recover, self._recover_from, self._back_m = "back", (here, now), TURN_BACK_M
             self.state, self.detail = "blocked", "no safe arc: turning toward the way" if w else "no safe arc: backing off"
         else:
@@ -401,12 +451,12 @@ class LocalNav:
             self.state, self.detail = "tripped", self.reflex.why
         if v < 0.02 and w != 0.0 and self._recover is None and self._turn_hits(here, w):
             # In a doorway or pass, do not trigger repeated back-off oscillations if heading towards the path
-            behind = float(self.costmap.clearance([here[0] - 0.1 * math.cos(here[2])],
-                                                  [here[1] - 0.1 * math.sin(here[2])])[0])
-            if abs(tb) > math.radians(45.0) and behind > self.params.radius_m:
+            if abs(tb) > math.radians(45.0) and self._room_behind(here, 0.1):
                 self._recover, self._recover_from, self._back_m = "back", (here, now), TURN_BACK_M
             v = w = 0.0
         self._watch_rules(now, here, v, w)
+        if self._watch_turn(now, here, v, w):
+            v = w = 0.0
         self._send(v, w)
         status.detail(f"nav {self.state}")
         self._watch_stuck(now, here, v, ahead)
@@ -430,10 +480,8 @@ class LocalNav:
             self._progress = (now, tuple(here[:2]))
             return
         if now - self._progress[0] > NO_PROGRESS_S and self._recover is None:
-            behind = float(self.costmap.clearance([here[0] - 0.12 * math.cos(here[2])],
-                                                  [here[1] - 0.12 * math.sin(here[2])])[0])
             rules.broke("no_progress", at=[round(here[0], 2), round(here[1], 2)], to_go=round(dist, 2))
-            if behind > self.params.radius_m:
+            if self._room_behind(here, 0.12):
                 self._recover, self._recover_from, self._back_m = "back", (here, now), BACK_OFF_M
             self._plan_t, self._local_t = 0.0, -1e9
             self._progress = (now, tuple(here[:2]))
@@ -457,6 +505,19 @@ class LocalNav:
                 self._blocked_since = now
         else:
             self._blocked_since = None
+
+    def _room_behind(self, here, m: float) -> bool:
+        """Room to back up m: the point m behind is clear by the robot's radius (unknown counts as clear, as before),
+        or it is narrower but seen free all the way and wide enough for the body: a recess it drove into, too tight
+        to turn in, has no room by the first test and it spun into the walls (test_scenarios nook). No rear sensor:
+        seen free is all it knows there."""
+        c, s = math.cos(here[2]), math.sin(here[2])
+        f = np.linspace(0.0, m, 4)
+        cl = self.costmap.clearance(here[0] - f * c, here[1] - f * s)
+        if float(cl[-1]) > self.params.radius_m:
+            return True
+        return float(cl.min()) >= self.params.radius_m / math.sqrt(2.0) + 0.02 and \
+            self.costmap.seen_free((here[0], here[1], here[2] + math.pi), 0.2 + m)
 
     def _turn_hits(self, here, w: float, dt: float = 0.4) -> bool:
         """Would turning on the spot at w for dt sweep the square footprint into an occupied cell?"""
@@ -529,16 +590,25 @@ class LocalNav:
 
     # ---------------------------------------------------------------- stuck
 
-    def _watch_stuck(self, now: float, here: Pose, v: float, ahead: Optional[float]) -> None:
+    def _watch_stuck(self, now: float, here: Pose, v: float, ahead: Optional[tuple]) -> None:
         pitch = self.head.pitch() if getattr(self.head, "pitch", None) else None
+        if pitch is not None:                             # the floor's pitch: the median of the last 10 s
+            self._pitches.append((now, pitch))
+            while now - self._pitches[0][0] > 10.0:
+                self._pitches.popleft()
         if v <= 0.02:
             self._moving_since = None
             self._stuck.reset()
             return
         if self._moving_since is None:
             self._moving_since = (now, self._odo, pitch)
-        rise = None if pitch is None or self._moving_since[2] is None else pitch - self._moving_since[2]
-        why = self._stuck.update(now, self._odo, ahead, rise)
+        # Up from where it set off, or from the floor's level: it may set off with the nose already up (it turned on
+        # the spot with the nose over a ledge, then drove on up it: test_scenarios ledge).
+        floor = statistics.median(p for _, p in self._pitches) if self._pitches else None
+        rise = None if pitch is None or self._moving_since[2] is None else \
+            pitch - min(self._moving_since[2], floor if floor is not None else self._moving_since[2])
+        c, pan, facing = ahead if ahead else (None, 0.0, False)
+        why = self._stuck.update(now, self._odo, c, rise, pan=pan, facing=facing, heading=here[2])
         if why:
             log.warning("nav: stuck: %s", why)
             self.motion.stop()
@@ -547,21 +617,84 @@ class LocalNav:
                 self.fix.undo(self._stuck.phantom_m, here[2])
                 log.info("nav: %.2f m of track slip taken out of the pose", self._stuck.phantom_m)
             at = self.fix()
-            self.costmap.add_obstacle(at, [(0.22, y / 20.0) for y in range(-3, 4)])
+            kind = self._stuck.kind
+            if kind == "floor" and not self._failed(at, "floor", (0.2, 0.0)):
+                self._cross(at)                           # spinning on a cable head-on: cross it at an angle
+            else:                                         # against something, riding up, or crossing failed too
+                self.costmap.add_obstacle(at, [(0.22, y / 20.0) for y in range(-3, 4)])
+                if kind != "floor":
+                    self._failed(at, kind, (0.22, 0.0), join=True)
             self._stuck.reset()
             self._moving_since = None
             self._recover, self._back_m = "back", BACK_OFF_M
             self._recover_from = (at, self.clock())
             self.state, self.detail = "stuck", why
 
+    def _failed(self, here, kind: str, at_base: Tuple[float, float], join: bool = False) -> list:
+        """A way that did not work, at_base (robot frame) from `here`. same_approach: an earlier failure within
+        SAME_PLACE_M and SAME_HEADING_DEG (it tried the same thing again). join: one within JOIN_M is the same
+        thing, wider than either showed (a glass panel, a ledge): mark the line through both, 0.3 m past each end.
+        Returns the earlier failures of this kind within JOIN_M."""
+        c, s = math.cos(here[2]), math.sin(here[2])
+        pt = (here[0] + c * at_base[0] - s * at_base[1], here[1] + s * at_base[0] + c * at_base[1])
+        near = [f for f in self.failures if f[3] == kind and math.dist(f[:2], pt) < JOIN_M]
+        if any(math.dist(f[:2], pt) < SAME_PLACE_M and abs(dwa.wrap(f[2] - here[2])) < math.radians(SAME_HEADING_DEG)
+               for f in self.failures):
+            rules.broke("same_approach", at=[round(pt[0], 2), round(pt[1], 2)], kind=kind)
+        self.failures = (self.failures + [(pt[0], pt[1], here[2], kind)])[-30:]
+        log.info("nav: %s at %s (%d near)", kind, [round(v, 2) for v in pt], len(near))
+        for f in near if join else []:
+            d = math.dist(f[:2], pt)
+            if d < 0.05:
+                continue
+            ux, uy = (pt[0] - f[0]) / d, (pt[1] - f[1]) / d
+            line = [(f[0] + ux * t - here[0], f[1] + uy * t - here[1]) for t in np.arange(-0.3, d + 0.31, 0.05)]
+            self.costmap.add_obstacle(here, [(x * c + y * s, -x * s + y * c) for x, y in line])
+            self._plan_t, self._local_t = 0.0, -1e9
+        return near
+
+    def _cross(self, here) -> None:
+        """The tracks spun on something on the floor head-on (a cable, a rug edge): go again through a point 45 deg
+        off the way it was going, on the side with more room. One track at a time climbs it (test_scenarios cable)."""
+        best = None
+        for side in (1.0, -1.0):
+            a = here[2] + side * math.radians(45.0)
+            p = (here[0] + 0.8 * math.cos(a), here[1] + 0.8 * math.sin(a))
+            cl = float(self.costmap.clearance([p[0]], [p[1]])[0])
+            if best is None or cl > best[0] + 0.01:
+                best = (cl, p)
+        self._via = (best[1], self.clock() + 10.0)
+        log.info("nav: tracks spun on the floor: crossing again at 45 deg through %s", [round(v, 2) for v in best[1]])
+
+    def _watch_turn(self, now: float, here: Pose, v: float, w: float) -> bool:
+        """Turning on the spot (|w| at least 0.3) while the gyro says under 0.1 rad/s for TURN_BLOCKED_S: a corner is
+        held by something it cannot see (a chair leg; the tracks turn on, the encoders count). Mark it at the leading
+        corner, brake and back off 10 cm: inside the corners' circle it is in the way of a turn either way, so
+        turning the other way hit it with the other corner. True: stop this tick. (test_scenarios wedge: 3.9 s held.)"""
+        tw = self.twist() if self.twist else None
+        if v > 0.02 or abs(w) < 0.3 or tw is None or abs(tw[1]) >= 0.1 or self._recover:
+            self._turn_held = None
+            return False
+        self._turn_held = self._turn_held or now
+        if now - self._turn_held < TURN_BLOCKED_S:
+            return False
+        self._turn_held = None
+        side = 1.0 if w > 0 else -1.0
+        corner = [(0.19 * math.cos(math.radians(a)), side * 0.19 * math.sin(math.radians(a))) for a in (40, 47, 54)]
+        self.costmap.add_obstacle(here, corner)           # where the leading corner stopped
+        self.motion.stop()                                # brake: a ramp down pushed on into it for 0.5 s
+        self._failed(here, "turn", corner[1])
+        if self._room_behind(here, 0.12):
+            self._recover, self._recover_from, self._back_m = "back", (here, now), 0.10
+        rules.broke("turn_blocked", at=[round(here[0], 2), round(here[1], 2)], w=round(w, 2))
+        return True
+
     def _do_recover(self, here: Pose) -> None:
         """Back off BACK_OFF_M (slowly, watching the reflex), then hand back to DWA."""
         start, t0 = self._recover_from
         want = getattr(self, "_back_m", BACK_OFF_M)
         gone = math.hypot(here[0] - start[0], here[1] - start[1]) if start else want
-        behind = float(self.costmap.clearance([here[0] - 0.12 * math.cos(here[2])],
-                                              [here[1] - 0.12 * math.sin(here[2])])[0])
-        if gone >= want or self.clock() - t0 > 3.0 or behind < self.params.radius_m:   # no room behind
+        if gone >= want or self.clock() - t0 > 3.0 or not self._room_behind(here, 0.12):   # no room behind
             self._recover = None
             self._send(0.0, 0.0)
             self._plan_t = 0.0
