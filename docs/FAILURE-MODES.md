@@ -1,0 +1,100 @@
+# Failure modes: what can go wrong, how we notice, what the robot does
+
+Written Nov 19 2026, after a week where every follow and obstacle bug was a failure nobody
+had written down: a frozen pose steered by, "unknown" taken as "free", a door frame taken as
+the person, a planner goal moved to the wrong side of a wall, hardware faults that looked
+like software. This file is where those are written down **before** code is written.
+
+## How to use this file
+
+- **A new module or input:** add a table (or rows) before writing the code. For every input:
+  what if it is *missing*, *stale*, *plausible but wrong*, *from the wrong object*. For every
+  output: who trusts it, and what happens to them if it is wrong. For every piece of hardware:
+  *reset*, *power off*, *slow*.
+- **An incident:** add a row, then a test that fails without the fix (a saved replay scenario
+  or a simulated room, below), then the fix. A dated comment in the code is not a test.
+- **Columns:** *Seen* = when it happened for real (or "expected" if not yet). *Detected by* = the
+  code that notices. *Response* = what the robot does (see the health modes). *Covered by* = the
+  test or rule that keeps it fixed.
+
+Tests and tools (Monitoring-Service, from the Mac, no robot needed except where said):
+
+| Tool | What it does |
+|---|---|
+| `test_replay.py` | Replays saved debug sessions (`scenarios/replay/`) through today's code: Mac range rules, Pi tracker, planner on the recorded maps, steering. `--save NAME --session S` freezes a new one. |
+| `test_scenarios.py` | The real nav stack in simulated rooms (box, door, trap, lookaway, sudden, follow, doorway, doorway2, doorleaf, corridor, chair) with pass rules and pictures. |
+| `scorecard.py` | Scores any recorded session against fixed limits (`session_checks.LIMITS`); `--compare` against another. |
+| `test_software.py` / `test_hardware.py` | End to end on the Mac and on the robot. |
+
+Rule breaks (`robot_core/rules.py`) go to logs.json as WARNING `"rule"` events and are counted
+in follow's debug note; the scorecard reads both.
+
+## Health modes (`robot_core/health.py`)
+
+| Mode | When | The task does |
+|---|---|---|
+| preflight fail | servo power off, no ToF grid in 1 s, no fresh pose, Mac not answering /healthz in 2 s, no velocity firmware | does not start; says every failure at once, with the fix |
+| normal | everything fresh | |
+| degraded | no ToF grid for 1 s · odometry 1-3 s old · Mac step over 2 s | stand still (no driving blind) · nav stops itself ("no pose") · keep the last goal |
+| stop | odometry over 3 s old · servo supply off | end the task, saying why |
+
+## Sensors and hardware
+
+| Failure | Seen | Detected by | Response | Covered by |
+|---|---|---|---|---|
+| Odometry stops (Arduino reset / hang / serial drop) | Nov 19 (twice) | `reading.Latest` age in voice_node; drivetrain "odometry telemetry stopped"; `Watchdog` | pose is None after 1 s → nav stops; task ends after 3 s; preflight refuses to start | `health`, rule `pose_stale`, scorecard `no_pose_steps` |
+| Arduino brown-out / RESET noise mid-move | Nov 19 | bridge "Arduino reset mid-command" | move fails; odometry gap handled as above | hardware: power wiring (open) |
+| Head servo supply off | Nov 19 | `gimbal.powered()` (GPIO4 sense) | preflight fail; `Watchdog` stop | `health` |
+| ToF grids stop | expected | grid age in `Watchdog` | degraded: stand still | rule `tof_stale` |
+| ToF grid paired with the wrong camera frame | Nov 19 | `grid.t - frame.t_capture` > 0.35 s | grid not used to range that frame's boxes | rule `grid_unpaired` |
+| ToF on the gimbal looks at the person, not the path | Nov 19 (root of several) | `AHEAD_STALE_S`, `seen_free` | speed capped where unseen; glance ahead; unknown never counted as free for straight-line decisions | test_scenarios lookaway, doorway; option: a fixed forward ToF |
+| Camera motion blur when turning fast | Nov 19 (9 misses in 16 at a doorway) | | pivot capped at 0.55 rad/s while the camera is on someone | `PIVOT_FOCUS_W` |
+| Camera fisheye distortion: floor distances near the picture edge jump | Nov 19 (found by the replay) | replay `pi_goal_jumps` | not handled yet: undistort boxes before the floor maths | test_replay doorway-20261119 (known) |
+| Gimbal pan at its limit (+81°) while the body does not turn | Nov 19 | head pan in debug note | body turns toward the goal (pivot when > 28° off) | scorecard (planned: pan-at-limit time) |
+| Bump / stall while driving forward | Nov 19 | drivetrain `motion_health` → reflex trip | brake; the spot is marked in the costmap; replan | rule `trip_repeat`, test_scenarios lookaway |
+| Bump while turning on the spot | Nov 19 (door leaf) | reflex trip | brake only: which corner hit is unknown (open) | |
+
+## Perception: the person (Mac `vision_service/follow.py`, Pi `robot_core/follow.py`)
+
+| Failure | Seen | Detected by | Response | Covered by |
+|---|---|---|---|---|
+| ToF range on the box hits something in front (chair leg) | Nov 19 (39 in one run) | Mac `_refuse`: nearer than the feet by max(0.3 m, 3σ); Pi `refuse_range`: 0.4 m nearer than tracked | range refused; floor/face distance used | test_replay (mac, pi), rule `range_refused` |
+| Edge-only ToF zones read the door frame beside a far person | Nov 19 (doorway) | Mac `_refuse(edge_only)` | refused when nearer than the feet by 0.3 m | test_replay, scorecard `edge_ranges_used` |
+| ToF zones on the floor in front of the feet | Nov 19 | zone height < 8 cm | zone skipped | Mac range_in_box `floor` count |
+| Range under 0.4 m on a box that does not fill the frame | Nov 18 | Mac `_refuse` | refused | test_replay `near_ranges_used` |
+| Pi's range_m read on the previous frame's box | Nov 19 | Mac `_refuse` on the Pi range | refused if implausible | test_replay |
+| A false box (slippers, a coat) taken as the person | Nov 19 | clothes similarity | lone-person reacquire needs ≥ 0.5 (was 0.35) | (add a replay scenario when seen again) |
+| Tracked person jumps further than anyone walks | Nov 19 | `WALK_MAX_MPS · dt + 0.5 m` | logged; tracker gate rejects one wild reading | rule `goal_jump`, test_replay |
+| Lost for good too soon ("gone") | Nov 19 | Mac search timing | head sweep dwells 0.8 s per position; gone after 20 s | |
+
+## Navigation (`robot_core/nav/`, Mac `vision_service/nav_map.py`)
+
+| Failure | Seen | Detected by | Response | Covered by |
+|---|---|---|---|---|
+| "Unknown" cells taken as free for a straight-line decision | Nov 19 (twice) | `costmap.known_free_line` | skipping ahead along a path, dropping the Mac's detour, and preferring our own Theta* all need SEEN free | **no test yet** (undoing it turns nothing red): write a scenario |
+| Planner goal moved to the robot's side of a wall the person stands behind; the plan then alternates "through the doorway" / "at the wall" | Nov 19 (root of the doorway loss) | `GlobalMap.plan(target=)`: the goal must see the person | goal re-chosen on the person's side | test_replay (3 flips without it, limit 1) |
+| Path ends where DWA cannot reach (the start's relaxed margin reached the goal) | Nov 19 (simulator) | planner: ends only where the full margin fits; relaxes only within 0.4 m of the start | | test_scenarios trap, doorway, doorway2 |
+| Global path hugs a wall DWA cannot follow | Nov 19 (simulator) | | robot asks for DWA radius + margin + 2.5 cm (`plan_radius_m`) | test_scenarios (4 rooms red without it) |
+| Skipping ahead cuts a door-frame corner and wedges | Nov 19 (simulator) | | skipping ahead needs 5 cm more room than DWA's margin | test_scenarios doorway |
+| Wedged: "driving" but not moving | Nov 19 (simulator) | `_watch_progress`, rule `no_progress` | after 4 s under 5 cm: back off 10 cm, plan again | test_scenarios trap |
+| Steering target flips sides: left-right-left on the spot | Nov 19 | rule `pivot_flip` | (a 1 s turn commitment and a keep-the-longer-plan rule were tried and removed: no test needed them, and doorway2 and the replay were better without) | test_replay, test_scenarios (every room checks it) |
+| Fallback turn always to the left when DWA will not advance | Nov 19 (simulator) | | turns toward the target's side | test_scenarios box |
+| Brakes again for the same thing | Nov 19 (4 times in 8 s) | reflex hit marked in the costmap | replan at once | rule `trip_repeat` |
+| No safe arc for a long time | expected | `blocked_long` | backs off / turns toward the way | rule `blocked_long` |
+| Stands still "the way round is long" while the person walks on | Nov 19 | | only for a person standing still | scorecard `stood_way_round_long` |
+| Person-ignore circle erases a real obstacle | Nov 19 | | person placed by refused/accepted ranges only (see Perception) | test_replay `pi_placed_too_near` |
+
+## Mac: SLAM, planning service, network
+
+| Failure | Seen | Detected by | Response | Covered by |
+|---|---|---|---|---|
+| ORB-SLAM3 does not track (white walls, blur, panning camera) | Nov 19 (2 of ~7 frames, one 4-minute run) | nav.jsonl `slam_frame` count vs frames in | odometry alone; plans in the odometry frame | scorecard SLAM line |
+| Mac slow or down | expected | follow step time; preflight /healthz | degraded (keep last goal); local Theta* | rule `mac_slow` |
+| Follow step returns 500 | Nov 19 (3 attempts) | VisionError | follow ends, says "vision error" | test_software vision |
+
+## Logging and evidence
+
+| Failure | Seen | Detected by | Response | Covered by |
+|---|---|---|---|---|
+| logs.json deleted while the robot runs | Nov 19 | `robot_log._ReopeningFileHandler` (inode check per record) | a new logs.json is started | |
+| Debug session pruned before it was looked at | Nov 19 | | freeze it: `test_replay.py --save` | |
