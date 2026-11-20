@@ -14,8 +14,8 @@ and streams the result as /cmd_vel (the drivetrain's velocity loop holds each tr
 the gyro its heading). Close enough: it turns to face the goal and stands.
 
 Network fail-safe: the Mac's plan is asked for in the background and never waited on. If it
-does not answer, the last waypoints are kept (stale ones too, until the goal moves away
-from them); with none, DWA goes straight for the goal on the local costmap alone. A goal
+does not answer, the last waypoints are kept for GLOBAL_FRESH_S (older ones lie behind it);
+then the Pi's own Theta* on the costmap, else DWA straight for the goal. A goal
 nobody has renewed for `goal_timeout_s` is dropped and the robot stops, ramped.
 
 Stuck (StuckWatch): the encoders gaining distance while what is straight ahead does not get
@@ -74,6 +74,8 @@ PIVOT_FREE_W = 1.0              # ...and with nobody to keep in frame (0.8 took 
                                 # and the person was missed 9 frames in 16 at a doorway (Nov 19)
 NO_PROGRESS_S, NO_PROGRESS_M = 4.0, 0.05   # "driving" this long without moving this far: wedged
 PLAN_EXTRA_M = 0.025            # extra room asked beyond DWA radius + margin (the planner adds its own 0.05, else 0.03)
+SILL_RISE_DEG = 2.5             # a drivetrain trip with the nose this far above the floor's level in the last 1 s,
+SILL_SLOW_MPS, SILL_SLOW_S = 0.10, 3.0   # and nothing seen just ahead: a door sill. Go again this slowly, this long
 
 
 def _length(here, path, goal) -> float:
@@ -209,6 +211,8 @@ class LocalNav:
         self._pitches: deque = deque()                # (t, IMU pitch) over 10 s: the floor's level
         self._via: Optional[Tuple[Tuple[float, float], float]] = None   # a point to go through first, and until when
         self._turn_held: Optional[float] = None       # since when a turn on the spot has not turned (gyro)
+        self._sill_at: Optional[Tuple[float, float]] = None   # where it last went again over a sill
+        self._slow_until = 0.0                        # until when it drives at SILL_SLOW_MPS at most
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._thread: Optional[threading.Thread] = None
@@ -332,7 +336,12 @@ class LocalNav:
         self._last_pose = here
         if self._trips_seen != self.reflex.trips:         # the brake holds /cmd_vel off until a zero command: send
             hits, self.reflex.hits = self.reflex.hits, []
-            if hits:                                      # remember what it braked for and plan round it: it drove
+            if hits and self.reflex.why.startswith("the drivetrain") and self._sill(here):
+                # A door sill jolted it (Nov 20: a 5 deg rise at a threshold marked a 0.5 m wall across the
+                # doorway, sealed it, and it turned away from the person). Mark nothing; go again slowly, once.
+                self._sill_at, self._slow_until = tuple(here[:2]), now + SILL_SLOW_S
+                log.info("nav: drivetrain trip on a sill at %s: going again slowly", [round(v, 2) for v in here[:2]])
+            elif hits:                                    # remember what it braked for and plan round it: it drove
                 self.costmap.add_obstacle(here, hits)     # back into the same thing 4 times in 8 s (Nov 19), as
                 self._plan_t, self._local_t = 0.0, -1e9   # the head was on the person and the map never had it
                 c, s = math.cos(here[2]), math.sin(here[2])
@@ -446,6 +455,8 @@ class LocalNav:
             v = min(v, SEEN_MPS if self.costmap.seen_free(here, 0.6) else BLIND_MPS)
             if now >= self.aim.glance_until:
                 self.aim.glance(now, math.degrees(self.aim.k_w * w))
+        if now < self._slow_until:                       # going again over a sill
+            v = min(v, SILL_SLOW_MPS)
         if self.reflex.tripped():
             v = 0.0
             self.state, self.detail = "tripped", self.reflex.why
@@ -505,6 +516,20 @@ class LocalNav:
                 self._blocked_since = now
         else:
             self._blocked_since = None
+
+    def _sill(self, here) -> bool:
+        """The drivetrain tripped with the nose up SILL_RISE_DEG over the floor's level in the last second and
+        nothing in the costmap just ahead: a door sill or rug edge, not a wall. Once per place: tripping again
+        within 0.3 m of the last try is something real."""
+        if not self._pitches or (self._sill_at is not None and math.dist(self._sill_at, here[:2]) < 0.3):
+            return False
+        last = self._pitches[-1][0]
+        floor = statistics.median(p for _, p in self._pitches)
+        peak = max(p for t, p in self._pitches if last - t <= 1.0)
+        if peak - floor < SILL_RISE_DEG:
+            return False
+        c, s = math.cos(here[2]), math.sin(here[2])
+        return float(self.costmap.clearance([here[0] + 0.25 * c], [here[1] + 0.25 * s])[0]) > 0.2
 
     def _room_behind(self, here, m: float) -> bool:
         """Room to back up m: the point m behind is clear by the robot's radius (unknown counts as clear, as before),
@@ -581,8 +606,11 @@ class LocalNav:
 
     def _plan_local(self, start, goal) -> None:
         try:
+            # The Mac's waypoints only while fresh: stale ones lie behind it (Nov 20: with the doorway sealed it
+            # turned round toward the Mac's path from 10 s before, away from the person straight ahead).
+            fresh = self.waypoints and self.clock() - self._wp_t < GLOBAL_FRESH_S
             self.local_wps = local_path(self.costmap, start, goal, self.params.radius_m,
-                                        self.params.margin_m) or self.waypoints or []
+                                        self.params.margin_m) or (self.waypoints if fresh else [])
         except Exception as exc:                         # noqa: BLE001
             log.info("nav: local plan failed: %s", exc)
         finally:
