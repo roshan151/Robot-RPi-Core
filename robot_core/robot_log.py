@@ -226,6 +226,34 @@ class _FileFilter(logging.Filter):
 # Setup
 # --------------------------------------------------------------------------- #
 
+class _ReopeningFileHandler(logging.handlers.RotatingFileHandler):
+    """A RotatingFileHandler that notices its file was deleted or replaced (Nov 19: logs.json was
+    deleted while the robot ran, and every record after that went into the deleted file) and
+    starts a new logs.json. One os.stat per record: microseconds."""
+
+    def _open(self):
+        stream = super()._open()
+        st = os.fstat(stream.fileno())
+        self._id = (st.st_dev, st.st_ino)
+        return stream
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if self.stream is not None:
+            try:
+                st = os.stat(self.baseFilename)
+                same = (st.st_dev, st.st_ino) == getattr(self, "_id", None)
+            except OSError:
+                same = False
+            if not same:                                  # gone or replaced: open a fresh one
+                try:
+                    self.stream.close()
+                except OSError:
+                    pass
+                self.stream = None
+                os.makedirs(os.path.dirname(self.baseFilename) or ".", exist_ok=True)
+        super().emit(record)
+
+
 def setup(
     path: Optional[str] = None,
     console_level: int = logging.INFO,
@@ -246,7 +274,7 @@ def setup(
 
     # StreamHandler.emit() flushes after every record, so anything already
     # logged survives a SIGKILL. Only power loss can lose it.
-    handler = logging.handlers.RotatingFileHandler(
+    handler = _ReopeningFileHandler(
         log_path, maxBytes=max_bytes, backupCount=backups, encoding="utf-8"
     )
     handler.setFormatter(JsonlFormatter())

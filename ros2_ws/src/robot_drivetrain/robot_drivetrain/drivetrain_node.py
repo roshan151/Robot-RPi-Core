@@ -572,9 +572,15 @@ class DrivetrainNode(Node):
         if st.samples == 0 or now - st.t > 1.0:
             if not getattr(self, "_warned_no_odo", False):
                 self._warned_no_odo = True
-                self.get_logger().warn(
-                    "no odometry telemetry — flash firmware v5 (drv8871-v5-odo); "
-                    "/odom and /motion_health are not published until it arrives")
+                if st.samples:                            # it was arriving, then stopped (Nov 19, twice)
+                    self.get_logger().warn(
+                        f"odometry telemetry stopped: last sample {now - st.t:.1f} s ago after {st.samples} — "
+                        "the Arduino reset (brown-out / noise on RESET), hung, or the serial link dropped; "
+                        "/odom and /motion_health are paused, follow and explore stop")
+                else:
+                    self.get_logger().warn(
+                        "no odometry telemetry — flash firmware v5 (drv8871-v5-odo); "
+                        "/odom and /motion_health are not published until it arrives")
             return
         self._warned_no_odo = False
         stamp = self.get_clock().now().to_msg()

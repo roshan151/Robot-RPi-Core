@@ -137,9 +137,13 @@ def wrap(a: float) -> float:
 
 
 def target_on_path(pose: Sequence[float], waypoints: Sequence[Sequence[float]], clear_fn,
-                   radius_m: float, reached_m: float = 0.25) -> Optional[Tuple[float, float]]:
+                   radius_m: float, reached_m: float = 0.25, seen_fn=None) -> Optional[Tuple[float, float]]:
     """The furthest waypoint that can be seen in a straight line (clear of obstacles) from the
-    robot, after dropping the ones already reached: DWA steers for it. None: no waypoints."""
+    robot, after dropping the ones already reached: DWA steers for it. None: no waypoints.
+    seen_fn(a, b): the straight line was SEEN free, not just not known to be blocked; skipping
+    ahead past the next waypoint needs it (Nov 19: with the head on the person the wall beside a
+    doorway was never in the costmap, so the target flipped each tick between the doorway and the
+    person straight through the wall, and the robot spun left-right until they were gone)."""
     pts = [tuple(w) for w in waypoints]
     while len(pts) > 1 and math.hypot(pts[0][0] - pose[0], pts[0][1] - pose[1]) < reached_m:
         pts.pop(0)
@@ -149,7 +153,7 @@ def target_on_path(pose: Sequence[float], waypoints: Sequence[Sequence[float]], 
     for wp in pts[1:]:
         n = max(2, int(math.hypot(wp[0] - pose[0], wp[1] - pose[1]) / 0.05))
         xs, ys = np.linspace(pose[0], wp[0], n), np.linspace(pose[1], wp[1], n)
-        if np.all(clear_fn(xs, ys) >= radius_m):
+        if np.all(clear_fn(xs, ys) >= radius_m) and (seen_fn is None or seen_fn(tuple(pose[:2]), wp)):
             best = wp
         else:
             break

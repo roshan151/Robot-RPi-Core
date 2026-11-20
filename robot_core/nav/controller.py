@@ -62,6 +62,8 @@ ARRIVE_M, RESUME_M = 0.08, 0.25 # arrived within keep + ARRIVE_M; set off again 
                                 # person standing still (their range wobbles) is not chased back and forth
 BLIND_MPS = 0.08                # top speed while the way ahead has not been seen...
 SEEN_MPS = 0.18                 # ...or this, where the map remembers it as free (the head is on the person)
+PIVOT_FOCUS_W = 0.55            # turn rate pivoting while the camera is on someone: 0.8 rad/s blurred the frames
+                                # and the person was missed 9 frames in 16 at a doorway (Nov 19)
 
 
 def _length(here, path, goal) -> float:
@@ -342,7 +344,8 @@ class LocalNav:
             self._moving_since = None
             self.aim.update(now, 0.0, w, focus_pan)
             return
-        target = dwa.target_on_path(here, path, self.costmap.clearance, radius) if path else None
+        target = dwa.target_on_path(here, path, self.costmap.clearance, radius,
+                                    seen_fn=self._seen_line) if path else None
         if target is None or math.dist(target, goal) < 0.1:   # the goal itself: stop keep_m short of it
             target, stop_at = goal, keep
         else:
@@ -355,7 +358,8 @@ class LocalNav:
             # Target is significantly off-heading: pivot in place to face it first,
             # rather than driving wide forward arcs that saturate the gimbal and chase its tail.
             v = 0.0
-            w = dwa.face(tb) or (math.copysign(0.7, tb) if abs(w_meas) < 0.3 else w_meas)
+            max_w = PIVOT_FOCUS_W if focus is not None else 0.8
+            w = dwa.face(tb, max_w=max_w) or (math.copysign(min(0.7, max_w), tb) if abs(w_meas) < 0.3 else w_meas)
         elif not res.blocked and v < 0.02:                # only turning on the spot is safe: turn properly, toward the
             w = dwa.face(tb) or (0.6 if abs(w) < 0.3 else w)   # way, not a 0.03 rad/s creep the tracks cannot do
         if res.blocked:
@@ -393,6 +397,11 @@ class LocalNav:
         self.aim.update(now, v, w, focus_pan, near)
 
     # ------------------------------------------------------------- planning
+
+    def _seen_line(self, a, b) -> bool:
+        """Every cell on the straight line a -> b was seen free."""
+        d = math.dist(a, b)
+        return d < 0.2 or self.costmap.seen_free((a[0], a[1], math.atan2(b[1] - a[1], b[0] - a[0])), d)
 
     def _turn_hits(self, here, w: float, dt: float = 0.4) -> bool:
         """Would turning on the spot at w for dt sweep the square footprint into an occupied cell?"""
