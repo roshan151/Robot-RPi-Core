@@ -65,6 +65,7 @@ class RosMotion:
         self._outstanding = 0
         self._pending: deque = deque()       # (deadline, op, value) per move sent, oldest first
         self._lock = threading.Lock()
+        self.odom_age = None                 # () -> s since the last /odom; set by voice_node
 
     # ------------------------------------------------------------------ #
     # Setup
@@ -142,6 +143,11 @@ class RosMotion:
               op: str, value: float) -> Dict[str, Any]:
         if not client.server_is_ready():
             return {"ok": False, "error": f"{op}: drivetrain is not running"}
+        age = self.odom_age() if self.odom_age else 0.0
+        if age > 2.0:                        # Arduino hung or resetting: a goal now would just time out
+            return {"ok": False, "error": f"{op}: drivetrain not answering (no wheel telemetry for "
+                                          f"{min(age, 999):.0f} s; the Arduino hung or is resetting). "
+                                          "It resets itself: tell the user and try again in about 10 s."}
         expect = 1.0 + abs(value) / 40.0 if op == "turn" else 2.0 + abs(value) / 0.08   # 40 deg/s, 0.08 m/s
         with self._lock:
             self._outstanding += 1

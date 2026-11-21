@@ -118,6 +118,7 @@ class ArduinoBridge:
 
         self._boot_seen = threading.Event()
         self._connecting = True
+        self._recovering = False
         self._closed = False
 
         # Health counters (read by diagnostics; never reset).
@@ -410,15 +411,58 @@ class ArduinoBridge:
                     raise RuntimeError(
                         f"Arduino reset mid-command — {msg.args[0]}"
                     )
+            recovered = self._recover_locked()
             raise TimeoutError(
                 f"No ACK from Arduino within "
                 f"{ack_timeout * (retries + 1):.1f} s and no boot frame "
                 f"afterwards — the board is likely HUNG (a supply dip "
                 f"with the brown-out detector disabled locks the chip up "
-                f"instead of resetting it). Reopen the port or power-cycle."
+                f"instead of resetting it). "
+                + ("It was reset via DTR and answers again; this command "
+                   "was NOT run — send it again." if recovered else
+                   "A DTR reset did not bring it back: power-cycle it.")
             )
         finally:
             self._awaiting_reply.clear()
+
+    def recover(self) -> bool:
+        """Reset a hung board (see _recover_locked).  Skips, returning
+        False, if a command is in flight: its own timeout recovers."""
+        if not self._cmd_lock.acquire(blocking=False):
+            return False
+        try:
+            return self._recover_locked()
+        finally:
+            self._cmd_lock.release()
+
+    def _recover_locked(self) -> bool:
+        """Pulse DTR — the same edge that resets the board when the port
+        opens — then wait for its boot frame and ping.  A hung chip (BOD
+        off) still obeys its RESET pin.  Caller holds _cmd_lock."""
+        if self._recovering or self._closed:
+            return False
+        self._recovering = True
+        self._connecting = True       # boot frame expected; heartbeat pauses
+        self._boot_seen.clear()
+        try:
+            logger.warning("Arduino not answering — resetting it via DTR")
+            self._ser.dtr = False
+            time.sleep(0.1)
+            self._ser.dtr = True
+            if not self._boot_seen.wait(timeout=BOOT_WAIT_S):
+                logger.error("No boot frame after a DTR reset — power-cycle "
+                             "the Arduino")
+                return False
+            self._transact_locked("Q")
+            self.resets_seen += 1
+            logger.warning("Arduino recovered after a DTR reset")
+            return True
+        except Exception as exc:                            # noqa: BLE001
+            logger.error("Arduino recovery failed: %s", exc)
+            return False
+        finally:
+            self._connecting = False
+            self._recovering = False
 
     def _raw_send(self, body: str) -> None:
         frame = encode_frame(body)
@@ -444,6 +488,8 @@ class ArduinoBridge:
         while not self._hb_stop.wait(PING_INTERVAL_S):
             if self._closed:
                 return
+            if self._connecting:          # resetting: the bootloader must not see bytes
+                continue
             try:
                 self._raw_send("P")
             except Exception:

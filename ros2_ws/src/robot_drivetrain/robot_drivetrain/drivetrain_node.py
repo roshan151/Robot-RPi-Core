@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import logging
 import math
+import threading
 import time
 from types import SimpleNamespace
 from typing import Optional
@@ -577,6 +578,9 @@ class DrivetrainNode(Node):
                         f"odometry telemetry stopped: last sample {now - st.t:.1f} s ago after {st.samples} — "
                         "the Arduino reset (brown-out / noise on RESET), hung, or the serial link dropped; "
                         "/odom and /motion_health are paused, follow and explore stop")
+                    # A hung board (BOD off) never comes back by itself: reset it now, off this timer.
+                    threading.Thread(target=self._drivetrain.recover, name="arduino-recover",
+                                     daemon=True).start()
                 else:
                     self.get_logger().warn(
                         "no odometry telemetry — flash firmware v5 (drv8871-v5-odo); "

@@ -222,6 +222,7 @@ def main(args=None) -> None:
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     motion = RosMotion(node, loop)
+    motion.odom_age = _odom.age              # refuse moves while the drivetrain is silent
     # Spin only once the action clients exist: an ActionClient is handed to the executor before it has
     # finished building itself, and a spin already running then reads it half-made and dies ("'ActionClient'
     # object has no attribute '_lock'", Nov 20). The voice went on without ROS: no /odom, so every follow

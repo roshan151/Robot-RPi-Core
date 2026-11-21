@@ -138,6 +138,10 @@ class SerialDrivetrain:
     def close(self) -> None:
         self._bridge.close()
 
+    def recover(self) -> bool:
+        """Reset a hung Arduino via DTR; True once it answers again."""
+        return self._bridge.recover()
+
     @property
     def is_connected(self) -> bool:
         return self._bridge.is_connected
