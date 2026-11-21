@@ -271,6 +271,7 @@ class Explorer:
                             head.gimbal.move_to(pan, tilt, wait=True)
                             pts += head.cloud()
                         frame = head.camera.capture(head.gimbal)
+                        self._recon(frame, sec)       # for the Mac's 3-D mesh (vision_service/recon.py)
                         for d in self._plants_in(frame):
                             s = self._localise_grid(frame, d, sec)
                             if s is not None:
@@ -281,6 +282,28 @@ class Explorer:
         head.home()
         self._kf_clear, self._kf_cloud = clear, cloud
         return kf_odom, rays, sightings
+
+    def _recon(self, frame, sec_odom: Pose2D) -> None:
+        """Send one scan frame to the Mac's 3-D reconstruction with everything that places it: the
+        odometry pose it was taken from, the head's angles and geometry, the robot's pitch, and the
+        ToF grid seen with it (which scales the frame's depth to metres). Best effort: never stops
+        the scan."""
+        send = getattr(self.vision, "recon_frame", None)
+        if send is None:
+            return
+        try:
+            head, g = self.head, self.head.geom
+            grid = head.lidar.grid(newer_than=frame.t_capture, timeout=0.5)
+            send(jpeg(frame.main), {
+                "odom": list(sec_odom.as_tuple()), "pan_deg": frame.pan_deg, "tilt_deg": frame.tilt_deg,
+                "settled": frame.settled, "pitch_deg": head.pitch() if head.pitch else None,
+                "tof_rows": grid.rows if grid is not None else None,
+                "geom": {"height_m": g.height_m, "pan_axis_x_m": g.pan_axis_x_m, "pan_axis_y_m": g.pan_axis_y_m,
+                         "tilt_offset_deg": g.tilt_offset_deg, "hfov_deg": g.hfov_deg,
+                         "tof_pan_offset_deg": g.tof_pan_offset_deg, "tof_tilt_offset_deg": g.tof_tilt_offset_deg,
+                         "tof_perpendicular": g.tof_perpendicular}})
+        except Exception as exc:                                  # noqa: BLE001 — the mesh is optional
+            log.info("recon frame skipped: %s", exc)
 
     def _localise_grid(self, frame, det, sec_odom: Pose2D) -> Optional[Sighting]:
         """Where a detected plant is, from the ToF zones on its pot (the lower part

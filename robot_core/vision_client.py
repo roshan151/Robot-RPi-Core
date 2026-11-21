@@ -250,6 +250,17 @@ class VisionClient:
             "low": [list(p) for p in low], "drops": [list(p) for p in drops],
             "clear": [[b, r] for b, r in clear], "cloud": [list(p) for p in cloud], "plan": plan})
 
+    def recon_frame(self, jpeg: bytes, meta: dict) -> bool:
+        """One explore scan frame for the Mac's 3-D mesh, with where it was taken (Explorer._recon).
+        False if the Mac did not take it; the scan carries on either way."""
+        try:
+            self._call("POST", "/v1/recon/frame", timeout=5.0, data={"meta": json.dumps(meta)},
+                       files={"image": ("f.jpg", jpeg, "image/jpeg")})
+            return True
+        except VisionError as exc:
+            log.warning("recon frame not sent: %s", exc)
+            return False
+
     def slam_plan(self, start, goal) -> Optional[list]:
         res = self._call("POST", "/v1/slam/plan", ok_422=True, timeout=30.0,
                          json={"start": list(start[:2]), "goal": list(goal[:2])})
