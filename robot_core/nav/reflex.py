@@ -117,9 +117,10 @@ class Reflex:
     def tick(self) -> None:
         now = self.clock()
         pan, tilt = self.head.gimbal.angles()
-        debug_upload.note_gimbal(pan, tilt)               # debug mode: every upload says where the head was
+        pose = self.pose()
+        debug_upload.note_gimbal(pan, tilt, now, pose)    # debug mode: each upload's ToF grids carry the head + pose of their moment
         with self._lock:
-            self._hist.append((now, pan, tilt, self.pose()))
+            self._hist.append((now, pan, tilt, pose))
         if self.bumped is not None and (self.bumped() or 0.0) > max(self._t0, self.tripped_until - self.hold_s):
             if self.command()[0] > 0.02:                  # driving forward into it: it is just ahead of the nose
                 self.hits = [(self.front + 0.06, y / 20.0) for y in range(-5, 6)]   # felt, not seen: as wide as

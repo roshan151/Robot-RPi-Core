@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import threading
 import time
 from collections import deque
@@ -38,6 +39,7 @@ JPEG_LONG_EDGE = 640         # frames the task did not encode itself are sent th
 JPEG_QUALITY = 80            # ...at this quality
 TOF_ONLY_AFTER_S = 1.0       # no new camera frame for this long: send ToF grids on their own
 EVENT_QUEUE = 120            # events waiting to be sent, at most (the oldest go first)
+TOF_LAG_S = 0.1              # a grid describes the scene this long before it arrives (nav/reflex SENSOR_LAG_S)
 
 _on = False
 _lock = threading.Lock()
@@ -47,6 +49,8 @@ _frame = None                # camera Frame (sensors/camera.py)
 _jpeg = None                 # (frame seq, JPEG bytes) the task encoded for the Mac
 _tof = None                  # (time.monotonic(), rows in metres / None)
 _gimbal = None               # (pan, tilt) the head pointed at most recently (note_gimbal)
+_tofs: deque = deque(maxlen=64)      # every ToF grid since the last upload: (time.monotonic(), rows)
+_hist: deque = deque(maxlen=150)     # 3 s of (time.monotonic(), pan, tilt, nav pose) from the reflex's 50 Hz tick
 _events: deque = deque(maxlen=EVENT_QUEUE)   # (jpeg or None, note dict, rows or None, frame seq or None)
 _cfg: dict = {}
 
@@ -91,15 +95,37 @@ def offer_tof(t: float, rows) -> None:
     if _on:
         with _lock:
             _tof = (t, rows)
+            _tofs.append((t, rows))
         _new.set()
 
 
-def note_gimbal(pan: float, tilt: float) -> None:
+def note_gimbal(pan: float, tilt: float, t: Optional[float] = None, pose=None) -> None:
     """Where the head points now (the nav reflex calls it 50 times a second): sent with every
-    upload, so a ToF grid without a camera frame can still be placed (Monitoring-Service --nav)."""
+    upload, so a ToF grid without a camera frame can still be placed (Monitoring-Service --nav).
+    With `t` (time.monotonic()) and the nav `pose`, it is also kept for a few seconds, so each ToF
+    grid and camera frame goes out with the head angles and pose of its own moment (_at)."""
     global _gimbal
     if _on:
         _gimbal = (pan, tilt)
+        if t is not None and pose is not None:
+            _hist.append((t, pan, tilt, tuple(pose)))
+
+
+def _at(t: float):
+    """(pan, tilt, pose) at time.monotonic() t, between the two reflex ticks around it; None when
+    t is outside the history (the reflex not running, or the upload fell behind by seconds)."""
+    with _lock:
+        h = list(_hist)
+    if not h or t < h[0][0] or t > h[-1][0] + 0.05:
+        return None
+    for (t0, p0, k0, q0), (t1, p1, k1, q1) in zip(h, h[1:] + [h[-1]]):
+        if t0 <= t <= t1 or t1 == t0:
+            w = 0.0 if t1 <= t0 else (t - t0) / (t1 - t0)
+            dth = math.atan2(math.sin(q1[2] - q0[2]), math.cos(q1[2] - q0[2]))
+            pose = (q0[0] + w * (q1[0] - q0[0]), q0[1] + w * (q1[1] - q0[1]),
+                    math.atan2(math.sin(q0[2] + w * dth), math.cos(q0[2] + w * dth)))
+            return p0 + w * (p1 - p0), k0 + w * (k1 - k0), pose
+    return None
 
 
 def offer_event(jpeg: Optional[bytes], note: dict, rows=None, seq: Optional[int] = None) -> None:
@@ -173,6 +199,7 @@ def _loop() -> None:
         t0 = time.monotonic()
         with _lock:
             frame, jpeg, tof = _frame, _jpeg, _tof
+            grids = [g for g in _tofs if sent_tof_t is None or g[0] > sent_tof_t]
         new_frame = frame is not None and frame.seq != sent_seq
         new_tof = tof is not None and tof[0] != sent_tof_t
         if new_frame:
@@ -196,6 +223,23 @@ def _loop() -> None:
             if tof is not None:
                 ref = frame.t_capture if new_frame else t0
                 meta["tof"] = {"age_ms": round((ref - tof[0]) * 1000), "rows": _rows(tof[1])}
+            # Every grid since the last upload, each with its own time (epoch s) and the head angles and
+            # nav pose of the moment it describes: what maps are built from. "tof" above (newest only,
+            # with the commanded head angle in "gimbal") stays for the viewer.
+            wall = time.time() - time.monotonic()
+            seq = []
+            for tg, rows in grids:
+                at = _at(tg - TOF_LAG_S)
+                seq.append({"t": round(wall + tg, 3), "rows": _rows(rows),
+                            "pan_deg": round(at[0], 2) if at else None,
+                            "tilt_deg": _real((0.0, at[1]))[1] if at else None,
+                            "pose": [round(v, 4) for v in at[2]] if at else None})
+            if seq:
+                meta["tof_seq"] = seq
+            if new_frame:
+                at = _at(frame.t_capture)
+                meta["frame"].update(t=round(wall + frame.t_capture, 3),
+                                     pose=[round(v, 4) for v in at[2]] if at else None)
             if _cfg["extras"]:
                 meta["extras"] = _cfg["extras"]()
             r = s.post(_cfg["url"], data={"meta": json.dumps(meta, default=str)}, files=files or None,
@@ -215,5 +259,5 @@ def _loop() -> None:
             if new_frame:
                 sent_seq = frame.seq
             if tof is not None:
-                sent_tof_t = tof[0]
+                sent_tof_t = max([tof[0]] + [g[0] for g in grids])
         _stop.wait(max(0.0, 1.0 / MAX_HZ - (time.monotonic() - t0)))
