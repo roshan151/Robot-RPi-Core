@@ -9510,3 +9510,215 @@
 {"ts":"2026-11-23T23:05:49.753Z","lvl":"info","evt":"voice.heard","text":"Raben"}
 {"ts":"2026-11-23T23:05:49.761Z","lvl":"info","evt":"voice.say","text":"<no speech","spoken":false}
 {"ts":"2026-11-23T23:05:49.974Z","lvl":"info","evt":"voice.say","text":"detected>","spoken":false}
+{"ts":"2026-11-23T23:06:13.011Z","lvl":"info","evt":"voice.heard","text":"Robin robot shutdown"}
+{"ts":"2026-11-23T23:06:13.021Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 241)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:06:13.023Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:06:13.110Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-23T23:06:13.456Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-23T23:06:13.457Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-23T23:06:13.458Z","lvl":"info","evt":"log","msg":"tool shutdown({}) -> {'ok': True, 'note': 'powering off in 4 seconds; stop cancels'} in 0.45s","src":"robot_core.live.agent"}
+{"ts":"2026-11-23T23:06:17.643Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 242)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:06:17.646Z","lvl":"warn","evt":"estop","reason":"shutdown","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:06:17.647Z","lvl":"info","evt":"log","msg":"motion executor stopped","src":"robot_core.motion_executor"}
+{"ts":"2026-11-23T23:05:51.585Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-23T23:05:52.376Z","lvl":"info","evt":"session.start","mode":"ros","pid":1677,"log":"logs.json","debug":true}
+{"ts":"2026-11-23T23:05:53.060Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:05:54.976Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v9-vel-noluna built Nov 20 2026 14:44:15","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:05:54.976Z","lvl":"info","evt":"log","msg":"Connected on /dev/ttyUSB0 (boot frame received)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:05:55.029Z","lvl":"info","evt":"log","msg":"motion executor started","src":"robot_core.motion_executor"}
+{"ts":"2026-11-23T23:05:57.109Z","lvl":"info","evt":"log","msg":"debug mode: uploading sensor data to http://roshans-mac-mini.local:8080/v1/debug/frame, session 20261123-170557","src":"robot_core.debug_upload"}
+{"ts":"2026-11-23T23:08:25.593Z","lvl":"info","evt":"log","msg":"drivetrain ready on /dev/ttyUSB0 (limit 5.0 m, velocity on)","src":"robot_drivetrain"}
+{"ts":"2026-11-23T23:08:25.602Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:08:25.604Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:08:25.618Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:08:28.261Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-23T23:08:28.262Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-23T23:08:30.639Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.98}
+{"ts":"2026-11-23T23:08:33.477Z","lvl":"info","evt":"voice.heard","text":"Raben Start Exploring"}
+{"ts":"2026-11-23T23:08:33.487Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"explore"},"ok":true,"starting":"explore","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-23T23:08:33.488Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'explore'}) -> {'ok': True, 'starting': 'explore', 'note': 'session closing; it reopens when the task ends'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-23T23:08:33.609Z","lvl":"info","evt":"task.start","task":"explore","name":"","_unregistered":true}
+{"ts":"2026-11-23T23:08:33.613Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 241)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:08:33.615Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:08:33.768Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:08:34.382Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-23T23:08:36.884Z","lvl":"info","evt":"session.start","mode":"explore","pid":1864}
+{"ts":"2026-11-23T23:08:37.129Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+81 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1600 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-23T23:08:40.390Z","lvl":"info","evt":"log","msg":"explore: vision service: real at http://roshans-mac-mini.local:8080","src":"robot_explore"}
+{"ts":"2026-11-23T23:08:40.486Z","lvl":"info","evt":"log","msg":"explore: scanning","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:08:54.125Z","lvl":"info","evt":"log","msg":"plant seen but no ToF zone on its pot gave a range \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:10.967Z","lvl":"info","evt":"log","msg":"plant seen but no ToF zone on its pot gave a range \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:14.355Z","lvl":"warn","evt":"log","msg":"Firmware warning VEL []","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:09:15.920Z","lvl":"info","evt":"move.done","op":"held","val":180.2,"dur":4.942,"heading_err":1.4,"detail":null}
+{"ts":"2026-11-23T23:09:38.802Z","lvl":"info","evt":"log","msg":"explore: keyframe 0: match 0.00 (odometry only), 1.0 m\u00b2 explored","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:38.888Z","lvl":"info","evt":"log","msg":"explore: plant at (-0.53, 0.67): new \u2014 photographing it from all sides","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:40.482Z","lvl":"info","evt":"move.done","op":"held","val":125.4,"dur":1.515,"heading_err":1.7,"detail":null}
+{"ts":"2026-11-23T23:09:40.783Z","lvl":"info","evt":"log","msg":"held turn: +2.9 deg still to go (asked -55 ccw)","src":"robot_drivetrain"}
+{"ts":"2026-11-23T23:09:41.138Z","lvl":"info","evt":"move.done","op":"held","val":125.4,"dur":0.354,"heading_err":1.6,"detail":null}
+{"ts":"2026-11-23T23:09:44.000Z","lvl":"info","evt":"follow.health","state":"bumped","reason":"jolt of 0.9 g during straight","braked":false,"_unregistered":true}
+{"ts":"2026-11-23T23:09:44.722Z","lvl":"info","evt":"move.done","op":"held","val":0.185,"dur":1.534,"heading_err":2.1,"detail":null}
+{"ts":"2026-11-23T23:09:47.361Z","lvl":"warn","evt":"log","msg":"VLM unavailable: POST /v1/ask: HTTP 503 {\"detail\":\"no VLM answered: ollama: <urlopen error [Errno 61] Connection refused>\"}","src":"robot_core.vision_client"}
+{"ts":"2026-11-23T23:09:47.580Z","lvl":"info","evt":"log","msg":"explore: saved 1 photos as plant_001 (/Users/roshantiwari/src/Vision-And-Planning/plants/map_4/plant_001)","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:47.664Z","lvl":"info","evt":"log","msg":"explore: plant at (2.01, 0.69): new \u2014 photographing it from all sides","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:47.700Z","lvl":"info","evt":"log","msg":"explore: could not reach any viewpoint around the plant \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:48.583Z","lvl":"warn","evt":"log","msg":"VLM unavailable: POST /v1/ask: HTTP 503 {\"detail\":\"no VLM answered: ollama: <urlopen error [Errno 61] Connection refused>\"}","src":"robot_core.vision_client"}
+{"ts":"2026-11-23T23:09:48.584Z","lvl":"info","evt":"log","msg":"explore: plant at (-0.56, 0.72), 0.31 m up: new \u2014 photographing it from all sides","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:58.498Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 right commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-23T23:09:58.498Z","lvl":"info","evt":"follow.health","state":"stalled","reason":"right commanded but the wheels are not turning","braked":true,"_unregistered":true}
+{"ts":"2026-11-23T23:09:58.506Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 242)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:09:58.507Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:09:58.616Z","lvl":"info","evt":"move.cancelled","op":"held","val":-47.9,"dur":9.978,"heading_err":-3.2,"detail":"interrupted by stop"}
+{"ts":"2026-11-23T23:09:58.877Z","lvl":"info","evt":"log","msg":"explore: viewpoint 1/1 unreachable \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:58.879Z","lvl":"info","evt":"log","msg":"explore: could not reach any viewpoint around the plant \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:59.030Z","lvl":"info","evt":"log","msg":"explore: plant at (2.50, 0.34): new \u2014 photographing it from all sides","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:59.084Z","lvl":"info","evt":"log","msg":"explore: could not reach any viewpoint around the plant \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:59.169Z","lvl":"info","evt":"log","msg":"explore: plant at (1.83, 0.58), 0.46 m up: new \u2014 photographing it from all sides","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:59.241Z","lvl":"info","evt":"log","msg":"explore: could not reach any viewpoint around the plant \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:59.316Z","lvl":"info","evt":"log","msg":"explore: plant at (1.97, -0.25), 0.70 m up: new \u2014 photographing it from all sides","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:59.372Z","lvl":"info","evt":"log","msg":"explore: could not reach any viewpoint around the plant \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:59.433Z","lvl":"info","evt":"log","msg":"explore: plant at (2.49, -0.30), 0.88 m up: new \u2014 photographing it from all sides","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:59.559Z","lvl":"info","evt":"log","msg":"explore: could not reach any viewpoint around the plant \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:09:59.562Z","lvl":"info","evt":"log","msg":"explore: scanning","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:10:21.370Z","lvl":"info","evt":"log","msg":"plant seen but no ToF zone on its pot gave a range \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:10:24.588Z","lvl":"info","evt":"log","msg":"plant seen but no ToF zone on its pot gave a range \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:10:35.988Z","lvl":"info","evt":"move.done","op":"held","val":135.5,"dur":11.376,"heading_err":1.2,"detail":null}
+{"ts":"2026-11-23T23:11:00.589Z","lvl":"info","evt":"log","msg":"explore: keyframe 1: match 0.44 (ok), 2.5 m\u00b2 explored","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:11:00.666Z","lvl":"info","evt":"log","msg":"explore: plant at (0.35, 0.19), 0.16 m up: new \u2014 photographing it from all sides","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:11:05.100Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 left commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-23T23:11:05.106Z","lvl":"info","evt":"follow.health","state":"stalled","reason":"left commanded but the wheels are not turning","braked":true,"_unregistered":true}
+{"ts":"2026-11-23T23:11:05.113Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 243)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:11:05.114Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:11:05.179Z","lvl":"info","evt":"move.cancelled","op":"held","val":185.0,"dur":4.437,"heading_err":3.1,"detail":"interrupted by stop"}
+{"ts":"2026-11-23T23:11:05.439Z","lvl":"info","evt":"log","msg":"explore: viewpoint 1/1 unreachable \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:11:05.442Z","lvl":"info","evt":"log","msg":"explore: could not reach any viewpoint around the plant \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:11:05.449Z","lvl":"info","evt":"log","msg":"explore: scanning","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:11:38.001Z","lvl":"info","evt":"follow.health","state":"stalled","reason":"left commanded but the wheels are not turning","braked":true,"_unregistered":true}
+{"ts":"2026-11-23T23:11:38.005Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 left commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-23T23:11:38.010Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 244)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:11:38.011Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:11:38.173Z","lvl":"info","evt":"move.cancelled","op":"held","val":362.1,"dur":12.38,"heading_err":5.4,"detail":"interrupted by stop"}
+{"ts":"2026-11-23T23:11:51.803Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1}
+{"ts":"2026-11-23T23:11:54.256Z","lvl":"warn","evt":"task.error","err":"cancel listener: LiveAgentError: uplink stuck: send took >5.0s","_unregistered":true}
+{"ts":"2026-11-23T23:11:55.426Z","lvl":"info","evt":"log","msg":"plant seen but no ToF zone on its pot gave a range \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:11:56.295Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:11:56.872Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-23T23:11:58.435Z","lvl":"info","evt":"log","msg":"plant seen but no ToF zone on its pot gave a range \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:12:13.399Z","lvl":"info","evt":"log","msg":"explore: keyframe 2: match 0.61 (ok), 3.0 m\u00b2 explored","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:12:13.648Z","lvl":"info","evt":"log","msg":"explore: plant at (1.81, 0.53), 0.18 m up: new \u2014 photographing it from all sides","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:12:15.080Z","lvl":"info","evt":"move.done","op":"held","val":369.2,"dur":1.218,"heading_err":1.7,"detail":null}
+{"ts":"2026-11-23T23:12:18.100Z","lvl":"info","evt":"follow.health","state":"bumped","reason":"jolt of 1.5 g during straight","braked":true,"_unregistered":true}
+{"ts":"2026-11-23T23:12:19.099Z","lvl":"info","evt":"follow.health","state":"bumped","reason":"jolt of 0.9 g during straight","braked":false,"_unregistered":true}
+{"ts":"2026-11-23T23:12:20.197Z","lvl":"info","evt":"follow.health","state":"bumped","reason":"jolt of 0.9 g during straight","braked":false,"_unregistered":true}
+{"ts":"2026-11-23T23:12:21.199Z","lvl":"info","evt":"follow.health","state":"bumped","reason":"jolt of 1.0 g during straight","braked":false,"_unregistered":true}
+{"ts":"2026-11-23T23:12:22.599Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 straight commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-23T23:12:22.608Z","lvl":"info","evt":"follow.health","state":"stalled","reason":"straight commanded but the wheels are not turning","braked":true,"_unregistered":true}
+{"ts":"2026-11-23T23:12:22.610Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 245)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:12:22.612Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:12:22.671Z","lvl":"info","evt":"move.cancelled","op":"held","val":0.6,"dur":5.405,"heading_err":-7.1,"detail":"interrupted by stop"}
+{"ts":"2026-11-23T23:12:25.796Z","lvl":"warn","evt":"log","msg":"motion health: stalled \u2014 reverse commanded but the wheels are not turning","src":"robot_drivetrain"}
+{"ts":"2026-11-23T23:12:25.800Z","lvl":"info","evt":"follow.health","state":"stalled","reason":"reverse commanded but the wheels are not turning","braked":true,"_unregistered":true}
+{"ts":"2026-11-23T23:12:25.801Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 246)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:12:25.802Z","lvl":"warn","evt":"estop","reason":"motion health: stalled","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:12:25.857Z","lvl":"info","evt":"move.cancelled","op":"held","val":-0.15,"dur":2.914,"heading_err":9.1,"detail":"interrupted by stop"}
+{"ts":"2026-11-23T23:12:26.117Z","lvl":"info","evt":"log","msg":"explore: viewpoint 1/1 unreachable \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:12:26.120Z","lvl":"info","evt":"log","msg":"explore: could not reach any viewpoint around the plant \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:12:26.374Z","lvl":"info","evt":"log","msg":"explore: plant at (2.48, 0.28), 0.42 m up: new \u2014 photographing it from all sides","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:12:26.441Z","lvl":"info","evt":"log","msg":"explore: could not reach any viewpoint around the plant \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:12:26.449Z","lvl":"info","evt":"log","msg":"explore: scanning","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:12:49.806Z","lvl":"info","evt":"log","msg":"plant seen but no ToF zone on its pot gave a range \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:12:58.210Z","lvl":"info","evt":"log","msg":"plant seen but no ToF zone on its pot gave a range \u2014 skipping","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:13:00.538Z","lvl":"warn","evt":"log","msg":"Firmware warning VEL []","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:13:10.535Z","lvl":"info","evt":"move.done","op":"held","val":545.4,"dur":12.317,"heading_err":0.9,"detail":null}
+{"ts":"2026-11-23T23:13:18.791Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1,"repeats":61}
+{"ts":"2026-11-23T23:13:19.314Z","lvl":"warn","evt":"audio.error","stage":"uplink-send","err":"websocket send is slower than real time","send_s":3.13,"qdepth":64}
+{"ts":"2026-11-23T23:13:31.567Z","lvl":"warn","evt":"task.error","err":"cancel listener: LiveAgentError: uplink stuck: send took >5.0s","_unregistered":true}
+{"ts":"2026-11-23T23:13:35.611Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:13:36.254Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-23T23:13:42.175Z","lvl":"warn","evt":"log","msg":"recon frame not sent: POST /v1/recon/frame: HTTPConnectionPool(host='roshans-mac-mini.local', port=8080): Read timed out. (read timeout=5.0)","src":"robot_core.vision_client"}
+{"ts":"2026-11-23T23:13:48.055Z","lvl":"warn","evt":"task.error","err":"cancel listener: LiveAgentError: uplink stuck: send took >5.0s","_unregistered":true}
+{"ts":"2026-11-23T23:13:51.597Z","lvl":"warn","evt":"log","msg":"recon frame not sent: POST /v1/recon/frame: HTTPConnectionPool(host='roshans-mac-mini.local', port=8080): Read timed out. (read timeout=5.0)","src":"robot_core.vision_client"}
+{"ts":"2026-11-23T23:13:56.108Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:13:57.937Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-23T23:14:02.017Z","lvl":"info","evt":"log","msg":"explore: vision service unavailable, stopping: POST /v1/detect: HTTPConnectionPool(host='roshans-mac-mini.local', port=8080): Read timed out. (read timeout=10.0)","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:14:03.032Z","lvl":"info","evt":"log","msg":"explore: finished: 3 keyframes, new plants ['plant_001'], revisited [], 3 low obstacle and 0 drop points mapped","src":"robot_core.explore.mission"}
+{"ts":"2026-11-23T23:14:09.316Z","lvl":"info","evt":"task.end","task":"explore","ok":true,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-23T23:14:09.318Z","lvl":"info","evt":"gesture","name":"yes","text_only":true}
+{"ts":"2026-11-23T23:14:09.319Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-23T23:14:09.375Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:14:09.458Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"APIError: 1006 None. abnormal closure [internal]","tb":["agent.py:310 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-23T23:14:09.469Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"LiveAgentError: uplink stuck: send took >5.0s","tb":["agent.py:268 in _pump_audio"]}
+{"ts":"2026-11-23T23:14:39.232Z","lvl":"error","evt":"voice.drop","err":"APIError: 1008 None. BidiGenerateContent session not found or expired"}
+{"ts":"2026-11-23T23:14:39.234Z","lvl":"info","evt":"voice.error","text":"Voice session failed. api error. Check the log.","detail":"api error"}
+{"ts":"2026-11-23T23:14:39.238Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 247)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:14:39.240Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:14:39.604Z","lvl":"info","evt":"voice.diag","wifi_dbm":-68,"wifi_power_save":"off","gateway_ping":true,"load":["0.95","1.04","0.54"],"throttled":"0x0"}
+{"ts":"2026-11-23T23:14:41.644Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:14:48.555Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-23T23:14:48.557Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-23T23:14:57.013Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1,"repeats":196}
+{"ts":"2026-11-23T23:14:59.459Z","lvl":"error","evt":"voice.drop","err":"LiveAgentError: uplink stuck: send took >5.0s"}
+{"ts":"2026-11-23T23:14:59.461Z","lvl":"info","evt":"voice.error","text":"Voice session failed. live agent error. Check the log.","detail":"live agent error"}
+{"ts":"2026-11-23T23:14:59.467Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 248)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:14:59.474Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:14:59.570Z","lvl":"info","evt":"voice.diag","wifi_dbm":-67,"wifi_power_save":"off","gateway_ping":true,"load":["0.68","0.97","0.53"],"throttled":"0x0"}
+{"ts":"2026-11-23T23:15:01.623Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:15:11.688Z","lvl":"error","evt":"voice.drop","err":"TimeoutError: timed out during opening handshake"}
+{"ts":"2026-11-23T23:15:11.690Z","lvl":"info","evt":"voice.error","text":"Voice session failed. the session timed out. Check the log.","detail":"the session timed out"}
+{"ts":"2026-11-23T23:15:11.700Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 249)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:15:11.705Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:15:12.728Z","lvl":"info","evt":"voice.diag","wifi_dbm":-67,"wifi_power_save":"off","gateway_ping":false,"load":["0.53","0.92","0.52"],"throttled":"0x0"}
+{"ts":"2026-11-23T23:15:16.790Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:15:20.210Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-23T23:15:20.211Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-23T23:15:28.951Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1,"repeats":60}
+{"ts":"2026-11-23T23:15:31.414Z","lvl":"error","evt":"voice.drop","err":"LiveAgentError: uplink stuck: send took >5.0s"}
+{"ts":"2026-11-23T23:15:31.416Z","lvl":"info","evt":"voice.error","text":"Voice session failed. live agent error. Check the log.","detail":"live agent error"}
+{"ts":"2026-11-23T23:15:31.424Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 250)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:15:31.426Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:15:31.468Z","lvl":"info","evt":"voice.diag","wifi_dbm":-69,"wifi_power_save":"off","gateway_ping":true,"load":["0.65","0.92","0.53"],"throttled":"0x0"}
+{"ts":"2026-11-23T23:15:33.527Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:15:43.597Z","lvl":"error","evt":"voice.drop","err":"TimeoutError: timed out during opening handshake"}
+{"ts":"2026-11-23T23:15:43.604Z","lvl":"info","evt":"voice.error","text":"Voice session failed. the session timed out. Check the log.","detail":"the session timed out"}
+{"ts":"2026-11-23T23:15:43.604Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 251)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:15:43.606Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:15:43.891Z","lvl":"info","evt":"voice.diag","wifi_dbm":-67,"wifi_power_save":"off","gateway_ping":true,"load":["0.72","0.93","0.54"],"throttled":"0x0"}
+{"ts":"2026-11-23T23:15:47.933Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:15:58.005Z","lvl":"error","evt":"voice.drop","err":"TimeoutError: timed out during opening handshake"}
+{"ts":"2026-11-23T23:15:58.006Z","lvl":"info","evt":"voice.error","text":"Voice session failed. the session timed out. Check the log.","detail":"the session timed out"}
+{"ts":"2026-11-23T23:15:58.014Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 252)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:15:58.015Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:15:58.341Z","lvl":"info","evt":"voice.diag","wifi_dbm":-68,"wifi_power_save":"off","gateway_ping":true,"load":["0.70","0.91","0.54"],"throttled":"0x0"}
+{"ts":"2026-11-23T23:16:02.402Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:16:10.714Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-23T23:16:10.715Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-23T23:16:19.180Z","lvl":"warn","evt":"audio.error","stage":"mic-queue","err":"uplink behind, dropping audio","dropped":1,"repeats":61}
+{"ts":"2026-11-23T23:16:19.649Z","lvl":"warn","evt":"audio.error","stage":"uplink-send","err":"websocket send is slower than real time","send_s":3.07,"qdepth":64,"repeats":3}
+{"ts":"2026-11-23T23:16:24.701Z","lvl":"error","evt":"voice.drop","err":"LiveAgentError: uplink stuck: send took >5.0s"}
+{"ts":"2026-11-23T23:16:24.713Z","lvl":"info","evt":"voice.error","text":"Voice session failed. live agent error. Check the log.","detail":"live agent error"}
+{"ts":"2026-11-23T23:16:24.719Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 253)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:16:24.722Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:16:25.115Z","lvl":"info","evt":"voice.diag","wifi_dbm":-70,"wifi_power_save":"off","gateway_ping":true,"load":["0.46","0.84","0.53"],"throttled":"0x0"}
+{"ts":"2026-11-23T23:16:27.159Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:16:52.908Z","lvl":"error","evt":"voice.drop","err":"APIError: 1008 None. BidiGenerateContent session is already connected to an existing client"}
+{"ts":"2026-11-23T23:16:52.909Z","lvl":"info","evt":"voice.error","text":"Voice session failed. api error. Check the log.","detail":"api error"}
+{"ts":"2026-11-23T23:16:52.914Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 254)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:16:52.916Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:16:52.939Z","lvl":"info","evt":"voice.diag","wifi_dbm":-66,"wifi_power_save":"off","gateway_ping":true,"load":["0.39","0.79","0.52"],"throttled":"0x0"}
+{"ts":"2026-11-23T23:16:56.987Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-23T23:16:57.386Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-23T23:16:57.387Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-23T23:20:25.393Z","lvl":"warn","evt":"log","msg":"motion health: tilted \u2014 tilted: pitch -15 deg, roll -24 deg","src":"robot_drivetrain"}
+{"ts":"2026-11-23T23:20:25.397Z","lvl":"info","evt":"follow.health","state":"tilted","reason":"tilted: pitch -15 deg, roll -24 deg","braked":true,"_unregistered":true}
+{"ts":"2026-11-23T23:20:25.400Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 255)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:20:25.401Z","lvl":"warn","evt":"estop","reason":"motion health: tilted","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:20:26.297Z","lvl":"warn","evt":"log","msg":"motion health: tilted \u2014 tilted: pitch -16 deg, roll -23 deg","src":"robot_drivetrain"}
+{"ts":"2026-11-23T23:20:26.303Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:20:26.304Z","lvl":"warn","evt":"estop","reason":"motion health: tilted","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:20:26.498Z","lvl":"info","evt":"follow.health","state":"tilted","reason":"tilted: pitch -19 deg, roll -21 deg","braked":true,"_unregistered":true}
+{"ts":"2026-11-23T23:20:27.196Z","lvl":"warn","evt":"log","msg":"motion health: tilted \u2014 tilted: pitch -6 deg, roll -29 deg","src":"robot_drivetrain"}
+{"ts":"2026-11-23T23:20:27.202Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 241)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:20:27.203Z","lvl":"warn","evt":"estop","reason":"motion health: tilted","dropped":[],"interrupted":null}
+{"ts":"2026-11-23T23:20:27.499Z","lvl":"info","evt":"follow.health","state":"tilted","reason":"tilted: pitch -9 deg, roll -21 deg","braked":true,"_unregistered":true}
+{"ts":"2026-11-23T23:20:28.195Z","lvl":"warn","evt":"log","msg":"motion health: tilted \u2014 tilted: pitch 7 deg, roll -28 deg","src":"robot_drivetrain"}
+{"ts":"2026-11-23T23:20:28.200Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 242)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-23T23:20:28.202Z","lvl":"warn","evt":"estop","reason":"motion health: tilted","dropped":[],"interrupted":null}
