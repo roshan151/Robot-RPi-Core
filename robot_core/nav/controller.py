@@ -296,6 +296,8 @@ class LocalNav:
                         zs.append(z)
                 zones = zs
             self.costmap.integrate(pose, zones, self.head.sensor_xy, t=t)
+            if ign is not None:                           # and what was marked there before: the tracked spot
+                self.costmap.clear_near(*ign)             # lags a walking person, so their back edge was marked
             travel = max(-45.0, min(45.0, math.degrees(self.aim.k_w * self.cmd[1])))
             if abs(pan - travel) <= AHEAD_CONE_DEG:
                 self._ahead_t = now

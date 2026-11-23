@@ -178,13 +178,16 @@ class RollingCostmap:
             self._field = None
 
     def clear_near(self, xy: XY, radius_m: float) -> None:
-        """Forget what was seen within radius_m of xy (the person being followed)."""
+        """What was seen within radius_m of xy is the person being followed, not an obstacle: the floor
+        they stand on is free. Marked SEEN FREE, not unknown, so the Mac's global map (which folds only
+        known cells) drops their trail too (Nov 23: their trail blocked the way and the plan went 9 m
+        back round)."""
         with self._lock:
             ix, iy = self._cells(xy[0], xy[1])
             r = int(math.ceil(radius_m / self.res))
             gx, gy = np.meshgrid(np.arange(ix - r, ix + r + 1), np.arange(iy - r, iy + r + 1), indexing="ij")
             near = self._inside(gx, gy) & (np.hypot((gx - ix) * self.res, (gy - iy) * self.res) <= radius_m)
-            self.lo[gx[near], gy[near]] = np.minimum(self.lo[gx[near], gy[near]], 0.0)
+            self.lo[gx[near], gy[near]] = np.minimum(self.lo[gx[near], gy[near]], self.FREE - 0.2)
             self._field = None
 
     # ------------------------------------------------------------------ query
