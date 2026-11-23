@@ -111,6 +111,15 @@ def offer_event(jpeg: Optional[bytes], note: dict, rows=None, seq: Optional[int]
         _new.set()
 
 
+def _real(pan_tilt):
+    """[pan, REAL tilt] rounded: the tilt as degrees above level (the head looks
+    geometry head_tilt_offset_deg up at gimbal tilt 0), as follow and the nav stream send it."""
+    if not pan_tilt:
+        return None
+    off = float(_cfg.get("geometry", {}).get("head_tilt_offset_deg", 0.0))
+    return [round(pan_tilt[0], 1), round(pan_tilt[1] + off, 1)]
+
+
 def _encode(img) -> bytes:
     import cv2
     h, w = img.shape[:2]
@@ -141,7 +150,7 @@ def _loop() -> None:
             meta = {"session": _cfg["session"], "n": n, "kind": "event",
                     "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
                     "geometry": _cfg["geometry"], "note": note, "frame": {"seq": seq} if seq else None,
-                    "gimbal": [round(v, 1) for v in _gimbal] if _gimbal else None,
+                    "gimbal": _real(_gimbal),
                     "tof": {"age_ms": 0, "rows": _rows(rows)} if rows else None}
             try:
                 if _cfg["extras"]:
@@ -174,14 +183,14 @@ def _loop() -> None:
         meta = {"session": _cfg["session"], "n": n,
                 "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
                 "geometry": _cfg["geometry"], "frame": None, "tof": None,
-                "gimbal": [round(v, 1) for v in _gimbal] if _gimbal else None}
+                "gimbal": _real(_gimbal)}
         files = {}
         try:
             if new_frame:
                 data = jpeg[1] if jpeg and jpeg[0] == frame.seq else _encode(frame.main)
                 h, w = frame.main.shape[:2]
                 meta["frame"] = {"seq": frame.seq, "pan_deg": round(frame.pan_deg, 1),
-                                 "tilt_deg": round(frame.tilt_deg, 1), "settled": frame.settled,
+                                 "tilt_deg": _real((frame.pan_deg, frame.tilt_deg))[1], "settled": frame.settled,
                                  "w": w, "h": h}
                 files["image"] = ("frame.jpg", data, "image/jpeg")
             if tof is not None:

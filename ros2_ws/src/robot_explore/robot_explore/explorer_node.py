@@ -26,7 +26,9 @@ Ctrl+C and systemd's SIGTERM, from destroy_node().
 
 from __future__ import annotations
 
+import logging
 import math
+import os
 import threading
 import time
 from typing import Optional
@@ -41,7 +43,7 @@ from std_msgs.msg import String
 from std_srvs.srv import Trigger
 from tf2_ros import TransformBroadcaster
 
-from robot_core import status
+from robot_core import robot_log, status
 from robot_core.explore import ExploreConfig, Explorer
 from robot_core.odometry import Pose2D
 from robot_core.sensors.camera import Camera
@@ -56,6 +58,7 @@ from robot_display.link import connect
 from robot_interfaces.action import Drive, Turn
 from robot_interfaces.msg import MotionHealth, VisualMotion
 
+log = logging.getLogger("robot_explore")       # robot* loggers: INFO and up reach logs.json
 STUCK_STATES = ("stalled", "slipping", "tilted", "drop")    # drop: the TF-Luna guard braked
 
 
@@ -274,22 +277,28 @@ class ExplorerNode(Node):
         self.get_logger().info(text)
         self._status.publish(String(data=text))
 
+    def _report(self, text: str, level: int = logging.INFO) -> None:
+        """The node's own messages (the mission logs its own: Explorer._say), to logs.json too."""
+        log.log(level, "explore: %s", text)
+        self._say(text)
+
     def _run_mission(self) -> None:
         try:
             if not self.base.wait_ready():
-                self._say("drivetrain not ready (no /odom or actions) — is firmware v5 flashed "
-                          "and the robot process running?")
+                self._report("drivetrain not ready (no /odom or actions) — is firmware v5 flashed "
+                             "and the robot process running?", logging.ERROR)
                 self.failed = True
                 return
             try:
-                self._say(f"vision service: {self.vision.health().get('backend')} at {self.vision.base}")
+                self._report(f"vision service: {self.vision.health().get('backend')} at {self.vision.base}")
             except Exception as exc:                        # noqa: BLE001
-                self._say(f"vision service unreachable at {self.vision.base}: {exc}")
+                self._report(f"vision service unreachable at {self.vision.base}: {exc}", logging.ERROR)
                 self.failed = True
                 return
             self.explorer.run()
         except Exception as exc:                            # noqa: BLE001
             self.get_logger().error(f"mission crashed: {type(exc).__name__}: {exc}")
+            log.error("explore: mission crashed: %s: %s", type(exc).__name__, exc, exc_info=True)
             self.failed = True
         finally:
             self.done.set()
@@ -358,8 +367,12 @@ def main(args=None) -> None:
     from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
 
     rclpy.init(args=args)
+    # A child process of the voice node (voice_node._explore): without this, everything the mission
+    # says (each keyframe, each drive, "exploration complete") reached only the console (Nov 21).
+    robot_log.setup(None)
+    robot_log.event("session.start", mode="explore", pid=os.getpid())
     node = ExplorerNode()
-    connect(node)                        # status + warnings go to the OLED
+    connect(node)                        # status + warnings go to the OLED (after setup: it resets handlers)
     status.task("explore")
     executor = MultiThreadedExecutor(num_threads=4)
     executor.add_node(node)

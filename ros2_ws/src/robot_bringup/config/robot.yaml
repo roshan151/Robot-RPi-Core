@@ -49,7 +49,8 @@
                                # Checked 2026-11-18 (imu check): level reads ~0 / ~0, front up = pitch +,
                                # left up = roll +. The IMU sits 6 cm from the left and the back: no setting
                                # needed, angles and turn rate are the same anywhere on the chassis
-    imu_pitch_offset_deg: 6.3  # MEASURED 2026-11-18 (follow logs): pitch on flat floor, taken off every reading.
+    imu_pitch_offset_deg: 4.0  # 2026-11-21: was 6.3; standing still it read -2.3 (median of 1,624, Nov 19-20 runs).
+                               # Pitch on flat floor, taken off every reading.
                                # calibrate.py imu measures it; 0 = none
     # Turns and straight drives are closed on the gyro (velocity mode, firmware -vel): turn_held,
     # drive_heading_hold. Encoder-counted moves are left for gestures only.

@@ -143,9 +143,18 @@ class Head:
         pan, tilt = self.pixel_angles(frame, u, v)
         return self.gimbal.move_to(pan, tilt, wait=True)
 
+    def real_tilt(self, tilt_deg: float) -> float:
+        """How far above level the head (camera and ToF) really looks at gimbal tilt `tilt_deg`: it
+        looks geom.tilt_offset_deg up at tilt 0. Geometry uses this; commands use cmd_tilt."""
+        return tilt_deg + self.geom.tilt_offset_deg
+
+    def cmd_tilt(self, real_deg: float) -> float:
+        """The gimbal tilt that makes the head really look `real_deg` above level."""
+        return real_deg - self.geom.tilt_offset_deg
+
     def point_at(self, pan_deg: float, tilt_deg: float, rng: float) -> Tuple[float, float]:
-        """base_link [x, y] of a range reading taken at (pan, tilt)."""
-        horiz = rng * math.cos(math.radians(tilt_deg))
+        """base_link [x, y] of a range reading taken at gimbal (pan, tilt), as commanded."""
+        horiz = rng * math.cos(math.radians(self.real_tilt(tilt_deg)))
         b = math.radians(pan_deg)
         return (self.geom.pan_axis_x_m + horiz * math.cos(b), horiz * math.sin(b))
 
@@ -284,8 +293,9 @@ class Head:
         d = max(0.3, distance_m)
         # Close in, the floor is steeper than the head can look down: look as
         # far down as it goes and judge that spot (a farther one) instead.
-        tilt = max(-math.degrees(math.atan2(h, d)), self.gimbal.tilt_limits()[0])
-        expected = h / math.sin(math.radians(-tilt))
+        real = max(-math.degrees(math.atan2(h, d)), self.real_tilt(self.gimbal.tilt_limits()[0]))
+        tilt = self.cmd_tilt(real)
+        expected = h / math.sin(math.radians(-real))
         worst, first, pts = "clear", None, []
         for pan in pans:
             r = self.range_at(pan, tilt)

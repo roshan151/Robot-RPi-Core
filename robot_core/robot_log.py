@@ -71,6 +71,7 @@ EVENTS = {
     "move.cancelled",
     "move.failed",
     "estop",              # out-of-band brake fired
+    "arduino.hang",       # board went silent and was reset: what it was doing, likely cause
     # conversation
     "gesture",            # YES / NO / UNCLEAR played
     "gesture.skip",       # suppressed, with the reason

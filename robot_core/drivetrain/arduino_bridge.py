@@ -34,11 +34,12 @@ import logging
 import queue
 import threading
 import time
+from collections import deque
 from typing import Callable, Optional, Tuple
 
 import serial  # pyserial
 
-from robot_core import settings
+from robot_core import robot_log, settings
 from .serial_protocol import (
     FrameParser,
     Message,
@@ -125,6 +126,12 @@ class ArduinoBridge:
         self.resets_seen = 0
         self.warnings_seen = 0
         self.firmware_build: Optional[str] = None
+        # Hang forensics, read by _log_hang: recent non-heartbeat commands
+        # (~3 s of a 10 Hz T stream), when bytes / valid frames last arrived.
+        self._tx_log: "deque[Tuple[float, str]]" = deque(maxlen=32)
+        self._last_rx_t = 0.0
+        self._last_frame_t = 0.0
+        self._hangs: list = []
         # TF-Luna on the Arduino (firmware v7 `-luna`, last field of E frames): cm, or None
         # (no sensor or a weak reading), and time.monotonic() of that reading.
         self.tfluna_cm: Optional[int] = None
@@ -411,7 +418,7 @@ class ArduinoBridge:
                     raise RuntimeError(
                         f"Arduino reset mid-command — {msg.args[0]}"
                     )
-            recovered = self._recover_locked()
+            recovered = self._recover_locked(f"no ACK for {kind}")
             raise TimeoutError(
                 f"No ACK from Arduino within "
                 f"{ack_timeout * (retries + 1):.1f} s and no boot frame "
@@ -425,22 +432,36 @@ class ArduinoBridge:
         finally:
             self._awaiting_reply.clear()
 
-    def recover(self) -> bool:
+    def recover(self, why: str = "telemetry stopped") -> bool:
         """Reset a hung board (see _recover_locked).  Skips, returning
         False, if a command is in flight: its own timeout recovers."""
         if not self._cmd_lock.acquire(blocking=False):
             return False
         try:
-            return self._recover_locked()
+            return self._recover_locked(why)
         finally:
             self._cmd_lock.release()
 
-    def _recover_locked(self) -> bool:
-        """Pulse DTR — the same edge that resets the board when the port
-        opens — then wait for its boot frame and ping.  A hung chip (BOD
-        off) still obeys its RESET pin.  Caller holds _cmd_lock."""
+    def _recover_locked(self, why: str = "telemetry stopped") -> bool:
+        """Reset the board first; diagnose and log the hang afterwards, on
+        another thread, so diagnosis never delays getting the robot back.
+        Caller holds _cmd_lock."""
         if self._recovering or self._closed:
             return False
+        t0 = time.monotonic()
+        snap = dict(why=why, t0=t0, last_rx=self._last_rx_t,
+                    last_frame=self._last_frame_t, tx=list(self._tx_log),
+                    reader_alive=self._reader.is_alive())
+        ok = self._reset_board()
+        snap["recovery_s"] = round(time.monotonic() - t0, 2)
+        threading.Thread(target=self._log_hang, args=(snap, ok),
+                         name="arduino-hang-log", daemon=True).start()
+        return ok
+
+    def _reset_board(self) -> bool:
+        """Pulse DTR — the same edge that resets the board when the port
+        opens — then wait for its boot frame and ping.  A hung chip (BOD
+        off) still obeys its RESET pin."""
         self._recovering = True
         self._connecting = True       # boot frame expected; heartbeat pauses
         self._boot_seen.clear()
@@ -464,7 +485,70 @@ class ArduinoBridge:
             self._connecting = False
             self._recovering = False
 
+    def _log_hang(self, snap: dict, recovered: bool) -> None:
+        """One `arduino.hang` event: what the robot was doing when the board
+        went silent and a rule-of-thumb cause.  A guess, not a measurement."""
+        try:
+            self._hangs.append(snap["t0"])
+            silent_at = snap["last_frame"] or snap["t0"]
+            # Commands in the 2 s before the last good frame (+ one telemetry
+            # period of slack); later ones were sent to an already-dead board.
+            near = [(round(t - silent_at, 2), b) for t, b in snap["tx"]
+                    if silent_at - 2.0 <= t <= silent_at + 0.15]
+            brake = drive = prev = None
+            for dt, body in near:
+                f = body.split(",")
+                if f[0] == "S" or (f[0] == "T" and f[2:4] == ["0", "0"]):
+                    brake = dt
+                elif f[0] == "T" and len(f) >= 4:
+                    l, r = int(f[2]), int(f[3])
+                    if prev and (l * prev[0] < 0 or r * prev[1] < 0):
+                        brake = dt                  # reversal drives through zero
+                    prev, drive = (l, r), dt
+                else:
+                    drive = dt
+            flags = uv = None
+            try:
+                from robot_core.power import UV_EVER, UV_NOW, read_flags
+                flags = read_flags()
+                uv = (bool(flags & UV_NOW), bool(flags & UV_EVER)) if flags is not None else None
+            except Exception:                               # noqa: BLE001
+                pass
+
+            if not snap["reader_alive"]:
+                cause = "serial link dropped (USB unplugged, cable fault or port reset)"
+            elif snap["last_rx"] - silent_at > 0.5:
+                cause = "bytes still arrived but failed their checksum: noise on the USB/serial line"
+            elif uv and uv[0]:
+                cause = "Pi under-voltage right now: the USB 5 V powering the Arduino is sagging"
+            elif brake is not None:
+                cause = (f"hung {max(0.0, -brake):.1f} s after a stop or reversal: motor energy "
+                         "dumped into the supply (bulk caps at the DRV8871s, gentler stop ramp)")
+            elif drive is not None:
+                cause = "hung while driving: supply dip or motor noise under load"
+            else:
+                cause = ("hung while idle (no motor command in the 2 s before): not motor-caused; "
+                         "suspect USB cable/power or a firmware lock-up")
+            if not recovered:
+                cause += "; the DTR reset did not revive it: board lost power or its USB chip hung, power-cycle"
+
+            prev_hang = self._hangs[-2] if len(self._hangs) > 1 else None
+            robot_log.event(
+                "arduino.hang", logging.WARNING if recovered else logging.ERROR,
+                cause=cause, recovered=recovered, recovery_s=snap["recovery_s"],
+                detected_by=snap["why"], silent_s=round(snap["t0"] - silent_at, 1),
+                cmds=[f"{dt:+.2f}s {b}" for dt, b in near[-8:]],
+                pi_undervolt_now=uv[0] if uv else None,
+                pi_undervolt_since_boot=uv[1] if uv else None,
+                hangs_this_run=len(self._hangs),
+                since_last_hang_min=round((snap["t0"] - prev_hang) / 60, 1) if prev_hang else None,
+            )
+        except Exception:                                   # noqa: BLE001
+            logger.exception("hang diagnosis failed")
+
     def _raw_send(self, body: str) -> None:
+        if body[:1] not in ("P", "Q"):
+            self._tx_log.append((time.monotonic(), body))
         frame = encode_frame(body)
         with self._write_lock:
             self._ser.write(frame)
@@ -505,6 +589,7 @@ class ArduinoBridge:
                 return
             if not data:
                 continue
+            self._last_rx_t = time.monotonic()
             for body in self._parser.feed(data):
                 msg = parse_body(body)
                 if msg is not None:
@@ -512,6 +597,7 @@ class ArduinoBridge:
 
     def _dispatch(self, msg: Message) -> None:
         logger.debug("RX: %s", msg)
+        self._last_frame_t = time.monotonic()
 
         if msg.kind in ("A", "N"):
             if self._awaiting_reply.is_set():

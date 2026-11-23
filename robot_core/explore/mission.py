@@ -226,7 +226,7 @@ class Explorer:
             rel = kf_odom.between(sec)            # this sector's pose in the keyframe
             # Alternate sweep direction so the head never swings back empty.
             a, b_ = (-45.0, 45.0) if k % 2 == 0 else (45.0, -45.0)
-            for b, r in self.head.sweep(a, b_, 0.0):
+            for b, r in self.head.sweep(a, b_, self.head.cmd_tilt(0.0)):
                 if r is None:
                     continue
                 # Re-express the hit from the keyframe's sensor position: turning
@@ -259,7 +259,7 @@ class Explorer:
             for pan in (cfg.grid_pans if k % 2 == 0 else cfg.grid_pans[::-1]):
                 if self._stop.is_set():
                     break
-                head.gimbal.move_to(pan, 0.0, wait=True)
+                head.gimbal.move_to(pan, head.cmd_tilt(0.0), wait=True)    # really level (the head looks up at 0)
                 sl, pts = head.scan_look()
                 rays += [ray(x, y) for x, y in sl.rays]
                 clear += [ray(x, y) for x, y in sl.clear]
@@ -268,7 +268,7 @@ class Explorer:
                 if pan in cfg.camera_pans:
                     for tilt in cfg.camera_tilts:
                         if tilt:                      # look up: shelves, the upper pots of a plant stand
-                            head.gimbal.move_to(pan, tilt, wait=True)
+                            head.gimbal.move_to(pan, head.cmd_tilt(tilt), wait=True)
                             pts += head.cloud()
                         frame = head.camera.capture(head.gimbal)
                         self._recon(frame, sec)       # for the Mac's 3-D mesh (vision_service/recon.py)
@@ -295,7 +295,8 @@ class Explorer:
             head, g = self.head, self.head.geom
             grid = head.lidar.grid(newer_than=frame.t_capture, timeout=0.5)
             send(jpeg(frame.main), {
-                "odom": list(sec_odom.as_tuple()), "pan_deg": frame.pan_deg, "tilt_deg": frame.tilt_deg,
+                "odom": list(sec_odom.as_tuple()), "pan_deg": frame.pan_deg,
+                "tilt_deg": head.real_tilt(frame.tilt_deg),             # real: degrees above level
                 "settled": frame.settled, "pitch_deg": head.pitch() if head.pitch else None,
                 "tof_rows": grid.rows if grid is not None else None,
                 "geom": {"height_m": g.height_m, "pan_axis_x_m": g.pan_axis_x_m, "pan_axis_y_m": g.pan_axis_y_m,
@@ -316,7 +317,9 @@ class Explorer:
             x1, y1, x2, y2 = d["bbox"]
             return (x1, y1 + 0.5 * (y2 - y1), x2, y2)
 
-        rng = range_in_box(head.lidar.grid(newer_than=time.monotonic()), pot(det), w, h, head.geom.hfov_deg)
+        g = head.geom
+        rng = range_in_box(head.lidar.grid(newer_than=time.monotonic()), pot(det), w, h, g.hfov_deg,
+                           g.tof_pan_offset_deg, g.tof_tilt_offset_deg)
         if rng is None:
             x1, y1, x2, y2 = det["bbox"]
             head.aim_at_pixel(frame, (x1 + x2) / 2, y1 + 0.7 * (y2 - y1))
@@ -327,7 +330,8 @@ class Explorer:
                 return None
             det = min(dets, key=lambda d: abs((d["bbox"][0] + d["bbox"][2]) / 2 - w / 2))
             frame = f2
-            rng = range_in_box(head.lidar.grid(newer_than=time.monotonic()), pot(det), w, h, head.geom.hfov_deg)
+            rng = range_in_box(head.lidar.grid(newer_than=time.monotonic()), pot(det), w, h, g.hfov_deg,
+                               g.tof_pan_offset_deg, g.tof_tilt_offset_deg)
             if rng is None:
                 log.info("plant seen but no ToF zone on its pot gave a range — skipping")
                 return None
@@ -336,7 +340,10 @@ class Explorer:
         left = math.atan2(w / 2.0 - (x1 + x2) / 2.0, f)           # the pot's bearing in the view, + left
         # A perpendicular range is depth along the view axis; a radial one is along the ray.
         depth = rng if head.geom.tof_perpendicular else rng * math.cos(left)
-        tilt = math.radians(frame.tilt_deg)
+        # Real elevation of the view: the head's tilt (it looks tilt_offset_deg up at 0) plus the robot's
+        # nose-up pitch, which tilts the view by pitch x cos(pan) (as Head.project, small angles).
+        pitch = (head.pitch() if head.pitch else None) or 0.0
+        tilt = math.radians(head.real_tilt(frame.tilt_deg) + pitch * math.cos(math.radians(frame.pan_deg)))
 
         def at(v):
             """Image row v at the pot's depth -> (metres ahead along the floor, height above the floor)."""
@@ -367,7 +374,7 @@ class Explorer:
         found: List[Sighting] = []
         pans_done: List[float] = []
         for pan in cfg.sector_pans:
-            frame = head.look(pan, 0.0)
+            frame = head.look(pan, head.cmd_tilt(0.0))
             for d in self._plants_in(frame):
                 x1, y1, x2, y2 = d["bbox"]
                 bpan, _ = head.pixel_angles(frame, (x1 + x2) / 2, (y1 + y2) / 2)
@@ -560,7 +567,7 @@ class Explorer:
             mid = (z + (s.top_m if s.top_m is not None else z + 0.3)) / 2.0
             tilt0 = math.degrees(math.atan2(mid - head.geom.height_m, dist))
             want = math.degrees(math.atan2(z - head.geom.height_m, dist))      # where its pot's base should appear
-        frame = head.look(0.0, tilt0)
+        frame = head.look(0.0, head.cmd_tilt(tilt0))
         dets = self._plants_in(frame)
         if dets:
             h, w = frame.main.shape[:2]
@@ -571,7 +578,7 @@ class Explorer:
                 side = abs((d["bbox"][0] + d["bbox"][2]) / 2 - w / 2) / w
                 if want is None:
                     return side
-                base = frame.tilt_deg + math.degrees(math.atan2(h / 2.0 - d["bbox"][3], f))
+                base = head.real_tilt(frame.tilt_deg) + math.degrees(math.atan2(h / 2.0 - d["bbox"][3], f))
                 return side + abs(base - want) / 30.0
 
             best = min(dets, key=off)
@@ -582,7 +589,7 @@ class Explorer:
         pose = self.map_pose()
         meta = {"pose": [round(pose.x, 3), round(pose.y, 3), round(pose.theta, 4)],
                 "angle_deg": angle_deg, "pan_deg": round(frame.pan_deg, 1),
-                "tilt_deg": round(frame.tilt_deg, 1), "range_m": head.range_at(),
+                "tilt_deg": round(head.real_tilt(frame.tilt_deg), 1), "range_m": head.range_at(),   # real: degrees above level
                 "detected": bool(dets)}
         return jpeg(frame.main, long_edge=None, quality=self.cfg.photo_quality), meta
 
@@ -665,7 +672,7 @@ class Explorer:
                         self.base.drive(min(room, step))
                     return f"blocked ({probe.status})"
                 if cfg.ask_before_drive:
-                    view = self.head.look(0.0, -10.0)
+                    view = self.head.look(0.0, self.head.cmd_tilt(-10.0))
                     if self.vision.path_clear(jpeg(view.main), step) is False:
                         self._remember_obstacles([(self.head.sensor_xy[0] + step, 0.0)])
                         return "blocked (vlm)"

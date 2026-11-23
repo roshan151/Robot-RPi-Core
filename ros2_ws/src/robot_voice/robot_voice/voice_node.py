@@ -201,7 +201,8 @@ def main(args=None) -> None:
         debug_upload.configure(
             True, ex.get("vision_url") or settings.VISION_SERVICE_BASE_URL,
             geometry={"camera_hfov_deg": float(ex.get("hfov_deg", 66.0)), "tof_fov_deg": 60.0,
-                      "tof_on": "gimbal"},
+                      "tof_on": "gimbal", "head_tilt_offset_deg": float(ex.get("head_tilt_offset_deg", 0.0)),
+                      "tilt": "real"},                 # frame / gimbal tilts already include the offset
             extras=lambda: {"pose": _odom.get(POSE_STALE_S), "pitch_deg": _pitch[0]})
     connect(node)                        # after setup(): status + warnings go to the OLED
     status.task("voice")
