@@ -137,7 +137,7 @@
     no_behind: false
 
     orbit_radius_m: 0.7        # photo distance from the plant
-    orbit_views: 4             # full 360: 4 views, 90 degrees apart
+    orbit_views: 8             # full 360: 8 views, 45 degrees apart (viewpoints may now be on floor not seen yet)
     revisit_known: true        # photograph known plants again (a new visit)
     ask_before_drive: false    # image+text model checks each step (slow, thorough)
 

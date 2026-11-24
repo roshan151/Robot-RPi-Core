@@ -52,6 +52,8 @@ from robot_core.sensors.camera import jpeg
 from robot_core.sensors.tof8x8 import range_in_box
 from robot_core.vision_client import VisionError
 
+VISION_RETRIES, VISION_RETRY_S = 6, 10.0    # ~1 min of a silent Mac before explore stops (Nov 23: one 10 s timeout did)
+
 log = logging.getLogger(__name__)
 
 DETOUR_MARGIN_M = 0.35   # going round: floor must be seen clear this far past each leg
@@ -87,7 +89,7 @@ class ExploreConfig:
     plant_classes: Tuple[str, ...] = ("potted plant",)
     plant_min_conf: float = 0.45
     orbit_radius_m: float = 0.7
-    orbit_views: int = 4
+    orbit_views: int = 8
     min_views: int = 3
     same_place_m: float = 0.6
     pot_radius_m: float = 0.08            # the beam hits the pot's near side; centre is further
@@ -160,42 +162,54 @@ class Explorer:
         if self.vision.slam_reset(cfg.map_name, cfg.start_pose, load=cfg.continue_map, **scope) is None:
             self._say(f"no saved map '{cfg.map_name}' — starting a new one")
             self.vision.slam_reset(cfg.map_name, cfg.start_pose, load=False, **scope)
+        fails = 0
         try:
             while not self._stop.is_set() and time.monotonic() < deadline:
-                self._say("scanning")
-                kf_odom, rays, sightings = self.scan_keyframe()
-                extra = {k: self._in_frame(kf_odom, pts) for k, pts in
-                         (("low", self._low_odom), ("drops", self._drops_odom)) if pts}
-                if self._kf_clear:
-                    extra["clear"] = self._kf_clear
-                if self._kf_cloud:
-                    extra["cloud"] = self._kf_cloud
-                res = self.vision.slam_keyframe(
-                    kf_odom.as_tuple(), rays, self.head.sensor_xy, self._obstacles_in(kf_odom), **extra)
-                for pts in (self._obstacles_odom, self._low_odom, self._drops_odom):
-                    pts.clear()
-                self.stats.keyframes += 1
-                self.m2o = Pose2D(*res["map_to_odom"])
-                self.base.set_map_to_odom(self.m2o)
-                if res["match"]["accepted"]:
-                    self.base.relocalized()
-                self._say(f"keyframe {res['kf_id']}: match {res['match']['score']:.2f} "
-                          f"({'ok' if res['match']['accepted'] else 'odometry only'}), "
-                          f"{res.get('explored_m2', 0):.1f} m² explored")
+                try:
+                    self._say("scanning")
+                    kf_odom, rays, sightings = self.scan_keyframe()
+                    extra = {k: self._in_frame(kf_odom, pts) for k, pts in
+                             (("low", self._low_odom), ("drops", self._drops_odom)) if pts}
+                    if self._kf_clear:
+                        extra["clear"] = self._kf_clear
+                    if self._kf_cloud:
+                        extra["cloud"] = self._kf_cloud
+                    res = self.vision.slam_keyframe(
+                        kf_odom.as_tuple(), rays, self.head.sensor_xy, self._obstacles_in(kf_odom), **extra)
+                    for pts in (self._obstacles_odom, self._low_odom, self._drops_odom):
+                        pts.clear()
+                    self.stats.keyframes += 1
+                    self.m2o = Pose2D(*res["map_to_odom"])
+                    self.base.set_map_to_odom(self.m2o)
+                    if res["match"]["accepted"]:
+                        self.base.relocalized()
+                    self._say(f"keyframe {res['kf_id']}: match {res['match']['score']:.2f} "
+                              f"({'ok' if res['match']['accepted'] else 'odometry only'}), "
+                              f"{res.get('explored_m2', 0):.1f} m² explored")
 
-                moved = False
-                for s in self._dedupe(sightings):
-                    if self._stop.is_set():
+                    o0 = self.base.odom()
+                    for s in self._dedupe(sightings):
+                        if self._stop.is_set():
+                            break
+                        self.handle_plant(s)
+                    o1 = self.base.odom()
+                    if math.hypot(o1.x - o0.x, o1.y - o0.y) > 0.15:
+                        continue      # the orbit moved us: re-scan rather than follow a stale path
+                    # (not handle_plant's "moved": True for a plant with no viewpoint too, so on Nov 23 the robot
+                    # re-scanned in place for 6 min and never drove a frontier)
+
+                    if res.get("done"):
+                        self._say("exploration complete — nothing reachable left unexplored")
                         break
-                    moved |= self.handle_plant(s)
-                if moved:
-                    continue      # the orbit moved us: re-scan rather than follow a stale path
-
-                if res.get("done"):
-                    self._say("exploration complete — nothing reachable left unexplored")
-                    break
-                outcome = self.follow(res["goal"]["path"], self.cfg.max_leg_m, res["goal"].get("clear_m"))
-                self._say(f"drive: {outcome}")
+                    outcome = self.follow(res["goal"]["path"], self.cfg.max_leg_m, res["goal"].get("clear_m"))
+                    self._say(f"drive: {outcome}")
+                    fails = 0
+                except VisionError as exc:          # the Mac or the Wi-Fi slow for a while: wait, don't give up
+                    fails += 1
+                    if fails > VISION_RETRIES:
+                        raise
+                    self._say(f"vision service not answering ({exc}); retry {fails}/{VISION_RETRIES}")
+                    self._stop.wait(VISION_RETRY_S)
         except VisionError as exc:
             self._say(f"vision service unavailable, stopping: {exc}")
         finally:
@@ -545,10 +559,17 @@ class Explorer:
             if self._stop.is_set():
                 break
             screen.detail(f"{self._plant} moving to view {i}/{len(vps)}")
-            now = self.map_pose()
-            path = self.vision.slam_plan((now.x, now.y), vp["pose"][:2])
-            if path is None or self.follow(path, max_dist=float("inf")) != "arrived":
-                self._say(f"viewpoint {i}/{len(vps)} unreachable — skipping")
+            for attempt in range(2):
+                now = self.map_pose()
+                path = self.vision.slam_plan((now.x, now.y), vp["pose"][:2])
+                st = "no path" if path is None else self.follow(path, max_dist=float("inf"))
+                if st == "arrived" or path is None or st.startswith("blocked") or self._stop.is_set():
+                    break
+                if attempt == 0:                      # stuck on a turn or a leg: back off, re-plan once
+                    self._say(f"viewpoint {i}/{len(vps)}: {st}, backing off to try again")
+                    self.base.drive(-0.15)
+            if st != "arrived":
+                self._say(f"viewpoint {i}/{len(vps)} unreachable ({st}) — skipping")
                 continue
             self.face(target)
             screen.detail(f"{self._plant} capturing {i}/{len(vps)}")

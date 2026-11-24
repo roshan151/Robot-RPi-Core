@@ -308,7 +308,9 @@ class MotionHealth:
         state, reason = (MOVING, "") if op else (IDLE, "")
         if op and not in_grace:
             fwd, turn = _EXPECT.get(op, (0, 0))
-            if self._held("stall", not wheels, now, self.stall_s):
+            # On a turn the gyro has the last word: rotating, it is not stalled whatever the encoders read.
+            gyro_turning = imu is not None and turn != 0 and abs(math.radians(imu.yaw_rate_dps)) >= self.min_turn
+            if self._held("stall", not wheels and not gyro_turning, now, self.stall_s):
                 state, reason = STALLED, f"{op} commanded but the wheels are not turning"
             elif self._held("slip", wheels and visual is False, now, self.slip_s):
                 state, reason = SLIPPING, f"wheels turning during {op} but the camera sees no motion"

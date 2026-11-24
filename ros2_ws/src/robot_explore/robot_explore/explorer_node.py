@@ -162,7 +162,7 @@ class ExplorerNode(Node):
         p("explore_radius_m", 10.0)
         p("no_behind", False)
         p("orbit_radius_m", 0.7)
-        p("orbit_views", 4)
+        p("orbit_views", 8)
         p("revisit_known", True)
         p("ask_before_drive", False)
         p("autostart", True)
