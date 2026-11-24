@@ -537,6 +537,13 @@ class Explorer:
         if about:
             meta["about"] = about
             screen.detail(f"{self._plant} {about.get('name', '')}")
+        if label:
+            compare = getattr(self.vision, "compare_plant_health", None)
+            prev_photo = getattr(self.vision, "plant_photo", None)
+            prev_jpg = prev_photo(label) if (compare and prev_photo) else None
+            diff = compare(views[0][0], prev_jpg) if prev_jpg else None
+            if diff:
+                meta["health_diff"] = diff
         res = self.vision.plant_enroll([v[0] for v in views], label, meta)
         (self.stats.plants_revisited if label else self.stats.plants_new).append(res["label"])
         screen.detail(f"{res['label']} saved {res['photos_saved']} photos")

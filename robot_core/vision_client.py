@@ -49,6 +49,13 @@ DESCRIBE_PLANT_Q = (
     '"condition": "<healthy | dry | wilting | yellowing | other, in a few words>", '
     '"pot": "<the pot or stand in a few words>", "confidence": 0..1}')
 
+HEALTH_DIFF_Q = (
+    "The first photo is a plant photographed today; the second is the same plant "
+    "from an earlier visit. Compare its health and growth. Answer JSON: "
+    '{"status": "<improving | stable | declining | needs_water>", '
+    '"changes": "<short summary of leaf colour, droop, or growth>", '
+    '"care": "<short actionable care tip, or none>"}')
+
 
 class UploadSpool:
     """Bounded local store-and-forward queue for non-real-time uploads (plant photos, recon frames)
@@ -281,6 +288,12 @@ class VisionClient:
         res = self.ask(DESCRIBE_PLANT_Q, [jpeg], as_json=True)
         parsed = (res or {}).get("parsed")
         return parsed if isinstance(parsed, dict) and parsed.get("name") else None
+
+    def compare_plant_health(self, now_jpeg: bytes, prev_jpeg: bytes) -> Optional[dict]:
+        """Compare today's photo against a previous visit: {status, changes, care}."""
+        res = self.ask(HEALTH_DIFF_Q, [now_jpeg, prev_jpeg], as_json=True)
+        parsed = (res or {}).get("parsed")
+        return parsed if isinstance(parsed, dict) and parsed.get("status") else None
 
     def path_clear(self, forward_jpeg: bytes, distance_m: float) -> Optional[bool]:
         res = self.ask(PATH_CLEAR_Q.format(d=distance_m), [forward_jpeg], as_json=True)
