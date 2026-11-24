@@ -46,7 +46,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional, Protocol, Sequence, Tuple
 
-from robot_core import local_plan, status as screen, terrain
+from robot_core import debug_upload, local_plan, status as screen, terrain
 from robot_core.odometry import Pose2D, wrap
 from robot_core.sensors.camera import jpeg
 from robot_core.sensors.tof8x8 import range_in_box
@@ -152,6 +152,8 @@ class Explorer:
 
     def _say(self, msg: str) -> None:
         log.info("explore: %s", msg)
+        o = self.base.odom()
+        debug_upload.offer_event(None, {"task": "explore", "msg": msg, "pose_now": [o.x, o.y, o.theta]})
         screen.detail(msg)
         self.status(msg)
 

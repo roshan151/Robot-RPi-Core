@@ -247,6 +247,7 @@ class ExplorerNode(Node):
         self.vision = VisionClient(v("vision_url")) if v("vision_url") else VisionClient()
 
         self.base = RosBase(self)
+        self._debug_upload(v)
         self._status = self.create_publisher(String, "explore/status", 10)
         self._vm_pub = self.create_publisher(VisualMotion, "visual_motion", 10)
         self._tf = TransformBroadcaster(self)
@@ -344,6 +345,22 @@ class ExplorerNode(Node):
         resp.success = True
         resp.message = "stopping after the current step; the map will be saved"
         return resp
+
+    def _debug_upload(self, v) -> None:
+        """robot.yaml /voice debug_mode: camera frames, ToF grids and the mission's steps go to the Mac as a
+        debug session, like follow's (Vision-And-Planning vision_service/navigation_debugging.py shows them)."""
+        import yaml
+        from ament_index_python.packages import get_package_share_directory
+        from robot_core import debug_upload
+        with open(os.path.join(get_package_share_directory("robot_bringup"), "config", "robot.yaml")) as f:
+            if not (yaml.safe_load(f).get("/voice") or {}).get("ros__parameters", {}).get("debug_mode"):
+                return
+        debug_upload.configure(
+            True, self.vision.base,
+            geometry={"camera_hfov_deg": float(v("hfov_deg")), "tof_fov_deg": 60.0, "tof_on": "gimbal",
+                      "head_tilt_offset_deg": float(v("head_tilt_offset_deg")), "tilt": "real"},
+            extras=lambda: {"pose": [round(a, 4) for a in (self.base.odom().x, self.base.odom().y, self.base.odom().theta)],
+                            "pitch_deg": self._pitch()})
 
     def _pitch(self) -> Optional[float]:
         """The robot's nose-up angle from the IMU (via /motion_health), None without one."""
