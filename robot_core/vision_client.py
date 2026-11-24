@@ -9,8 +9,11 @@ decides whether to pause, skip or stop.
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
+import time
+from pathlib import Path
 from typing import Any, Optional, Sequence
 
 import requests
@@ -47,13 +50,60 @@ DESCRIBE_PLANT_Q = (
     '"pot": "<the pot or stand in a few words>", "confidence": 0..1}')
 
 
+class UploadSpool:
+    """Bounded local store-and-forward queue for non-real-time uploads (plant photos, recon frames)
+    during outdoor Wi-Fi dropouts. Replayed FIFO once the vision server answers again."""
+
+    def __init__(self, spool_dir: Optional[Path] = None, max_items: int = 50) -> None:
+        self.dir = Path(spool_dir or Path.home() / ".robot-core" / "spool")
+        self.max_items = int(max_items)
+
+    def put(self, kind: str, payload: dict) -> Path:
+        self.dir.mkdir(parents=True, exist_ok=True)
+        existing = sorted(self.dir.glob("*.json"))
+        while len(existing) >= self.max_items:
+            existing.pop(0).unlink(missing_ok=True)
+        path = self.dir / f"{int(time.time() * 1000)}_{kind}.json"
+        path.write_text(json.dumps({"kind": kind, "payload": payload}))
+        return path
+
+    def items(self) -> list[Path]:
+        return sorted(self.dir.glob("*.json")) if self.dir.exists() else []
+
+
 class VisionClient:
     def __init__(self, base_url: str = settings.VISION_SERVICE_BASE_URL,
-                 timeout_s: float = 10.0, vlm_timeout_s: float = 60.0) -> None:
+                 timeout_s: float = 10.0, vlm_timeout_s: float = 60.0,
+                 spool_dir: Optional[Path] = None) -> None:
         self.base = base_url.rstrip("/")
         self.timeout = timeout_s
         self.vlm_timeout = vlm_timeout_s
         self._s = requests.Session()
+        self.spool = UploadSpool(spool_dir)
+
+    def flush_spool(self, max_items: int = 10) -> int:
+        """Replay spooled uploads FIFO. Stops on first network error; returns count flushed."""
+        flushed = 0
+        for path in self.spool.items()[:max_items]:
+            try:
+                rec = json.loads(path.read_text())
+                kind, p = rec["kind"], rec["payload"]
+                if kind == "plant_enroll":
+                    jpegs = [base64.b64decode(b) for b in p["jpegs_b64"]]
+                    self.plant_enroll(jpegs, label=p.get("label", ""), meta=p.get("meta"), spool_on_fail=False)
+                elif kind == "recon_frame":
+                    if not self.recon_frame(base64.b64decode(p["jpeg_b64"]), p["meta"], spool_on_fail=False):
+                        break
+                path.unlink(missing_ok=True)
+                flushed += 1
+            except VisionError:
+                break
+            except Exception as exc:                             # noqa: BLE001 — corrupt spool entry
+                log.warning("spool: dropping unreadable %s (%s)", path.name, exc)
+                path.unlink(missing_ok=True)
+        if flushed:
+            log.info("spool: flushed %d queued upload(s) to vision server", flushed)
+        return flushed
 
     # ------------------------------------------------------------ plumbing
 
@@ -172,10 +222,21 @@ class VisionClient:
             body["position"] = list(position[:3])       # x, y on the map and, when known, height above the floor
         return self._call("POST", "/v1/plants/match", json=body)
 
-    def plant_enroll(self, jpegs: Sequence[bytes], label: str = "", meta: Optional[dict] = None) -> dict:
-        return self._call("POST", "/v1/plants/enroll", timeout=60.0,
-                          data={"label": label, "meta": json.dumps(meta or {})},
-                          files=self._files(jpegs))
+    def plant_enroll(self, jpegs: Sequence[bytes], label: str = "", meta: Optional[dict] = None,
+                     spool_on_fail: bool = True) -> dict:
+        try:
+            return self._call("POST", "/v1/plants/enroll", timeout=60.0,
+                              data={"label": label, "meta": json.dumps(meta or {})},
+                              files=self._files(jpegs))
+        except VisionError:
+            if spool_on_fail:
+                self.spool.put("plant_enroll", {
+                    "label": label, "meta": meta or {},
+                    "jpegs_b64": [base64.b64encode(b).decode("ascii") for b in jpegs],
+                })
+                log.warning("vision: spooled plant_enroll (%s) locally for later upload", label or "new")
+                return {"label": label or "spooled", "spooled": True}
+            raise
 
     def plants(self) -> list:
         return self._call("GET", "/v1/plants")["plants"]
@@ -250,15 +311,21 @@ class VisionClient:
             "low": [list(p) for p in low], "drops": [list(p) for p in drops],
             "clear": [[b, r] for b, r in clear], "cloud": [list(p) for p in cloud], "plan": plan})
 
-    def recon_frame(self, jpeg: bytes, meta: dict) -> bool:
+    def recon_frame(self, jpeg: bytes, meta: dict, spool_on_fail: bool = True) -> bool:
         """One explore scan frame for the Mac's 3-D mesh, with where it was taken (Explorer._recon).
-        False if the Mac did not take it; the scan carries on either way."""
+        Spools locally when `spool_on_fail` is True so outdoor Wi-Fi blips do not lose scan frames."""
         try:
             self._call("POST", "/v1/recon/frame", timeout=5.0, data={"meta": json.dumps(meta)},
                        files={"image": ("f.jpg", jpeg, "image/jpeg")})
             return True
         except VisionError as exc:
-            log.warning("recon frame not sent: %s", exc)
+            if spool_on_fail:
+                self.spool.put("recon_frame", {
+                    "meta": meta, "jpeg_b64": base64.b64encode(jpeg).decode("ascii"),
+                })
+                log.warning("recon frame spooled locally: %s", exc)
+            else:
+                log.warning("recon frame not sent: %s", exc)
             return False
 
     def slam_plan(self, start, goal) -> Optional[list]:

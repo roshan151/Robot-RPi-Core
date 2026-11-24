@@ -168,6 +168,9 @@ class ExplorerNode(Node):
         p("autostart", True)
         p("tfluna_port", "/dev/serial0")
         p("tfluna_fitted", True)
+        p("outdoor_mode", False)
+        p("max_slope_deg", 12.0)
+        p("roughness_tol_m", 0.04)
         # 8x8 ToF on the head (robot_core/sensors/tof8x8.py): replaces the TF-Luna as the
         # range sensor and gives the floor check its grid. Wiring: README.
         p("tof_fitted", False)
@@ -180,6 +183,7 @@ class ExplorerNode(Node):
         p("tof_perpendicular", True)
         p("drive_tilt_deg", -30.0)
         p("head_tilt_offset_deg", 0.0)
+        p("imu_on_gimbal", False)
         p("h_max_m", 0.03)
         p("flat_tol_m", 0.015)
         p("min_landing_m", 0.20)
@@ -239,11 +243,13 @@ class ExplorerNode(Node):
             tof_pan_offset_deg=float(v("tof_pan_offset_deg") if self.has_parameter("tof_pan_offset_deg") else 0.0),
             tof_tilt_offset_deg=float(v("tof_tilt_offset_deg") if self.has_parameter("tof_tilt_offset_deg") else 0.0),
             pan_axis_y_m=float(v("tof_from_right_m")) - float(v("robot_width_m")) / 2.0,
-            self_zones=parse_self_zones(v("tof_self_zones"))),
+            self_zones=parse_self_zones(v("tof_self_zones")),
+            imu_on_gimbal=bool(v("imu_on_gimbal"))),
             pitch=lambda: self._pitch(),
             terrain_params=terrain.params_from({n: v(n) for n in ("h_max_m", "flat_tol_m", "min_landing_m", "max_drop_m", "robot_width_m",
                                                              "plan_clearance_m", "floor_auto_level", "floor_holes_are_drops",
-                                                             "drive_on_unknown_floor", "robot_height_m", "stop_short_m")}))
+                                                             "drive_on_unknown_floor", "robot_height_m", "stop_short_m", "tfluna_fitted",
+                                                             "outdoor_mode", "max_slope_deg", "roughness_tol_m")}))
         self.vision = VisionClient(v("vision_url")) if v("vision_url") else VisionClient()
 
         self.base = RosBase(self)

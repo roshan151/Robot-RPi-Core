@@ -49,7 +49,9 @@ in follow's debug note; the scorecard reads both.
 | ToF grid paired with the wrong camera frame | Nov 19 | `grid.t - frame.t_capture` > 0.35 s | grid not used to range that frame's boxes | rule `grid_unpaired` |
 | ToF on the gimbal looks at the person, not the path | Nov 19 (root of several) | `AHEAD_STALE_S`, `seen_free` | speed capped where unseen; glance ahead; unknown never counted as free for straight-line decisions | test_scenarios lookaway, doorway; option: a fixed forward ToF |
 | Camera motion blur when turning fast | Nov 19 (9 misses in 16 at a doorway) | | pivot capped at 0.55 rad/s while the camera is on someone | `PIVOT_FOCUS_W` |
-| Camera fisheye distortion: floor distances near the picture edge jump | Nov 19 (found by the replay) | replay `pi_goal_jumps` | not handled yet: undistort boxes before the floor maths | test_replay doorway-20261119 (known) |
+| Camera fisheye distortion: floor distances near the picture edge jump | Nov 19 (found by the replay) | replay `pi_goal_jumps` | server supports calibrated `VS_CAMERA_DIST` + `VS_CAMERA_FX/FY/CX/CY` (`_undistort_px` in `nav_api.py` and `vslam.settings_yaml`); run chessboard calibration and set env vars | test_software fixes, test_replay doorway-20261119 |
+| IMU pitch/roll mounting drift turns flat floor into false ToF obstacles (19% on Nov 23) | Nov 23 (3.3° pitch error) | `--report` floor-as-obstacle check | `imu_auto_tare: true` auto-zeros pitch & roll during the first stationary 1 s window on boot (within ±12° guard) | test_software fixes |
+| No drop/cliff detection when `tfluna_fitted: false` | Nov 23 audit | `terrain.params_from` | `terrain.Params.detect_drops` automatically enables ToF visible-drop & stairwell-hole detection when `tfluna_fitted` is `false` | test_software fixes |
 | Gimbal pan at its limit (+81°) while the body does not turn | Nov 19 | head pan in debug note | body turns toward the goal (pivot when > 28° off) | scorecard (planned: pan-at-limit time) |
 | Bump / stall while driving forward | Nov 19 | drivetrain `motion_health` → reflex trip | brake; the spot is marked in the costmap; replan | rule `trip_repeat`, test_scenarios lookaway |
 | Bump while turning on the spot | Nov 19 (door leaf) | reflex trip | brake only: which corner hit is unknown (open) | |
@@ -89,16 +91,19 @@ in follow's debug note; the scorecard reads both.
 | A turn held by a leg it cannot see (gyro still, tracks turning) | Nov 20 (simulator) | `_watch_turn`: commanded at least 0.3 rad/s, gyro below 0.1 for 0.7 s; rule `turn_blocked` | brake; mark the leading corner; back off 10 cm, then turn (turning the other way hits it with another corner) | test_scenarios wedge |
 | Nose rides up on a ledge it cannot see and stops; the odometry counts on | Nov 20 (simulator) | nose up 6° above the floor's level (median pitch over 10 s) for 0.5 s; was 12° at once from where it set off | encoder metres since are taken out; marked; backs off; goes round | test_scenarios ledge |
 | Bumps something it cannot see (glass) again beside the mark | Nov 20 (simulator) | `_failed`: rule `same_approach` (within 0.3 m and 30° of an earlier failure) | backs off 15 cm before turning; the bump mark is 0.5 m wide; two failures within 0.6 m are joined into one line, 0.3 m past each end | test_scenarios glass |
-| A door the person walked through maps too narrow for the Mac (ToF cones draw the frame into it); the robot takes the Mac's long way round and loses them | Nov 20 (18-27 s) | | **not fixed**: passage handling (EXPLORE-PLAN phase C) | test_scenarios door20 (known), replay follow-20261120 |
-| Swings left-right beside a wall corner 0.2 m off: the Mac's 0.17 m step aside is dropped as reached; the line on is at DWA's limit | Nov 20 (68-82 s) | rule `pivot_flip` | **not fixed**: phase C | test_scenarios corner20 (known), replay follow-20261120 (1 flip left) |
+| A door the person walked through maps too narrow for the Mac (ToF cones draw the frame into it); the robot takes the Mac's long way round and loses them | Nov 20 (18-27 s) | | oriented capsule body clearance in `dwa.rect_clearance` + `nav_map.py` margin relaxation down to 0 | test_scenarios door20 (passing), replay follow-20261120 |
+| Swings left-right beside a wall corner 0.2 m off: the Mac's 0.17 m step aside is dropped as reached; the line on is at DWA's limit | Nov 20 (68-82 s) | rule `pivot_flip` | oriented capsule body clearance (`dwa.rect_clearance`: 0.165 m half-width vs 0.177 m circle) | test_scenarios corner20 (passing), test_software fixes |
 | Person-ignore circle erases a real obstacle | Nov 19 | | person placed by refused/accepted ranges only (see Perception) | test_replay `pi_placed_too_near` |
 
 ## Mac: SLAM, planning service, network
 
 | Failure | Seen | Detected by | Response | Covered by |
 |---|---|---|---|---|
+| ORB-SLAM3 SIGSEGV in `getTrackedMappoints()` on NULL `MapPoint*` | Nov 23 (`python3.12-2026-11-23-150045.ips`) | child exit code -11 | verified regex patch in `install_orbslam3_macos.sh` skips `!Mps[i] \|\| Mps[i]->isBad()`; defensive finite-point filter in `vslam._tof_step()` | `deploy/install_orbslam3_macos.sh` |
 | ORB-SLAM3 does not track (white walls, blur, panning camera) | Nov 19 (2 of ~7 frames, one 4-minute run) | nav.jsonl `slam_frame` count vs frames in | odometry alone; plans in the odometry frame | scorecard SLAM line |
-| Mac slow or down | expected | follow step time; preflight /healthz | degraded (keep last goal); local Theta* | rule `mac_slow` |
+| YOLO projects clutter near person as false `"suitcase"` obstacles (55-172/run) | Nov 23 | `nav.jsonl` semantic counts | removed `"suitcase"` from `nav_api.OBSTACLES` | test_software fixes |
+| Mac slow or down | expected | follow step time; preflight /healthz | degraded (keep last goal); local Theta*; explore spools plant/recon uploads locally (`UploadSpool`) and backtracks toward last online pose (`_return_to_signal`); `FrameStream` motion-gates & adapts JPEG quality to RTT | rule `mac_slow`, test_software fixes |
+| Uneven outdoor ground (grass, mulch, garden slopes) reads as blocked | Phase 3 outdoor | `terrain.classify` | `outdoor_mode: true` fits local ground slope (blocks > `max_slope_deg`), tolerates `roughness_tol_m` (4 cm) while still catching rocks/curbs/drops | test_software fixes |
 | Follow step returns 500 | Nov 19 (3 attempts) | VisionError | follow ends, says "vision error" | test_software vision |
 
 ## Logging and evidence

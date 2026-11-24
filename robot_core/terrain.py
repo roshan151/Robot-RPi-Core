@@ -50,6 +50,10 @@ class Params:
     holes_are_drops: bool = True   # no return where the floor should be, beyond seen floor = a drop; False:
                                    # floor not seen there (driven up to, never onto; not planned round)
     auto_level: bool = False       # level each floor scan on the floor right in front (see level())
+    detect_drops: bool = True      # detect drops from ToF when no dedicated TF-Luna drop guard is fitted
+    outdoor_mode: bool = False     # uneven ground (grass/mulch/slopes): fits local slope plane & widens roughness tol
+    max_slope_deg: float = 12.0    # steepest ground slope (pitch or roll) allowed in outdoor_mode before BLOCKED
+    roughness_tol_m: float = 0.04  # surface roughness (grass tufts, mulch, gravel) tolerated in outdoor_mode
 
 
 @dataclass(frozen=True)
@@ -69,6 +73,12 @@ def _high(values: Sequence[float]) -> float:
     return s[min(len(s) - 1, int(0.8 * len(s)))]
 
 
+def _low(values: Sequence[float]) -> float:
+    """Near the bottom of a slice, ignoring a single stray low reading."""
+    s = sorted(values)
+    return s[min(len(s) - 1, int(0.2 * len(s)))]
+
+
 def classify(points: Sequence[Point], p: Params = Params(), reach_m: float = 0.5) -> Terrain:
     """The first thing that matters within `reach_m` ahead (how far the robot means to drive).
 
@@ -76,6 +86,15 @@ def classify(points: Sequence[Point], p: Params = Params(), reach_m: float = 0.5
     further apart with distance, so most slices beyond half a metre are empty:
     only slices with readings are judged, and what lies between two of them is
     taken to be like the nearer one."""
+    if p.outdoor_mode or p.auto_level:
+        leveled, corr = level(points, max_deg=max(30.0, p.max_slope_deg))
+        if corr is not None:
+            _, slope_p, slope_r = corr
+            if p.outdoor_mode and (abs(slope_p) > p.max_slope_deg or abs(slope_r) > p.max_slope_deg):
+                return Terrain(BLOCKED, p.near_m, None)
+            if abs(slope_p) <= p.max_slope_deg and abs(slope_r) <= p.max_slope_deg:
+                points = leveled
+    flat_tol = max(p.flat_tol_m, p.roughness_tol_m) if p.outdoor_mode else p.flat_tol_m
     cells: Dict[int, List[float]] = {}
     holes: Dict[int, int] = {}                       # slices where the floor should be and nothing came back
     for x, y, h in points:
@@ -90,16 +109,24 @@ def classify(points: Sequence[Point], p: Params = Params(), reach_m: float = 0.5
     if sum(1 for i in seen if i <= last_i + 1) < 2:
         return Terrain(UNKNOWN)
 
-    # No drops from the ToF: a drop is the TF-Luna's to find (the drivetrain's drop guard).
-    # Floor lower than it should be, or no floor return, is not judged here (Nov 18).
+    if p.detect_drops:
+        # When TF-Luna is not fitted, ToF is the only drop guard: catch both visible drops
+        # below -max_drop_m and multi-zone missing-return holes beyond seen floor (stairwells).
+        drop_i = next((i for i in seen if i <= last_i and _low(cells[i]) < -p.max_drop_m), None)
+        if drop_i is not None:
+            return Terrain(DROP, drop_i * p.cell_m, _low(cells[drop_i]))
+        if p.holes_are_drops and seen:
+            hole_i = next((i for i in sorted(holes) if seen[0] < i <= last_i and holes[i] >= 2 and i not in cells), None)
+            if hole_i is not None:
+                return Terrain(DROP, hole_i * p.cell_m, None)
 
-    rise = next((i for i in seen if i <= last_i and _high(cells[i]) > p.flat_tol_m), None)
+    rise = next((i for i in seen if i <= last_i and _high(cells[i]) > flat_tol), None)
     if rise is None:
         return Terrain(FLAT)
     landing_end = rise + int(math.ceil(p.min_landing_m / p.cell_m)) + 1
     over = [i for i in seen if rise <= i <= landing_end]
     top = max(_high(cells[i]) for i in over)
-    if top > p.h_max_m or len(over) < 2:
+    if top > max(p.h_max_m, flat_tol) or len(over) < 2:
         return Terrain(BLOCKED, rise * p.cell_m, top)      # too high, or what follows cannot be seen
     return Terrain(CLIMBABLE, rise * p.cell_m, top)
 
@@ -110,7 +137,7 @@ LEVEL_MAX_M = 0.07        # corrections bigger than these mean the fit found som
 LEVEL_MAX_DEG = 12.0      # a box filling the view): the scan is left as it was
 
 
-def level(pts: Sequence[Point]) -> Tuple[List[Point], Optional[Tuple[float, float, float]]]:
+def level(pts: Sequence[Point], max_deg: float = LEVEL_MAX_DEG) -> Tuple[List[Point], Optional[Tuple[float, float, float]]]:
     """Heights measured from the floor the robot stands on, whatever the head's real angle.
 
     The SG90 tilt servo stops a few degrees from where it was sent (backlash, the head's
@@ -121,7 +148,7 @@ def level(pts: Sequence[Point]) -> Tuple[List[Point], Optional[Tuple[float, floa
     not count) and measure every height from that plane. Returns the points and
     (offset m, pitch deg, roll deg) of the correction, or None when there was too little
     floor to fit or the correction would be too large to believe."""
-    cand = [(x, y, h) for x, y, h in pts if h is not None and x <= LEVEL_REACH_M and abs(h) <= 0.10]
+    cand = [(x, y, h) for x, y, h in pts if h is not None and x <= LEVEL_REACH_M and abs(h) <= 0.35]
     if len(cand) < 8 or max(q[0] for q in cand) - min(q[0] for q in cand) < 0.15:
         return list(pts), None
     use, fit = cand, None
@@ -135,7 +162,7 @@ def level(pts: Sequence[Point]) -> Tuple[List[Point], Optional[Tuple[float, floa
         use = keep
     a, b, c = fit
     pitch, roll = math.degrees(math.atan(b)), math.degrees(math.atan(c))
-    if abs(a) > LEVEL_MAX_M or abs(pitch) > LEVEL_MAX_DEG or abs(roll) > LEVEL_MAX_DEG:
+    if abs(a) > LEVEL_MAX_M or abs(pitch) > max_deg or abs(roll) > max_deg:
         return list(pts), None
     return [(x, y, None if h is None else h - (a + b * x + c * y)) for x, y, h in pts], (a, pitch, roll)
 
@@ -213,6 +240,10 @@ def scan_slice(columns: Sequence[Column], p: Params = Params(), low_m: float = 0
                     out.low.append((x, y))
                 hit = True
                 break
+            if p.detect_drops and h < -(margin + p.max_drop_m):
+                out.drops.append((x, y))
+                hit = True
+                break
             if abs(h) <= margin:
                 floor_at = (x, y)
         if not hit and floor_at is not None:
@@ -221,14 +252,20 @@ def scan_slice(columns: Sequence[Column], p: Params = Params(), low_m: float = 0
 
 
 def params_from(p: dict) -> Params:
-    """Params from robot.yaml's /explorer section; anything missing keeps its default."""
+    """Params from robot.yaml's /explorer section; anything missing keeps its default.
+    Enables ToF drop detection automatically when `tfluna_fitted` is False."""
     d = Params()
     width = float(p.get("robot_width_m", d.width_m))
     corridor = width + 0.05 if "robot_width_m" in p else float(p.get("path_width_m", d.corridor_m))
+    detect_drops = bool(p.get("tof_drop_guard", not bool(p.get("tfluna_fitted", True))))
     return Params(width_m=width, corridor_m=corridor,
                   clearance_m=float(p.get("plan_clearance_m", d.clearance_m)),
                   holes_are_drops=bool(p.get("floor_holes_are_drops", d.holes_are_drops)),
                   auto_level=bool(p.get("floor_auto_level", d.auto_level)),
+                  detect_drops=detect_drops,
+                  outdoor_mode=bool(p.get("outdoor_mode", d.outdoor_mode)),
+                  max_slope_deg=float(p.get("max_slope_deg", d.max_slope_deg)),
+                  roughness_tol_m=float(p.get("roughness_tol_m", d.roughness_tol_m)),
                   h_max_m=float(p.get("h_max_m", d.h_max_m)),
                   flat_tol_m=float(p.get("flat_tol_m", d.flat_tol_m)),
                   min_landing_m=float(p.get("min_landing_m", d.min_landing_m)),

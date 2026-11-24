@@ -112,6 +112,8 @@ class DrivetrainNode(Node):
         self.declare_parameter("imu_gyro_addr", 0x69)           # the BMI323
         self.declare_parameter("imu_axes", ["y", "x", "-z"])   # board axis along robot forward, left, up
         self.declare_parameter("imu_pitch_offset_deg", 0.0)     # pitch read on flat floor: taken off (calibrate.py imu)
+        self.declare_parameter("imu_auto_tare", True)           # auto-zero pitch/roll on stationary startup (within 12 deg)
+        self.declare_parameter("imu_on_gimbal", False)          # true: IMU is on the moving head, not the chassis
         self.declare_parameter("turn_tolerance_deg", 2.0)
         # Gyro-held moves (velocity mode + IMU): straight drives steered back to their start heading,
         # and a turn's last few degrees finished slowly against the gyro (see _held).
@@ -158,13 +160,15 @@ class DrivetrainNode(Node):
             max_dip_deg=float(self.get_parameter("max_dip_deg").value),
             max_climb_deg=float(self.get_parameter("max_climb_deg").value))
         self._imu = None
+        self._imu_on_gimbal = bool(self.get_parameter("imu_on_gimbal").value)
         if self.get_parameter("imu_fitted").value:
             try:
                 from robot_core.sensors.imu import Imu
                 self._imu = Imu(bus=int(self.get_parameter("imu_bus").value),
                                 axes=list(self.get_parameter("imu_axes").value),
                                 gyro_addr=int(self.get_parameter("imu_gyro_addr").value),
-                                pitch_offset_deg=float(self.get_parameter("imu_pitch_offset_deg").value))
+                                pitch_offset_deg=float(self.get_parameter("imu_pitch_offset_deg").value),
+                                auto_tare_level=bool(self.get_parameter("imu_auto_tare").value))
                 if not self._imu.wait_calibrated(5.0):
                     self.get_logger().warn("imu: gyro not zeroed yet (was the robot moving?); "
                                            "it zeroes itself the next time it stands still")
@@ -289,6 +293,8 @@ class DrivetrainNode(Node):
         return SetParametersResult(successful=True)
 
     def _yaw_deg(self) -> Optional[float]:
+        if self._imu_on_gimbal:                                # head yaw != chassis yaw when gimbal pans
+            return None
         st = self._imu.state() if self._imu is not None else None
         return st.yaw_deg if st is not None else None
 
@@ -630,7 +636,9 @@ class DrivetrainNode(Node):
             self._imu.set_moving(op is not None)             # the gyro zeroes itself only at rest
         if ims is not None:
             self._publish_imu(ims, stamp, base_frame)
-        rep = self._health.update(st, op, now, imu=ims)
+        rep = self._health.update(st, op, now, imu=None if self._imu_on_gimbal else ims)
+        pub_pitch = ims.pitch_deg if (self._imu_on_gimbal and ims is not None) else rep.pitch_deg
+        pub_roll = ims.roll_deg if (self._imu_on_gimbal and ims is not None) else rep.roll_deg
         state, reason = rep.state, rep.reason
         if self._drop is not None:                         # TF-Luna drop guard, every tick (10 Hz)
             cm, t_cm = self._drivetrain.tfluna()
@@ -652,7 +660,7 @@ class DrivetrainNode(Node):
             drift_deg_per_m=rep.drift_deg_per_m,
             visual_known=rep.visual_moving is not None,
             visual_moving=bool(rep.visual_moving), since_s=rep.since_s,
-            imu_known=ims is not None, pitch_deg=rep.pitch_deg, roll_deg=rep.roll_deg))
+            imu_known=ims is not None, pitch_deg=pub_pitch, roll_deg=pub_roll))
         if rep.state != getattr(self, "_last_health", None):
             self._last_health = rep.state
             if rep.stuck:

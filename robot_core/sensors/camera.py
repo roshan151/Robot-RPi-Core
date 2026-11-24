@@ -128,8 +128,8 @@ class Camera:
                     raise RuntimeError("camera read failed")
                 if self.inverted:
                     main = cv2.flip(main, -1)
-                lores = cv2.resize(cv2.cvtColor(main, cv2.COLOR_BGR2GRAY), self.lores_size,
-                                   interpolation=cv2.INTER_AREA)
+                small = cv2.resize(main, self.lores_size, interpolation=cv2.INTER_AREA)
+                lores = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
             self._seq += 1
             frame = Frame(self._seq, time.monotonic(), main, lores, pan, tilt, settled)
         debug_upload.offer_frame(frame)                 # debug mode only; a reference, no copy
@@ -151,10 +151,12 @@ class Camera:
             ok, main = self._cap.read()
             if not ok:
                 raise RuntimeError("camera read failed")
+            # Downsample before color-convert and 180-deg flip: avoids processing 6 MB 1080p buffers on Pi 4B.
+            small = cv2.resize(main, self.lores_size, interpolation=cv2.INTER_NEAREST)
+            grey = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
             if self.inverted:
-                main = cv2.flip(main, -1)
-            return time.monotonic(), cv2.resize(cv2.cvtColor(main, cv2.COLOR_BGR2GRAY),
-                                                self.lores_size, interpolation=cv2.INTER_AREA)
+                grey = cv2.flip(grey, -1)
+            return time.monotonic(), grey
 
     def close(self) -> None:
         if self._picam is not None:

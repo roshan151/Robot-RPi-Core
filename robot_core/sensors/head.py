@@ -53,6 +53,7 @@ class HeadGeometry:
                                       # TF-Luna in the bottom-left zones at 8-12 cm read as a 15 cm box ahead)
     self_zones: dict = field(default_factory=dict)   # {(row, col): metres}: zones that see part of the robot
                                       # further out than self_range_m; nearer than that there is the robot
+    imu_on_gimbal: bool = False       # true: IMU pitch measures true world-relative head tilt directly (no double-count)
 
 
 def parse_self_zones(text) -> dict:
@@ -187,10 +188,16 @@ class Head:
         near = self.geom.self_range_m if min_range_m is None else min_range_m
         own = self.geom.self_zones if min_range_m is None else {}
         pan = math.radians(pan_deg + self.geom.tof_pan_offset_deg)
-        tilt = math.radians(tilt_deg + self.geom.tilt_offset_deg + self.geom.tof_tilt_offset_deg)
-        if pitch_deg is None:
-            pitch_deg = (self.pitch() if self.pitch else 0.0) or 0.0
-        body = math.radians(pitch_deg)
+        raw_pitch = pitch_deg if pitch_deg is not None else (self.pitch() if self.pitch else None)
+        if self.geom.imu_on_gimbal and raw_pitch is not None:
+            # Gimbal-mounted IMU already measures (real gimbal tilt + chassis pitch) relative to tilt=0,
+            # so use it directly instead of adding commanded tilt_deg + body pitch (avoids double-counting
+            # and removes SG90 tilt backlash/lag).
+            tilt = math.radians(raw_pitch + self.geom.tilt_offset_deg + self.geom.tof_tilt_offset_deg)
+            body = 0.0
+        else:
+            tilt = math.radians(tilt_deg + self.geom.tilt_offset_deg + self.geom.tof_tilt_offset_deg)
+            body = math.radians(raw_pitch or 0.0)
         ox, oy, height = self.geom.pan_axis_x_m, self.geom.pan_axis_y_m, self.geom.height_m
         out = []
         for r in range(SIZE):

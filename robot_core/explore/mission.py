@@ -86,7 +86,10 @@ class ExploreConfig:
     camera_pans: Tuple[float, ...] = (-75.0, -37.5, 0.0, 37.5, 75.0)   # which of them also look for plants
     camera_tilts: Tuple[float, ...] = (0.0, 30.0)     # ...level, then looking up (shelves, plant stands)
     same_level_m: float = 0.15            # pots whose bases differ by more than this are on different shelves
-    plant_classes: Tuple[str, ...] = ("potted plant",)
+    plant_classes: Tuple[str, ...] = (
+        "potted plant", "plant", "shrub", "bush", "flower",
+        "garden bed", "houseplant", "fern", "succulent", "tree",
+    )
     plant_min_conf: float = 0.45
     orbit_radius_m: float = 0.7
     orbit_views: int = 8
@@ -143,12 +146,32 @@ class Explorer:
         self._low_odom: List[Tuple[float, float]] = []       # low obstacles seen by the ToF
         self._drops_odom: List[Tuple[float, float]] = []     # places where the floor falls away
         self._hazards = local_plan.Hazards()                 # what blocked steps, for going round (local_plan)
+        self._last_online_odom: Optional[Pose2D] = None      # last pose where vision server answered (for return-to-signal)
         self._stop = threading.Event()
 
     # ================================================================ loop
 
     def stop(self) -> None:
         self._stop.set()
+
+    def _return_to_signal(self, max_step_m: float = 0.8) -> None:
+        """Backtrack toward the last pose where the Mac answered so an outdoor Wi-Fi dead zone
+        does not strand the robot."""
+        if self._last_online_odom is None or self._stop.is_set():
+            return
+        cur = self.base.odom()
+        dx, dy = self._last_online_odom.x - cur.x, self._last_online_odom.y - cur.y
+        dist = math.hypot(dx, dy)
+        if dist < 0.25:
+            return
+        step = min(dist, max_step_m)
+        target_th = math.atan2(dy, dx)
+        turn = math.degrees(math.atan2(math.sin(target_th - cur.theta), math.cos(target_th - cur.theta)))
+        self._say(f"Wi-Fi lost: backtracking {step:.2f} m toward last online pose")
+        if abs(turn) > 10.0:
+            self.base.turn(turn)
+        if not self._stop.is_set():
+            self.base.drive(step)
 
     def _say(self, msg: str) -> None:
         log.info("explore: %s", msg)
@@ -180,6 +203,9 @@ class Explorer:
                         kf_odom.as_tuple(), rays, self.head.sensor_xy, self._obstacles_in(kf_odom), **extra)
                     for pts in (self._obstacles_odom, self._low_odom, self._drops_odom):
                         pts.clear()
+                    self._last_online_odom = kf_odom
+                    if hasattr(self.vision, "flush_spool"):
+                        self.vision.flush_spool()
                     self.stats.keyframes += 1
                     self.m2o = Pose2D(*res["map_to_odom"])
                     self.base.set_map_to_odom(self.m2o)
@@ -211,6 +237,8 @@ class Explorer:
                     if fails > VISION_RETRIES:
                         raise
                     self._say(f"vision service not answering ({exc}); retry {fails}/{VISION_RETRIES}")
+                    if fails >= 2 and self._last_online_odom is not None:
+                        self._return_to_signal()
                     self._stop.wait(VISION_RETRY_S)
         except VisionError as exc:
             self._say(f"vision service unavailable, stopping: {exc}")

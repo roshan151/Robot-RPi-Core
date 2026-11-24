@@ -45,15 +45,13 @@
     imu_fitted: true           # set true once calibrate.py imu (Monitoring-Service) passes
     imu_bus: 1                 # I2C bus. 1 = GPIO2/3
     imu_gyro_addr: 105         # 0x69, the BMI323 with its address pad open (as shipped); 104 (0x68) if closed
-    imu_axes: ["-x", "-y", "z"]  # which board axis points robot-forward, robot-left, up; "-" flips one.
-                               # Checked 2026-11-18 (imu check): level reads ~0 / ~0, front up = pitch +,
-                               # left up = roll +. The IMU sits 6 cm from the left and the back: no setting
-                               # needed, angles and turn rate are the same anywhere on the chassis
-    imu_pitch_offset_deg: 7.3  # 2026-11-23: was 4.0; it read +3.3 on flat floor all through the Nov 23 follow (still and
-                               # moving), lifting the floor 2-5 cm in the ToF maths: 19% of floor returns became obstacles.
-                               # Nov 21: was 6.3; standing still it read -2.3 (median of 1,624, Nov 19-20 runs).
-                               # Pitch on flat floor, taken off every reading.
-                               # calibrate.py imu measures it; 0 = none
+    imu_axes: ["-z", "-x", "y"]  # Mounted on the gimbal (+21 deg tilt): board +x = robot right (left = -x),
+                               # +y = robot up, +z = into robot (forward = -z). Right-handed: (-z) x (-x) = +y.
+    imu_on_gimbal: true        # IMU is mounted on the panning/tilting gimbal head (not the chassis):
+                               # drivetrain does not use head yaw/pitch for chassis odom or tilt e-stop;
+                               # head.py uses IMU pitch directly as true world-relative head tilt.
+    imu_pitch_offset_deg: 21.0 # Raw IMU pitch at neutral gimbal tilt=0 on flat floor (matches head_tilt_offset_deg: 21.0).
+    imu_auto_tare: false       # Disabled while IMU is on the gimbal (head may not be at tilt=0 on boot).
     # Turns and straight drives are closed on the gyro (velocity mode, firmware -vel): turn_held,
     # drive_heading_hold. Encoder-counted moves are left for gestures only.
     turn_tolerance_deg: 2.0
@@ -181,6 +179,10 @@
     plan_clearance_m: 0.08     # going round something: this gap between the robot's side and it
     floor_auto_level: true     # judge each floor scan against the floor fitted right in front (the tilt servo
                                # stops a few degrees off and the chassis rocks): see terrain.level
+    outdoor_mode: false        # true for uneven outdoor terrain (grass/mulch/slopes at night with white LED):
+                               # fits local ground slope (blocks > max_slope_deg) and tolerates roughness_tol_m
+    max_slope_deg: 12.0        # steepest ground pitch/roll allowed in outdoor_mode before BLOCKED
+    roughness_tol_m: 0.04      # grass/mulch/gravel height roughness tolerated in outdoor_mode
     floor_holes_are_drops: false   # false: a floor zone with no return (dark floor at a glancing angle) is
                                # "not seen": driven up to, never onto, and not planned round. true: a drop
     drive_on_unknown_floor: false   # false = never drive onto floor the ToF cannot read (very dark or shiny).
@@ -197,6 +199,7 @@
     face_camera_size: [1920, 1080]   # enroll / match / follow (was [640, 480] for the V2)
     camera_inverted: true      # mounted upside down: rotated 180 deg (ISP on the ribbon camera, software on USB)
     head_tilt_offset_deg: 21.0 # the head (camera and ToF) looks this far UP at tilt 0, its straight position
+    imu_on_gimbal: true        # true: /motion_health pitch_deg comes from the gimbal-mounted IMU (true head tilt, no double-count)
     head_height_m: 0.22        # MEASURED 2026-11-18: ToF height above the floor, head level
     tof_from_right_m: 0.10     # MEASURED 2026-11-18: ToF centre from the robot's right side (centre = robot_width_m / 2)
     pan_axis_x_m: 0.0          # 2026-11-19: the gimbal pan axis is at the robot centre

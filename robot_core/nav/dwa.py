@@ -37,9 +37,11 @@ class DwaParams:
     dt: float = 0.1
     nv: int = 9
     nw: int = 25
-    radius_m: float = 0.177        # the footprint as a circle: half the 25 x 25 cm diagonal
-    margin_m: float = 0.04         # an arc must keep this clear beyond the radius (sideways the 0.177 m circle
-                                   # is already 5 cm wider than the 25 cm square): ~0.5 m gaps are passable
+    radius_m: float = 0.177        # circumscribed circle (half the 25 x 25 cm diagonal), for turn-in-place / fallback
+    half_l_m: float = 0.125        # physical body half-length (along heading)
+    half_w_m: float = 0.125        # physical body half-width (sideways)
+    side_pad_m: float = 0.04       # extra body pad on flat sides (0.165 + 0.04 = 0.205 m sideways vs 0.217 m circle)
+    margin_m: float = 0.04         # an arc must keep this clear beyond the body edge
     nose_m: float = 0.10           # ...and a point this far ahead of the centre must keep nose_clear_m clear, so
     nose_clear_m: float = 0.17     # head-on it stays 0.27 m from what is ahead (the reflex brakes at 0.25)
     clear_cap_m: float = 0.5       # clearance beyond radius + this counts no better
@@ -72,6 +74,26 @@ def arcs(x: float, y: float, th: float, vs: np.ndarray, ws: np.ndarray, horizon:
     return xs, ys, ths
 
 
+def rect_clearance(xs: np.ndarray, ys: np.ndarray, ths: np.ndarray, clearance_fn,
+                   half_l: float, half_w: float, side_pad: float = 0.04) -> np.ndarray:
+    """Oriented body clearance (m) along heading: a 3-circle capsule of half-width
+    `r_side = half_w + side_pad` (0.165 m -> 0.205 m with margin) and axial offset `d`
+    chosen so `r_side + d*cos(45) >= diag` (0.177 m), covering all 4 square corners
+    during turns while reclaiming ~1.2 cm/side when driving straight past walls and doors."""
+    shape = xs.shape
+    r_side = half_w + side_pad
+    diag = math.hypot(half_l, half_w)
+    d = max(0.0, (diag - r_side) / math.sqrt(0.5))      # ensures r_side + d*cos(45) >= diag (no corner clips)
+    c, s = np.cos(ths), np.sin(ths)
+    clear = clearance_fn(xs.ravel(), ys.ravel()).reshape(shape) - r_side
+    if d > 1e-4:
+        for sign in (-1.0, 1.0):
+            px = xs + sign * d * c
+            py = ys + sign * d * s
+            clear = np.minimum(clear, clearance_fn(px.ravel(), py.ravel()).reshape(shape) - r_side)
+    return clear
+
+
 def plan(state: Sequence[float], target: Sequence[float], clearance_fn, p: DwaParams = DwaParams(),
          stop_at_m: float = 0.0) -> DwaResult:
     """state: (x, y, heading, v, w) with v, w measured (or last commanded). target: (x, y).
@@ -88,11 +110,12 @@ def plan(state: Sequence[float], target: Sequence[float], clearance_fn, p: DwaPa
     ws1 = np.unique(np.concatenate([np.linspace(wlo, whi, p.nw), [0.0] if wlo <= 0.0 <= whi else []]))
     V, W = (a.ravel() for a in np.meshgrid(vs1, ws1, indexing="ij"))
     xs, ys, ths = arcs(x, y, th, V, W, p.horizon_s, p.dt)
-    clear = clearance_fn(xs.ravel(), ys.ravel()).reshape(xs.shape) - p.radius_m
+    clear = rect_clearance(xs, ys, ths, clearance_fn, p.half_l_m, p.half_w_m, p.side_pad_m)
     # The nose: head-on is where the reflex looks, so it must stay further from things ahead than to the side.
     nose = clearance_fn((xs + p.nose_m * np.cos(ths)).ravel(), (ys + p.nose_m * np.sin(ths)).ravel()).reshape(xs.shape)
     clear = np.minimum(clear, nose - p.nose_clear_m + p.margin_m)
-    here = float(clearance_fn(np.array([x]), np.array([y]))[0]) - p.radius_m
+    here = float(rect_clearance(np.array([x]), np.array([y]), np.array([th]),
+                                clearance_fn, p.half_l_m, p.half_w_m, p.side_pad_m)[0])
     here = min(here, float(clearance_fn(np.array([x + p.nose_m * math.cos(th)]),
                                         np.array([y + p.nose_m * math.sin(th)]))[0]) - p.nose_clear_m + p.margin_m)
     # Starting inside the margin (stopped close to something): an arc may not get any closer.

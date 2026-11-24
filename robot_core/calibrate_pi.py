@@ -71,8 +71,9 @@ class Rig:
     def imu(self):
         if self._imu is None and self.dt.get("imu_fitted", False):
             from robot_core.sensors.imu import Imu
+            # auto_tare_level=False so calibration measures the raw un-offset mounting pitch & roll
             self._imu = Imu(bus=int(self.dt.get("imu_bus", 1)), axes=list(self.dt.get("imu_axes", ["x", "y", "z"])),
-                            gyro_addr=int(self.dt.get("imu_gyro_addr", 0x69)))
+                            gyro_addr=int(self.dt.get("imu_gyro_addr", 0x69)), auto_tare_level=False)
             progress("zeroing the gyro: keep the robot still")
             self._imu.wait_calibrated(6.0)
         return self._imu
@@ -147,9 +148,9 @@ class Rig:
         keys_ex = ("pan_center_us", "tilt_center_us", "pan_us_per_deg", "tilt_us_per_deg", "pan_invert", "tilt_invert",
                    "head_height_m", "head_tilt_offset_deg", "hfov_deg", "tof_range_scale", "tof_range_offset_m",
                    "tof_tilt", "tof_flip_rows", "tof_flip_cols", "tof_perpendicular", "tof_fitted", "head_backlash_deg",
-                   "robot_width_m", "tof_pan_offset_deg", "pan_axis_x_m")
+                   "robot_width_m", "tof_pan_offset_deg", "pan_axis_x_m", "imu_on_gimbal")
         keys_dt = ("ticks_per_cm", "ticks_per_degree", "odom_swap_sides", "imu_fitted", "imu_axes",
-                   "tfluna_floor_cm", "drop_guard")
+                   "imu_on_gimbal", "imu_pitch_offset_deg", "tfluna_floor_cm", "drop_guard")
         return {"host": socket.gethostname(), "repo": str(REPO),
                 "explorer": {k: self.ex.get(k) for k in keys_ex},
                 "drivetrain": {k: self.dt.get(k) for k in keys_dt},
@@ -306,6 +307,14 @@ class Rig:
             progress(f"{max(0, round(seconds - (time.monotonic() - t0)))} s")
         b = self.totals
         return self.physical(b[0] - a[0], b[1] - a[1])
+
+    def cmd_gimbal_move(self, pan: float = 0.0, tilt: float = 0.0) -> dict:
+        """Command the gimbal directly to (pan, tilt) in commanded degrees and wait for it to settle."""
+        g = self.gimbal()
+        g.move_to(float(pan), float(tilt), wait=True)
+        time.sleep(0.3)
+        p, t = g.angles()
+        return {"pan_deg": round(p, 2), "tilt_deg": round(t, 2)}
 
     def cmd_imu_read(self, seconds: float = 2.0) -> dict:
         imu = self.imu()

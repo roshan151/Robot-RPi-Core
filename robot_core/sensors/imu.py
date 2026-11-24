@@ -120,15 +120,21 @@ class Fusion:
     """Samples in (robot axes) -> angles out. No clock, no thread: `update(sample, dt)`."""
 
     def __init__(self, accel_weight: float = 0.02, still_spread_dps: float = 1.0,
-                 window: int = 100, jolt_window: int = 50) -> None:
+                 window: int = 100, jolt_window: int = 50,
+                 auto_tare_level: bool = False, max_tare_deg: float = 12.0) -> None:
         self.k = accel_weight
         self.still_spread = still_spread_dps
         self.pitch = self.roll = self.yaw = self.yaw_rate = 0.0      # degrees
         self.bias = [0.0, 0.0, 0.0]
         self.calibrated = False
+        self.auto_tare_level = bool(auto_tare_level)
+        self.max_tare_deg = float(max_tare_deg)
+        self.pitch_tare = self.roll_tare = 0.0
+        self.level_tared = False
         self.moving = False                    # told from outside: no zeroing during a move
         self._gyro: deque = deque(maxlen=window)
         self._accel: deque = deque(maxlen=window)
+        self._pr: deque = deque(maxlen=window)
         self._jolt: deque = deque(maxlen=jolt_window)
         self._started = False
 
@@ -136,7 +142,9 @@ class Fusion:
         ax, ay, az = accel
         norm = math.sqrt(ax * ax + ay * ay + az * az)
         self._jolt.append(abs(norm - 1.0))
-        self._zero(gyro, norm)
+        p_acc = math.degrees(math.atan2(ax, math.sqrt(ay * ay + az * az)))
+        r_acc = math.degrees(math.atan2(ay, az))
+        self._zero(gyro, norm, p_acc, r_acc)
         gx, gy, gz = (g - b for g, b in zip(gyro, self.bias))
         # Right-hand turns about forward / left / up: roll right-side-down, nose DOWN, yaw left.
         self.roll += gx * dt
@@ -144,22 +152,24 @@ class Fusion:
         self.yaw += gz * dt
         self.yaw_rate = gz
         if abs(norm - 1.0) < 0.15:             # only gravity on it: let it pull the angles back
-            p = math.degrees(math.atan2(ax, math.sqrt(ay * ay + az * az)))
-            r = math.degrees(math.atan2(ay, az))
             k = self.k if self._started else 1.0
-            self.pitch += k * (p - self.pitch)
-            self.roll += k * (r - self.roll)
+            self.pitch += k * (p_acc - self.pitch)
+            self.roll += k * (r_acc - self.roll)
             self._started = True
 
-    def _zero(self, gyro: Sequence[float], norm: float) -> None:
+    def _zero(self, gyro: Sequence[float], norm: float, p_acc: float, r_acc: float) -> None:
         """A full window with the gyro steady and only gravity on the accelerometer
-        is the robot standing still: its mean is the gyro's zero."""
+        is the robot standing still: its mean is the gyro's zero. On the first
+        stationary window, optionally auto-tares pitch & roll (within max_tare_deg)
+        so mounting/chassis drift never turns flat floor into false obstacles."""
         if self.moving:
             self._gyro.clear()
             self._accel.clear()
+            self._pr.clear()
             return
         self._gyro.append(tuple(gyro))
         self._accel.append(norm)
+        self._pr.append((p_acc, r_acc))
         if len(self._gyro) < self._gyro.maxlen:
             return
         cols = list(zip(*self._gyro))
@@ -169,26 +179,40 @@ class Fusion:
         # Once zeroed, a mean far from the last zero is a slow steady turn, not drift.
         if steady and (not self.calibrated or all(abs(m - b) < 3.0 for m, b in zip(mean, self.bias))):
             self.bias, self.calibrated = mean, True
+            if self.auto_tare_level and not self.level_tared and abs(sum(self._accel) / len(self._accel) - 1.0) < 0.15:
+                p0 = sum(p for p, _ in self._pr) / len(self._pr)
+                r0 = sum(r for _, r in self._pr) / len(self._pr)
+                if abs(p0) <= self.max_tare_deg and abs(r0) <= self.max_tare_deg:
+                    self.pitch_tare, self.roll_tare, self.level_tared = p0, r0, True
+                    log.info("imu: auto-tared level at pitch=%.2f deg, roll=%.2f deg", p0, r0)
+                else:
+                    log.warning("imu: startup tilt (pitch=%.1f, roll=%.1f deg) exceeds %.1f deg; skipping auto-tare",
+                                p0, r0, self.max_tare_deg)
         self._gyro.clear()
         self._accel.clear()
+        self._pr.clear()
 
     def state(self, t: float) -> ImuState:
-        return ImuState(t, self.pitch, self.roll, self.yaw, self.yaw_rate,
-                        max(self._jolt, default=0.0), self.calibrated)
+        return ImuState(t, self.pitch - self.pitch_tare, self.roll - self.roll_tare,
+                        self.yaw, self.yaw_rate, max(self._jolt, default=0.0), self.calibrated)
 
 
 class Imu:
     def __init__(self, bus: int = 1, axes: Sequence[str] = ("x", "y", "z"), hz: float = 100.0,
                  gyro_addr: int = GYRO_ADDR,
-                 source: Optional[Callable[[], Sample]] = None, pitch_offset_deg: float = 0.0) -> None:
-        """`pitch_offset_deg`: what the IMU reads with the robot on flat floor (the board is not
-        mounted quite level): taken off every pitch, so flat floor reads 0."""
+                 source: Optional[Callable[[], Sample]] = None, pitch_offset_deg: float = 0.0,
+                 auto_tare_level: bool = True, max_tare_deg: float = 12.0) -> None:
+        """`pitch_offset_deg`: fallback flat-floor pitch offset before startup auto-tare completes.
+        `auto_tare_level`: when True, measures flat-floor pitch and roll during the first stationary
+        calibration window (within `max_tare_deg`) so mounting/chassis drift never turns flat floor
+        into false obstacles."""
         self._chips, self._pitch0 = None, float(pitch_offset_deg)
         if source is None:
             self._chips = Chips(bus, gyro_addr)
             source = self._chips.read
         self._read, self._map, self._period = source, axis_map(axes), 1.0 / hz
-        self._fusion = Fusion(window=max(10, int(hz)), jolt_window=max(5, int(hz / 2)))
+        self._fusion = Fusion(window=max(10, int(hz)), jolt_window=max(5, int(hz / 2)),
+                              auto_tare_level=auto_tare_level, max_tare_deg=max_tare_deg)
         self._lock = threading.Lock()
         self._state: Optional[ImuState] = None
         self._stop = threading.Event()
@@ -219,7 +243,8 @@ class Imu:
         """The latest angles, or None before the first sample."""
         with self._lock:
             st = self._state
-        return st if st is None or not self._pitch0 else replace(st, pitch_deg=st.pitch_deg - self._pitch0)
+            tared = self._fusion.level_tared
+        return st if st is None or tared or not self._pitch0 else replace(st, pitch_deg=st.pitch_deg - self._pitch0)
 
     def set_moving(self, moving: bool) -> None:
         """The gyro's zero is only measured while this is False (the drivetrain says so)."""

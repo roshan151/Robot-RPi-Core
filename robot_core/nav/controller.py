@@ -173,7 +173,8 @@ class LocalNav:
         self.head, self.motion, self.clock = head, motion, clock
         self.fix = PoseFix(pose)
         self.twist = twist
-        self.params = params or dwa.DwaParams(radius_m=math.hypot(p.width_m / 2.0, p.width_m / 2.0))   # square
+        half = p.width_m / 2.0
+        self.params = params or dwa.DwaParams(radius_m=math.hypot(half, half), half_l_m=half, half_w_m=half)   # square
         # What the global planner is asked to keep clear: DWA's radius + margin + PLAN_EXTRA_M. Planned with DWA's
         # bare radius, the Mac's path hugged a wall 0.22 m off past a door frame, DWA (which also wants room at the
         # nose) could not follow it, and the robot stood turning in the doorway (test_scenarios doorway).
