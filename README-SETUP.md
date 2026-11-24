@@ -97,7 +97,7 @@ Stop the service before running `./start_robot.sh` by hand (`sudo systemctl stop
 
 ## 6. The other two machines
 
-**Mac mini (vision service).** In the `Vision-Microservice` folder on the Mac: `make deploy` (creates the venv, installs, runs tests, starts it), then `make status`. If the robot seems blind, check `GET /healthz`. For `/v1/ask`, set `GEMINI_API_KEY` on the Mac and/or run `ollama pull qwen3-vl:8b`.
+**Mac mini (vision service).** In the `Vision-And-Planning` folder on the Mac: `make deploy` (creates the venv, installs, runs tests, starts it), then `make status`. If the robot seems blind, check `GET /healthz`. For `/v1/ask`, set `GEMINI_API_KEY` on the Mac and/or run `ollama pull qwen3-vl:8b`.
 
 **Arduino (drivetrain firmware).** Plug the Arduino into the **Mac** and run, once: `brew install arduino-cli && arduino-cli core install arduino:avr`. Then `./flash.sh` (override with `PORT=` and `FQBN=` if needed; the script header lists board types). The boot line must say `drv8871-v5-odo`. Or use the Arduino IDE on `firmware/drivetrain/drivetrain.ino`. You can test upload and serial without motors connected. Afterwards plug it into the Pi; the port is `/dev/ttyUSB0` or `/dev/ttyACM0` (set `ROBOT_SERIAL_PORT` in `/etc/robot.env` if it is the second).
 
@@ -132,13 +132,11 @@ sudo systemctl restart robot-voice
 
 Because the workspace is built with `--symlink-install`, edits to existing Python files only need the restart. New packages and new `.msg`/`.action` files need the `./install_pi.sh` build step.
 
-## Laptop (tests only, no Pi needed)
+## Testing
 
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-pytest
-```
+All testing runs from the Mac in Monitoring-Service: `python test_software.py` (Vision-And-Planning
+and the robot's code end to end, nothing moves) and `python test_hardware.py` (the running robot).
+Each opens a plain-English results page.
 
 ## About ROS on the Pi
 

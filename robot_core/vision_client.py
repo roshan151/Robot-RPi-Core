@@ -1,4 +1,4 @@
-"""Client for the vision service on the Mac (Vision-Microservice).
+"""Client for the vision service on the Mac (Vision-And-Planning).
 
 The one place on the Pi that knows the endpoint paths. Explore mode is a
 sequential mission — it waits for each answer before acting — so this is a
@@ -39,6 +39,14 @@ PATH_CLEAR_Q = (
     '{{"clear": true|false, "reason": "<short>"}}')
 
 
+DESCRIBE_PLANT_Q = (
+    "This photo was taken by a small home robot of a plant it found. What plant "
+    "is it? Answer JSON: "
+    '{"name": "<common name, or unknown>", "species": "<botanical name, or unknown>", '
+    '"condition": "<healthy | dry | wilting | yellowing | other, in a few words>", '
+    '"pot": "<the pot or stand in a few words>", "confidence": 0..1}')
+
+
 class VisionClient:
     def __init__(self, base_url: str = settings.VISION_SERVICE_BASE_URL,
                  timeout_s: float = 10.0, vlm_timeout_s: float = 60.0) -> None:
@@ -65,8 +73,8 @@ class VisionClient:
     def _files(jpegs: Sequence[bytes], field: str = "images") -> list:
         return [(field, (f"{i}.jpg", b, "image/jpeg")) for i, b in enumerate(jpegs)]
 
-    def health(self) -> dict:
-        return self._call("GET", "/healthz")
+    def health(self, timeout: Optional[float] = None) -> dict:
+        return self._call("GET", "/healthz", timeout=timeout)
 
     # ----------------------------------------------------------- detection
 
@@ -96,17 +104,60 @@ class VisionClient:
 
     def follow_step(self, jpeg: bytes, seq: int, pan_deg: float = 0.0, tilt_deg: float = 0.0,
                     hfov_deg: float = 66.0, camera_height_m: float = 0.25,
-                    range_m: Optional[float] = None) -> dict:
-        """Where the person is and how to move: turn `turn_deg` (+ right), then drive `drive_m`."""
+                    range_m: Optional[float] = None, tof_grid=None, tof_fov_deg: float = 60.0,
+                    hint_deg: Optional[float] = None, pose=None,
+                    tof_pan_offset_deg: Optional[float] = None,
+                    tof_tilt_offset_deg: Optional[float] = None) -> dict:
+        """Where the person is and how to move: turn `turn_deg` (+ right), then drive `drive_m`.
+        tof_grid: the 8x8 ToF's rows (metres, None = no range; row 0 the top, column 0 the
+        left, as the camera sees), for the Mac to range every person in view. hint_deg:
+        where the person was last seen, from the robot's present heading (+ left)."""
         data = {"seq": seq, "pan_deg": pan_deg, "tilt_deg": tilt_deg, "hfov_deg": hfov_deg,
                 "camera_height_m": camera_height_m}
         if range_m is not None:
             data["range_m"] = range_m
+        if tof_grid is not None:
+            data["tof_grid"] = json.dumps([[None if v is None else round(v, 3) for v in row] for row in tof_grid])
+            data["tof_fov_deg"] = tof_fov_deg
+        if tof_pan_offset_deg is not None:
+            data["tof_pan_offset_deg"] = float(tof_pan_offset_deg)
+        if tof_tilt_offset_deg is not None:
+            data["tof_tilt_offset_deg"] = float(tof_tilt_offset_deg)
+        if hint_deg is not None:
+            data["hint_deg"] = hint_deg
+        if pose is not None:                              # lets the Mac put what the camera sees on its map
+            data["pose"] = json.dumps([round(float(v), 4) for v in pose])
         return self._call("POST", "/v1/follow/step", timeout=20.0, data=data,
                           files={"image": ("f.jpg", jpeg, "image/jpeg")})
 
     def follow_stop(self) -> dict:
         return self._call("POST", "/v1/follow/stop")
+
+    # ---------------------------------------------------------- navigation
+
+    def nav_frame(self, jpeg: bytes, t: float, pose, pan_deg: float, tilt_deg: float, tof=None) -> dict:
+        """One frame of the camera stream, for the Mac's visual SLAM: its capture time (the Pi's
+        monotonic clock), the odometry pose then, where the head pointed, and the ToF grid nearest
+        it ({"rows", "age_s"}: grid time minus capture time), whose ranges give SLAM its scale."""
+        data = {"t": round(t, 4), "pan_deg": round(pan_deg, 2), "tilt_deg": round(tilt_deg, 2)}
+        if tof is not None:
+            data["tof"] = json.dumps(tof, separators=(",", ":"))
+        if pose is not None:
+            data["pose"] = json.dumps([round(float(v), 4) for v in pose])
+        return self._call("POST", "/v1/nav/frame", timeout=2.0, data=data,
+                          files={"image": ("f.jpg", jpeg, "image/jpeg")})
+
+    def nav_plan(self, pose, goal, radius_m: float, local: Optional[dict] = None, target=None) -> Optional[list]:
+        """Waypoints [(x, y), ...] from `pose` to `goal` in the odometry frame (the Mac plans with
+        Theta* on its global map, corrected by visual SLAM), or None when it finds no way. `local`:
+        the Pi's rolling costmap (RollingCostmap.snapshot), folded into the global map first. `target`:
+        what the goal is for (the person it stops short of): the Mac keeps the goal on its side of walls."""
+        body = {"pose": [float(v) for v in pose], "goal": [float(v) for v in goal],
+                "radius_m": radius_m, "local": local}
+        if target is not None:
+            body["target"] = [float(v) for v in target[:2]]
+        out = self._call("POST", "/v1/nav/plan", timeout=3.0, ok_404=True, json=body)
+        return None if not out or not out.get("path") else [tuple(p) for p in out["path"]]
 
     # -------------------------------------------------------------- plants
 
@@ -118,7 +169,7 @@ class VisionClient:
                     top_k: int = 3) -> dict:
         body = {"embedding": embedding, "top_k": top_k}
         if position is not None:
-            body["position"] = list(position[:2])
+            body["position"] = list(position[:3])       # x, y on the map and, when known, height above the floor
         return self._call("POST", "/v1/plants/match", json=body)
 
     def plant_enroll(self, jpegs: Sequence[bytes], label: str = "", meta: Optional[dict] = None) -> dict:
@@ -163,6 +214,13 @@ class VisionClient:
         log.info("VLM same-plant: %s (%s)", parsed.get("same"), parsed.get("reason"))
         return bool(parsed["same"]) if float(parsed.get("confidence", 1.0)) >= 0.6 else None
 
+    def describe_plant(self, jpeg: bytes) -> Optional[dict]:
+        """What the image+text model says the plant is: {name, species, condition,
+        pot, confidence}. None when no model answered; the plant is saved without it."""
+        res = self.ask(DESCRIBE_PLANT_Q, [jpeg], as_json=True)
+        parsed = (res or {}).get("parsed")
+        return parsed if isinstance(parsed, dict) and parsed.get("name") else None
+
     def path_clear(self, forward_jpeg: bytes, distance_m: float) -> Optional[bool]:
         res = self.ask(PATH_CLEAR_Q.format(d=distance_m), [forward_jpeg], as_json=True)
         parsed = (res or {}).get("parsed") or {}
@@ -180,10 +238,28 @@ class VisionClient:
                           json={"name": name, "initial_pose": list(initial_pose), "load": load,
                                 "explore_radius_m": explore_radius_m, "no_behind": no_behind})
 
-    def slam_keyframe(self, odom, rays, sensor_xy=(0.0, 0.0), obstacles=(), plan: bool = True) -> dict:
+    def slam_keyframe(self, odom, rays, sensor_xy=(0.0, 0.0), obstacles=(), plan: bool = True,
+                      low=(), drops=(), clear=(), cloud=()) -> dict:
+        """Everything in base_link at `odom`. obstacles, low, drops: [[x, y]], floor-probe
+        obstacles, low obstacles the ToF saw, places where the floor falls away. clear:
+        [[bearing, range]] rays along which the floor was seen that far and nothing was in
+        the way (free space, no wall at the end). cloud: [[x, y, height]], every ToF reading."""
         return self._call("POST", "/v1/slam/keyframe", timeout=30.0, json={
             "odom": list(odom), "rays": [[b, r] for b, r in rays],
-            "sensor_xy": list(sensor_xy), "obstacles": [list(p) for p in obstacles], "plan": plan})
+            "sensor_xy": list(sensor_xy), "obstacles": [list(p) for p in obstacles],
+            "low": [list(p) for p in low], "drops": [list(p) for p in drops],
+            "clear": [[b, r] for b, r in clear], "cloud": [list(p) for p in cloud], "plan": plan})
+
+    def recon_frame(self, jpeg: bytes, meta: dict) -> bool:
+        """One explore scan frame for the Mac's 3-D mesh, with where it was taken (Explorer._recon).
+        False if the Mac did not take it; the scan carries on either way."""
+        try:
+            self._call("POST", "/v1/recon/frame", timeout=5.0, data={"meta": json.dumps(meta)},
+                       files={"image": ("f.jpg", jpeg, "image/jpeg")})
+            return True
+        except VisionError as exc:
+            log.warning("recon frame not sent: %s", exc)
+            return False
 
     def slam_plan(self, start, goal) -> Optional[list]:
         res = self._call("POST", "/v1/slam/plan", ok_422=True, timeout=30.0,

@@ -6,7 +6,7 @@ A Raspberry Pi robot that listens (Gemini Live voice), looks (camera + TF-Luna o
 
 ## Repository layout
 
-Two layers, and the boundary is the point. `robot_core/` is the robot as plain Python and imports **no ROS**; `ros2_ws/` is thin nodes that call into it. That keeps the tests runnable on a laptop and means deleting `ros2_ws/` still leaves a working robot. `tests/test_layering.py` enforces it.
+Two layers, and the boundary is the point. `robot_core/` is the robot as plain Python and imports **no ROS**; `ros2_ws/` is thin nodes that call into it. That means deleting `ros2_ws/` still leaves a working robot. `Monitoring-Service/test_software.py robot` checks it.
 
 | Path | Purpose |
 |------|--------|
@@ -14,8 +14,9 @@ Two layers, and the boundary is the point. `robot_core/` is the robot as plain P
 | `robot_core/settings.py` | Every setting, with its environment variable and default |
 | `robot_core/drivetrain/` | Framed serial protocol, the Arduino bridge, `SerialDrivetrain` |
 | `robot_core/motion_executor.py`, `motion.py` | The move queue that owns the serial link, and the `MotionBackend` seam the tools call |
-| `robot_core/odometry.py` | Wheel odometry, drift estimate, and motion health (stalled / slipping / pushed) |
-| `robot_core/sensors/` | Pan/tilt gimbal, TF-Luna, camera, visual motion, and the `Head` that combines them |
+| `robot_core/odometry.py` | Wheel odometry (gyro heading with the IMU), drift estimate, motion health (stalled / slipping / pushed / tilted / bumped), turn trim |
+| `robot_core/sensors/` | Pan/tilt gimbal, 8x8 ToF (`tof8x8.py`), IMU (`imu.py`), TF-Luna, camera, visual motion, and the `Head` that combines them |
+| `robot_core/terrain.py` | The floor ahead from the ToF: flat, climbable, blocked, drop |
 | `robot_core/explore/` | The explore mission: scan, plan, find plants, photograph them |
 | `robot_core/face_tasks.py`, `vision_client.py` | Voice-triggered face enroll/match, and the client for the Mac service |
 | `robot_core/live/` | The Gemini Live session (`agent.py`) and its tools (`tools.py`: drive, turn, stop, answer, run_task) |
@@ -25,18 +26,19 @@ Two layers, and the boundary is the point. `robot_core/` is the robot as plain P
 | `ros2_ws/src/` | ROS 2 nodes: `robot_interfaces` (actions, messages), `robot_drivetrain`, `robot_voice`, `robot_explore`, `robot_vision` (Mac-service client node), `robot_display` (OLED + power watcher), `robot_bringup` (launch files, `robot.yaml`) |
 | `install_pi.sh`, `cleanup_pi.sh`, `README-SETUP.md`, `start_robot.sh`, `robot-voice.service` | Pi installer and its guide, the launcher, the boot service |
 | `flash.sh`, `check_bt_audio.sh`, `vision_test.py`, `read_log.py` | Flash the Arduino (from the Mac), check the buds' audio, test the vision service, read `logs.json` |
-| `tests/` | Unit tests (no hardware or ROS needed); `tests/hardware/` needs the real robot |
-| `docs/` | `PLAN.md`, `VISION-DESIGN.md`, `EXPLORE-DESIGN.md`, `FOLLOW-DESIGN.md`, `HARDWARE-BASICS.md` |
+| (tests) | None here: all testing runs from the Mac in Monitoring-Service: `test_software.py` (the code end to end, nothing moves), `test_hardware.py` (the running robot) and `calibrate.py` ("Calibration and checks") |
+| `docs/` | `PLAN.md`, `VISION-DESIGN.md`, `EXPLORE-DESIGN.md`, `FOLLOW-DESIGN.md`, `TERRAIN-DESIGN.md`, `HARDWARE-BASICS.md` |
 
-The Mac service lives in its own repo, **Vision-Microservice**.
+The Mac service lives in its own repo, **Vision-And-Planning** (on GitHub still `roshan151/Vision-And-Planning`).
 
 ## Hardware (summary)
 
 - **Raspberry Pi 4B** (64-bit OS): voice, camera, head, serial to the Arduino
-- **Arduino** (Uno-class): 2× DRV8871 motor drivers, quadrature encoders, serial watchdog; separate motor battery, common ground
-- **Head:** Pi camera (mounted inverted), TF-Luna range sensor (UART) and two hobby servos: pan on GPIO13 (±90°), tilt on GPIO12 (±45°)
+- **Arduino** (Uno-class): 2× DRV8871 motor drivers, quadrature encoders, serial watchdog, TF-Luna drop sensor on I2C (see "TF-Luna on the Arduino"); separate motor battery, common ground
+- **Head:** Pi camera (mounted inverted) and two hobby servos: pan on GPIO13 (±90°), tilt on GPIO12 (±45°)
+- **IMU** (Fermion 10 DOF, BMI323) on the base, on I2C, and **8x8 ToF** (Gravity SEN0628) on the head, also on I2C: see "IMU and ToF sensors"
 - **Bluetooth buds** for microphone and speaker
-- **Mac mini** on the LAN running Vision-Microservice
+- **Mac mini** on the LAN running Vision-And-Planning
 
 Wiring, power and encoder notes are in the Electrical Schematics section below.
 
@@ -138,7 +140,7 @@ ros2 topic echo /explore/status     # what it is doing, in plain English
 
 The robot stops, sweeps the TF-Luna ±45° on the head in each of four directions (a 360° scan), and sends that keyframe to the Mac. The Mac matches it into the map, corrects the drifting wheel odometry, and returns a path to the nearest unexplored area. Whenever the camera sees a plant, the robot ranges it, checks the plant register on the Mac, then drives to 3–4 viewpoints around it and saves a photo from each. New plants are enrolled as `plant_NNN`; known plants get a new visit, which is what growth tracking reads. Before every drive step the head tilts down to check the floor, which catches low obstacles and drops that the level sweep misses.
 
-- **Map:** `http://<mac>:8080/v1/slam/map.png` (plants marked in red). **Stored on the Mac only** (the Pi keeps nothing), in the Vision-Microservice folder: photos in `plants/map_{index}/plant_{NNN}/photo_{i}.png` + `bbox_{i}.txt` (a new map gets a new `map_{index}`), maps in `maps/<name>.npz` + `.png`, rewritten after every scan.
+- **Map:** `http://<mac>:8080/v1/slam/map.png` (plants marked in red). **Stored on the Mac only** (the Pi keeps nothing), in the Vision-And-Planning folder: photos in `plants/map_{index}/plant_{NNN}/photo_{i}.png` + `bbox_{i}.txt` (a new map gets a new `map_{index}`), maps in `maps/<name>.npz` + `.png`, rewritten after every scan.
 - **Guard rails** (`/explorer` in `robot.yaml`, or `--ros-args -p no_behind:=true -p explore_radius_m:=5.0`): `explore_radius_m` (default `10`, `0` = unlimited) only explores within that radius of `start_pose`; `no_behind: true` only explores ahead of the start heading. Both apply to where it drives and which plants it photographs; the 360° scans still map everything around it. When nothing inside the limits is left, the run ends as complete.
 - **Re-scan later on the same map:** set `continue_map: true` and `start_pose` (where the robot stands, read off the map) under `/explorer` in `robot.yaml`.
 - **Motion health:** `ros2 topic echo /motion_health` compares the command, the encoders and the camera. It reports `stalled` (wheels blocked), `slipping` (wheels turning, image static), `pushed`, or `wrong_direction`; the drivetrain brakes on stalled or slipping.
@@ -158,7 +160,7 @@ In command mode, say it to the robot: *"remember my face, I'm Sam"* (`enroll_fac
 
 For face tasks the head **searches for you**: it sweeps pan ±45° at 0°, 20° and 40° up (never below level), stops on the first face, centres it, and holds while it captures, then parks. Tilt is limited to ±45° everywhere; face tasks narrow it to 0°/+45°. The durations are set in [Common variables](#common-variables).
 
-The voice session **closes for the whole task**, then reopens. While the task runs, a cancel-only voice session listens: say *"stop"* / *"Robin stop"* / *"that's enough"* and the robot brakes and ends the task (needs internet). Without internet: `ros2 service call /task/stop std_srvs/srv/Trigger`. See [docs/TASK-CANCEL.md](docs/TASK-CANCEL.md). The robot answers by gesture: **nod = it worked / the face is known / it stopped when asked, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-Microservice/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
+The voice session **closes for the whole task**, then reopens. While the task runs, a cancel-only voice session listens: say *"stop"* / *"Robin stop"* / *"that's enough"* and the robot brakes and ends the task (needs internet). Without internet: `ros2 service call /task/stop std_srvs/srv/Trigger`. See [docs/TASK-CANCEL.md](docs/TASK-CANCEL.md). The robot answers by gesture: **nod = it worked / the face is known / it stopped when asked, shake = it failed / the face is unknown** (for explore: nod = finished cleanly). Faces are saved on the Mac as `Vision-And-Planning/faces/<name>/photo_{i}.png` + `bbox_{i}.txt`.
 
 ### Shutting the Pi down by voice
 
@@ -184,7 +186,7 @@ A tool is a function the voice model can call. All of it lives in `robot_core/li
    ```
 3. **Register it** in the table inside `dispatch()`: `"beep": self._beep,` (use a lambda to pass defaults, as `look_left` does). The tool name shows on the OLED automatically, and exceptions become an `{"ok": False}` result instead of crashing the session.
 4. **Tell the model in the prompt**: add a line to the rules in `robot_core/settings.py` so it knows when to use the tool (for example *"beep(): ... "*).
-5. **Add a test** in `tests/test_robot_tools.py` (dispatch it, check the result), and add the name to the test that lists every tool (`test_*_tools_and_stop_takes_no_arguments`, rename its count), which will fail until you do.
+5. **Check it**: run `python test_software.py robot` in Monitoring-Service; "Voice assistant's tools ready" lists every tool the robot declares.
 
 If the tool needs hardware, create the object in the node and pass it in, the way `head` is: `run_live_agent(motion, run_task, head)` in `voice_node.py` hands it to `RobotTools(...)` through `robot_core/live/agent.py`.
 
@@ -222,9 +224,9 @@ Two SG90 micro servos move the head. Each has three wires: **yellow = signal, re
 - **Sense the servo supply (recommended).** The servos have their own switch, so the Pi cannot otherwise tell whether they are powered, and it keeps "moving" an unpowered head; the moment the switch goes on the servo dashes to where the software thinks it is. Wire a spare GPIO to the servo +5 V through a divider (10 kΩ from +5 V to the pin, 20 kΩ from the pin to GND; share the ground) and set `servo_power_gpio: <BCM pin>` in `robot.yaml`. While the pin reads low the head is frozen and `look_*` answers "head servos have no power"; switching on changes nothing, and motion resumes from where the head really is. A broken sense wire reads as "off", so it fails safe. `0` (default) = not fitted, supply assumed on.
 - **Fail-safe.** If the head's PWM output is ever not what the driver wrote (another process or driver reprogrammed the channel), a pulse jumps further than the speed limit allows, the 50 Hz loop crashes, or a second process already drives the head, the driver stops both PWM channels (the pull-downs hold the lines low, so the servos go limp instead of being driven), refuses every move, and shows `E-G04` to `E-G08` on the OLED. The fault is latched in `~/.cache/robot-head.fault`, so a restart does not retry: fix the cause, then run `python -m robot_core.sensors.gimbal reset`. It cannot see electrical faults (a sagging servo supply, a ground fault, noise on the signal); those need the wiring checks above.
 - **Switching order:** servo supply on after the Pi is up, off before the Pi is powered off. The voice `shutdown` parks the head and then stops the servo pulses itself (the head goes limp), so the Pi never halts while still driving a live pulse; cutting the servo supply afterwards is still the cleanest.
-- **Mechanics:** the pan servo can only turn about 170 degrees (pulses 500-2400 us). `pan_center_us` in `robot.yaml` is the pulse where the head faces straight ahead. With the horn fitted so that is near the end of the travel (currently 2300 us), pan only reaches -90 to +9 degrees; refit the horn so straight ahead is near 1500 us to get the full +-90. Tilt is currently centred at 1750 us and inverted, and reaches +-45 degrees.
+- **Mechanics:** the pan servo turns about 180 degrees over pulses 500-2500 us (`servo_min_us` / `servo_max_us`). `pan_center_us` in `robot.yaml` is the pulse where the head faces straight ahead. Centred at 1600 us (now), pan reaches -90 (right) to +81 (left); refit the horn one tooth so straight ahead is near 1500 us to get the full +-90. If the servo buzzes at full left, it is pressing on its end stop: set `servo_max_us` back to 2400 (+72). Tilt is currently centred at 1750 us and inverted, and reaches +-45 degrees.
 
-Tools: `python3 tests/hardware/check_head_diag.py` (read-only health report; paste its output when asking for help), `python tests/hardware/check_head.py` (four look commands with degree variables to find a good centre and sweet spot), `python -m robot_core.sensors.gimbal home` (go to the centres and keep holding), `... release` (let the servos go limp), `... move PAN [TILT]`, `... reset` (clear a latched fault after fixing its cause). The head remembers where it last rested in `~/.cache/robot-head.json` (a few bytes, overwritten) so a restart can begin from there.
+Tools: `python calibrate.py check` and `python calibrate.py head` in Monitoring-Service on the Mac (health report; head directions, true zero and height), `python -m robot_core.sensors.gimbal home` (go to the centres and keep holding), `... release` (let the servos go limp), `... move PAN [TILT]`, `... reset` (clear a latched fault after fixing its cause). The head remembers where it last rested in `~/.cache/robot-head.json` (a few bytes, overwritten) so a restart can begin from there.
 
 ## Status OLED and power dips
 
@@ -263,7 +265,7 @@ Roughly 10 to 30 mA at 3.3 V (about 0.03 to 0.1 W) for a mostly dark screen of s
 
 To measure it on your robot, compare the PiSugar amps (`echo "get battery_i" | nc -q 1 127.0.0.1 8423`) with the OLED wired and then unwired (with the robot idle); the difference is the screen's draw.
 
-`install_pi.sh` turns SPI on and installs the libraries (`pip install -e ".[oled]"`). Check the wiring with `python tests/hardware/check_oled.py` (stop `robot-voice` first, only one program can own the screen). After pulling this change, rebuild once for the new package: `cd ros2_ws && colcon build --symlink-install`.
+`install_pi.sh` turns SPI on and installs the libraries (`pip install -e ".[oled]"`). Check the wiring with `python calibrate.py check` in Monitoring-Service (it stops `robot-voice` for you, since only one program can own the screen, and offers an OLED test line). After pulling this change, rebuild once for the new package: `cd ros2_ws && colcon build --symlink-install`.
 
 The screen: a header in small print with the task, power state (`OK`, `DIP xN`), uptime and a battery icon (PiSugar, polled every 2 s; no icon if it does not answer); then rows of 21 characters: `TOOL` (the voice agent's current call); two detail lines (for explore, `plant_03 capturing 4/8`); a countdown or result (`enroll Sam 0:17`, then `Sam enrolled` or `Sam matched`). Every message is cut to 10 words.
 
@@ -285,6 +287,215 @@ Under-voltage: the firmware's live flag is polled about 5 times a second. Each d
 The screen is optional. With it unplugged or broken the robot runs the same, and the power watcher keeps going: every dip is written to `logs.json` as `power.dip` (cause, task, tool, battery, temp, flags, uptime) and `power.clear` (how long it lasted), plus `power.flag` (throttled, capped, hot), `power.earlier` and `power.lastdip`. Find them with `grep power logs.json`.
 
 The full list is `CODES` in `robot_core/status.py`; `RULES` there maps log warnings to codes.
+
+## Buzzer
+
+A passive buzzer lets the robot be understood without looking at its screen. The `display_node` plays three sounds from the same status messages it draws:
+
+| Sound | What you hear | When |
+|---|---|---|
+| **Online** | three quick rising notes, once | the voice session is up and the robot is waiting for a command (after boot, and after a lost session comes back) |
+| **Connecting** | two short low blips, every 1 s | the voice session is not up: booting, the session dropped (`L01`), the voice agent gave up, or a task (follow, enroll) has ended and the session has not reopened. Keeps going, however long, until the screen shows `mic: room` (or `mic: buds`: the agent opening its session again), "online", or a failure. Quiet while a task runs, since the session is closed on purpose then. One pair of blips alone = a passing error: vision unreachable or slow (`V01`, `V02`), motor command timeout (`S04`), audio error (`A01`) |
+| **Failure** | four falling notes, the last one long | something that will not fix itself: fatal error (`X02`), Arduino link lost (`S01`), emergency stop (`S03`), camera will not open (`C01`), head stopped or latched (`G04` to `G07`), explore aborted (`N03`). At most once every 8 s |
+
+### Wiring the buzzer
+
+Power the Pi off first. Use a **passive** buzzer (no built-in oscillator; it clicks, rather than beeps, on a battery).
+
+| Buzzer | Pi GPIO (BCM) | Pi physical pin |
+|---|---|---|
+| + (signal) | GPIO26 | 37, through a 100 ohm resistor |
+| - | GND | 39 (next to it) |
+
+```
+ pin 37 (GPIO26) ──[ 100 ohm ]── buzzer +
+ pin 39 (GND)    ─────────────── buzzer -
+```
+
+- **That is for a piezo disc**, which draws about a milliamp. A **magnetic** buzzer (the common 12 mm black can, 16 to 40 ohm coil) draws more than a GPIO pin may give: drive it through a small NPN transistor (2N2222 or S8050) instead: GPIO26 → 1 k → base; emitter → GND; buzzer between **3.3 V (pin 17)** and the collector; a diode (1N4148) across the buzzer, stripe to 3.3 V. If you cannot tell which you have, measure it: a few ohms to tens of ohms is magnetic, open circuit is piezo. A 3-pin buzzer *module* (VCC, I/O, GND) has the transistor on board: VCC to 3.3 V, I/O to pin 37, GND to pin 39.
+- **Do not use GPIO12, 13, 18 or 19.** Those are the Pi's two hardware PWM channels, which drive the head servos; a tone there corrupts the servo pulses and the head snaps. The buzzer's tone is timed in software on an ordinary pin instead, so its pitch can waver slightly when the Pi is busy.
+- GPIO26 clashes with nothing already wired: the OLED (GPIO8, 10, 11, 17, 25), the servos (12, 13), the servo power sense (4), I2C (2, 3) and the UART (14, 15).
+
+Check it with `python calibrate.py check` in Monitoring-Service, which offers to play the buzzer. The pin is `buzzer_pin` under `/display` in `robot.yaml`; `0` turns the sounds off. The tunes and the list of error codes for each sound are at the top of `robot_core/buzzer.py`. After pulling this change, rebuild the workspace (the launch files changed).
+
+## IMU and ToF sensors
+
+Both go on the Pi's I2C bus (four wires each to the GPIO header, sharing the same four pins). Neither needs the Arduino.
+
+| Sensor | What it is for | Where it goes | Code |
+|---|---|---|---|
+| **IMU**: DFRobot Fermion 10 DOF (SEN0697: BMI323 + BMM350 + BMP581). Only the BMI323 (accelerometer + gyro) is read | Pitch, roll and heading: turns that end at the asked angle, and a stop when the robot tilts too far | Flat on the base plate, near the middle, away from the motors | `robot_core/sensors/imu.py` |
+| **ToF**: DFRobot Gravity 8x8 matrix (SEN0628: VL53L7CX + RP2040) | 64 ranges across 60° x 60°, up to 3.5 m: the range to a person, and the shape of the floor ahead | On the head beside the camera, looking the same way | `robot_core/sensors/tof8x8.py` |
+
+What the robot does with them is in `docs/TERRAIN-DESIGN.md`.
+
+### Wiring the IMU
+
+Power the Pi off first. The board has two ways in carrying the same four signals: a row of pins labelled on its back, and a small 5-pin plug labelled `+ - C D NC` on its front. Use **one**, not both.
+
+| IMU pin (back) | Plug (front) | Pi GPIO (BCM) | Pi physical pin | What it does |
+|----------------|--------------|---------------|-----------------|--------------|
+| `3V3` | `+` | 3.3 V | 17 | Power. Use 3.3 V, not 5 V: it keeps the data lines at the Pi's level |
+| `GND` | `-` | GND | 9 | Ground |
+| `SDA` | `D` | GPIO2 (I2C1 SDA) | 3 | Data |
+| `SCL` | `C` | GPIO3 (I2C1 SCL) | 5 | Clock |
+| `INT1` to `INT4` | `NC` | | | Not connected |
+
+```
+ IMU           Pi header
+ 3V3  ───────  pin 17  (3.3 V)
+ GND  ───────  pin 9   (GND)
+ SDA  ───────  pin 3   (GPIO2)
+ SCL  ───────  pin 5   (GPIO3)
+```
+
+The plug takes the SH1.0 5-pin cable that comes with the board; cut its far end or crimp Dupont pins on it. Leave the three solder pads for the I2C addresses open, as shipped: the BMI323 is then at `0x69`, which nothing else on the robot uses.
+
+INT1 to INT4 are the chips' interrupt outputs (data ready, motion, tap, free-fall); the robot polls the chip instead, so they stay unconnected. Mount the board flat and screwed down, not on foam: it measures the plate's angle, and anything that wobbles reads as tilt. The robot's `robot.yaml` has it mounted **chips facing up, the printed Y arrow pointing to the robot's front and X to its left** (`imu_axes: ["y", "x", "-z"]`: the printed Z points into the board). Mounted another way, `calibrate.py imu` (Monitoring-Service) tells you what to change.
+
+### Wiring the ToF
+
+**I2C (what the robot uses).** The ToF's 4-pin Gravity cable (PH2.0) goes to the same four header pins as the IMU. Power the Pi off first.
+
+1. On the board, slide the mode switch to **I2C** and leave both address switches as shipped (`0x33`). The board reads the switches only when it powers up, so power-cycle it after changing either.
+2. Wire the Gravity cable by the labels next to its socket:
+
+| ToF plug | Pi GPIO (BCM) | Pi physical pin | What it does |
+|----------|---------------|-----------------|--------------|
+| `+` | 3.3 V | 17 (with the IMU's `3V3`) | Power. Use 3.3 V, not 5 V: it keeps the data lines at the Pi's level |
+| `-` | GND | 14 | Ground |
+| `D/T` | GPIO2 (I2C1 SDA) | 3 (with the IMU's `SDA`) | Data |
+| `C/R` | GPIO3 (I2C1 SCL) | 5 (with the IMU's `SCL`) | Clock |
+
+```
+ ToF (Gravity plug)    green protoboard          Pi header
+ +    ──────────┐
+ IMU 3V3  ──────┴───── 3.3 V row  ─────────────  pin 17  (3.3 V)
+ D/T  ──────────┐
+ IMU SDA  ──────┴───── SDA row    ─────────────  pin 3   (GPIO2)
+ C/R  ──────────┐
+ IMU SCL  ──────┴───── SCL row    ─────────────  pin 5   (GPIO3)
+ -    ─────────────────────────────────────────  pin 14  (GND)
+ IMU GND  ─────────────────────────────────────  pin 9   (GND)
+```
+
+   Pins 3, 5 and 17 each take one wire from the protoboard; the IMU and ToF wires meet on its rows. The ToF's ground has its own pin (14).
+3. `robot.yaml`, `/explorer`: `tof_port: ""` (I2C), `tof_bus: 1`, `tof_addr: 51` (0x33). The robot's file has these.
+4. Pi on: `i2cdetect -y 1` shows `33` (see "Check the wiring" below). Over I2C the grid comes about 5 times a second.
+
+Firmware: updating to V1.3 needs the USB-C port once, with a cable that carries data (not a charge-only one): hold BOOT while plugging it into a computer (the Mac is fine), and copy the `.uf2` file from DFRobot's wiki onto the drive that appears. V1.3 reports a zone it cannot measure as 4000 instead of repeating a stale value; older firmware works on I2C too, but a stale zone can look like floor that is not there.
+
+On the head:
+
+- Mount the board next to the camera, facing the same way, its face square to the camera's. On its side is fine: set `tof_tilt` (see below).
+- **The cable moves with the head.** Leave a loop long enough for the full pan (±90°) and tilt, and tie it down at both ends so the plug never takes the pull and the servos never have to drag it. This is the lesson of the torn camera ribbons.
+- **Keep it short and away from the motors.** I2C is meant for short runs: keep the cable from the head to the protoboard under about 50 cm and route it away from the motor leads and the motor driver. If `i2cdetect` sometimes misses `33`, or `calibrate.py tof` reports read failures, shorten it or twist SDA and SCL each with a ground wire.
+
+**USB instead.** A USB-C *data* cable from the ToF to a free USB port on the Pi, nothing on the GPIO pins; the mode and address switches do not matter. `ls /dev/serial/by-id/` shows something like `usb-Raspberry_Pi_..._E6614...-if00`: put that whole path in `tof_port`. `python -m serial.tools.miniterm <that path> 115200` (Ctrl-] to quit) should scroll rows of millimetres. The reader takes 8 numbers on a line as a row and 8 such rows as a grid (a leading row number is ignored), or 64 numbers on one line as a grid. If `calibrate.py tof` then shows nothing, send a few lines of that output for the reader to be adjusted.
+
+None of this clashes with what is already wired: the OLED (pins 1, 11, 19, 22, 23, 24, 25), the servos (GPIO12, 13), the servo power sense (pin 7), the buzzer (pin 37) and the Arduino (USB). On I2C the ToF adds only a ground pin (14) and shares the IMU's pins 3, 5 and 17.
+
+### Check the wiring
+
+Pi back on, robot stopped (`sudo systemctl stop robot-voice`):
+
+```bash
+i2cdetect -y 1
+```
+
+You should now see, besides the PiSugar's own addresses:
+
+| Address | Chip |
+|---------|------|
+| `69` | IMU accelerometer + gyro (BMI323) |
+| `15` and `47` | IMU magnetometer and barometer (not used by the robot; they show the board is alive) |
+| `33` | ToF (on USB instead, it shows in `ls /dev/serial/by-id/`, not here) |
+
+Nothing new in the table: check power and ground first, then whether SDA and SCL are swapped. `68` instead of `69`: the BMI323's address pad is closed; set `imu_gyro_addr: 104`. `33` missing: the ToF's mode switch is not on I2C, or it was not power-cycled after switching.
+
+Then check both from the Mac (`pip install -e ".[sensors]"` once on the Pi for the I2C library; `install_pi.sh` does it). `calibrate.py` prints what to put in `robot.yaml`:
+
+```bash
+cd ~/src/Monitoring-Service
+python calibrate.py imu      # level, then lift the front, then the left side; optional 60 s drift check
+python calibrate.py tof      # floor rows, a hand on the left, and a camera + ToF overlay picture
+```
+
+| It finds | Set in `robot.yaml` |
+|---|---|
+| Lifting the front does not make pitch positive, or lifting the left side does not make roll positive, or turning left does not make yaw positive | `/drivetrain` `imu_axes`: the board axis pointing robot-forward, robot-left and up, `"-"` in front of one that points the other way, e.g. `["y", "-x", "z"]` |
+| Head level, the floor (short ranges) shows in the left or right columns instead of the bottom rows | `/explorer` `tof_tilt`: the board is on its side. `90` = turned a quarter-turn clockwise as seen from behind the head (its top edge to the robot's right), `-90` = the other way. The robot's file has `90`; if the floor then shows in the top rows, use `-90` |
+| Head level, the floor (short ranges) shows in the top rows | `/explorer` `tof_flip_rows: true` |
+| A hand at the robot's left shows in the right columns | `/explorer` `tof_flip_cols: true` |
+| `calibrate.py drive` suggests `tof_perpendicular: false` (against its wall) | `/explorer` `tof_perpendicular: false` |
+
+When both read sensibly, switch them on and measure:
+
+| Setting | Where | Value |
+|---|---|---|
+| `imu_fitted: true` | `/drivetrain` | |
+| `tof_fitted: true` | `/explorer` | |
+| `head_height_m` | `/explorer` | Floor to the ToF's face, head level, in metres: `calibrate.py head` measures it from the floor |
+| `pan_axis_x_m` | `/explorer` | Pan axis ahead of the middle of the tracks |
+| `h_max_m` | `/explorer` | The highest board (1 to 4 cm) the tracks climb. Until measured, 0.03 |
+| `max_pitch_deg`, `max_roll_deg` | `/drivetrain` | Tilt at which a move is stopped. Start with 25 and 20 |
+
+Then rebuild once, because a message gained fields (`MotionHealth.msg`), and restart:
+
+```bash
+cd ros2_ws && colcon build --symlink-install && cd ..
+sudo systemctl restart robot-voice
+```
+
+### Power the sensors use
+
+The ToF draws under 80 mA and the IMU a few mA, both from the Pi's 3.3 V pin 17; the OLED is on the same 3.3 V rail (pin 1). Together that is well inside what the Pi 4's 3.3 V rail supplies.
+
+## TF-Luna on the Arduino
+
+The TF-Luna moves off the head and the Pi's UART to the Arduino, as a forward-looking drop sensor on the front of the chassis. The Arduino's only hardware serial port is the link to the Pi, and a software serial port at the TF-Luna's 115200 baud would make the encoder interrupts miss counts, so the TF-Luna runs in **I2C mode** on A4/A5. **D6 is dead** (it used to drive the left motor's IN2, now on D11): never wire anything to it.
+
+| TF-Luna pin | Wire to | What it does |
+|-------------|---------|--------------|
+| 1 `+5V` | Arduino 5V | Power (about 70 mA, 150 mA peak) |
+| 2 `SDA` | Arduino A4 | Data, plus a 4.7 kΩ pull-up to 3.3 V |
+| 3 `SCL` | Arduino A5 | Clock, plus a 4.7 kΩ pull-up to 3.3 V |
+| 4 `GND` | Arduino GND | Ground |
+| 5 `CFG` | Arduino GND | Tied low at power-up: I2C mode, address `0x10` |
+| 6 `MUX` | not connected | |
+
+```
+ TF-Luna            Arduino
+ 1 +5V  ──────────  5V
+ 2 SDA  ──────┬───  A4
+              └─[4.7k]─ 3.3V
+ 3 SCL  ──────┬───  A5
+              └─[4.7k]─ 3.3V
+ 4 GND  ──────────  GND
+ 5 CFG  ──────────  GND
+```
+
+- **Pull-ups to 3.3 V, not 5 V.** The TF-Luna's signals are 3.3 V, so the firmware turns the Arduino's internal 5 V pull-ups off and the bus needs the two external 4.7 kΩ resistors to the Arduino's 3.3V pin. Without them the reading is always `-1`. A small bidirectional level shifter (3.3 V side to the TF-Luna, 5 V side to A4/A5) works instead of the resistors.
+- **CFG is read only at power-up.** Tie it to GND before powering on; changing it with the sensor on does nothing until it is power-cycled.
+- **Mounting:** front of the chassis, centred, tilted down so the beam meets the floor about 35 cm ahead (about 33° down at 20 cm high). It sees nothing nearer than 20 cm. A sudden jump in the range is a drop (longer) or a step or obstacle (shorter).
+- **Ground:** the TF-Luna's GND goes to the Arduino's GND, which is already on the star point. Keep its wires away from the motor leads.
+
+**Firmware:** `drv8871-v9-vel-luna` (v7 and later) reads the TF-Luna each telemetry tick (every 100 ms) and adds the range in cm as the last field of the `E` frame: `E,<el>,<er>,<ol>,<or>,<ms>,<cm>`. `-1` means no sensor, a bus error, or a weak or saturated reading (signal strength under 100). With the sensor unplugged everything else runs as before. Since v9 the firmware asks once at boot whether the TF-Luna is there, and only if both I2C lines sit high (pull-ups fitted). If it doesn't answer, the firmware never touches I2C again and the boot line says `drv8871-v9-vel-noluna`. Before v9, a missing sensor or missing pull-ups could freeze the Arduino right after boot: the Pi's first ping went unanswered and the drivetrain node did not start. Flash with `./flash.sh` (see "Refresh Code and Build"). Arduino AVR core 1.8.3 or later also gives the I2C reads a 3 ms timeout (`arduino-cli core upgrade arduino:avr`, or Boards Manager → Arduino AVR Boards in the IDE); older cores work, protected by the boot check only.
+
+**On the Pi:** `ArduinoBridge.tfluna_cm` holds the latest range (`None` when the firmware sent `-1`) and `tfluna_t` the `time.monotonic()` it arrived. Older firmware sends no such field and both stay at `None` / `0.0`. `tfluna_fitted` and `tfluna_port` in `robot.yaml` are for the old Pi UART hookup: leave `tfluna_fitted: false`.
+
+**Drop guard** (`robot_core/drop_guard.py`, run by the drivetrain node 10 times a second, `robot.yaml` `/drivetrain`). While the robot drives forward it brakes at once if:
+- the range is longer than the floor's by `drop_jump_cm` (the floor fell away), or
+- shorter by `drop_low_cm` (something low is in the beam), or
+- there is no range for `drop_misses` readings in a row.
+
+The first two need two readings in a row, so one noisy reading never brakes. It then reports `drop` in `/motion_health` for 2 s: follow treats that like a bump, and explore marks a drop on the map and backs off 15 cm.
+
+The floor's range is `tfluna_floor_cm`, or learnt at start-up while the robot stands still (`0`, the default): start it on flat floor, not at an edge. Measure it once: stop the robot, read the `E` lines as below on flat floor, and put the number in `tfluna_floor_cm`.
+
+Until it has a floor range the guard is not armed, so with no TF-Luna fitted it does nothing. Turn it off with `drop_guard: false`.
+
+**Check it:** stop the robot (`sudo systemctl stop robot-voice`), then `python -m serial.tools.miniterm /dev/ttyUSB0 115200` (Ctrl-] to quit). The boot line reads `drv8871-v9-vel-luna` (`-noluna`: not found, check wiring and the 3.3 V pull-ups), and every `E` line ends in a range in cm that changes as you move a hand in front of the sensor.
 
 ## Audio
 
@@ -363,6 +574,66 @@ aloud instead of following them.
 ![Front](https://github.com/user-attachments/assets/65aa1004-b8d2-4fd7-ae23-dbf517e464cc)
 
 ---
+
+## Calibration and checks (Monitoring-Service/calibrate.py)
+
+All hardware checks and calibration run from the Mac, with one script:
+
+```bash
+cd ~/src/Monitoring-Service
+python calibrate.py          # a menu; or: all | check | encoders | imu | tof | tfluna | head | drive | service
+```
+
+**What it does:**
+- Asks whether the Pi is on, connects over SSH (the address is asked once and remembered), and offers to stop `robot-voice`.
+- Runs `robot_core/calibrate_pi.py` on the Pi. The Pi takes the readings and works the numbers out from its own sensors.
+- Tells you what to do, with a countdown (Enter starts at once).
+- Asks for a tape reading only where nothing on the robot can measure it: twice, in `drive`.
+- Prints the new `robot.yaml` values (and any firmware constant), saves the run in `Monitoring-Service/calibrations/`, and offers to start `robot-voice` again.
+
+It changes nothing on the robot by itself.
+
+| Mode | Measures | Sets |
+|---|---|---|
+| `check` | Power flags, robot-voice stopped, serial port, I2C devices, firmware, TF-Luna, servo supply, ToF, IMU, camera; buzzer and OLED if you want | (reports) |
+| `encoders` | Each track hand-rolled forward (robot lifted): counts up, on the right channel | `odom_swap_sides` |
+| `imu` | Level, front lifted, left side lifted; optional 60 s drift | (reports `imu_axes` fixes) |
+| `tof` | Where the floor shows (bottom, top or a side), a hand on the left; a camera + ToF overlay picture | `tof_tilt`, `tof_flip_rows`, `tof_flip_cols` |
+| `tfluna` | The TF-Luna on flat floor | `tfluna_floor_cm` |
+| `head` | Head directions; pan sweep at a wall; tilt sweep over the floor | `pan_center_us`, `tilt_center_us`, `head_height_m` |
+| `drive` | Backing 1 m from a wall (2 tape readings) and two full turns (gyro) | `ticks_per_cm`, `tof_range_scale`, `tof_range_offset_m`, `tof_perpendicular`, `ticks_per_degree`, firmware `REVERSE_TRIM_PCT` |
+| `service` | Vision-And-Planning on the Mac: health and detect latency (no Pi needed) | (reports) |
+
+`all` runs `check` → `encoders` → `imu` → `tof` → `tfluna` → `head` → `drive`. Ctrl-C skips the current step.
+
+## Debug mode (sensor uploads and logs.json)
+
+One switch in `robot.yaml`, read by every node that writes `logs.json`:
+
+```yaml
+/voice:
+  ros__parameters:
+    debug_mode: false
+```
+
+| | `debug_mode: true` | `debug_mode: false` (default) |
+|---|---|---|
+| Sensor uploads | Every camera frame and ToF grid a task collects (follow, enroll, match) goes to Vision-And-Planning (`POST /v1/debug/frame`), with head pan/tilt, pitch and pose | None |
+| `logs.json` | Everything: events, the robot's info lines, warnings | Warnings and errors only |
+
+Viewing the uploads: Monitoring-Service (`tof_camera_overlaid.py`), on the Mac. It shows the frame in black and white with the ToF grid laid over it as coloured dots.
+
+The uploads are built not to slow the robot down (`robot_core/debug_upload.py`):
+- The camera and ToF only hand over a reference to data they already have.
+- One background thread sends the newest frame with the newest ToF grid, at most 2 a second. Anything that arrives while an upload is in flight replaces what was waiting (dropped, never queued).
+- Each upload gives up after 1 s. While the Mac is unreachable it retries every 5 s and logs one warning.
+- Follow's frames, already JPEG-encoded for the Mac, are sent as they are.
+
+Explore runs in its own process and does not upload yet.
+
+`ROBOT_DEBUG_MODE=1` (or `0`) in the environment overrides `robot.yaml` for one run; the test suite sets it.
+
+Either way, `logs.json` lines are kept short: a plain log line is its first line only, at most 300 characters (tracebacks go in `tb`), and follow's per-frame line no longer carries the whole Mac answer or the floor points.
 
 ## Debugging Arduino
 Check if anything is occupying the port: lsof /dev/cu.usbserial-A5069RR4
@@ -541,8 +812,8 @@ consistently one-sided, and never converging.
 
 **Verify after any harness change**, before calibrating anything:
 
-1. `tests/hardware/check_encoders.py`; hand-roll each wheel in the robot's forward
-   direction. Both must count **up** — fix with `ENC_x_INVERT` and re-flash.
+1. `python calibrate.py encoders` (Monitoring-Service, robot lifted); hand-roll each track in the
+   robot's forward direction when it says go. Both must count **up** — fix with `ENC_x_INVERT` and re-flash.
 2. In the same test, roll the **left** wheel only. `enc_left` must be the
    counter that moves. If `enc_right` moves instead, the pairing is crossed.
 3. Command `F` briefly. Both wheels must drive the robot forward, not spin it.
@@ -564,6 +835,8 @@ Both scale the **target**, not the measurement. The firmware ends a move when
 *both* wheels reach the target (`drivetrain.ino:714`), so neither constant can
 cause a move to stop early — short travel is always traction or a lost encoder
 channel, never calibration.
+
+`python calibrate.py drive` (Monitoring-Service) does both below for you: two tape readings for distance, and the gyro for turns. By hand:
 
 **Distance.** On flat ground, on the surface you will actually run on, at your
 normal mission speed (slip changes with PWM, so calibrating at 100 % and
@@ -587,6 +860,47 @@ your measurement precision, while the same relative error at 360° shows up as
 scrubs both wheels sideways, so carpet and hardwood genuinely need different
 values. Distance is closed-loop on ticks and therefore battery-independent,
 but slip is not — calibrate at mid-charge.
+
+**Backward-running track (firmware `REVERSE_TRIM_PCT`).** In every turn the
+track running forward leads the one running backward: left turns, the right
+track leads; right turns, the left one does (by 10-22 % on turns over 15 deg in the
+Nov 2026 logs). That is a direction asymmetry, not one weak side, and the sync
+loop saturates on it. The firmware gives a track running backward
+`REVERSE_TRIM_PCT` (10 %) more PWM in counted moves. `python calibrate.py drive`
+measures the lead over two full turns and prints the value to set. Reflash after
+each change (`./flash.sh`).
+
+**Turn corrections (`turn_trim` in `/drivetrain`).** With the IMU, the pose
+uses the gyro's measured heading, so a turn that comes out a few degrees off
+costs nothing: the robot knows where it points. `turn_trim: false` (the
+default in `robot.yaml`) skips the short correcting moves after each turn,
+which cost about 0.9 s each and swung the robot left and right. `true` brings
+them back (within `turn_tolerance_deg`).
+
+### Calibrating the head and the ToF (measuring rooms and plants)
+
+Map and plant sizes are only as good as the head's angles and the ToF's
+ranges. Do these once, and again after changing the head:
+
+1. **Pan range.** If start-up logs `gimbal: pan limited to -90..+81 deg`, the
+   servo horn is not centred: re-fit it nearer the middle of the servo's travel.
+2. **ToF ranges.** `python calibrate.py drive`: the robot backs 1 m away from a
+   wall and you tape the distance before and after. That gives
+   `tof_range_scale` and `tof_range_offset_m` for `/explorer` (every grid is
+   corrected with them), and `ticks_per_cm` as well.
+3. **Head zero.** `python calibrate.py head`: square-on to a flat wall for pan,
+   then open floor for tilt. It works out `head_height_m` from the floor itself,
+   so no ruler is needed, and prints the new `pan_center_us` / `tilt_center_us`.
+   Run it again: both should then be under 0.5 deg.
+4. **Gear slop (`head_backlash_deg`, `/explorer`).** SG90 gears have a couple of
+   degrees of play, so the same angle comes out different depending on the
+   direction the head arrived from. With `head_backlash_deg: 2.0` every move
+   down goes 2 deg past its target and comes back up, so every target is
+   reached moving up and the play is always on the same side. Moves stay
+   ramped. `0` turns it off.
+
+Check the result with Monitoring-Service (`tof_camera_overlaid.py`, debug mode on):
+the ToF dots should sit on what they measure in the camera image.
 
 ### Capacitors: What, Where, How
 
@@ -616,8 +930,8 @@ Bits can combine (e.g. `3` = power-on + reset pin).
 
 Wire the white B wires: left → D4, right → D7 (blue → 5V, green → GND, yellow → D2/D3 as before).
 Flash (./flash.sh or IDE) — confirm the drv8871-v4-quad stamp.
-Calibrate polarity: run tests/hardware/check_encoders.py, roll each wheel in the robot's forward direction by hand. Both must count up. A side counting down → set its ENC_x_INVERT to 1, re-flash, re-check.
-Then tests/hardware/check_movements.py — with working, signed encoders this should be the first honest closed-loop run the bot has ever had.
+Calibrate polarity: run `python calibrate.py encoders` (Monitoring-Service), roll each track in the robot's forward direction by hand. Both must count up. A side counting down → set its ENC_x_INVERT to 1, re-flash, re-check.
+Then `python calibrate.py drive` — with working, signed encoders this is the first honest closed-loop run.
 
 
 ## Refresh Code and Build

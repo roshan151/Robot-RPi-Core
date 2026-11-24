@@ -13,6 +13,8 @@ text is using plays an animation (blinking eyes, or `anim("tank")` while driving
     status.result("Sam enrolled")     shown for a few seconds
     status.error("P01")               boxed E-P01 plus its short text from CODES, for 20 s
     status.anim("tank", 10)           animation for the free space; anim("") = back to eyes
+    status.no_drop(15)                small icon bottom right (crossed circle on a stair): nothing
+                                      watches for drops (TF-Luna not answering); renew to keep it up
 
 One process owns the screen. The others call `set_sink()` with something that
 forwards the message to it (the ROS nodes publish /robot/status); until then
@@ -72,6 +74,7 @@ class Frame(NamedTuple):
     battery: Optional[float]                      # percent, for the battery icon
     error: List[str]                              # small-print lines of the error box; empty = no box
     anim: str                                     # animation for the free space, a name in oled.ANIMS
+    no_drop: bool = False                         # icon: no drop detection (status.no_drop)
 
 
 class Board:
@@ -86,7 +89,7 @@ class Board:
         self.volts = self.amps = None             # from the PiSugar
         self._timer: Optional[tuple] = None       # (label, started, seconds)
         self._result: Optional[tuple] = None      # (text, until)
-        self._note_until = self._error_until = 0.0
+        self._note_until = self._error_until = self._no_drop_until = 0.0
         self._anim = ("", 0.0)                    # (name, until)
 
     def apply(self, msg: dict) -> None:
@@ -116,6 +119,8 @@ class Board:
                 self.battery, self.volts, self.amps = msg.get("n"), msg.get("volts"), msg.get("amps")
             elif k == "note":
                 self.note, self._note_until = v, now + float(msg.get("n", 30))
+            elif k == "nodrop":
+                self._no_drop_until = now + float(msg.get("n", 15))
 
     def lines(self) -> List[str]:
         now = self._clock()
@@ -139,7 +144,8 @@ class Board:
         with self._lock:
             error = (textwrap.wrap(f"E-{self.code} {CODES.get(self.code, '')}", SMALL_WIDTH)
                      + textwrap.wrap(self.cause, SMALL_WIDTH))[:3] if now < self._error_until else []
-            return Frame(rows, self.battery, error, self._anim[0] if now < self._anim[1] else "")
+            return Frame(rows, self.battery, error, self._anim[0] if now < self._anim[1] else "",
+                         now < self._no_drop_until)
 
 
 BOARD = Board()
@@ -170,6 +176,8 @@ def anim(name: str, seconds: float = 30.0) -> None: _post(k="anim", v=name, n=se
 def power(state: str, dips: int = 0) -> None: _post(k="power", v=state, n=dips)
 def battery(percent=None, volts=None, amps=None) -> None: _post(k="battery", n=percent, volts=volts, amps=amps)
 def note(text: str, seconds: float = 30.0) -> None: _post(k="note", v=text, n=seconds)
+def no_drop(seconds: float = 15.0) -> None: _post(k="nodrop", n=seconds)
+def sound(name: str) -> None: _post(k="sound", v=name)       # "online" / "connecting": robot_core/buzzer.py
 
 
 # ---------------------------------------------------------------- log -> code

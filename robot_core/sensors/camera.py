@@ -26,6 +26,8 @@ from typing import Optional, Tuple
 
 import numpy as np
 
+from .. import debug_upload
+
 log = logging.getLogger(__name__)
 FRAME_TIMEOUT_S = 4.0       # no frame for this long: the sensor link stalled, so restart the camera once
 
@@ -129,7 +131,9 @@ class Camera:
                 lores = cv2.resize(cv2.cvtColor(main, cv2.COLOR_BGR2GRAY), self.lores_size,
                                    interpolation=cv2.INTER_AREA)
             self._seq += 1
-            return Frame(self._seq, time.monotonic(), main, lores, pan, tilt, settled)
+            frame = Frame(self._seq, time.monotonic(), main, lores, pan, tilt, settled)
+        debug_upload.offer_frame(frame)                 # debug mode only; a reference, no copy
+        return frame
 
     def capture_lores(self):
         """(t, lores grey) only — cheap enough to run at 5 Hz for the motion

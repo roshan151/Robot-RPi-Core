@@ -29,6 +29,7 @@ Read it back with:
 What lands in the file
 ----------------------
   * every structured event() call, at any level
+  * every INFO or worse from the robot's own loggers (robot*, e.g. robot_core.follow)
   * every WARNING or worse from any logger in the process
 
 Routine INFO chatter from library loggers stays on the console only.  That is
@@ -70,6 +71,7 @@ EVENTS = {
     "move.cancelled",
     "move.failed",
     "estop",              # out-of-band brake fired
+    "arduino.hang",       # board went silent and was reset: what it was doing, likely cause
     # conversation
     "gesture",            # YES / NO / UNCLEAR played
     "gesture.skip",       # suppressed, with the reason
@@ -96,6 +98,10 @@ EVENTS = {
     "power.flag",        # throttled / freq capped / too hot (live firmware flags)
     "power.earlier",     # a dip happened before the watcher started (sticky flag)
     "power.lastdip",     # the note a previous boot left behind
+    # health and rule breaks (robot_core/health.py, robot_core/rules.py, docs/FAILURE-MODES.md)
+    "health.preflight",  # what was checked before a task started, and what failed
+    "health.mode",       # a running task went normal / degraded / stop, and why
+    "rule",              # something that should never happen did (rule=..., throttled per rule)
 }
 
 _LEVEL_NAME = {
@@ -168,9 +174,11 @@ class JsonlFormatter(logging.Formatter):
             payload.update(fields)
 
         # Plain logger.warning()/error() calls carry no structured fields, so
-        # keep their text and say where it came from.
+        # keep their text and say where it came from. One line, capped: a log you
+        # read, not a wall of text (tracebacks go in "tb", sensor data to debug mode).
         if not hasattr(record, "evt"):
-            payload["msg"] = record.getMessage()
+            msg = record.getMessage().split("\n", 1)[0]
+            payload["msg"] = msg if len(msg) <= MSG_MAX else msg[:MSG_MAX] + "..."
             payload["src"] = record.name
 
         if record.exc_info:
@@ -198,27 +206,69 @@ def _short_tb(tb: Any, limit: int = 6) -> list:
     ]
 
 
+MSG_MAX = 300                         # characters of a plain log line kept in the file
+
+
 class _FileFilter(logging.Filter):
-    """Structured events always; unstructured records only if WARNING+.
+    """Structured events always; the robot's own INFO+; anything else only if WARNING+.
+    With `warnings_only` (robot.yaml debug_mode: false), WARNING+ and nothing else.
 
     This is the whole 'clean not verbose' policy in four lines.
     """
 
+    def __init__(self, warnings_only: bool = False) -> None:
+        super().__init__()
+        self.warnings_only = warnings_only
+
     def filter(self, record: logging.LogRecord) -> bool:
-        return hasattr(record, "evt") or record.levelno >= logging.WARNING
+        if record.levelno >= logging.WARNING:
+            return True
+        return not self.warnings_only and (
+            hasattr(record, "evt") or (record.levelno >= logging.INFO and record.name.startswith("robot")))
 
 
 # --------------------------------------------------------------------------- #
 # Setup
 # --------------------------------------------------------------------------- #
 
+class _ReopeningFileHandler(logging.handlers.RotatingFileHandler):
+    """A RotatingFileHandler that notices its file was deleted or replaced (Nov 19: logs.json was
+    deleted while the robot ran, and every record after that went into the deleted file) and
+    starts a new logs.json. One os.stat per record: microseconds."""
+
+    def _open(self):
+        stream = super()._open()
+        st = os.fstat(stream.fileno())
+        self._id = (st.st_dev, st.st_ino)
+        return stream
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if self.stream is not None:
+            try:
+                st = os.stat(self.baseFilename)
+                same = (st.st_dev, st.st_ino) == getattr(self, "_id", None)
+            except OSError:
+                same = False
+            if not same:                                  # gone or replaced: open a fresh one
+                try:
+                    self.stream.close()
+                except OSError:
+                    pass
+                self.stream = None
+                os.makedirs(os.path.dirname(self.baseFilename) or ".", exist_ok=True)
+        super().emit(record)
+
+
 def setup(
     path: Optional[str] = None,
     console_level: int = logging.INFO,
     max_bytes: Optional[int] = None,
     backups: Optional[int] = None,
+    debug: Optional[bool] = None,
 ) -> Path:
-    """Configure logging. Safe to call twice; the second call is a no-op."""
+    """Configure logging. Safe to call twice; the second call is a no-op.
+    `debug` False (default: robot.yaml debug_mode) keeps only warnings and errors
+    in the file; True or unknown (no robot.yaml) keeps everything as before."""
     if _state["handler"] is not None:
         return _state["path"]
 
@@ -229,11 +279,11 @@ def setup(
 
     # StreamHandler.emit() flushes after every record, so anything already
     # logged survives a SIGKILL. Only power loss can lose it.
-    handler = logging.handlers.RotatingFileHandler(
+    handler = _ReopeningFileHandler(
         log_path, maxBytes=max_bytes, backupCount=backups, encoding="utf-8"
     )
     handler.setFormatter(JsonlFormatter())
-    handler.addFilter(_FileFilter())
+    handler.addFilter(_FileFilter(warnings_only=(settings.debug_mode() if debug is None else debug) is False))
     handler.setLevel(logging.DEBUG)
 
     console = logging.StreamHandler(sys.stderr)

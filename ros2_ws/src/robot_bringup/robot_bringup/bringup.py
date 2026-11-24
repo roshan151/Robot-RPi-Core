@@ -20,6 +20,7 @@ from __future__ import annotations
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 
+from robot_core import robot_log
 from robot_display.link import connect
 from robot_drivetrain.drivetrain_node import DrivetrainNode
 
@@ -28,6 +29,7 @@ NUM_THREADS = 6
 
 def main(args=None) -> None:
     rclpy.init(args=args)
+    robot_log.setup(None)             # moves, stops and the drivetrain's own lines go to logs.json
 
     nodes = [DrivetrainNode()]
     connect(nodes[0])                 # status + warnings go to the OLED

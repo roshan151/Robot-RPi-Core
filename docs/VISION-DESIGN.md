@@ -2,6 +2,13 @@
 
 > **Amended by `EXPLORE-DESIGN.md`**: pan is ±45° (not ±90°), there is no 2-D lidar — range at a bearing comes from the TF-Luna on the head, aimed with the camera — and SLAM runs on the Mac.
 > **Amended by `FOLLOW-DESIGN.md`**: follow is stop-and-go with all processing on the Mac (`/v1/follow/step`); no Pi tracker or `follow_node` yet (§4.6, §7.2).
+> **Amended (Nov 2026), planning split and sensors**:
+> - **Sensors.** The 8x8 ToF stays on the gimbal (accurate plant and room ranging comes first). The TF-Luna is fixed on the front, tilted down, read by the Arduino, as a drop guard (`robot_core/drop_guard.py`).
+> - **The Mac** recognises people and plants, ranges from images, and keeps the SLAM map, now with loop closure. It also chooses where to explore and plans the global route; paths keep clear of walls and carry `clear_m` per leg.
+> - **The Pi** keeps the pose and a local hazard map, drives each leg watched (braking mid-leg), goes round what the map lacks, and tracks the person for follow (`follow.PersonTracker`).
+> - **Why the Pi:** moment-to-moment decisions never wait on Wi-Fi.
+> - **Follow** is leg-based: look, then a watched leg of up to 1.5 m with the head on the path.
+> - **The Mac's `/v1/follow/step`** returns measurements (`distance_sigma_m`, `ground_xy`, `confidence`); its `turn_deg`/`drive_m` are used only while searching.
 
 Companion to `PLAN.md` (ROS 2 migration) and `HARDWARE-BASICS.md`. This doc covers
 only the vision/perception layer: object detection, object tracking, gimbal aim,
@@ -611,6 +618,12 @@ including every branch of the backpressure table in Part 4.3 — deterministic a
 This is how you tune `APPROACH_STANDOFF_M`, the match threshold, `MIN_INLIERS` and the
 tracker parameters without spending the robot's time, and it is the single
 highest-leverage item in this document for development speed.
+
+> **As built (Nov 2026), in Monitoring-Service.** The robot's debug sessions are the
+> recordings: `test_replay.py` replays saved ones (`scenarios/replay/`) through today's
+> follow, tracker, planner and steering code; `test_scenarios.py` drives the real nav
+> stack through simulated rooms with pass rules; `scorecard.py` scores any session
+> against fixed limits. What each guards against is in `FAILURE-MODES.md` (PLAN §8 rule 10).
 
 ---
 

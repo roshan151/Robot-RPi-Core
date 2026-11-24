@@ -4,6 +4,56 @@
 records the simple first version. **It amends `VISION-DESIGN.md`** (§4.6
 `follow_node`, §7.2) the way `EXPLORE-DESIGN.md` does for explore mode.
 
+> **Amended (Nov 2026).** Here is how a frame turns into a move now:
+> - The Mac's answer is a measurement: bearing in the robot's frame, `distance_m` with `distance_sigma_m`, `ground_xy`, `confidence`.
+> - The Pi's `follow.PersonTracker` places the person in the odometry frame, from the pose read just after the capture (the robot stands still while the Mac answers).
+> - It combines readings by how sure each is, and ignores one wild reading.
+> - It then turns to face the tracked position (8 deg deadband) and drives a watched leg of up to 1.5 m (`FOLLOW_MAX_DRIVE_M`), keeping 0.5 m from the person.
+>
+> What else changed:
+> - The Mac's `turn_deg`/`drive_m` (0.6 turn gain, 0.5 m step, 1.2 m keep) are used only while searching.
+> - Gliding (`ROBOT_FOLLOW_GLIDE`) is off by default: with the ToF on the gimbal, the path is watched only during a leg.
+> - Gyro turn corrections are off (`turn_trim: false`).
+> - The TF-Luna drop guard reports `drop`, which is treated like a bump.
+
+> **Superseded (Nov 19 2026): a hierarchical nav stack.** Follow no longer turns and drives legs.
+> The perception loop (`robot_core/follow.py`) only says where the person is; driving is the
+> nav stack's (`robot_core/nav/`, Pi) and the global planner's (`vision_service/nav_api.py`, Mac).
+> Parts 2-3 below describe the old stop-and-go loop and are kept for the Mac's identity logic,
+> which is unchanged.
+>
+> | Subsystem | Runs on | Code | Rate |
+> |---|---|---|---|
+> | Emergency reflex: a ToF zone under 25 cm where the robot is going, or a bump/stall/slip/climb from the drivetrain | Pi | `nav/reflex.py` | 50 Hz loop, reacts within 20 ms of each ToF grid (the SEN0628 gives ~5 grids/s on I2C) |
+> | Rolling costmap: 4 x 4 m, 5 cm, every ToF grid placed by the gimbal angle at measurement + odometry/gyro; rays clear, evidence fades | Pi | `nav/costmap.py` | every grid |
+> | DWA: (v, w) from the dynamic window round measured v and gyro w, arcs scored on progress, heading, clearance, speed | Pi | `nav/dwa.py`, `nav/controller.py` | 20 Hz, streamed as /cmd_vel |
+> | Local Theta* on the costmap: the fallback route when the Mac's waypoints are missing or older than 3 s (network fail-safe) | Pi | `nav/plan.py` | 2 Hz, own thread |
+> | Gimbal aim: look-ahead into the turn, +-45 deg sweep on straights, centred on the person while following; glance along the way when it has not been seen for 1.2 s (slowing to 0.12 m/s meanwhile, 0.25 m/s where the map has it seen free) | Pi | `nav/aim.py` | 20 Hz targets, 50 Hz servo thread |
+> | Camera stream to the Mac (JPEG + pose + pan/real tilt) | Pi | `nav/stream.py` | 10 Hz |
+> | Global map (the Pi's costmap folded in, camera-detected furniture added) + Theta* waypoints | Mac | `nav_map.py`, `nav_api.py` | ~1 Hz per request |
+> | Visual SLAM: ORB-SLAM3 monocular; scale and level from odometry, camera-to-base through the gimbal; gives odom_to_map | Mac | `vslam.py` (install: `deploy/install_orbslam3_macos.sh`) | stream rate |
+>
+> Margins line up: DWA keeps the robot's centre 0.31 m (radius 0.19 + 0.12) from anything, so
+> head-on the ToF stays outside the reflex's 25 cm; a 0.75 m door is passable. Stuck (encoders
+> gaining while what is straight ahead does not get nearer, or nose up 12 deg) stops, takes the
+> slipped metres out of the pose and backs off 10 cm. Turns and straight drives are closed on the
+> gyro in the drivetrain (`turn_held`, `drive_heading_hold`); a held drive pushed 12 deg off its
+> heading, or a held turn the gyro sees going nowhere, is reported as "slipping". Encoder-counted
+> moves are for gestures only; the encoder sync-error diagnostics and counted turn trims are gone.
+> Follow needs the 8x8 ToF and velocity firmware; without them it says so and does not drive.
+> `replay_debug.py <debug session>` replays a recorded session through the stuck and reflex rules.
+
+> **Amended (Nov 19 2026, evening): fixes from the follow logs.**
+> - **Ranges in front of the person are refused.** Mac: a ToF zone landing within 8 cm of the floor is skipped; a range more than max(0.3 m, 3 sigma) nearer than where the box's bottom edge puts their feet is "something in front of them"; under 0.4 m the box must be tall and cut off at the top. The Pi's `range_m` (read on the previous frame's box) gets the same checks. Pi: a ToF/range reading 0.4 m nearer than the tracked person is skipped (`RANGE_JUMP_M`). Before this, one run had 39 such readings: the person was placed on the obstacle, nav "arrived" 0.2 m from it, and the person-ignore circle erased the obstacle from the costmap.
+> - **What the reflex brakes for goes into the costmap** (ToF zone, or just ahead of the nose for a bump/stall while driving forward) and a replan is asked for at once.
+> - **The Mac's longer way round is kept** unless the straight line was *seen* free (unknown cells no longer count as clear).
+> - **"Stand and face" when the way round is long** applies only to a person standing still; one walking on is followed round.
+> - **No stale pose:** `/odom` older than 1 s is no pose (nav stops); 3 s without one ends follow ("no odometry"). Follow refuses to start with the head servos unpowered.
+> - **Through doorways (4:26 pm run):** DWA skips ahead along the path only over a line *seen* free (`target_on_path(seen_fn=)`): the steering target had flipped each tick between the doorway and the person straight through an unseen wall, spinning the robot left-right. Pivots while the camera is on someone are capped at 0.55 rad/s (motion blur lost the person 9 frames in 16). Mac: an edge-only ToF range (no zone centre inside a narrow, far box) nearer than the feet by 0.3 m is refused (it read the door frame); the only person in view while searching needs clothes >= min_similarity (a false box on slippers was taken back at 0.43).
+> - **Failure modes, health and tests (Nov 19, night):** `docs/FAILURE-MODES.md` lists what can go wrong and what covers it. Follow runs a preflight (servo power, ToF, odometry, Mac) and a watchdog with degraded modes (`robot_core/health.py`), counts rule breaks (`robot_core/rules.py`), sends the person as the plan's `target` so the Mac keeps the goal on their side of walls, backs off and re-plans when wedged (`no_progress`), and keeps clear of corners when skipping ahead along a path. The robot asks the planner for DWA's radius + margin + 2.5 cm; the planner relaxes clearance only near the start and ends a path only where the full margin fits. Monitoring-Service `test_replay.py`, `test_scenarios.py` and `scorecard.py` check all of this without the robot.
+> - **logs.json** is recreated if it is deleted or replaced while the robot runs (`robot_log._ReopeningFileHandler`); before, records went into the deleted file until a restart. The drivetrain now says "odometry telemetry stopped" (Arduino reset, hang or serial drop) when samples stop after arriving, instead of asking to flash firmware v5.
+> - **Debugging:** logs.json now has `mac: <why>` on a follow line when the Mac passed over a ToF/range reading, the Pi's own refusals, every obstacle marked from a reflex trip, and the Mac's detours it drops. With debug_mode on, the event note adds `range_note`, `gated`, `tracker` (xy, sigma, walking), `near_m_used`, `nav_source`, `marked`; the Mac writes every step's working (each person's ToF range, zone counts, why refused, feet distance, who was picked and why) to `debug/<session>/nav/follow.jsonl` (Vision-And-Planning `nav_record.py`).
+
 ## Part 0 — What this changes in PLAN.md / VISION-DESIGN.md
 
 | Was | Now | Why |
@@ -12,7 +62,7 @@ records the simple first version. **It amends `VISION-DESIGN.md`** (§4.6
 | Distance from the LD14P scan at the person's bearing | TF-Luna on the head, when its beam (the image centre column) lands on the person. Otherwise the floor point under the box's bottom edge, using the camera height | There is no 2-D lidar (EXPLORE-DESIGN Part 0) |
 | Gimbal tracks the person | Head held at **pan 0, tilt `FOLLOW_TILT_DEG` (20°)**. The base turns to face the person | Simplest. At 20° a standing face is visible from ~1.3 m and the beam hits the torso at 1–3 m |
 | Identity: 2 consecutive face matches, sticky for the track (VISION-DESIGN Part 6) | Unchanged. After that, identity is carried by **continuity** — where they should be next frame, and a bank of **clothes looks** (torso + legs histograms, up to 8, learned while tracking, back included). A face that is someone else's rules a person out. Details: `CAMERA-PLAN.md` Phase 1 | The face is rarely visible from behind |
-| Obstacle veto at `MIN_OBSTACLE_M` | **None yet.** It never reverses, closes only to `standoff_m` (1.2 m) and drives at most 0.5 m per step | The voice node limits tilt to 0..45°, so `Head.floor_probe` can't look down. See Part 3 |
+| Obstacle veto at `MIN_OBSTACLE_M` | **With the 8x8 ToF: a floor check before every drive** (`TERRAIN-DESIGN.md`). Without it, none: it never reverses and drives at most 0.5 m per step | The ToF sees the whole path in one glance; follow may tilt down to the drive pose for it. See Part 3 |
 
 Unchanged: `robot_core` imports no ROS, one request in flight to the Mac, and
 follow is a `run_task` job like enroll/match/explore (the Live session is
@@ -36,18 +86,85 @@ locks onto whichever enrolled person is confirmed first.
 
 | State | Meaning | Move |
 |---|---|---|
-| `searching` | Not locked yet (or lost for a while) | The robot stays put and the **head** sweeps (`head` in the answer: pan, tilt above the follow tilt): left to 90° in 30° steps, up 45°, across to −90°, down, back to centre. The sweep pauses while anyone is in view |
+| `searching` | Not locked yet (or lost for a while) | The robot stays put and the **head** sweeps (`head` in the answer: pan, tilt above the follow tilt): eight looks: left to 90° in 45° steps, up 30°, across to −90°, down, back to centre, at `servo_fast_dps` (120°/s, still ramped). With `hint_deg` it looks where they were last seen first. The sweep pauses while anyone is in view |
 | `tracking` | Found | Turn to face them (deadband 8°). If within 25° of ahead and the distance is known, drive `min(distance − 1.2, 0.5)` m |
 | `holding` | Missed for ≤ 3 frames | Nothing |
-| `gone` | The whole head sweep with no luck | The Pi ends the task |
+| `gone` | The whole head sweep with no luck, or 20 s since they were lost (`search_s`), whichever comes first | The Pi ends the task and the voice session reopens |
 
 `turn_deg` uses the drive/turn tools' convention (+ = right); `bearing_deg`
 uses the head's (+ = left).
 
 ## Part 3 — Known limits / next
 
-* **No obstacle check before a drive.** Next: allow tilt below 0 during follow
-  and run `Head.floor_probe` before each step, as explore does.
+* **The path before a drive (needs the 8x8 ToF, `tof_fitted: true`).** In order:
+  1. *Anything in the way, at any height up to the robot's own* (`robot_height_m`): the
+     zones of the frame just taken (the head on the person, turned by the turn the robot
+     makes first) that lie in the robot's path, higher than a climbable step, and nearer
+     than the person by 0.3 m. A table top above the robot does not count; the person
+     does not either. Needs the person's distance.
+  2. *The floor*, looked at as little as possible: floor seen clear in the last 10 s that
+     is still ahead on the same line (odometry; turned more than 8° or moved 8 cm aside
+     and it no longer counts) is not looked at again; else the same frame's lower rows,
+     if they reach the floor right in front of the robot; else the head glances down
+     (`Head.floor_scan`, two looks) and back up. A glance records how far the floor is
+     clear (up to 1 m), so the next drives usually need no look.
+
+  Only flat floor is driven, for the drive plus 0.2 m. Something in the way, a step or a
+  drop ends the drive `stop_short_m` (0.25 m) before it: the robot drives **part of the
+  way** instead of not at all, and anything shorter than 8 cm is not driven. A floor the
+  sensor cannot read is not driven (`drive_on_unknown_floor: true` allows it). The robot
+  keeps turning to face the person either way; the OLED shows `path in the way at 0.62 m`.
+  Without the ToF there is no check. See `TERRAIN-DESIGN.md`.
+* **Step length** (Pi side, `settings.FOLLOW_MAX_DRIVE_M` / `FOLLOW_KEEP_M`): the Mac's step is
+  capped at 0.5 m and keeps 1.2 m back; the Pi drives up to `min(distance − 0.5, 3)` m instead, but never past the
+  floor it has actually measured (minus 0.2 m). When the drive pose does not see that far, one
+  more floor look is taken 12° higher.
+* **Going round** (`robot_core/local_plan.py`, shared with explore): whatever made a drive unsafe
+  (box, step, drop, unreadable floor, something in the way) is remembered in the odometry frame
+  for 2 min, so a drive into it is refused without looking again (`path known hazard`). Then A* on
+  a 5 cm grid round the robot, every hazard grown by half the robot's width + `plan_clearance_m`
+  (0.255 / 2 + 0.08 m; the unseen far side of an obstacle is filled in 0.2 m deep), gives a way
+  round as straight legs; up to three are driven per step, each floor-checked first, and the robot
+  turns back to face the person. No way round: it stays and keeps facing them (`no way round`).
+  The person's own legs (within 0.35 m of where they stand) are not remembered.
+  Only something 8 cm or more off the floor is remembered, and a floor zone with no return is
+  floor not seen, not a hazard (`floor_holes_are_drops: false`).
+* **Levelling** (`floor_auto_level`, `terrain.level`): every floor scan is judged against a plane
+  fitted to the floor right in front, because the SG90 tilt servo stops a few degrees off and the
+  chassis rocks: the same flat floor read 7 deg sloped one way, then the other. Corrections over
+  7 cm or 12 deg are not believed (a ramp, a box filling the view) and the scan is left as it was.
+* **Watched drives** (A): with the 8x8 ToF the head looks down at the floor for the whole drive
+  and every new grid (5 a second) is judged out to 0.8 m; the robot brakes once something is
+  within `stop_short_m` + 0.2 m (`follow N: braked mid-drive, ...`), or after three grids in a row
+  too thin to judge. So a drive may run past the floor seen before it, up to
+  `FOLLOW_MAX_DRIVE_M` (3 m), and the glance needs no extra far look.
+* **Gliding** (B, `settings.FOLLOW_GLIDE`, needs firmware `drv8871-v6-vel`): the drivetrain then
+  takes `/cmd_vel` (forward m/s, turn rad/s) and holds each track's speed with encoder feedback
+  (`robot_core/velocity.py`, robot.yaml `velocity_*`; it stops when `/cmd_vel` goes quiet for
+  `velocity_timeout_s`, during a Drive/Turn goal, and after an e-stop or a motion-health stop
+  until a zero command). Follow, once locked on, holds the head level (`FOLLOW_GLIDE_TILT_DEG`
+  above the real horizon) so the camera sees the person and the ToF the floor 0.5-1.3 m ahead,
+  and on every frame: turns at 0.8 rad/s per radian of bearing (none within 3°, in place beyond
+  30°), drives at 0.4 m/s per metre of clear path (top `FOLLOW_GLIDE_MAX_MPS`, 0.2), judged on
+  that frame's grid against the floor, things in the way and known hazards. From standing it
+  glances at the floor right in front once. Blocked (under 8 cm clear): it stops and that frame
+  is a step, with a way round. Lost, or a bump: it stops. Without v6 firmware, steps as before.
+* **Bumps**: a jolt during a drive (the drivetrain's `/motion_health` says `bumped`) is
+  something the ToF did not see: glass, a thin chair leg. The drive is braked, the floor
+  memory dropped, and no drive is tried until the robot has turned 20° away
+  (`FOLLOW_BUMP_TURN_DEG`). Straight ahead behind it, the robot turns but does not drive.
+* **Edges**: with the IMU, the nose falling fast on a drive stops it at once
+  (TERRAIN-DESIGN Part 2, `max_dip_deg`): the backstop for a drop the ToF missed.
+* **Range and identity**: with the ToF, the whole grid goes to the Mac with every frame
+  (`tof_grid`). The Mac ranges each person by the zones on their box: that is their
+  distance (`distance_from: tof`), and a check on who is who. Once the target's ToF range
+  is known, a person further than 1.2 m (plus 0.5 m per missed frame) from where the
+  target should be is not taken by their clothes. A face match always wins. `range_m`
+  (the zones on the previous frame's box) is still sent, for a Mac without this.
+* **Searching where they went**: the Pi keeps the person's last bearing in the odometry
+  frame (gyro heading with the IMU) and sends it, from its present heading, as
+  `hint_deg`. When a search starts, the head looks there first; behind the robot, past
+  ±90°, the robot turns that way instead. Once per loss.
 * **Cancelling**: say "stop" (the cancel-only voice session, needs internet) or call
   `ros2 service call /task/stop std_srvs/srv/Trigger` — see `TASK-CANCEL.md`. Otherwise
   it ends when the person is gone or after `FOLLOW_SECONDS` (300 s).

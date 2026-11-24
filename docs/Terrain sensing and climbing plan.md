@@ -11,7 +11,7 @@ The plan is in build order. Each step leaves a working robot, and nothing before
 - **Source:** the Pi repo (Robot-RPi-Core) was read for this plan. Mac-side file names come from the design docs; Vision-Microservice was not opened.
 - **TF-Luna:** `robot.yaml` has `tfluna_fitted: false`, so the TF-Luna is off the robot and explore is currently refused. The ToF becomes the range sensor, and step 2 is what re-enables explore.
 - **Chassis:** tank tracks 3 in tall and 11 in long, 1.5 in sprockets, 2.8 lb, TS-25GA370 12 V 130 RPM motors.
-- **Sensors:** Fermion 10 DOF IMU (ADXL345, ITG3205, VCM5883L, BMP280) and Gravity 8×8 ToF (60° field of view, 3.5 m), with the ToF on the gimbal.
+- **Sensors:** Fermion 10 DOF IMU (BMI323, BMM350, BMP581; SEN0697) on I2C and Gravity 8×8 ToF (60° field of view, 3.5 m) also on I2C, with the ToF on the gimbal.
 
 ## Step 0: Measure and wire (no code)
 
@@ -20,7 +20,7 @@ The plan is in build order. Each step leaves a working robot, and nothing before
 **Do:**
 
 - Run the 1–4 cm board test to find `h_max`.
-- Run `i2cdetect` to check the gyro's 0x68 address against the PiSugar.
+- Run `i2cdetect` to check the BMI323 answers at 0x69.
 - Measure the ToF's height and its offset from the pan axis.
 
 **Done when:** the numbers are written down.
@@ -33,7 +33,7 @@ The plan is in build order. Each step leaves a working robot, and nothing before
 
 - New `robot_core/sensors/imu.py`: reads the accelerometer and gyro, calibrates gyro bias at standstill, runs a small fusion filter in a background thread (same shape as `tfluna.py`), and includes a fake for tests.
 - `pyproject.toml`: add an I²C library to an optional extra.
-- New `tests/hardware/check_imu.py`; cases added to `tests/test_sensors.py`.
+- New `tests/hardware/check_imu.py` (since replaced by `Monitoring-Service/calibrate.py imu`); cases added to `tests/test_sensors.py`.
 
 **Done when:** tilting the robot by hand shows correct angles, and yaw drifts under about 1° per minute at rest.
 
@@ -46,7 +46,7 @@ The plan is in build order. Each step leaves a working robot, and nothing before
 - New `robot_core/sensors/tof8x8.py`: `grid()` returns 64 ranges, and `read()`/`latest()` match the `TFLuna` interface using the centre zones, so `Head` works unchanged.
 - `explorer_node.py` and `voice_node.py`: construct it where the TF-Luna is built today.
 - `robot.yaml`: add `tof_fitted` and the mount measurements.
-- New `tests/hardware/check_tof.py`.
+- New `tests/hardware/check_tof.py` (since replaced by `Monitoring-Service/calibrate.py tof`).
 
 **Done when:** explore starts again and existing tests pass.
 

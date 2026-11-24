@@ -19,8 +19,8 @@
     # Calibration. Both scale the TARGET, not the measurement, so neither can
     # make a move stop early — short travel is traction or a lost encoder
     # channel, never calibration. See the calibration section of the README.
-    ticks_per_cm: 38.5
-    ticks_per_degree: 6
+    ticks_per_cm: 37.2
+    ticks_per_degree: 7.363    # a float: the node declares it as one, and ROS refuses an int here
 
     # The hard limit on a single move. Enforced in the goal callback, so the
     # model cannot talk its way past it.
@@ -36,8 +36,65 @@
     # hence swap_sides; /motion_health says "wrong_direction" if that's wrong.
     wheelbase_m: 0.0
     odom_swap_sides: true
-    # Brake as soon as motion health says stalled/slipping.
+    # Brake as soon as motion health says stalled/slipping (and, with the IMU, tilted).
     stop_on_stuck: true
+
+    # IMU: DFRobot Fermion 10 DOF (SEN0697, BMI323) on I2C. Wiring and checks: README, "IMU and ToF
+    # sensors". With it the heading comes from the gyro, every turn is trimmed to the asked
+    # angle, and tilting past the limits stops the move.
+    imu_fitted: true           # set true once calibrate.py imu (Monitoring-Service) passes
+    imu_bus: 1                 # I2C bus. 1 = GPIO2/3
+    imu_gyro_addr: 105         # 0x69, the BMI323 with its address pad open (as shipped); 104 (0x68) if closed
+    imu_axes: ["-x", "-y", "z"]  # which board axis points robot-forward, robot-left, up; "-" flips one.
+                               # Checked 2026-11-18 (imu check): level reads ~0 / ~0, front up = pitch +,
+                               # left up = roll +. The IMU sits 6 cm from the left and the back: no setting
+                               # needed, angles and turn rate are the same anywhere on the chassis
+    imu_pitch_offset_deg: 7.3  # 2026-11-23: was 4.0; it read +3.3 on flat floor all through the Nov 23 follow (still and
+                               # moving), lifting the floor 2-5 cm in the ToF maths: 19% of floor returns became obstacles.
+                               # Nov 21: was 6.3; standing still it read -2.3 (median of 1,624, Nov 19-20 runs).
+                               # Pitch on flat floor, taken off every reading.
+                               # calibrate.py imu measures it; 0 = none
+    # Turns and straight drives are closed on the gyro (velocity mode, firmware -vel): turn_held,
+    # drive_heading_hold. Encoder-counted moves are left for gestures only.
+    turn_tolerance_deg: 2.0
+    drive_heading_hold: true   # straight drives in velocity mode, steered back to their start heading by
+                               # the gyro 10x a second (a slipping track or weaker motor no longer bends
+                               # the path); distance from the encoders. false: counted moves as before
+    drive_held_mps: 0.18       # held straight-drive speed (velocity_max_mps caps it)
+    drive_heading_gain: 3.0    # turn rate (rad/s) per radian of heading error
+    turn_held: true            # turns closed on the gyro from the start (velocity mode), no counted turn first
+    drive_blocked_deg: 12.0    # a held drive pushed this far off its heading for drive_blocked_s is blocked
+    drive_blocked_s: 0.8       # (pivoting on a wall): stopped and reported as "slipping"
+    max_pitch_deg: 25.0        # MEASURE: nose up/down beyond this is "tilted" and stops the move
+    max_roll_deg: 20.0
+    max_climb_deg: 12.0        # the nose rising this far above where a drive started: climbing something, stop
+    max_dip_deg: 8.0           # the nose falling this far below where a drive started, fast, stops it at once
+                               # (going over an edge the ToF missed). Raise it if a bumpy floor trips it
+
+    # TF-Luna drop guard (robot_core/drop_guard.py; wiring: README "TF-Luna on the Arduino").
+    # Driving forward, a range LONGER than the floor by drop_jump_cm (a drop), SHORTER by
+    # drop_low_cm (something low), or drop_misses readings with no range, brakes at once and
+    # reports "drop" in /motion_health. Not armed until it has the floor's range, so with no
+    # TF-Luna fitted it does nothing.
+    drop_guard: true
+    tfluna_floor_cm: 0.0       # MEASURE: the reading on flat floor at the mount angle; 0 = learn it
+                               # at start-up while standing still (start on flat floor, not at an edge)
+    drop_jump_cm: 6.0
+    drop_low_cm: 6.0
+    drop_misses: 3
+
+    # Velocity driving (/cmd_vel -> firmware v6 T frames; robot_core/velocity.py). Only with
+    # drv8871-v6-vel flashed: follow then steers continuously instead of stop-and-go.
+    velocity_timeout_s: 1.0    # no /cmd_vel for this long: ramp down and stop (follow sends ~2 a second)
+    velocity_max_mps: 0.25     # forward speed limit (130 RPM motors, 1.5 in sprockets: ~0.26 at full PWM)
+    velocity_max_radps: 1.0    # turn rate limit
+    velocity_accel_mps2: 0.4   # smooth starts and stops
+    velocity_accel_radps2: 2.0
+    velocity_pwm_min: 60.0     # MEASURE: the PWM at which a track just starts to move (dead band)
+    velocity_pwm_per_mps: 750.0   # MEASURE: extra PWM per m/s; the speed loop corrects what is left
+    velocity_kp: 300.0
+    velocity_ki: 600.0
+    velocity_i_max: 60.0
 
 /voice:
   ros__parameters:
@@ -54,6 +111,12 @@
     # false = no spoken announcements ("Robot online", "Voice session failed"). With no
     # speaker fitted they only delay the microphone: ~6 s on every dropped session.
     tts: false
+
+    # if true, debug mode: every camera frame and ToF grid a task collects goes to the Mac
+    # (Vision-And-Planning POST /v1/debug/frame, for Monitoring-Service to show)
+    debug_mode: true          # on while debugging follow and the ToF overlay; false for normal runs
+    follow_bump_g: 1.5         # follow: a jolt counts as hitting something only past this (the drivetrain
+                               # reports any jolt over 0.8 g, which the tracks reach on a floor at full speed)
 
 /explorer:
   ros__parameters:
@@ -76,14 +139,55 @@
     no_behind: false
 
     orbit_radius_m: 0.7        # photo distance from the plant
-    orbit_views: 4             # full 360: 4 views, 90 degrees apart
+    orbit_views: 8             # full 360: 8 views, 45 degrees apart (viewpoints may now be on floor not seen yet)
     revisit_known: true        # photograph known plants again (a new visit)
     ask_before_drive: false    # image+text model checks each step (slow, thorough)
 
     # Head. Pan is limited to +-90 and tilt to +-45 in the driver, and both
     # park at their start position (the *_center_us pulse) on shutdown.
+    # Same-side approach for the head: every move down goes this far past its target and comes
+    # back up, so the SG90's gear play is always on the same side (repeatable angles for ranging
+    # plants and rooms). 0 = off. README "Calibrating the head and the ToF".
+    head_backlash_deg: 2.0
     tfluna_port: "/dev/serial0"
-    tfluna_fitted: false        # false = TF-Luna removed: follow runs without it, explore is refused
+    tfluna_fitted: false        # false = TF-Luna removed (the ToF below replaces it)
+
+    # 8x8 ToF: DFRobot Gravity SEN0628 on the head beside the camera, on I2C. Wiring and
+    # checks: README, "IMU and ToF sensors". It is the range sensor for follow and explore and
+    # sees the floor ahead (docs/TERRAIN-DESIGN.md). With tof_fitted and tfluna_fitted both
+    # false, follow runs without a range and explore is refused.
+    tof_fitted: true           # set true once calibrate.py tof (Monitoring-Service) passes
+    tof_port: ""               # "" = on I2C (what the robot uses), with tof_bus / tof_addr. For USB instead: the
+                               # ToF's serial port, best its fixed name from `ls /dev/serial/by-id/`
+    tof_bus: 1                 # I2C bus (1 = GPIO2/3, shared with the IMU); not used on USB
+    tof_addr: 51               # 0x33, both address switches as shipped; not used on USB
+    tof_tilt: 90               # board turned on its side: 90 = a quarter-turn clockwise seen from behind the head
+                               # (its top edge to the robot's right), -90 = anticlockwise, 0 = upright. Multiples of 90
+    tof_range_scale: 1.0       # calibrate.py drive (Monitoring-Service): true = scale * reading + offset
+    tof_range_offset_m: -0.0025
+    tof_pan_offset_deg: 0.0    # calibrate.py align (Monitoring-Service): ToF pan offset relative to camera (+ is left)
+    tof_tilt_offset_deg: 0.0   # calibrate.py align (Monitoring-Service): ToF tilt offset relative to camera (+ is up)
+    tof_flip_rows: false       # true if the floor shows in the TOP rows (calibrate.py tof)
+    tof_flip_cols: false       # true if a hand on the robot's left shows in the RIGHT columns
+    tof_perpendicular: true    # ranges are distances to the sensor's face, not along each ray
+                               # (calibrate.py drive says which, against its wall)
+    drive_tilt_deg: -30.0      # head tilt for looking at the floor ahead; follow glances here before a drive
+    h_max_m: 0.03              # MEASURE (boards of 1 to 4 cm): the highest step the tracks climb
+    flat_tol_m: 0.045          # floor reads up to this high is still floor: the 8x8 ToF reads the nearest
+                               # strip 2-4 cm high on flat floor (measured 2026-11-17)
+    min_landing_m: 0.20        # flat floor needed beyond a step for it to count as climbable
+    max_drop_m: 0.03           # a fall deeper than this is a drop: never driven
+    robot_width_m: 0.25        # 2026-11-19: 25 x 25 cm, square (nav treats it as a 0.177 m circle). The floor checked ahead is this plus 5 cm
+    plan_clearance_m: 0.08     # going round something: this gap between the robot's side and it
+    floor_auto_level: true     # judge each floor scan against the floor fitted right in front (the tilt servo
+                               # stops a few degrees off and the chassis rocks): see terrain.level
+    floor_holes_are_drops: false   # false: a floor zone with no return (dark floor at a glancing angle) is
+                               # "not seen": driven up to, never onto, and not planned round. true: a drop
+    drive_on_unknown_floor: false   # false = never drive onto floor the ToF cannot read (very dark or shiny).
+                               # Follow and explore then stop there; true drives it unchecked
+    robot_height_m: 0.20       # 2026-11-19: 20 cm. Lower than this is in its way
+    stop_short_m: 0.25         # a drive cut short by something (follow) ends with the middle of the tracks this
+                               # far before it: half the track length (0.14 m) plus a gap. At least 0.25
     # Head camera: the USB U20CAM-1080P-WDR (PS5268, 1080p HDR) on the gimbal,
     # the only camera (docs/USB-CAMERA-MIC.md). Its built-in mic is the voice
     # fallback when the buds are off.
@@ -92,24 +196,38 @@
     camera_main_size: [1920, 1080]   # explore photos
     face_camera_size: [1920, 1080]   # enroll / match / follow (was [640, 480] for the V2)
     camera_inverted: true      # mounted upside down: rotated 180 deg (ISP on the ribbon camera, software on USB)
-    head_height_m: 0.25        # MEASURE: TF-Luna height above the floor
-    pan_axis_x_m: 0.05         # MEASURE: pan axis ahead of the wheel-axle centre
+    head_tilt_offset_deg: 21.0 # the head (camera and ToF) looks this far UP at tilt 0, its straight position
+    head_height_m: 0.22        # MEASURED 2026-11-18: ToF height above the floor, head level
+    tof_from_right_m: 0.10     # MEASURED 2026-11-18: ToF centre from the robot's right side (centre = robot_width_m / 2)
+    pan_axis_x_m: 0.0          # 2026-11-19: the gimbal pan axis is at the robot centre
+    tof_self_zones: "7,0:0.22 7,1:0.15 7,2:0.15 7,3:0.15 6,0:0.30"   # ToF zones (row,col: metres) that see the
+                               # robot itself: nearer readings there are ignored. 2026-11-19 door run: (7,0) read
+                               # 0.10-0.17, (6,0) 0.20-0.25, (7,1..3) 0.06-0.11 with nothing there; they braked it
     hfov_deg: 80.0             # USB HD: measured 2026-11-10 (1 m of tape = 764 px at 1.5 m). The lens bends
                                # (fisheye-like): ~105 at the edges, but the angle maths uses the centre. V2 was 66
     pwm_chip: 0                # Pi 4: 0. Pi 5: 2
     pan_channel: 1             # GPIO13
     tilt_channel: 0            # GPIO12
-    pan_center_us: 1600.0      # measured (check_servo_pulse.py trim): head points straight ahead
-    tilt_center_us: 1400.0     # measured (check_servo_pulse.py trim): head is level
-    pan_us_per_deg: 11.111     # pulse change per degree (2000/180); MEASURE with tests/hardware/check_servo_pulse.py
+    pan_center_us: 1600.0      # calibrate.py head (Monitoring-Service): head points straight ahead
+    tilt_center_us: 1400.0     # calibrate.py head: head is level
+    pan_us_per_deg: 11.111     # pulse change per degree (2000/180); the servo's spec; calibrate.py head checks the result
     tilt_us_per_deg: 11.111
     pan_invert: false          # +pan must turn the head LEFT
     tilt_invert: true          # +tilt must look UP (flipped: this servo was mounted the other way up)
     servo_speed_dps: 60.0      # head speed, deg/s; lower = slower, below ~10 gets steppy
+    servo_fast_dps: 120.0      # the most a move may ask for: follow's search sweep. Still ramped (accelerates
+                               # and slows down), so not a snap; set it to servo_speed_dps to keep every move slow
     servo_min_us: 500.0        # hard pulse window: no angle or trim can send a pulse outside it. The driver
-    servo_max_us: 2400.0       # shrinks the reachable angles to fit (pan at 2300 us has only ~9 deg to the left):
-                               # re-fit the horn nearer the middle, or widen this if the servo really goes further
+    servo_max_us: 2500.0       # shrinks the reachable angles to fit: with pan centred at 1600 us, 2500 lets it
+                               # reach +81 deg to the left (2400 stopped it at +72; -90 right is at 600 us).
+                               # If the servo buzzes at full left, it is against its stop: back to 2400.
+                               # Full +-90: re-fit the pan horn one tooth so straight ahead is near 1500 us
     hold_on_close: true        # on shutdown park at centre and KEEP holding it (false: release the PWM, servos go limp)
     servo_power_gpio: 4        # BCM pin that reads the servo +5 V through a 10k/20k divider (high = on); 0 = none fitted.
                                # While it reads low the head is frozen and moves are refused, so switching the servos on
                                # can never snap them to a stale position
+
+/display:
+  ros__parameters:
+    buzzer_pin: 26             # BCM pin of the passive buzzer (README "Buzzer"); 0 = none fitted, no sounds.
+                               # Never 12, 13, 18 or 19: those are the head servos' PWM channels
