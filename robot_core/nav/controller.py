@@ -201,6 +201,7 @@ class LocalNav:
         self._moving_since: Optional[Tuple[float, float, Optional[float]]] = None   # (t, odo, pitch)
         self._odo, self._last_pose = 0.0, None
         self._recover: Optional[str] = None
+        self._back_w = 0.0
         self._trips_seen = 0
         self._ahead_t = -1e9                          # when a grid last looked along the way it is going
         self.marked: List[Tuple[float, float]] = []    # odom xy of what the reflex braked for (debug record)
@@ -353,7 +354,7 @@ class LocalNav:
                 if self.reflex.why.startswith("the drivetrain"):   # felt, not seen: a way that did not work
                     self._failed(here, "bump", hits[len(hits) // 2], join=True)
                     if self._room_behind(here, 0.15):     # off it before turning: turning against it rubbed it
-                        self._recover, self._recover_from, self._back_m = "back", (here, self.clock()), 0.15
+                        self._start_back(here, self.clock(), 0.15)
                 self.marked = (self.marked + [at[len(at) // 2]])[-20:]
                 log.info("nav: marked what it braked for (%s) at %s, replanning", self.reflex.why, at[len(at) // 2])
             self._trips_seen = self.reflex.trips          # it first, whatever the state (Nov 19: tripped while
@@ -450,12 +451,17 @@ class LocalNav:
             # spot in a doorway until it lost the person (Nov 19). Blocked with the way straight ahead: back off.
             self._plan_t, self._local_t = 0.0, -1e9       # plan a way round now (the Mac's and our own)
             w = dwa.face(tb) if abs(tb) > math.radians(20) else 0.0
-            if not w and self._recover is None and self._room_behind(here, 0.1):
-                self._recover, self._recover_from, self._back_m = "back", (here, now), TURN_BACK_M
+            if not w and self._recover is None:
+                if self._room_behind(here, 0.1):
+                    self._start_back(here, now, TURN_BACK_M)
+                else:
+                    ew = self._escape_arc(here, tb, TURN_BACK_M)
+                    if ew is not None:
+                        self._start_back(here, now, TURN_BACK_M, ew, mode="arc")
             self.state, self.detail = "blocked", "no safe arc: turning toward the way" if w else "no safe arc: backing off"
         else:
             self.state, self.detail = "driving", f"{dist:.2f} m to go"
-            self._watch_progress(now, here, dist)
+            self._watch_progress(now, here, dist, tb)
         if v > 0.02 and now - self._ahead_t > AHEAD_STALE_S:     # not looked where it is going lately
             v = min(v, SEEN_MPS if self.costmap.seen_free(here, 0.6) else BLIND_MPS)
             if now >= self.aim.glance_until:
@@ -466,10 +472,25 @@ class LocalNav:
             v = 0.0
             self.state, self.detail = "tripped", self.reflex.why
         if v < 0.02 and w != 0.0 and self._recover is None and self._turn_hits(here, w):
-            # In a doorway or pass, do not trigger repeated back-off oscillations if heading towards the path
-            if abs(tb) > math.radians(45.0) and self._room_behind(here, 0.1):
-                self._recover, self._recover_from, self._back_m = "back", (here, now), TURN_BACK_M
-            v = w = 0.0
+            # Pivoting in place would clip a corner: if DWA already found a clear forward arc
+            # curving toward the target (and reflex isn't tripped), follow that arc instead of deadlocking.
+            if (not res.blocked and not self.reflex.tripped() and abs(tb) <= math.radians(55.0)
+                    and res.v >= 0.02 and res.w * tb > 0.0 and res.clearance_m >= self.params.margin_m):
+                v, w = res.v, res.w
+                if v > 0.02 and now - self._ahead_t > AHEAD_STALE_S:
+                    v = min(v, SEEN_MPS if self.costmap.seen_free(here, 0.6) else BLIND_MPS)
+                if now < self._slow_until:
+                    v = min(v, SILL_SLOW_MPS)
+            else:
+                # In a doorway or pass, do not trigger repeated back-off oscillations if heading towards the path
+                if abs(tb) > math.radians(45.0):
+                    if self._room_behind(here, 0.1):
+                        self._start_back(here, now, TURN_BACK_M)
+                    else:
+                        ew = self._escape_arc(here, tb, TURN_BACK_M)
+                        if ew is not None:
+                            self._start_back(here, now, TURN_BACK_M, ew, mode="arc")
+                v = w = 0.0
         self._watch_rules(now, here, v, w)
         if self._watch_turn(now, here, v, w):
             v = w = 0.0
@@ -488,7 +509,7 @@ class LocalNav:
         """Every cell on the straight line a -> b was seen free."""
         return self.costmap.known_free_line(a, b)
 
-    def _watch_progress(self, now: float, here: Pose, dist: float) -> None:
+    def _watch_progress(self, now: float, here: Pose, dist: float, tb: float = 0.0) -> None:
         """In "driving" but not NO_PROGRESS_M from where it was NO_PROGRESS_S ago: wedged (Nov 19 sim: against a
         door-frame corner no arc met the margin and it turned on the spot for 40 s). Back off and plan again.
         Measured by where it is, not by the distance to the goal: the way round can first lead away."""
@@ -498,7 +519,11 @@ class LocalNav:
         if now - self._progress[0] > NO_PROGRESS_S and self._recover is None:
             rules.broke("no_progress", at=[round(here[0], 2), round(here[1], 2)], to_go=round(dist, 2))
             if self._room_behind(here, 0.12):
-                self._recover, self._recover_from, self._back_m = "back", (here, now), BACK_OFF_M
+                self._start_back(here, now, BACK_OFF_M)
+            else:
+                ew = self._escape_arc(here, tb, BACK_OFF_M)
+                if ew is not None:
+                    self._start_back(here, now, BACK_OFF_M, ew, mode="arc")
             self._plan_t, self._local_t = 0.0, -1e9
             self._progress = (now, tuple(here[:2]))
 
@@ -664,8 +689,7 @@ class LocalNav:
                     self._failed(at, kind, (0.22, 0.0), join=True)
             self._stuck.reset()
             self._moving_since = None
-            self._recover, self._back_m = "back", BACK_OFF_M
-            self._recover_from = (at, self.clock())
+            self._start_back(at, self.clock(), BACK_OFF_M)
             self.state, self.detail = "stuck", why
 
     def _failed(self, here, kind: str, at_base: Tuple[float, float], join: bool = False) -> list:
@@ -723,18 +747,84 @@ class LocalNav:
         self.motion.stop()                                # brake: a ramp down pushed on into it for 0.5 s
         self._failed(here, "turn", corner[1])
         if self._room_behind(here, 0.12):
-            self._recover, self._recover_from, self._back_m = "back", (here, now), 0.10
+            self._start_back(here, now, 0.10)
         rules.broke("turn_blocked", at=[round(here[0], 2), round(here[1], 2)], w=round(w, 2))
         return True
 
+    def _start_back(self, here: Pose, now: float, dist_m: float, w: float = 0.0, mode: str = "back") -> None:
+        self._recover = mode
+        self._recover_from = (here, now)
+        self._back_m = dist_m
+        self._back_w = w
+
+    def _box_gap(self, x: float, y: float, th: float, pts: Sequence[Tuple[float, float]]) -> float:
+        """Signed clearance from the oriented square body (half-side = radius_m / sqrt(2)) to `pts`."""
+        if not pts:
+            return 1.0
+        half = self.params.radius_m / math.sqrt(2.0)
+        c, s = math.cos(th), math.sin(th)
+        best = 1.0
+        for px, py in pts:
+            dx, dy = px - x, py - y
+            g = max(abs(dx * c + dy * s), abs(-dx * s + dy * c)) - half
+            if g < best:
+                best = g
+        return best
+
+    def _arc_eval(self, here: Pose, w: float, dist_m: float, pts: Sequence[Tuple[float, float]]) -> Optional[Tuple[float, float]]:
+        """Evaluate a short reverse arc (v = -0.08, w) over dist_m. Returns (min_gap, end_gap) or None if unsafe."""
+        v = -0.08
+        dur = max(0.25, dist_m / abs(v))
+        start_gap = self._box_gap(here[0], here[1], here[2], pts)
+        xs, ys, ths = dwa.arcs(here[0], here[1], here[2], np.array([v]), np.array([w]), dur, dur / 5.0)
+        if start_gap < 0.0:
+            return None
+        min_ok = min(0.015, start_gap - 1e-4)
+        min_gap = 1.0
+        end_gap = 1.0
+        for x, y, th in zip(xs[0], ys[0], ths[0]):
+            g = self._box_gap(float(x), float(y), float(th), pts)
+            if g < min_ok:
+                return None
+            if g < min(0.04, start_gap - 0.002):
+                return None
+            if g < min_gap:
+                min_gap = g
+            end_gap = g
+        return min_gap, end_gap
+
+    def _escape_arc(self, here: Pose, tb: float, dist_m: float = BACK_OFF_M) -> Optional[float]:
+        """Pick the safest short reverse arc (3-point turn) that pulls the body away from tight corners
+        and aims the nose toward `tb` when straight `_room_behind` is blocked by a side obstacle."""
+        reach = self.params.radius_m + dist_m + 0.15
+        pts = [p for p in self.costmap.points() if math.dist(p, here[:2]) < reach]
+        dur = max(0.25, dist_m / 0.08)
+        best: Optional[Tuple[float, float]] = None
+        for w in (0.0, 0.35, -0.35, 0.6, -0.6):
+            ev = self._arc_eval(here, w, dist_m, pts)
+            if ev is None:
+                continue
+            min_gap, end_gap = ev
+            score = 2.0 * min(end_gap, 0.30) + min(min_gap, 0.20) - 0.15 * abs(dwa.wrap(tb - w * dur))
+            if best is None or score > best[0]:
+                best = (score, w)
+        return best[1] if best is not None else None
+
     def _do_recover(self, here: Pose) -> None:
-        """Back off BACK_OFF_M (slowly, watching the reflex), then hand back to DWA."""
+        """Back off BACK_OFF_M (straight or along a safe reverse arc), then hand back to DWA."""
         start, t0 = self._recover_from
         want = getattr(self, "_back_m", BACK_OFF_M)
         gone = math.hypot(here[0] - start[0], here[1] - start[1]) if start else want
-        if gone >= want or self.clock() - t0 > 3.0 or not self._room_behind(here, 0.12):   # no room behind
+        if self._recover == "arc":
+            reach = self.params.radius_m + 0.25
+            pts = [p for p in self.costmap.points() if math.dist(p, here[:2]) < reach]
+            blocked = self._arc_eval(here, self._back_w, 0.08, pts) is None
+        else:
+            blocked = not self._room_behind(here, 0.12)
+        if gone >= want or self.clock() - t0 > 3.0 or blocked:
             self._recover = None
+            self._back_w = 0.0
             self._send(0.0, 0.0)
             self._plan_t = 0.0
             return
-        self._send(-0.08, 0.0)
+        self._send(-0.08, self._back_w)

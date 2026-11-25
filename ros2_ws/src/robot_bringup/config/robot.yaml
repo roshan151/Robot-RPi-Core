@@ -196,7 +196,7 @@
     face_camera_size: [1920, 1080]   # enroll / match / follow (was [640, 480] for the V2)
     camera_inverted: true      # mounted upside down: rotated 180 deg (ISP on the ribbon camera, software on USB)
     head_tilt_offset_deg: 21.0 # the head (camera and ToF) looks this far UP at tilt 0, its straight position
-    head_height_m: 0.22        # MEASURED 2026-11-18: ToF height above the floor, head level
+    head_height_m: 0.245       # MEASURED 2026-11-18: ToF height above the floor, head level
     tof_from_right_m: 0.10     # MEASURED 2026-11-18: ToF centre from the robot's right side (centre = robot_width_m / 2)
     pan_axis_x_m: 0.0          # 2026-11-19: the gimbal pan axis is at the robot centre
     tof_self_zones: "7,0:0.22 7,1:0.15 7,2:0.15 7,3:0.15 6,0:0.30"   # ToF zones (row,col: metres) that see the
@@ -207,8 +207,8 @@
     pwm_chip: 0                # Pi 4: 0. Pi 5: 2
     pan_channel: 1             # GPIO13
     tilt_channel: 0            # GPIO12
-    pan_center_us: 1600.0      # calibrate.py head (Monitoring-Service): head points straight ahead
-    tilt_center_us: 1400.0     # calibrate.py head: head is level
+    pan_center_us: 1608        # calibrate.py head (Monitoring-Service): head points straight ahead
+    tilt_center_us: 1326       # calibrate.py head: head is level
     pan_us_per_deg: 11.111     # pulse change per degree (2000/180); the servo's spec; calibrate.py head checks the result
     tilt_us_per_deg: 11.111
     pan_invert: false          # +pan must turn the head LEFT
