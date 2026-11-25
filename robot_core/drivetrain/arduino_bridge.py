@@ -192,10 +192,17 @@ class ArduinoBridge:
         if self._boot_seen.wait(timeout=BOOT_WAIT_S):
             logger.info("Connected on %s (boot frame received)", port)
         else:
-            logger.info(
-                "No boot frame on %s — assuming the board was already "
-                "running; pinging", port,
-            )
+            # The ESP32 does not reset when the port opens (the Arduino did), so
+            # reset it once via DTR to read its build stamp (velocity mode needs it).
+            logger.info("No boot frame on %s — resetting the board via DTR", port)
+            self._ser.dtr = False
+            time.sleep(0.1)
+            self._ser.dtr = True
+            if not self._boot_seen.wait(timeout=BOOT_WAIT_S):
+                logger.info(
+                    "Still no boot frame on %s — assuming the board is "
+                    "running; pinging", port,
+                )
         try:
             self._transact("Q")
         except Exception as exc:
