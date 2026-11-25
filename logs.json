@@ -5417,3 +5417,176 @@
 {"ts":"2026-11-25T22:42:44.182Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:270 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
 {"ts":"2026-11-25T22:42:44.607Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
 {"ts":"2026-11-25T22:42:44.608Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-25T23:03:05.647Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 252)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-25T23:03:05.651Z","lvl":"warn","evt":"estop","reason":"shutdown","dropped":[],"interrupted":null}
+{"ts":"2026-11-25T23:03:05.658Z","lvl":"info","evt":"log","msg":"motion executor stopped","src":"robot_core.motion_executor"}
+{"ts":"2026-11-25T23:03:29.479Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-25T23:03:30.227Z","lvl":"info","evt":"session.start","mode":"ros","pid":24789,"log":"logs.json","debug":true}
+{"ts":"2026-11-25T23:03:30.559Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-25T23:03:32.245Z","lvl":"info","evt":"log","msg":"debug mode: uploading sensor data to http://roshans-mac-mini.local:8080/v1/debug/frame, session 20261125-170332","src":"robot_core.debug_upload"}
+{"ts":"2026-11-25T23:03:34.570Z","lvl":"info","evt":"log","msg":"No boot frame on /dev/ttyUSB0 \u2014 resetting the board via DTR","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-25T23:03:35.051Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v10-esp32-vel-noluna built Nov 25 2026 13:24:16","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-25T23:03:35.103Z","lvl":"info","evt":"log","msg":"motion executor started","src":"robot_core.motion_executor"}
+{"ts":"2026-11-25T23:03:36.399Z","lvl":"info","evt":"log","msg":"imu: auto-tared level at pitch=4.23 deg, roll=3.90 deg","src":"robot_core.sensors.imu"}
+{"ts":"2026-11-25T23:03:36.523Z","lvl":"info","evt":"log","msg":"drivetrain ready on /dev/ttyUSB0 (limit 5.0 m, velocity on)","src":"robot_drivetrain"}
+{"ts":"2026-11-25T23:03:36.629Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-25T23:03:36.631Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-25T23:03:36.661Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-25T23:03:38.864Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-25T23:03:38.865Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-25T23:05:44.032Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":124.89}
+{"ts":"2026-11-25T23:05:46.495Z","lvl":"info","evt":"voice.heard","text":"Raben, Donau-Ries"}
+{"ts":"2026-11-25T23:05:46.513Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":90},"ok":true,"queued":true,"op":"turn","value":90.0}
+{"ts":"2026-11-25T23:05:46.513Z","lvl":"info","evt":"log","msg":"tool turn({'degrees': 90}) -> {'ok': True, 'queued': True, 'op': 'turn', 'value': 90.0} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-25T23:05:51.242Z","lvl":"info","evt":"move.done","op":"held","val":-90.0,"dur":4.722,"heading_err":-1.0,"detail":null}
+{"ts":"2026-11-25T23:05:58.971Z","lvl":"info","evt":"voice.heard","text":"Robin, start exploring."}
+{"ts":"2026-11-25T23:05:58.975Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"explore"},"ok":true,"starting":"explore","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-25T23:05:58.976Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'explore'}) -> {'ok': True, 'starting': 'explore', 'note': 'session closing; it reopens when the task ends'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-25T23:05:59.101Z","lvl":"info","evt":"task.start","task":"explore","name":"","_unregistered":true}
+{"ts":"2026-11-25T23:05:59.107Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 241)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-25T23:05:59.109Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-25T23:05:59.275Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-25T23:05:59.631Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-25T23:06:01.905Z","lvl":"info","evt":"session.start","mode":"explore","pid":25617}
+{"ts":"2026-11-25T23:06:02.848Z","lvl":"info","evt":"task.end","task":"explore","ok":false,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-25T23:06:02.849Z","lvl":"info","evt":"gesture","name":"no","text_only":true}
+{"ts":"2026-11-25T23:06:02.850Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-11-25T23:06:02.884Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-25T23:06:02.953Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:310 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-25T23:06:02.962Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:270 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-25T23:06:03.400Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-25T23:06:03.401Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-25T23:06:47.454Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":43.99,"repeats":3}
+{"ts":"2026-11-25T23:06:50.037Z","lvl":"info","evt":"voice.heard","text":"Robin, start exploring."}
+{"ts":"2026-11-25T23:06:50.042Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"explore"},"ok":true,"starting":"explore","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-25T23:06:50.043Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'explore'}) -> {'ok': True, 'starting': 'explore', 'note': 'session closing; it reopens when the task ends'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-25T23:06:50.139Z","lvl":"info","evt":"task.start","task":"explore","name":"","_unregistered":true}
+{"ts":"2026-11-25T23:06:50.144Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 242)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-25T23:06:50.148Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-25T23:06:50.261Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-25T23:06:50.662Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-25T23:06:52.885Z","lvl":"info","evt":"session.start","mode":"explore","pid":25901}
+{"ts":"2026-11-25T23:06:53.720Z","lvl":"info","evt":"task.end","task":"explore","ok":false,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-25T23:06:53.721Z","lvl":"info","evt":"gesture","name":"no","text_only":true}
+{"ts":"2026-11-25T23:06:53.722Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-11-25T23:06:53.759Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-25T23:06:53.828Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:310 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-25T23:06:53.836Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:270 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-25T23:06:54.230Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-25T23:06:54.231Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-25T23:07:04.158Z","lvl":"info","evt":"voice.heard","text":"Praveen, follow me."}
+{"ts":"2026-11-25T23:07:04.162Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"follow"},"ok":true,"starting":"follow","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-25T23:07:04.163Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'follow'}) -> {'ok': True, 'starting': 'follow', 'note': 'session closing; it reopens when the task ends'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-25T23:07:04.239Z","lvl":"info","evt":"task.start","task":"follow","name":"","_unregistered":true}
+{"ts":"2026-11-25T23:07:04.244Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 243)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-25T23:07:04.248Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-25T23:07:04.293Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-25T23:07:04.447Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+80 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1608 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-25T23:07:04.646Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-25T23:07:04.669Z","lvl":"info","evt":"health.preflight","checks":{"head servo power":[true,""],"ToF grids arriving":[true,"newest 0.0 s old"],"odometry pose fresh":[true,""],"Mac answering":[true,"75 ms"]}}
+{"ts":"2026-11-25T23:07:05.913Z","lvl":"info","evt":"log","msg":"follow 1: searching -, bearing None, None m (None); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:06.130Z","lvl":"info","evt":"log","msg":"follow 2: tracking Roshan, bearing 27.5, 0.92 m (tof); nav idle ","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:06.335Z","lvl":"info","evt":"log","msg":"follow 3: tracking Roshan, bearing 27.3, 0.91 m (tof); nav driving 0.92 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:06.498Z","lvl":"info","evt":"log","msg":"follow 4: tracking Roshan, bearing 27.0, 0.92 m (tof); nav driving 0.91 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:06.652Z","lvl":"info","evt":"log","msg":"follow 5: tracking Roshan, bearing 27.6, 0.97 m (tof); nav driving 0.92 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:06.810Z","lvl":"info","evt":"log","msg":"follow 6: tracking Roshan, bearing 29.3, 0.99 m (tof); nav driving 0.95 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:06.978Z","lvl":"info","evt":"log","msg":"follow 7: tracking Roshan, bearing 30.3, 1.12 m (tof); nav driving 0.96 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:07.088Z","lvl":"info","evt":"log","msg":"follow 8: holding Roshan, bearing None, None m (None); nav driving 1.05 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:07.254Z","lvl":"info","evt":"log","msg":"follow 9: holding Roshan, bearing None, None m (None); nav driving 1.03 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:07.402Z","lvl":"info","evt":"log","msg":"follow 10: holding Roshan, bearing None, None m (None); nav driving 1.00 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:07.590Z","lvl":"info","evt":"log","msg":"follow 11: tracking Roshan, bearing 20.3, 1.15 m (tof); nav driving 0.96 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:07.833Z","lvl":"info","evt":"log","msg":"follow 12: tracking Roshan, bearing 16.3, 0.89 m (tof); nav driving 1.05 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:07.989Z","lvl":"info","evt":"log","msg":"follow 13: holding Roshan, bearing None, None m (None); nav driving 0.83 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:08.228Z","lvl":"info","evt":"log","msg":"follow 14: holding Roshan, bearing None, None m (None); nav driving 0.79 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:08.393Z","lvl":"info","evt":"log","msg":"follow 15: holding Roshan, bearing None, None m (None); nav driving 0.76 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:08.553Z","lvl":"info","evt":"log","msg":"follow 16: searching Roshan, bearing None, None m (None); nav driving 0.74 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:08.554Z","lvl":"info","evt":"log","msg":"follow 16: lost, going to where they were last seen","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:08.757Z","lvl":"info","evt":"log","msg":"follow 17: searching Roshan, bearing None, None m (None); nav driving 0.71 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:08.936Z","lvl":"info","evt":"log","msg":"follow 18: searching Roshan, bearing None, None m (None); nav driving 0.69 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:09.112Z","lvl":"info","evt":"log","msg":"follow 19: searching Roshan, bearing None, None m (None); nav driving 0.66 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:09.293Z","lvl":"info","evt":"log","msg":"follow 20: searching Roshan, bearing None, None m (None); nav driving 0.65 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:09.476Z","lvl":"info","evt":"log","msg":"follow 21: searching Roshan, bearing None, None m (None); nav driving 0.62 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:09.640Z","lvl":"info","evt":"log","msg":"follow 22: searching Roshan, bearing None, None m (None); nav driving 0.61 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:09.802Z","lvl":"info","evt":"log","msg":"follow 23: searching Roshan, bearing None, None m (None); nav driving 0.60 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:09.912Z","lvl":"info","evt":"log","msg":"follow 24: searching Roshan, bearing None, None m (None); nav driving 0.58 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:10.037Z","lvl":"info","evt":"log","msg":"follow 25: searching Roshan, bearing None, None m (None); nav driving 0.56 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:10.176Z","lvl":"info","evt":"log","msg":"follow 26: searching Roshan, bearing None, None m (None); nav driving 0.53 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:10.395Z","lvl":"info","evt":"log","msg":"follow 27: searching Roshan, bearing None, None m (None); nav driving 0.51 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:10.539Z","lvl":"info","evt":"log","msg":"follow 28: searching Roshan, bearing None, None m (None); nav driving 0.50 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:10.690Z","lvl":"info","evt":"log","msg":"follow 29: searching Roshan, bearing None, None m (None); nav driving 0.47 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:10.847Z","lvl":"info","evt":"log","msg":"follow 30: searching Roshan, bearing None, None m (None); nav driving 0.46 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:10.981Z","lvl":"info","evt":"log","msg":"follow 31: searching Roshan, bearing None, None m (None); nav driving 0.45 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:11.109Z","lvl":"info","evt":"log","msg":"follow 32: searching Roshan, bearing None, None m (None); nav driving 0.44 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:11.228Z","lvl":"info","evt":"log","msg":"follow 33: searching Roshan, bearing None, None m (None); nav driving 0.43 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:11.375Z","lvl":"info","evt":"log","msg":"follow 34: searching Roshan, bearing None, None m (None); nav driving 0.43 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:11.552Z","lvl":"info","evt":"log","msg":"follow 35: searching Roshan, bearing None, None m (None); nav driving 0.41 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:11.715Z","lvl":"info","evt":"log","msg":"follow 36: searching Roshan, bearing None, None m (None); nav driving 0.40 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:11.894Z","lvl":"info","evt":"log","msg":"follow 37: searching Roshan, bearing None, None m (None); nav driving 0.39 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:12.060Z","lvl":"info","evt":"log","msg":"follow 38: searching Roshan, bearing None, None m (None); nav driving 0.39 m to go","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:12.187Z","lvl":"info","evt":"log","msg":"follow 39: searching Roshan, bearing None, None m (None); nav arrived 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:12.318Z","lvl":"info","evt":"log","msg":"follow 40: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:14.191Z","lvl":"warn","evt":"rule","rule":"grid_unpaired","pair_s":-1.141}
+{"ts":"2026-11-25T23:07:14.382Z","lvl":"warn","evt":"health.mode","mode":"degraded","was":"normal","why":["no ToF grid for 1.5 s"]}
+{"ts":"2026-11-25T23:07:14.383Z","lvl":"info","evt":"log","msg":"follow 41: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:16.736Z","lvl":"info","evt":"health.mode","mode":"normal","was":"degraded","why":[]}
+{"ts":"2026-11-25T23:07:16.736Z","lvl":"info","evt":"log","msg":"follow 42: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:16.892Z","lvl":"info","evt":"log","msg":"follow 43: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:17.138Z","lvl":"info","evt":"log","msg":"follow 44: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:17.309Z","lvl":"warn","evt":"health.mode","mode":"degraded","was":"normal","why":["no ToF grid for 1.1 s"]}
+{"ts":"2026-11-25T23:07:17.309Z","lvl":"info","evt":"log","msg":"follow 45: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:17.469Z","lvl":"info","evt":"log","msg":"follow 46: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:17.664Z","lvl":"info","evt":"health.mode","mode":"normal","was":"degraded","why":[]}
+{"ts":"2026-11-25T23:07:17.664Z","lvl":"info","evt":"log","msg":"follow 47: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:17.843Z","lvl":"info","evt":"log","msg":"follow 48: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:18.008Z","lvl":"info","evt":"log","msg":"follow 49: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:18.185Z","lvl":"info","evt":"log","msg":"follow 50: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:18.345Z","lvl":"info","evt":"log","msg":"follow 51: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:18.535Z","lvl":"info","evt":"log","msg":"follow 52: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:18.714Z","lvl":"info","evt":"log","msg":"follow 53: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:18.895Z","lvl":"info","evt":"log","msg":"follow 54: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:20.970Z","lvl":"info","evt":"log","msg":"follow 55: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:22.054Z","lvl":"warn","evt":"rule","rule":"grid_unpaired","pair_s":-0.383,"repeats":5}
+{"ts":"2026-11-25T23:07:22.203Z","lvl":"info","evt":"log","msg":"follow 56: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:23.550Z","lvl":"info","evt":"log","msg":"follow 57: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:24.914Z","lvl":"info","evt":"log","msg":"follow 58: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:25.151Z","lvl":"info","evt":"log","msg":"follow 59: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:25.330Z","lvl":"info","evt":"log","msg":"follow 60: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:25.541Z","lvl":"info","evt":"log","msg":"follow 61: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:25.726Z","lvl":"info","evt":"log","msg":"follow 62: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:25.953Z","lvl":"info","evt":"log","msg":"follow 63: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:26.238Z","lvl":"info","evt":"log","msg":"follow 64: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:26.433Z","lvl":"info","evt":"log","msg":"follow 65: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:26.691Z","lvl":"info","evt":"log","msg":"follow 66: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:26.875Z","lvl":"info","evt":"log","msg":"follow 67: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:27.098Z","lvl":"info","evt":"log","msg":"follow 68: searching Roshan, bearing None, None m (None); nav idle 0.38 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:27.269Z","lvl":"info","evt":"log","msg":"follow 69: searching Roshan, bearing None, None m (None); nav arrived 1.00 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:27.429Z","lvl":"info","evt":"log","msg":"follow 70: searching Roshan, bearing None, None m (None); nav idle 1.00 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:27.635Z","lvl":"info","evt":"log","msg":"follow 71: searching Roshan, bearing None, None m (None); nav idle 1.00 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:27.833Z","lvl":"info","evt":"log","msg":"follow 72: searching Roshan, bearing None, None m (None); nav idle 1.00 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:28.014Z","lvl":"info","evt":"log","msg":"follow 73: gone Roshan, bearing None, None m (None); nav idle 1.00 m from the goal","src":"robot_core.follow"}
+{"ts":"2026-11-25T23:07:29.434Z","lvl":"info","evt":"task.end","task":"follow","ok":true,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-25T23:07:29.435Z","lvl":"info","evt":"gesture","name":"yes","text_only":true}
+{"ts":"2026-11-25T23:07:29.436Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"yes"},"ok":true,"gestured":true,"value":"yes","jobs":[]}
+{"ts":"2026-11-25T23:07:29.471Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-25T23:07:29.538Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:310 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-25T23:07:29.545Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:270 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-25T23:07:30.006Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-25T23:07:30.007Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-25T23:07:31.522Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":1.43,"repeats":3}
+{"ts":"2026-11-25T23:07:34.499Z","lvl":"info","evt":"voice.heard","text":"Joven. Start exploring."}
+{"ts":"2026-11-25T23:07:34.501Z","lvl":"info","evt":"voice.tool","name":"run_task","args":{"task":"explore"},"ok":true,"starting":"explore","note":"session closing; it reopens when the task ends"}
+{"ts":"2026-11-25T23:07:34.501Z","lvl":"info","evt":"log","msg":"tool run_task({'task': 'explore'}) -> {'ok': True, 'starting': 'explore', 'note': 'session closing; it reopens when the task ends'} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-25T23:07:34.595Z","lvl":"info","evt":"task.start","task":"explore","name":"","_unregistered":true}
+{"ts":"2026-11-25T23:07:34.600Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 244)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-25T23:07:34.601Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-25T23:07:34.682Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-25T23:07:35.076Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"cancel","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-25T23:07:37.383Z","lvl":"info","evt":"session.start","mode":"explore","pid":26193}
+{"ts":"2026-11-25T23:07:38.331Z","lvl":"info","evt":"task.end","task":"explore","ok":false,"cancelled":false,"_unregistered":true}
+{"ts":"2026-11-25T23:07:38.332Z","lvl":"info","evt":"gesture","name":"no","text_only":true}
+{"ts":"2026-11-25T23:07:38.333Z","lvl":"info","evt":"voice.tool","name":"answer","args":{"value":"no"},"ok":true,"gestured":true,"value":"no","jobs":[]}
+{"ts":"2026-11-25T23:07:38.368Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-25T23:07:38.437Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"APIError: 1000 None. ","tb":["agent.py:310 in _pump_events","live.py:471 in receive","live.py:562 in _receive","errors.py:206 in raise_error"]}
+{"ts":"2026-11-25T23:07:38.443Z","lvl":"error","evt":"log","msg":"Task exception was never retrieved","src":"asyncio","err":"ConnectionClosedOK: sent 1000 (OK); then received 1000 (OK)","tb":["agent.py:270 in _pump_audio","live.py:361 in send_realtime_input","connection.py:479 in send","contextlib.py:214 in __aenter__","connection.py:966 in send_context"]}
+{"ts":"2026-11-25T23:07:38.876Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":true}
+{"ts":"2026-11-25T23:07:38.877Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
