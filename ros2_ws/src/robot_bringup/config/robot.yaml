@@ -51,7 +51,7 @@
                                # uses relative_tilt in MotionHealth; paired with head_still_while_driving
                                # so the IMU serves the chassis while driving and the head while stopped.
     head_still_while_driving: true  # One switch: head moves only while tracks are stopped; tracks start once head settled (0.15 s).
-    imu_pitch_offset_deg: 21.0 # Raw IMU pitch at neutral gimbal tilt=0 on flat floor (matches head_tilt_offset_deg: 21.0; verify via calibrate_and_apply.py imu).
+    imu_pitch_offset_deg: -27.4 # Raw IMU pitch at neutral gimbal tilt=0 on flat floor (matches head_tilt_offset_deg: 21.0; verify via calibrate_and_apply.py imu).
     imu_auto_tare: false       # Disabled while IMU is on the gimbal (head may not be at tilt=0 on boot).
     # Turns and straight drives are closed on the gyro (velocity mode, firmware -vel): turn_held,
     # drive_heading_hold. Encoder-counted moves are left for gestures only.
