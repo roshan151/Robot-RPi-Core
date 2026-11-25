@@ -99,34 +99,32 @@ def offer_tof(t: float, rows) -> None:
         _new.set()
 
 
-def note_gimbal(pan: float, tilt: float, t: Optional[float] = None, pose=None,
-                head_still: Optional[bool] = None) -> None:
+def note_gimbal(pan: float, tilt: float, t: Optional[float] = None, pose=None) -> None:
     """Where the head points now (the nav reflex calls it 50 times a second): sent with every
     upload, so a ToF grid without a camera frame can still be placed (Monitoring-Service --nav).
     With `t` (time.monotonic()) and the nav `pose`, it is also kept for a few seconds, so each ToF
-    grid and camera frame goes out with the head angles, pose, and settled state of its moment (_at)."""
+    grid and camera frame goes out with the head angles and pose of its own moment (_at)."""
     global _gimbal
     if _on:
         _gimbal = (pan, tilt)
         if t is not None and pose is not None:
-            _hist.append((t, pan, tilt, tuple(pose), head_still))
+            _hist.append((t, pan, tilt, tuple(pose)))
 
 
 def _at(t: float):
-    """(pan, tilt, pose, head_still) at time.monotonic() t, between the two reflex ticks around it;
-    None when t is outside the history (the reflex not running, or the upload fell behind by seconds)."""
+    """(pan, tilt, pose) at time.monotonic() t, between the two reflex ticks around it; None when
+    t is outside the history (the reflex not running, or the upload fell behind by seconds)."""
     with _lock:
         h = list(_hist)
     if not h or t < h[0][0] or t > h[-1][0] + 0.05:
         return None
-    for (t0, p0, k0, q0, s0), (t1, p1, k1, q1, s1) in zip(h, h[1:] + [h[-1]]):
+    for (t0, p0, k0, q0), (t1, p1, k1, q1) in zip(h, h[1:] + [h[-1]]):
         if t0 <= t <= t1 or t1 == t0:
             w = 0.0 if t1 <= t0 else (t - t0) / (t1 - t0)
             dth = math.atan2(math.sin(q1[2] - q0[2]), math.cos(q1[2] - q0[2]))
             pose = (q0[0] + w * (q1[0] - q0[0]), q0[1] + w * (q1[1] - q0[1]),
                     math.atan2(math.sin(q0[2] + w * dth), math.cos(q0[2] + w * dth)))
-            still = s0 if s1 is None else (s1 if s0 is None else bool(s0 and s1))
-            return p0 + w * (p1 - p0), k0 + w * (k1 - k0), pose, still
+            return p0 + w * (p1 - p0), k0 + w * (k1 - k0), pose
     return None
 
 
@@ -235,8 +233,7 @@ def _loop() -> None:
                 seq.append({"t": round(wall + tg, 3), "rows": _rows(rows),
                             "pan_deg": round(at[0], 2) if at else None,
                             "tilt_deg": _real((0.0, at[1]))[1] if at else None,
-                            "pose": [round(v, 4) for v in at[2]] if at else None,
-                            "head_still": at[3] if at else None})
+                            "pose": [round(v, 4) for v in at[2]] if at else None})
             if seq:
                 meta["tof_seq"] = seq
             if new_frame:

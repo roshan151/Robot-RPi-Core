@@ -1,7 +1,10 @@
 /*
  * Drivetrain firmware v3 — framed, checksummed serial protocol.
  *
- * Board  : Arduino UNO/Nano-class (ATmega328P, FTDI or CH340 USB-serial)
+ * Board  : ESP32 DevKit (ESP32-WROOM-32, CP2102/CH340 USB-serial),
+ *          Arduino-ESP32 core 3.x.  Replaced the Arduino UNO (v9 and
+ *          earlier), which hung on 5 V supply dips.  3.3 V logic: NO pin
+ *          is 5 V tolerant.
  * Drivers: 2x DRV8871 breakout (one per motor, ILIM ~2.1 A via 30k)
  * Sensors: 2x TSINY-8370 dual-channel (quadrature) Hall encoders.
  *          Channel A drives the count interrupt; channel B is sampled
@@ -9,25 +12,28 @@
  *          counts are hardware-signed, not inferred from the command.
  *
  * Wiring (TSINY colours: yellow=A, white=B, blue=Vcc, green=GND,
- *         red/black = motor power -> DRV8871 MOTOR terminals only):
- *   D5  (PWM) -> LEFT  board IN1  (forward)
- *   D11 (PWM) -> LEFT  board IN2  (reverse)  [was D6 -- pin died]
- *   D9  (PWM) -> RIGHT board IN1  (forward)
- *   D10 (PWM) -> RIGHT board IN2  (reverse)
- *   D2        <- LEFT  encoder A (yellow)  INPUT_PULLUP, RISING int
- *   D4        <- LEFT  encoder B (white)   INPUT_PULLUP, sampled
- *   D3        <- RIGHT encoder A (yellow)  INPUT_PULLUP, RISING int
- *   D7        <- RIGHT encoder B (white)   INPUT_PULLUP, sampled
- *   5V / GND  -> both encoders' blue / green (NOT the 9 V rail — the
- *                encoders' internal 10k pull-up ties Vout to Vcc, so
- *                Vcc must equal the Arduino's logic voltage)
- *   TF-Luna (I2C mode, 0x10): 1 +5V -> 5V, 2 SDA -> A4, 3 SCL -> A5,
- *                4 GND -> GND, 5 CFG -> GND (selects I2C).  SDA/SCL
- *                need 4.7k pull-ups to 3.3 V (internal 5 V ones are
- *                turned off).  D6 is dead: do not use it.
+ *         red/black = motor power -> DRV8871 MOTOR terminals only).
+ *         Each wire moves pin-for-pin from the old Arduino pin in [ ];
+ *         the harness's right-board IN1/IN2 swap (README) stays as is.
+ *   GPIO25 (PWM) -> LEFT  board IN1  (forward)               [D5]
+ *   GPIO26 (PWM) -> LEFT  board IN2  (reverse)               [D11]
+ *   GPIO32 (PWM) -> RIGHT board IN1  (forward)               [D9]
+ *   GPIO33 (PWM) -> RIGHT board IN2  (reverse)               [D10]
+ *   GPIO18       <- LEFT  encoder A (yellow)  INPUT_PULLUP, RISING int [D2]
+ *   GPIO34       <- LEFT  encoder B (white)   input-only pin, sampled  [D4]
+ *   GPIO19       <- RIGHT encoder A (yellow)  INPUT_PULLUP, RISING int [D3]
+ *   GPIO35       <- RIGHT encoder B (white)   input-only pin, sampled  [D7]
+ *   3V3 / GND    -> both encoders' blue / green (NOT 5 V any more: the
+ *                encoders' internal 10k pull-up ties Vout to Vcc, and
+ *                5 V on an ESP32 pin damages it)
+ *   TF-Luna (I2C mode, 0x10): 1 +5V -> 5V/VIN, 2 SDA -> GPIO21,
+ *                3 SCL -> GPIO22, 4 GND -> GND, 5 CFG -> GND (I2C).
+ *                Keep the 4.7k pull-ups on SDA/SCL, now to the ESP32 3V3.
+ *   5 V supply (not the motor buck) -> ESP32 5V/VIN; USB to the Pi = data
  *   Buck OUT+ (8-9 V)      -> each DRV8871 POWER+ (VM)
- *   Star point (buck OUT-) -> each DRV8871 POWER- and Arduino GND,
- *                             each on its OWN wire (no ground ring)
+ *   Star point (buck OUT-) -> each DRV8871 POWER-, ESP32 GND and the 5 V
+ *                             supply's GND, each on its OWN wire
+ *   Never use GPIO0, 2, 5, 12, 15 (boot straps) or 6-11 (flash).
  *
  * ============================ PROTOCOL ============================
  * Every line, both directions:   $BODY*CS\n
@@ -75,27 +81,43 @@
 #include <Wire.h>
 
 // ---------------------------------------------------------------- //
-// Reset-cause capture.  MCUSR records WHY the chip last reset:
-//   bit0 PORF=power-on  bit1 EXTRF=reset pin  bit2 BORF=brown-out
-//   bit3 WDRF=watchdog
-// Most bootloaders clear MCUSR but first copy it into r2; this
-// .init0 stub saves r2 before anything else runs.
+// Reset cause, sent in the B frame using the AVR MCUSR bit meanings the
+// host already decodes: 0x1 power-on (on the ESP32 the EN pin, i.e. a
+// DTR/RTS reset, reports this too), 0x2 external, 0x4 brown-out,
+// 0x8 watchdog or crash.  0 = software reset.
 // ---------------------------------------------------------------- //
-uint8_t reset_flags __attribute__((section(".noinit")));
-void resetFlagsInit(void) __attribute__((naked)) __attribute__((used)) __attribute__((section(".init0")));
-void resetFlagsInit(void) {
-  __asm__ __volatile__ ("sts %0, r2\n" : "=m" (reset_flags));
+#include <esp_system.h>
+uint8_t resetCause() {
+  switch (esp_reset_reason()) {
+    case ESP_RST_POWERON:  return 0x1;
+    case ESP_RST_EXT:      return 0x2;
+    case ESP_RST_BROWNOUT: return 0x4;
+    case ESP_RST_PANIC:
+    case ESP_RST_INT_WDT:
+    case ESP_RST_TASK_WDT:
+    case ESP_RST_WDT:      return 0x8;
+    default:               return 0x0;
+  }
 }
 
+// On the ESP32 noInterrupts()/interrupts() compile to nothing, so the
+// encoder snapshots below would not be atomic: make them a critical
+// section (blocks the encoder ISRs, which run on this same core).
+portMUX_TYPE enc_mux = portMUX_INITIALIZER_UNLOCKED;
+#undef noInterrupts
+#undef interrupts
+#define noInterrupts() portENTER_CRITICAL(&enc_mux)
+#define interrupts()   portEXIT_CRITICAL(&enc_mux)
+
 // ------------------------------ Pins ---------------------------- //
-#define IN1_L  5     // Left  motor forward (PWM)
-#define IN2_L  11    // Left  motor reverse (PWM) -- moved from D6 (dead pin)
-#define IN1_R  9     // Right motor forward (PWM)
-#define IN2_R  10    // Right motor reverse (PWM)
-#define ENC_L    2   // Left  encoder channel A (INT0)
-#define ENC_R    3   // Right encoder channel A (INT1)
-#define ENC_L_B  4   // Left  encoder channel B (sampled in ISR)
-#define ENC_R_B  7   // Right encoder channel B (sampled in ISR)
+#define IN1_L  25    // Left  motor forward (PWM)   [Arduino D5]
+#define IN2_L  26    // Left  motor reverse (PWM)   [Arduino D11]
+#define IN1_R  32    // Right motor forward (PWM)   [Arduino D9]
+#define IN2_R  33    // Right motor reverse (PWM)   [Arduino D10]
+#define ENC_L    18  // Left  encoder channel A (interrupt)
+#define ENC_R    19  // Right encoder channel A (interrupt)
+#define ENC_L_B  34  // Left  encoder channel B (sampled in ISR; input-only pin)
+#define ENC_R_B  35  // Right encoder channel B (sampled in ISR; input-only pin)
 
 // Per-side quadrature polarity.  The two motors are mirror-mounted, so
 // one side usually needs inverting.  CALIBRATE after flashing: hand-roll
@@ -196,7 +218,7 @@ volatile unsigned long last_right_us = 0;
 
 static inline long labs32(long v) { return v < 0 ? -v : v; }
 
-void isr_left() {
+void IRAM_ATTR isr_left() {
   unsigned long now = micros();
   if (now - last_left_us < MIN_PULSE_US) return;
   last_left_us = now;
@@ -207,7 +229,7 @@ void isr_left() {
   enc_left += step;
   odo_left += step;
 }
-void isr_right() {
+void IRAM_ATTR isr_right() {
   unsigned long now = micros();
   if (now - last_right_us < MIN_PULSE_US) return;
   last_right_us = now;
@@ -287,7 +309,9 @@ void sendf(const char* fmt, ...) {
 // ping went unanswered and the drivetrain node never started).
 bool luna_ok = false;
 
-bool busIdle() { return digitalRead(SDA) == HIGH && digitalRead(SCL) == HIGH; }
+// ESP32: Wire has its own timeout (set in setup) and its pins can't be read
+// as GPIO once Wire owns them, so the idle check is the boot probe only.
+bool busIdle() { return true; }
 
 // Is something really pulling this line up? Drive it low, let go: a pull-up brings it back high within
 // microseconds, a floating line (TF-Luna and its pull-ups unplugged) stays low. A floating line can read
@@ -319,15 +343,19 @@ int readLuna() {
 // ---------------------- Motor primitives ------------------------ //
 // DRV8871 per board:  IN1=PWM,IN2=LOW forward · IN1=LOW,IN2=PWM reverse
 //                     both LOW coast (auto-sleep) · both HIGH brake
+// ESP32: once analogWrite() owns a pin, digitalWrite() on it is ignored
+// (core 3.x), so full LOW/HIGH levels go through analogWrite too.
+#define PIN_LOW(p)  analogWrite((p), 0)
+#define PIN_HIGH(p) analogWrite((p), PWM_MAX)
 void motorWrite(uint8_t in1, uint8_t in2, int pwm) {
   if (pwm == 0) {
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
+    PIN_LOW(in1);
+    PIN_LOW(in2);
   } else if (pwm > 0) {
     analogWrite(in1, min(pwm, PWM_MAX));
-    digitalWrite(in2, LOW);
+    PIN_LOW(in2);
   } else {
-    digitalWrite(in1, LOW);
+    PIN_LOW(in1);
     analogWrite(in2, min(-pwm, PWM_MAX));
   }
 }
@@ -345,10 +373,10 @@ void coastMotors() {
 void brakeMotors() {
   target_pwm_left = target_pwm_right = 0;
   current_pwm_left = current_pwm_right = 0;
-  digitalWrite(IN1_L, HIGH);
-  digitalWrite(IN2_L, HIGH);
-  digitalWrite(IN1_R, HIGH);
-  digitalWrite(IN2_R, HIGH);
+  PIN_HIGH(IN1_L);
+  PIN_HIGH(IN2_L);
+  PIN_HIGH(IN1_R);
+  PIN_HIGH(IN2_R);
 }
 
 // ------------------- Direction / reversal helpers ---------------- //
@@ -677,9 +705,7 @@ void pollSerial() {
 
 // ---------------------------- Setup ----------------------------- //
 void setup() {
-  uint8_t cause = MCUSR ? MCUSR : reset_flags;
-  cause &= 0x0F;
-  MCUSR = 0;
+  uint8_t cause = resetCause();
 
   Serial.begin(115200);
 
@@ -689,21 +715,16 @@ void setup() {
   pinMode(IN2_R, OUTPUT);
   pinMode(ENC_L,   INPUT_PULLUP);
   pinMode(ENC_R,   INPUT_PULLUP);
-  pinMode(ENC_L_B, INPUT_PULLUP);
-  pinMode(ENC_R_B, INPUT_PULLUP);
+  pinMode(ENC_L_B, INPUT);           // GPIO34/35 have no internal pull-up;
+  pinMode(ENC_R_B, INPUT);           // the encoder's own 10k does the job
   attachInterrupt(digitalPinToInterrupt(ENC_L), isr_left,  RISING);
   attachInterrupt(digitalPinToInterrupt(ENC_R), isr_right, RISING);
 
   coastMotors();
 
   bool luna_bus = pulledUp(SDA) && pulledUp(SCL);   // no pull-ups: no TF-Luna, never touch the bus
-  Wire.begin();
-  digitalWrite(SDA, LOW);           // internal pull-ups off: the TF-Luna is 3.3 V,
-  digitalWrite(SCL, LOW);           // the external 4.7k pull-ups go to 3.3 V
-#if defined(WIRE_HAS_TIMEOUT)
-  Wire.setWireTimeout(3000, true);  // a missing or hung sensor never stalls loop()
-#endif                              // older cores (before 1.8.3) have no timeout: the boot check
-                                    // and busIdle() below are what keep the loop from freezing
+  Wire.begin();                     // GPIO21/22; 3.3 V logic, so no pull-up juggling
+  Wire.setTimeOut(5);               // ms: a missing or hung sensor never stalls loop()
   delay(200);
   if (luna_bus && busIdle()) {      // pulled up and idle: ask once whether the TF-Luna is there
     Wire.beginTransmission(LUNA_ADDR);
@@ -713,8 +734,8 @@ void setup() {
   // Reset cause + build stamp.  __DATE__/__TIME__ come from the compiler,
   // so every fresh build announces itself — a stale flash can never
   // masquerade as current source.
-  sendf(luna_ok ? "B,%X,drv8871-v9-vel-luna built " __DATE__ " " __TIME__
-                : "B,%X,drv8871-v9-vel-noluna built " __DATE__ " " __TIME__, cause);
+  sendf(luna_ok ? "B,%X,drv8871-v10-esp32-vel-luna built " __DATE__ " " __TIME__
+                : "B,%X,drv8871-v10-esp32-vel-noluna built " __DATE__ " " __TIME__, cause);
   last_rx_ms = millis();
 }
 

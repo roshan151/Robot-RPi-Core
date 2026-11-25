@@ -256,7 +256,6 @@ class MotionHealth:
         max_dip_deg: float = 8.0,
         dip_window_s: float = 0.5,
         max_climb_deg: float = 12.0,
-        relative_tilt: bool = False,       # true when IMU is on the gimbal: judge change since move start
     ) -> None:
         self.start_grace_s, self.stall_s, self.slip_s, self.pushed_s = (
             start_grace_s, stall_s, slip_s, pushed_s)
@@ -265,10 +264,8 @@ class MotionHealth:
         self.max_pitch_deg, self.max_roll_deg, self.bump_g = max_pitch_deg, max_roll_deg, bump_g
         self.max_dip_deg, self.dip_window_s = max_dip_deg, dip_window_s
         self.max_climb_deg = max_climb_deg
-        self.relative_tilt = bool(relative_tilt)
         self._dip_ref: Optional[float] = None     # pitch when the drive started
-        self._roll_ref: Optional[float] = None    # roll when the drive started
-        self._pitches: list = []                  # (t, pitch) or (t, pitch, roll) over the last dip_window_s
+        self._pitches: list = []                  # (t, pitch) over the last dip_window_s
         self._op: Optional[str] = None
         self._op_since = 0.0
         self._cond_since: dict = {}
@@ -296,9 +293,7 @@ class MotionHealth:
                 self._fold_drift(self._straight_start, odom)
             self._op, self._op_since = op, now
             self._cond_since.clear()
-            self._dip_ref = imu.pitch_deg if imu is not None else None
-            self._roll_ref = imu.roll_deg if imu is not None else None
-            self._pitches = []
+            self._dip_ref, self._pitches = (imu.pitch_deg if imu is not None else None), []
             self._straight_start = odom if op in ("straight", "reverse") else None
 
         visual = None
@@ -333,21 +328,10 @@ class MotionHealth:
                 state, reason = PUSHED, "wheels turning with no command (bumped or lifted?)"
 
         if imu is not None:
-            dip = self._dip(op, pitch, roll, now)
-            if self.relative_tilt:
-                # Gimbal-mounted IMU: head may be tilted tens of degrees for driving, so judge
-                # attitude change since the move started as one magnitude √(Δpitch² + Δroll²).
-                tilted = False
-                if op is not None and self._dip_ref is not None and self._roll_ref is not None:
-                    mag = math.hypot(pitch - self._dip_ref, roll - self._roll_ref)
-                    tilted = mag > min(self.max_pitch_deg, self.max_roll_deg)
-                else:
-                    mag = 0.0
-                if self._held("tilt", tilted, now, 0.3):
-                    state, reason = TILTED, f"tilted: attitude shifted {mag:.0f} deg during {op}"
-            elif self._held("tilt", abs(pitch) > self.max_pitch_deg or abs(roll) > self.max_roll_deg, now, 0.3):
+            dip = self._dip(op, pitch, now)
+            if self._held("tilt", abs(pitch) > self.max_pitch_deg or abs(roll) > self.max_roll_deg, now, 0.3):
                 state, reason = TILTED, f"tilted: pitch {pitch:.0f} deg, roll {roll:.0f} deg"
-            if state != TILTED and dip:
+            elif dip:
                 state, reason = TILTED, dip
             elif op and not in_grace and state == MOVING and imu.jolt_g > self.bump_g:
                 state, reason = BUMPED, f"jolt of {imu.jolt_g:.1f} g during {op}"
@@ -357,21 +341,12 @@ class MotionHealth:
         return HealthReport(state, reason, odom.v, odom.w, odom.sigma_xy, odom.sigma_theta,
                             self._drift, visual, now - self._state_since, pitch, roll)
 
-    def _dip(self, op: Optional[str], pitch: float, roll: float, now: float) -> str:
+    def _dip(self, op: Optional[str], pitch: float, now: float) -> str:
         """Going over an edge on a drive: why, or "". The front (the back, reversing) has
         fallen more than max_dip_deg below the pitch the move started at, and at least half
-        of that within the last dip_window_s. With relative_tilt=True, uses √(Δpitch² + Δroll²)
-        so the check does not depend on which way the head is panned."""
+        of that within the last dip_window_s. A sill crossed and left behind comes back to
+        the start pitch, and a slow ramp is not fast: neither stops the move."""
         if op not in ("straight", "reverse") or self._dip_ref is None:
-            return ""
-        if self.relative_tilt and self._roll_ref is not None:
-            self._pitches = [(t, p, r) for t, p, r in self._pitches if now - t <= self.dip_window_s] + [(now, pitch, roll)]
-            mag = math.hypot(pitch - self._dip_ref, roll - self._roll_ref)
-            recent = max(math.hypot(p - pitch, r - roll) for _, p, r in self._pitches)
-            if mag > self.max_dip_deg and recent > self.max_dip_deg / 2.0:
-                return f"attitude shifted {mag:.0f} deg fast on a drive: over an edge?"
-            if mag > self.max_climb_deg:
-                return f"attitude shifted {mag:.0f} deg on a drive: climbing something?"
             return ""
         self._pitches = [(t, p) for t, p in self._pitches if now - t <= self.dip_window_s] + [(now, pitch)]
         sign = 1.0 if op == "straight" else -1.0

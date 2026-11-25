@@ -76,8 +76,6 @@ class RosBase:
     def __init__(self, node: "ExplorerNode") -> None:
         self.n = node
         self._odom: Optional[Pose2D] = None
-        self._odom_move_t = 0.0
-        self._action_running = False
         self._health: Optional[MotionHealth] = None
         self._stuck_at = 0.0
         self.m2o = Pose2D()
@@ -92,11 +90,6 @@ class RosBase:
         q = m.pose.pose.orientation
         self._odom = Pose2D(m.pose.pose.position.x, m.pose.pose.position.y,
                             2.0 * math.atan2(q.z, q.w))
-        if abs(m.twist.twist.linear.x) > 0.01 or abs(m.twist.twist.angular.z) > 0.02:
-            self._odom_move_t = time.monotonic()
-
-    def body_moving(self) -> bool:
-        return self._action_running or (time.monotonic() - self._odom_move_t <= 0.3)
 
     def _on_health(self, m: MotionHealth) -> None:
         self._health = m
@@ -118,33 +111,27 @@ class RosBase:
     def _run(self, client, goal, timeout: float, watch=None) -> str:
         """`watch()`: called while the move runs (it paces itself, e.g. one ToF grid);
         True cancels the move and the answer is "blocked"."""
-        if getattr(self.n, "_head_still", False) and getattr(self.n, "gimbal", None) is not None:
-            self.n.gimbal.wait_settled(0.15, timeout=3.0)
-        self._action_running = True
-        try:
-            t0 = time.monotonic()
-            handle = _wait(client.send_goal_async(goal), 5.0)
-            if handle is None or not handle.accepted:
-                return "rejected"
-            fut = handle.get_result_async()
-            blocked = False
-            while watch is not None and not fut.done() and time.monotonic() - t0 < timeout:
-                if watch():
-                    blocked = True
-                    _wait(handle.cancel_goal_async(), 2.0)
-                    break
-            res = _wait(fut, max(1.0, timeout - (time.monotonic() - t0)))
-            time.sleep(0.25)                   # let /odom catch up (10 Hz telemetry)
-            if blocked:
-                return "blocked"
-            if res is None:
-                return "timeout"
-            status = res.result.status
-            if status != "done" and self._stuck_at >= t0:
-                return "drop" if getattr(self, "_stuck_why", "") == "drop" else "stuck"   # braked on motion health
-            return status
-        finally:
-            self._action_running = False
+        t0 = time.monotonic()
+        handle = _wait(client.send_goal_async(goal), 5.0)
+        if handle is None or not handle.accepted:
+            return "rejected"
+        fut = handle.get_result_async()
+        blocked = False
+        while watch is not None and not fut.done() and time.monotonic() - t0 < timeout:
+            if watch():
+                blocked = True
+                _wait(handle.cancel_goal_async(), 2.0)
+                break
+        res = _wait(fut, max(1.0, timeout - (time.monotonic() - t0)))
+        time.sleep(0.25)                   # let /odom catch up (10 Hz telemetry)
+        if blocked:
+            return "blocked"
+        if res is None:
+            return "timeout"
+        status = res.result.status
+        if status != "done" and self._stuck_at >= t0:
+            return "drop" if getattr(self, "_stuck_why", "") == "drop" else "stuck"   # braked on motion health
+        return status
 
     def drive(self, meters: float, watch=None) -> str:
         return self._run(self._drive, Drive.Goal(meters=float(meters)), 30.0, watch)
@@ -196,8 +183,6 @@ class ExplorerNode(Node):
         p("tof_perpendicular", True)
         p("drive_tilt_deg", -30.0)
         p("head_tilt_offset_deg", 0.0)
-        p("imu_on_gimbal", False)
-        p("head_still_while_driving", False)
         p("h_max_m", 0.03)
         p("flat_tol_m", 0.015)
         p("min_landing_m", 0.20)
@@ -240,12 +225,10 @@ class ExplorerNode(Node):
             # The map, plant ranging and the floor check before every step all
             # come from the range sensor; without one the robot would drive blind.
             raise SystemExit("explore needs a range sensor (robot.yaml tof_fitted / tfluna_fitted are both false)")
-        self._head_still = bool(v("head_still_while_driving"))
         self.gimbal = from_params({n: v(n) for n in (
             "pwm_chip", "pan_channel", "tilt_channel", "pan_center_us", "tilt_center_us",
             "pan_us_per_deg", "tilt_us_per_deg", "pan_invert", "tilt_invert", "servo_speed_dps", "servo_fast_dps",
-            "servo_min_us", "servo_max_us", "hold_on_close", "servo_power_gpio")},
-            body_moving=(lambda: hasattr(self, "base") and self.base.body_moving()) if self._head_still else None)
+            "servo_min_us", "servo_max_us", "hold_on_close", "servo_power_gpio")})
         if v("tof_fitted"):
             self.lidar = tof8x8.from_params({n: v(n) for n in ("tof_port", "tof_bus", "tof_addr", "tof_tilt", "tof_flip_rows", "tof_flip_cols")})
         else:
@@ -259,8 +242,7 @@ class ExplorerNode(Node):
             tof_pan_offset_deg=float(v("tof_pan_offset_deg") if self.has_parameter("tof_pan_offset_deg") else 0.0),
             tof_tilt_offset_deg=float(v("tof_tilt_offset_deg") if self.has_parameter("tof_tilt_offset_deg") else 0.0),
             pan_axis_y_m=float(v("tof_from_right_m")) - float(v("robot_width_m")) / 2.0,
-            self_zones=parse_self_zones(v("tof_self_zones")),
-            imu_on_gimbal=bool(v("imu_on_gimbal"))),
+            self_zones=parse_self_zones(v("tof_self_zones"))),
             pitch=lambda: self._pitch(),
             terrain_params=terrain.params_from({n: v(n) for n in ("h_max_m", "flat_tol_m", "min_landing_m", "max_drop_m", "robot_width_m",
                                                              "plan_clearance_m", "floor_auto_level", "floor_holes_are_drops",
@@ -380,10 +362,7 @@ class ExplorerNode(Node):
         debug_upload.configure(
             True, self.vision.base,
             geometry={"camera_hfov_deg": float(v("hfov_deg")), "tof_fov_deg": 60.0, "tof_on": "gimbal",
-                      "head_tilt_offset_deg": float(v("head_tilt_offset_deg")),
-                      "imu_on_gimbal": bool(v("imu_on_gimbal")),
-                      "head_still_while_driving": bool(v("head_still_while_driving")),
-                      "tilt": "real"},
+                      "head_tilt_offset_deg": float(v("head_tilt_offset_deg")), "tilt": "real"},
             extras=lambda: {"pose": [round(a, 4) for a in (self.base.odom().x, self.base.odom().y, self.base.odom().theta)],
                             "pitch_deg": self._pitch()})
 

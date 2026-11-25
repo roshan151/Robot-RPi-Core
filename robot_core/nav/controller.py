@@ -168,13 +168,9 @@ class LocalNav:
                  planner: Optional[Callable[[Pose, Tuple[float, float], dict], Optional[list]]] = None,
                  tilt_deg: float = -21.0, hz: float = 20.0, goal_timeout_s: float = 6.0,
                  plan_every_s: float = 1.0, params: Optional[dwa.DwaParams] = None,
-                 clock: Callable[[], float] = time.monotonic,
-                 head_still_while_driving: bool = False,
-                 on_cmd: Optional[Callable[[float, float], None]] = None) -> None:
+                 clock: Callable[[], float] = time.monotonic) -> None:
         p = head.terrain
         self.head, self.motion, self.clock = head, motion, clock
-        self.head_still_while_driving = bool(head_still_while_driving)
-        self._on_cmd = on_cmd
         self.fix = PoseFix(pose)
         self.twist = twist
         half = p.width_m / 2.0
@@ -260,15 +256,6 @@ class LocalNav:
         """Take the head for a search look; `release_head()` gives it back to the nav aim."""
         self.aim.look(pan, tilt)
 
-    def hold_head(self, pan: float, tilt: float) -> None:
-        """Hold the head fixed at (pan, tilt) and disable sweeps/glances/look-ahead until release_head()."""
-        self.aim.hold(pan, tilt)
-
-    def stop_here(self) -> None:
-        """Clear the goal and stop the tracks immediately (used by Follow's Watch phase)."""
-        self.set_goal(None)
-        self._send(0.0, 0.0)
-
     def release_head(self) -> None:
         self.aim.release()
 
@@ -291,24 +278,8 @@ class LocalNav:
             self._stop.wait(max(0.0, self.period - (self.clock() - t0)))
 
     def _send(self, v: float, w: float) -> None:
-        if self.head_still_while_driving and (v != 0.0 or w != 0.0):
-            g, held = self.head.gimbal, self.aim.held
-            if g is not None and not g.settled(0.15):
-                v, w = 0.0, 0.0
-            elif g is not None and held is not None and not self._at_held(g, held):
-                v, w = 0.0, 0.0                           # the head is not where it is held (yet): do not drive
         self.cmd = (v, w)
-        if self._on_cmd is not None:
-            self._on_cmd(v, w)
         self.motion.velocity(v, w)
-
-    @staticmethod
-    def _at_held(g, held, tol_deg: float = 3.0) -> bool:
-        """The head within tol_deg of the held pose (clamped to the gimbal's limits)."""
-        pan, tilt = g.angles()
-        hp = min(max(held[0], g.pan_limits()[0]), g.pan_limits()[1]) if hasattr(g, "pan_limits") else held[0]
-        ht = min(max(held[1], g.tilt_limits()[0]), g.tilt_limits()[1]) if hasattr(g, "tilt_limits") else held[1]
-        return abs(pan - hp) <= tol_deg and abs(tilt - ht) <= tol_deg
 
     def _ingest(self, now: float) -> Optional[tuple]:
         """Fold the new grids into the costmap; the latest (middle range, pan, facing) for StuckWatch."""
@@ -405,6 +376,7 @@ class LocalNav:
         if goal is None:
             self._send(0.0, 0.0)
             self.state = "idle"
+            self._progress = None
             self.aim.update(now, 0.0, 0.0, focus_pan)
             return
         dist = math.hypot(goal[0] - here[0], goal[1] - here[1])
@@ -414,6 +386,7 @@ class LocalNav:
             self._send(0.0, w)
             self.state, self.detail = "arrived", f"{dist:.2f} m from the goal"
             self._moving_since = None
+            self._progress = None
             self.aim.update(now, 0.0, w, focus_pan)
             return
         self._maybe_plan(now, here, goal, keep)
@@ -442,6 +415,7 @@ class LocalNav:
             self._send(0.0, w)
             self.state, self.detail = "arrived", f"{dist:.2f} m, the way round is long: facing it"
             self._moving_since = None
+            self._progress = None
             self.aim.update(now, 0.0, w, focus_pan)
             return
         # Skipping ahead to a later waypoint needs PLAN_EXTRA_M + 0.025 more room than DWA's margin: with the bare margin
@@ -482,11 +456,9 @@ class LocalNav:
         else:
             self.state, self.detail = "driving", f"{dist:.2f} m to go"
             self._watch_progress(now, here, dist)
-        held = self.aim.held
-        held_ahead = held is not None and abs(held[0]) <= 28.0
-        if v > 0.02 and not held_ahead and now - self._ahead_t > AHEAD_STALE_S:     # not looked where it is going lately
+        if v > 0.02 and now - self._ahead_t > AHEAD_STALE_S:     # not looked where it is going lately
             v = min(v, SEEN_MPS if self.costmap.seen_free(here, 0.6) else BLIND_MPS)
-            if held is None and now >= self.aim.glance_until:
+            if now >= self.aim.glance_until:
                 self.aim.glance(now, math.degrees(self.aim.k_w * w))
         if now < self._slow_until:                       # going again over a sill
             v = min(v, SILL_SLOW_MPS)
@@ -503,7 +475,7 @@ class LocalNav:
             v = w = 0.0
         self._send(v, w)
         status.detail(f"nav {self.state}")
-        self._watch_stuck(now, here, v, ahead)
+        self._watch_stuck(now, here, self.cmd[0], ahead)   # what was sent: _send zeroes v while the head settles
         near = None
         cl = float(self.costmap.clearance([here[0] + 0.5 * math.cos(here[2])], [here[1] + 0.5 * math.sin(here[2])])[0])
         if cl < 1.5:
@@ -657,14 +629,12 @@ class LocalNav:
         if v <= 0.02:
             self._moving_since = None
             self._stuck.reset()
-            if pitch is not None and not self.head_still_while_driving:
+            if pitch is not None:
                 self._pitches.append((now, pitch))
                 while now - self._pitches[0][0] > 10.0:
                     self._pitches.popleft()
             return
         if self._moving_since is None:
-            if self.head_still_while_driving:             # clear stopped head-tilt history so baseline is this move's pitch
-                self._pitches.clear()
             self._moving_since = (now, self._odo, pitch)
         if pitch is not None:                             # the floor's pitch: the median of the last 10 s
             self._pitches.append((now, pitch))

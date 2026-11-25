@@ -33,17 +33,16 @@ FRAME_END = ord("*")
 BODY_MAX = 64
 
 # ---------------------------------------------------------------------------
-# Reset-cause bits (AVR MCUSR), reported by the firmware in the B frame.
+# Reset-cause bits (AVR MCUSR meanings; the ESP32 firmware maps onto them).
 # ---------------------------------------------------------------------------
 _RESET_CAUSE_BITS = (
-    (0x1, "power-on (the Arduino's 5V supply dropped completely — "
-          "USB power was interrupted: check the USB cable, connector, and port)"),
+    (0x1, "power-on or EN-pin reset (the ESP32 can't tell them apart: "
+          "its 5V supply dropped out, or noise reached the EN pin)"),
     (0x2, "external reset pin (normal when the serial port is opened via DTR; "
           "mid-move it means electrical noise reached the RESET pin)"),
-    (0x4, "brown-out (the Arduino's 5V rail sagged below ~2.7V — "
-          "something is dragging down or coupling into the 5V supply)"),
-    (0x8, "watchdog flag (usually a bootloader side effect — "
-          "ignore unless it appears alone)"),
+    (0x4, "brown-out (the ESP32's 3.3V rail sagged below ~2.4V — "
+          "something is dragging down or coupling into its 5V supply)"),
+    (0x8, "watchdog or crash (the firmware hung or panicked)"),
 )
 
 # Human-readable text for D-frame terminal statuses (anything except OK).

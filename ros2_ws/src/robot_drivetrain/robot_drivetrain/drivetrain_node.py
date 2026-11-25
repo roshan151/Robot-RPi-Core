@@ -113,8 +113,6 @@ class DrivetrainNode(Node):
         self.declare_parameter("imu_axes", ["y", "x", "-z"])   # board axis along robot forward, left, up
         self.declare_parameter("imu_pitch_offset_deg", 0.0)     # pitch read on flat floor: taken off (calibrate.py imu)
         self.declare_parameter("imu_auto_tare", True)           # auto-zero pitch/roll on stationary startup (within 12 deg)
-        self.declare_parameter("imu_on_gimbal", False)          # true: IMU is on the head (uses relative_tilt)
-        self.declare_parameter("head_still_while_driving", False)
         self.declare_parameter("turn_tolerance_deg", 2.0)
         # Gyro-held moves (velocity mode + IMU): straight drives steered back to their start heading,
         # and a turn's last few degrees finished slowly against the gyro (see _held).
@@ -155,16 +153,11 @@ class DrivetrainNode(Node):
             wheelbase_m=self._wheelbase(),
             swap_sides=bool(self.get_parameter("odom_swap_sides").value),
         )
-        self._imu_on_gimbal = bool(self.get_parameter("imu_on_gimbal").value)
-        # IMU on the head: it is the chassis' gyro only with the head held while driving (head_still_while_driving);
-        # without that interlock, nothing chassis-side may use it (head pans read as turns).
-        self._gyro_ok = not self._imu_on_gimbal or bool(self.get_parameter("head_still_while_driving").value)
         self._health = MotionHealth(
             max_pitch_deg=float(self.get_parameter("max_pitch_deg").value),
             max_roll_deg=float(self.get_parameter("max_roll_deg").value),
             max_dip_deg=float(self.get_parameter("max_dip_deg").value),
-            max_climb_deg=float(self.get_parameter("max_climb_deg").value),
-            relative_tilt=self._imu_on_gimbal)
+            max_climb_deg=float(self.get_parameter("max_climb_deg").value))
         self._imu = None
         if self.get_parameter("imu_fitted").value:
             try:
@@ -182,7 +175,7 @@ class DrivetrainNode(Node):
                                         "heading from the encoders, no turn trim, no tilt stop")
                 self._imu = None
         self._drivetrain.add_odometry_listener(
-            lambda l, r, ms: self._odo.update(l, r, ms, time.monotonic(), yaw=self._odo_yaw()))
+            lambda l, r, ms: self._odo.update(l, r, ms, time.monotonic(), yaw=self._yaw_rad()))
         self._drop = self._drop_why = None
         self._drop_t = 0.0
         self._held_why, self._held_t = None, 0.0    # a held move found itself blocked: (state, reason)
@@ -298,28 +291,8 @@ class DrivetrainNode(Node):
         return SetParametersResult(successful=True)
 
     def _yaw_deg(self) -> Optional[float]:
-        if not self._gyro_ok:
-            return None
         st = self._imu.state() if self._imu is not None else None
         return st.yaw_deg if st is not None else None
-
-    def _odo_yaw(self) -> Optional[float]:
-        """The gyro heading for the odometry. With the IMU on the head it is the chassis' heading only while the
-        tracks are driven (the head is held then); standing still the head pans freely, so the encoders keep
-        the heading (a 40 deg head pan had turned the odometry 40 deg)."""
-        if self._imu_on_gimbal and not self._tracks_driven():
-            return None
-        return self._yaw_rad()
-
-    def _tracks_driven(self) -> bool:
-        if getattr(self, "_held_on", False):
-            return True
-        vc = getattr(self, "_vel_ctrl", None)
-        if getattr(self, "_vel_on", False) and vc is not None and (abs(vc.v) > 0.02 or abs(vc.w) > 0.05):
-            return True
-        ex = getattr(self, "_exec", None)
-        st = ex.status() if ex is not None else None
-        return bool(st and (st.get("current") or st.get("moving")))
 
     def _yaw_rad(self) -> Optional[float]:
         yaw = self._yaw_deg()
@@ -659,8 +632,7 @@ class DrivetrainNode(Node):
             self._imu.set_moving(op is not None)             # the gyro zeroes itself only at rest
         if ims is not None:
             self._publish_imu(ims, stamp, base_frame)
-        rep = self._health.update(st, op, now, imu=ims if self._gyro_ok else None)
-        head_imu = ims is not None and not self._gyro_ok           # the IMU is only the head's: publish its angles
+        rep = self._health.update(st, op, now, imu=ims)
         state, reason = rep.state, rep.reason
         if self._drop is not None:                         # TF-Luna drop guard, every tick (10 Hz)
             cm, t_cm = self._drivetrain.tfluna()
@@ -682,8 +654,7 @@ class DrivetrainNode(Node):
             drift_deg_per_m=rep.drift_deg_per_m,
             visual_known=rep.visual_moving is not None,
             visual_moving=bool(rep.visual_moving), since_s=rep.since_s,
-            imu_known=ims is not None, pitch_deg=ims.pitch_deg if head_imu else rep.pitch_deg,
-            roll_deg=ims.roll_deg if head_imu else rep.roll_deg))
+            imu_known=ims is not None, pitch_deg=rep.pitch_deg, roll_deg=rep.roll_deg))
         if rep.state != getattr(self, "_last_health", None):
             self._last_health = rep.state
             if rep.stuck:
@@ -748,7 +719,7 @@ class DrivetrainNode(Node):
         meas = self._wheel_mps
         meas = meas[:2] if meas is not None and now - meas[2] < 0.3 else None
         ims = self._imu.state() if self._imu is not None else None
-        pl, pr = ctrl.step(v, w, meas, 0.1, yaw_rate=math.radians(ims.yaw_rate_dps) if ims is not None and self._gyro_ok else None)
+        pl, pr = ctrl.step(v, w, meas, 0.1, yaw_rate=math.radians(ims.yaw_rate_dps) if ims is not None else None)
         if pl == 0 and pr == 0 and not self._vel_on:
             return
         try:

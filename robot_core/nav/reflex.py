@@ -118,8 +118,7 @@ class Reflex:
         now = self.clock()
         pan, tilt = self.head.gimbal.angles()
         pose = self.pose()
-        still = self.head.gimbal.settled(0.15) if self.head.gimbal is not None else True
-        debug_upload.note_gimbal(pan, tilt, now, pose, head_still=still)    # debug mode: each upload's ToF grids carry the head + pose + settled state
+        debug_upload.note_gimbal(pan, tilt, now, pose)    # debug mode: each upload's ToF grids carry the head + pose of their moment
         with self._lock:
             self._hist.append((now, pan, tilt, pose))
         if self.bumped is not None and (self.bumped() or 0.0) > max(self._t0, self.tripped_until - self.hold_s):
