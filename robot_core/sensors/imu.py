@@ -147,8 +147,11 @@ class Fusion:
         self._zero(gyro, norm, p_acc, r_acc)
         gx, gy, gz = (g - b for g, b in zip(gyro, self.bias))
         # Right-hand turns about forward / left / up: roll right-side-down, nose DOWN, yaw left.
-        self.roll += gx * dt
-        self.pitch -= gy * dt
+        # Euler rates, not raw gyro axes: on a tilted mount (gimbal) a flat turn leaks into roll otherwise.
+        sr, cr = math.sin(math.radians(self.roll)), math.cos(math.radians(self.roll))
+        tp = math.tan(math.radians(self.pitch))
+        self.roll += (gx - (gy * sr + gz * cr) * tp) * dt
+        self.pitch += (-gy * cr + gz * sr) * dt
         if abs(norm - 1.0) < 0.15:             # only gravity on it: let it pull the angles back
             k = self.k if self._started else 1.0
             self.pitch += k * (p_acc - self.pitch)
