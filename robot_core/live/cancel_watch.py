@@ -15,9 +15,18 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
+import time
 from typing import Any, Callable, Dict
 
 from robot_core import robot_log, settings, task_cancel
+
+# The fixed phrase that cancels: "Robin, cancel explore mode" / "Robin, cancel follow mode".
+# Matched on the transcript here, not left to the model: it called cancel_task for noise it
+# heard as "Chup" (Nov 25). "Robin" is not required — the transcript garbles it (Raven, Joven).
+CANCEL_PHRASE = re.compile(r"\bcancel\w*\b.*\b(explor|follow)", re.I | re.S)
+NOT_CANCEL = re.compile(r"\b(don'?t|do not|never)\s+cancel", re.I)
+HEARD_WINDOW_S = 6.0      # the phrase may come in several transcript pieces
 
 
 def declarations() -> list:
@@ -41,17 +50,34 @@ class CancelTools:
 
     def __init__(self, stop: Callable[[], Any]) -> None:
         self._stop = stop
+        self._heard: list = []                          # (time, text) of the last HEARD_WINDOW_S
+        self._done = False
+
+    def heard(self, text: str) -> None:
+        """Every transcript piece (LiveAgent._log_transcripts). Cancels on the fixed phrase."""
+        now = time.monotonic()
+        self._heard = [(t, x) for t, x in self._heard if now - t <= HEARD_WINDOW_S] + [(now, text)]
+        said = " ".join(x for _, x in self._heard)
+        if not self._done and CANCEL_PHRASE.search(said) and not NOT_CANCEL.search(said):
+            self._cancel()
 
     async def dispatch(self, name: str, args: Dict[str, Any]) -> Dict[str, Any]:
         if name != "cancel_task":
             return {"ok": False, "error": "only cancel_task exists"}
+        if self._done:
+            return {"ok": True, "note": "task cancelled"}
+        # The model's call alone does not cancel; the phrase in the transcript does (heard()).
+        robot_log.event("task.cancel_ignored", heard=" ".join(x for _, x in self._heard)[-200:])
+        return {"ok": False, "note": "not cancelled: say 'Robin, cancel explore mode' or 'Robin, cancel follow mode'"}
+
+    def _cancel(self) -> None:
+        self._done = True
         task_cancel.request("voice")
         robot_log.event("task.cancel", by="voice")
         try:
             self._stop()
         except Exception as e:                          # noqa: BLE001
             robot_log.event("task.error", logging.WARNING, err=f"cancel brake failed: {e}")
-        return {"ok": True, "note": "task cancelled"}
 
 
 async def watch(motion) -> None:

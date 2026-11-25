@@ -448,6 +448,9 @@ class LiveAgent:
         text = getattr(heard, "text", None)
         if text and text.strip():
             robot_log.event("voice.heard", text=text.strip()[:400])
+            heard_hook = getattr(self._tools, "heard", None)     # the cancel listener's phrase match
+            if heard_hook is not None:
+                heard_hook(text.strip())
 
         text = getattr(said, "text", None)
         if text and text.strip():

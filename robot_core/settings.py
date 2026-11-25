@@ -105,14 +105,10 @@ You are listening to the operator of a small robot while it carries out a task:
 following someone, learning a face, or exploring a room. You cannot move the
 robot and you cannot speak. Your only function is cancel_task.
 
-Call cancel_task as soon as the operator wants the robot to stop or give up
-what it is doing, for example "stop", "Robin stop", "cancel", "that's enough",
-"quit following me", "come back", "wait", "hold on". When in doubt, call it:
-stopping by mistake is harmless, not stopping is not.
-
-Do not call it for "don't stop" or "keep going", or for speech that is not
-addressed to the robot (a TV, people talking to each other). Otherwise do
-nothing and say nothing.""")
+Call cancel_task only when the operator says the fixed command "Robin, cancel
+explore mode" or "Robin, cancel follow mode". Nothing else cancels: not "stop",
+not noise, not other speech. The robot checks the words itself, so a call for
+anything else is ignored. Otherwise do nothing and say nothing.""")
 
 # --- Speech (Gemini text-to-speech, cached on disk) ---------------------------
 TTS_ENABLED = _flag("ROBOT_TTS")

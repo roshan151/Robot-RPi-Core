@@ -44,7 +44,7 @@ import logging
 import math
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Callable, List, Optional, Protocol, Sequence, Tuple
 
 from robot_core import debug_upload, local_plan, status as screen, terrain
@@ -62,6 +62,9 @@ WATCH_REACH_M = 0.8      # a watched leg: the floor judged this far ahead on eve
 WATCH_MARGIN_M = 0.2     # ...and the robot brakes once a hazard is within stop_short_m + this
 WATCH_UNSEEN = 3         # ...or this many grids in a row are too thin to judge
 ROOMY_M = 0.3            # a leg passing at least this far from anything mapped is driven whole
+PLANT_MAX_RANGE_M = 8.0  # a plant the ToF gave no range on is somewhere on its bearing, up to this far
+APPROACH_STEP_M = 2.5    # ...and is approached along that bearing this far between looks
+MIN_CROSS_DEG = 10.0     # two bearings fix a plant where they cross, if they cross this steeply
 
 
 class Base(Protocol):
@@ -83,11 +86,12 @@ class ExploreConfig:
     sector_pans: Tuple[float, ...] = (-30.0, 30.0)    # camera looks per 90° sector
     # ToF anchor scan: 5 overlapping 60°-wide looks per half (35° step = 25° overlap, full 200° swath).
     grid_pans: Tuple[float, ...] = (-70.0, -35.0, 0.0, 35.0, 70.0)
+    scan_tilt_deg: float = -10.0                      # real tilt during ToF anchor scans: steeper floor angle on glossy wood
     camera_pans: Tuple[float, ...] = (-70.0, 0.0, 70.0)   # 80° HFOV: 3 looks cover 220° per half
     camera_tilts: Tuple[float, ...] = (0.0, 30.0)     # ...level, then looking up (when scan_up_during_map=True)
     scan_up_during_map: bool = False                  # skip upward shelf tilt during Phase A fast mapping
     orbit_after_map: bool = True                      # Phase A: map whole space cleanly; Phase B: visit/orbit plants
-    anchor_spacing_m: float = 2.5                     # drive this far with LocalNav + continuous ToF between 360° anchors
+    anchor_spacing_m: float = 2.5                     # glide this far with LocalNav + rolling frontiers between 360° anchors
     scan_stream_step_m: float = 0.35                  # fold continuous ToF scan into Mac map every 0.35 m driven
     scan_stream_turn_deg: float = 25.0                # ...or every 25° turned
     same_level_m: float = 0.15            # pots whose bases differ by more than this are on different shelves
@@ -123,6 +127,8 @@ class Sighting:
     top_m: Optional[float] = None          # the top of the plant above the floor
     level: int = 0                         # which shelf, counted up from the lowest plant at this spot
     on_stand: bool = False                 # another plant shares this spot at another height
+    ray_from: Optional[Tuple[float, float]] = None   # bearing only (no ToF range): the ray starts here
+                                           # (base_link at sector_odom); local_xy is its far end
 
 
 @dataclass
@@ -266,7 +272,7 @@ class Explorer:
 
                     goal = res["goal"]
                     leg_lim = cfg.anchor_spacing_m if self._can_continuous() else cfg.max_leg_m
-                    outcome = self.follow(goal["path"], leg_lim, goal.get("clear_m"))
+                    outcome = self.follow(goal["path"], leg_lim, goal.get("clear_m"), rolling_frontier=True)
                     self._say(f"drive: {outcome}")
 
                     # If we couldn't reach this frontier, blacklist it temporarily so the planner
@@ -361,11 +367,12 @@ class Explorer:
                 return (math.atan2(hit.y - sy, hit.x - sx), math.hypot(hit.x - sx, hit.y - sy))
 
             # Alternate direction so the head never swings back empty.
-            tilts = cfg.camera_tilts if cfg.scan_up_during_map else (0.0,)
+            scan_tilt = head.cmd_tilt(cfg.scan_tilt_deg)
+            tilts = cfg.camera_tilts if cfg.scan_up_during_map else (cfg.scan_tilt_deg,)
             for pan in (cfg.grid_pans if k % 2 == 0 else cfg.grid_pans[::-1]):
                 if self._stop.is_set():
                     break
-                head.gimbal.move_to(pan, head.cmd_tilt(0.0), wait=True)    # really level (the head looks up at 0)
+                head.gimbal.move_to(pan, scan_tilt, wait=True)    # slightly down: steeper floor incidence on glossy wood
                 sl, pts = head.scan_look()
                 rays += [ray(x, y) for x, y in sl.rays]
                 clear += [ray(x, y) for x, y in sl.clear]
@@ -373,7 +380,7 @@ class Explorer:
                 self._remember_obstacles(sl.drops, "drop")
                 if pan in cfg.camera_pans and head.camera is not None:
                     for tilt in tilts:
-                        if tilt:                      # look up: shelves, the upper pots of a plant stand
+                        if abs(tilt - cfg.scan_tilt_deg) > 1.0:   # extra look up for upper plant shelves when enabled
                             head.gimbal.move_to(pan, head.cmd_tilt(tilt), wait=True)
                             pts += head.cloud()
                         frame = head.camera.capture(head.gimbal)
@@ -436,19 +443,27 @@ class Explorer:
                            g.tof_pan_offset_deg, g.tof_tilt_offset_deg)
         if rng is None:
             x1, y1, x2, y2 = det["bbox"]
-            head.aim_at_pixel(frame, (x1 + x2) / 2, y1 + 0.7 * (y2 - y1))
+            px, py = (x1 + x2) / 2.0, y1 + 0.7 * (y2 - y1)
+            f_px = head.fx(w)
+            ang_left = math.degrees(math.atan2(w / 2.0 - px, f_px)) - g.tof_pan_offset_deg
+            ang_up = math.degrees(math.atan2(h / 2.0 - py, f_px)) - g.tof_tilt_offset_deg
+            # Only slew & re-detect if the pot lay outside the 60 deg ToF FOV (wide 80 deg camera edge).
+            # If it was already inside the ToF FOV and returned None, it is simply out of ToF range:
+            # record its bearing immediately in 0 ms instead of burning ~2 s re-aiming.
+            if abs(ang_left) <= 27.0 and abs(ang_up) <= 27.0:
+                return self._bearing_only(frame, det, sec_odom)
+            head.aim_at_pixel(frame, px, py)
             head.gimbal.wait_settled()
             f2 = head.camera.capture(head.gimbal)
             dets = self._plants_in(f2)
             if not dets:
-                return None
+                return self._bearing_only(frame, det, sec_odom)
             det = min(dets, key=lambda d: abs((d["bbox"][0] + d["bbox"][2]) / 2 - w / 2))
             frame = f2
             rng = range_in_box(head.lidar.grid(newer_than=time.monotonic()), pot(det), w, h, g.hfov_deg,
                                g.tof_pan_offset_deg, g.tof_tilt_offset_deg)
             if rng is None:
-                log.info("plant seen but no ToF zone on its pot gave a range — skipping")
-                return None
+                return self._bearing_only(frame, det, sec_odom)
         x1, y1, x2, y2 = det["bbox"]
         f = head.fx(w)
         left = math.atan2(w / 2.0 - (x1 + x2) / 2.0, f)           # the pot's bearing in the view, + left
@@ -482,6 +497,141 @@ class Explorer:
         size = (round(depth * (x2 - x1) / f, 2), round(depth * (y2 - y1) / f, 2))
         return Sighting(sec_odom, centre, _crop(frame.main, det["bbox"]), det["confidence"], size_m=size,
                         z_m=base, top_m=top)
+
+    def _bearing_only(self, frame, det, sec_odom: Pose2D) -> Sighting:
+        """A plant the ToF gave no range on (too far, a dark pot): keep its bearing instead of
+        dropping it (Nov 25: every plant of a run was dropped). It is on that ray, up to
+        PLANT_MAX_RANGE_M; a second bearing from elsewhere (_fuse_bearings) or a ToF range from
+        closer (_approach) puts it on the map."""
+        h, w = frame.main.shape[:2]
+        x1, _, x2, _ = det["bbox"]
+        b = math.radians(frame.pan_deg) + math.atan2(w / 2.0 - (x1 + x2) / 2.0, self.head.fx(w))
+        ax = self.head.geom.pan_axis_x_m
+        log.info("plant seen but no ToF range on its pot — keeping its bearing (%.0f deg), up to %.0f m",
+                 math.degrees(b), PLANT_MAX_RANGE_M)
+        return Sighting(sec_odom, (ax + PLANT_MAX_RANGE_M * math.cos(b), PLANT_MAX_RANGE_M * math.sin(b)),
+                        _crop(frame.main, det["bbox"]), det["confidence"], ray_from=(ax, 0.0))
+
+    def _map_xy(self, s: Sighting) -> Tuple[float, float]:
+        p = self.m2o.compose(s.sector_odom).compose(Pose2D(*s.local_xy, 0.0))
+        return (p.x, p.y)
+
+    def _ray(self, s: Sighting):
+        """A bearing-only sighting as (origin, heading) on the map."""
+        base = self.m2o.compose(s.sector_odom)
+        a, b = base.compose(Pose2D(*s.ray_from, 0.0)), base.compose(Pose2D(*s.local_xy, 0.0))
+        return (a.x, a.y), math.atan2(b.y - a.y, b.x - a.x)
+
+    def _near_ray(self, ray, xy) -> bool:
+        (ox, oy), th = ray
+        dx, dy = xy[0] - ox, xy[1] - oy
+        along = dx * math.cos(th) + dy * math.sin(th)
+        return -0.3 <= along <= PLANT_MAX_RANGE_M + self.cfg.same_place_m \
+            and abs(dy * math.cos(th) - dx * math.sin(th)) <= self.cfg.same_place_m
+
+    def _placed(self, s: Sighting, xy) -> Sighting:
+        """s, now known to stand at map `xy`."""
+        loc = self.m2o.compose(s.sector_odom).inverse().compose(Pose2D(xy[0], xy[1], 0.0))
+        return replace(s, local_xy=(loc.x, loc.y), ray_from=None)
+
+    def _fuse_bearings(self, sightings: List[Sighting]) -> List[Sighting]:
+        """Bearing-only sightings: one whose ray passes a placed plant is that plant (dropped);
+        two that cross from different spots fix the plant there (odometry + bearings); the rest
+        stay bearing-only, for handle_plant to approach."""
+        out = [s for s in sightings if s.ray_from is None]
+        if len(out) == len(sightings):
+            return sightings
+
+        def explained(r: Sighting) -> bool:
+            return any(o.ray_from is None and self._near_ray(self._ray(r), self._map_xy(o)) for o in out)
+
+        def same_bearing(ra, rb) -> bool:
+            (ax, ay), ta = ra
+            (bx, by), tb = rb
+            if abs(wrap(ta - tb)) >= math.radians(10.0):
+                return False
+            dx, dy = bx - ax, by - ay
+            perp = abs(dy * math.cos(ta) - dx * math.sin(ta))
+            return perp <= self.cfg.same_place_m
+
+        pending = [s for s in sightings if s.ray_from is not None and not explained(s)]
+        while pending:
+            a = pending.pop(0)
+            ra = self._ray(a)
+            hit = next(((b, xy) for b in pending for xy in [_cross(ra, self._ray(b))] if xy), None)
+            if hit is None:
+                # Merge near-parallel duplicate bearings of the same distant plant (keep highest confidence)
+                dups = [b for b in pending if same_bearing(ra, self._ray(b))]
+                best = max([a] + dups, key=lambda o: o.confidence)
+                out.append(best)
+                if dups:
+                    dup_ids = {id(b) for b in dups}
+                    pending = [r for r in pending if id(r) not in dup_ids]
+                continue
+            b, xy = hit
+            out.append(self._placed(max(a, b, key=lambda o: o.confidence), xy))
+            self._say(f"plant placed at ({xy[0]:.2f}, {xy[1]:.2f}) from two bearings")
+            pending = [r for r in pending if r is not b and not explained(r)]
+        return out
+
+    def _look_along(self, s: Sighting, far) -> Optional[Sighting]:
+        """Face the bearing's far end and look: a plant on the ray with a ToF range, or a
+        second bearing crossing it, is where s is. None if neither."""
+        self.face(far)
+        frame = self.head.look(0.0, self.head.cmd_tilt(0.0))
+        ray = self._ray(s)
+        for det in sorted(self._plants_in(frame), key=lambda d: -d["confidence"]):
+            s2 = self._localise_grid(frame, det, self.base.odom())
+            if s2 is None:
+                continue
+            if s2.ray_from is None:
+                if self._near_ray(ray, self._map_xy(s2)):
+                    return s2
+            else:
+                xy = _cross(ray, self._ray(s2))
+                if xy is not None:
+                    return self._placed(max(s, s2, key=lambda o: o.confidence), xy)
+        return None
+
+    def _approach(self, s: Sighting) -> bool:
+        """A plant known only by its bearing: look from here (a new bearing may fix it), then
+        drive along the bearing APPROACH_STEP_M at a time, looking again, until the ToF ranges it.
+        Every step shortens how far it can still be (odometry); past the far end there was no
+        plant there (or no way to it). True if the robot moved."""
+        (ox, oy), th = self._ray(s)
+        far = (ox + PLANT_MAX_RANGE_M * math.cos(th), oy + PLANT_MAX_RANGE_M * math.sin(th))
+        moved = False
+        for _ in range(int(PLANT_MAX_RANGE_M / APPROACH_STEP_M) + 2):
+            if self._stop.is_set():
+                return moved
+            fixed = self._look_along(s, far)
+            if fixed is not None:
+                return self.handle_plant(self._dedupe([fixed])[0]) or moved
+            here = self.map_pose()
+            left = _dist((here.x, here.y), far)
+            step = min(APPROACH_STEP_M, left - 1.0)
+            if step < 0.3:
+                break
+            # Probe shorter fractions along the ray if the full step lands inside a wall or beyond the mapped room.
+            path = None
+            chosen = step
+            for frac in (1.0, 0.65, 0.35):
+                cand = step * frac
+                if cand < 0.3:
+                    continue
+                k = cand / left
+                p_try = self.vision.slam_plan((here.x, here.y), (here.x + k * (far[0] - here.x),
+                                                                 here.y + k * (far[1] - here.y)))
+                if p_try:
+                    path, chosen = p_try, cand
+                    break
+            if not path:
+                break
+            moved = True
+            if self.follow(path, chosen) not in ("arrived", "leg_limit"):
+                break
+        self._say(f"plant seen at bearing {math.degrees(th):.0f}° never got a range — skipping")
+        return moved
 
     def look_for_plants(self, sec_odom: Pose2D) -> List[Sighting]:
         cfg, head = self.cfg, self.head
@@ -556,6 +706,7 @@ class Explorer:
         return a_z is None or b_z is None or abs(a_z - b_z) <= self.cfg.same_level_m
 
     def _dedupe(self, sightings: List[Sighting]) -> List[Sighting]:
+        sightings = self._fuse_bearings(sightings)
         out: List[Sighting] = []
         # Sightings with a measured height first: one without (its pot was out of the
         # picture) then joins the plant it belongs to, instead of hiding a shelf.
@@ -577,6 +728,8 @@ class Explorer:
 
     def handle_plant(self, s: Sighting) -> bool:
         """Identify, orbit and save one plant. True if the robot moved."""
+        if s.ray_from is not None:
+            return self._approach(s)                 # not placed yet: only its bearing is known
         if any(self._same(s.map_xy, s.z_m, xy, z) for xy, z in self._handled):
             return False                             # already dealt with this run
         if not self._in_scope(s.map_xy):
@@ -764,34 +917,41 @@ class Explorer:
             return False
         return watch
 
-    def _stream_scan(self, odom_pose: Pose2D) -> None:
-        """Fold the newest in-transit ToF grid into the Mac's SLAM map without stopping."""
+    def _stream_scan(self, odom_pose: Pose2D, plan: bool = False) -> Optional[dict]:
+        """Fold the newest in-transit ToF grid into the Mac's SLAM map without stopping.
+        When `plan=True`, also returns the Mac's updated frontier goal so LocalNav can
+        keep gliding continuously instead of stopping after short open-floor steps."""
         send = getattr(self.vision, "slam_scan", None)
         if send is None or not getattr(self.head, "has_grid", False):
-            return
+            return None
         try:
             grid = self.head.lidar.latest()
             if grid is None or not getattr(grid, "rows", None):
-                return
+                return None
             angle_at = getattr(self.head.gimbal, "angle_at", None)
             pan, tilt = angle_at(grid.t) if angle_at else self.head.gimbal.angles()
             zones = self.head.project(grid.rows, pan, tilt)
             if not zones:
-                return
+                return None
             sl = terrain.scan_slice(zones, self.head.terrain)
             sx, sy = self.head.sensor_xy
             rays = [(math.atan2(y - sy, x - sx), math.hypot(x - sx, y - sy)) for x, y in sl.rays]
             clear = [(math.atan2(y - sy, x - sx), math.hypot(x - sx, y - sy)) for x, y in sl.clear]
             if not rays and not clear:
-                return
-            send(odom_pose.as_tuple(), rays, (sx, sy), low=sl.low, drops=sl.drops, clear=clear)
+                return None
+            return send(odom_pose.as_tuple(), rays, (sx, sy), plan=plan,
+                        low=sl.low, drops=sl.drops, clear=clear)
         except Exception as exc:                                  # noqa: BLE001 — best effort in transit
             log.debug("in-transit slam_scan skipped: %s", exc)
+            return None
 
-    def _follow_continuous(self, path: Sequence[Sequence[float]], max_dist: float) -> str:
-        """Drive smoothly toward the frontier goal using LocalNav (DWA + RollingCostmap +
-        50 Hz reflex + smart-arc escape), streaming continuous ToF scans to the Mac so the
-        map grows while driving instead of stopping every 0.6 m."""
+    def _follow_continuous(self, path: Sequence[Sequence[float]], max_dist: float,
+                           rolling_frontier: bool = False) -> str:
+        """Drive smoothly toward the goal using LocalNav (DWA + RollingCostmap + 50 Hz
+        reflex + smart-arc escape), streaming continuous ToF scans to the Mac.
+        When `rolling_frontier=True` (Phase A mapping), advances the frontier goal on the
+        fly via `slam_scan(..., plan=True)` so the robot glides up to `max_dist` (~2.5 m)
+        continuously instead of stopping after a 0.25-0.50 m hardwood step."""
         from robot_core.nav.controller import LocalNav
 
         cfg = self.cfg
@@ -819,7 +979,7 @@ class Explorer:
             inv = self.m2o.inverse()
             return [(inv.compose(Pose2D(x, y, 0.0)).x, inv.compose(Pose2D(x, y, 0.0)).y) for x, y in m_path]
 
-        nav_tilt = self.head.cmd_tilt(-5.0)
+        nav_tilt = self.head.cmd_tilt(-8.0)
         nav = LocalNav(
             self.head, self.base, pose_odom,
             twist=getattr(self.base, "twist", None),
@@ -827,11 +987,17 @@ class Explorer:
             planner=mac_planner,
             tilt_deg=nav_tilt,
         )
-        # Seed LocalNav with the Mac's initial waypoints right away (converted to odom)
-        seed_wps = [(inv_m2o.compose(Pose2D(x, y, 0.0)).x, inv_m2o.compose(Pose2D(x, y, 0.0)).y) for x, y in pts]
-        nav.waypoints = seed_wps
-        nav.wp_goal = goal_odom
-        nav._wp_t = nav.clock()
+
+        def _seed_map_path(m_pts) -> Tuple[float, float]:
+            inv = self.m2o.inverse()
+            wps = [(inv.compose(Pose2D(x, y, 0.0)).x, inv.compose(Pose2D(x, y, 0.0)).y) for x, y in m_pts]
+            g_o = wps[-1]
+            nav.waypoints = wps
+            nav.wp_goal = g_o
+            nav._wp_t = nav.clock()
+            return g_o
+
+        goal_odom = _seed_map_path(pts)
 
         nav.start()
         try:
@@ -845,6 +1011,25 @@ class Explorer:
             max_leg_s = max(25.0, max_dist / 0.08 + 15.0)
             leg_deadline = time.monotonic() + max_leg_s
             outcome = "arrived"
+
+            def _try_advance_frontier(cur_o: Pose2D) -> Tuple[bool, bool]:
+                """Stream current ToF scan with plan=True and advance goal_odom if a further
+                frontier exists. Returns (advanced, map_done)."""
+                nonlocal goal_odom, last_scan_o, last_scan_t
+                res = self._stream_scan(cur_o, plan=rolling_frontier)
+                last_scan_o, last_scan_t = cur_o, time.monotonic()
+                if not res or not rolling_frontier:
+                    return False, False
+                if res.get("done"):
+                    return False, True
+                new_goal = res.get("goal")
+                if not new_goal or not new_goal.get("path"):
+                    return False, False
+                cand_o = self.m2o.inverse().compose(Pose2D(new_goal["xy"][0], new_goal["xy"][1], 0.0))
+                if math.hypot(cand_o.x - cur_o.x, cand_o.y - cur_o.y) > 0.35:
+                    goal_odom = _seed_map_path(new_goal["path"])
+                    return True, False
+                return False, False
 
             while not self._stop.is_set():
                 now = time.monotonic()
@@ -867,22 +1052,30 @@ class Explorer:
                 # Keep renewing goal in odom frame
                 nav.set_goal(goal_odom, keep_m=0.18, face=False)
 
-                # Continuous ToF scan fold into the Mac map while moving
-                moved_since_scan = math.hypot(cur_o.x - last_scan_o.x, cur_o.y - last_scan_o.y)
-                turned_since_scan = abs(math.degrees(wrap(cur_o.theta - last_scan_o.theta)))
-                if (moved_since_scan >= cfg.scan_stream_step_m
-                        or turned_since_scan >= cfg.scan_stream_turn_deg
-                        or now - last_scan_t >= 2.0):
-                    self._stream_scan(cur_o)
-                    last_scan_o, last_scan_t = cur_o, now
-
-                # Check completion / anchor spacing / stall
-                rem = math.hypot(goal_odom[0] - cur_o.x, goal_odom[1] - cur_o.y)
-                if nav.arrived() or rem <= 0.25:
-                    outcome = "arrived"
-                    break
                 if travelled >= max_dist:
                     outcome = "leg_limit"
+                    break
+
+                # Continuous ToF scan fold into the Mac map while moving (and roll frontier forward)
+                rem = math.hypot(goal_odom[0] - cur_o.x, goal_odom[1] - cur_o.y)
+                moved_since_scan = math.hypot(cur_o.x - last_scan_o.x, cur_o.y - last_scan_o.y)
+                turned_since_scan = abs(math.degrees(wrap(cur_o.theta - last_scan_o.theta)))
+                near_goal = nav.arrived() or rem <= 0.35
+                if (near_goal
+                        or moved_since_scan >= cfg.scan_stream_step_m
+                        or turned_since_scan >= cfg.scan_stream_turn_deg
+                        or now - last_scan_t >= 2.0):
+                    advanced, map_done = _try_advance_frontier(cur_o)
+                    if map_done:
+                        outcome = "arrived"
+                        break
+                    if advanced:
+                        nav.set_goal(goal_odom, keep_m=0.18, face=False)
+                        rem = math.hypot(goal_odom[0] - cur_o.x, goal_odom[1] - cur_o.y)
+
+                # Stop only if we reached the goal AND rolling pursuit had no further frontier
+                if (nav.arrived() or rem <= 0.25) and not (rolling_frontier and rem > 0.35):
+                    outcome = "arrived"
                     break
 
                 if math.hypot(cur_o.x - prog_o.x, cur_o.y - prog_o.y) >= 0.12:
@@ -897,7 +1090,7 @@ class Explorer:
                 outcome = "stopped"
             # Final in-transit scan before stopping for anchor scan
             if outcome in ("arrived", "leg_limit"):
-                self._stream_scan(self.base.odom())
+                self._stream_scan(self.base.odom(), plan=False)
             return outcome
         finally:
             nav.stop()
@@ -907,12 +1100,12 @@ class Explorer:
                 pass
 
     def follow(self, path: Sequence[Sequence[float]], max_dist: float,
-               clear: Optional[Sequence[float]] = None) -> str:
+               clear: Optional[Sequence[float]] = None, rolling_frontier: bool = False) -> str:
         """Drive a map path toward a waypoint. Uses continuous LocalNav (DWA + reflex +
         live ToF map streaming) when 8x8 ToF + velocity firmware are available, falling
         back to discrete turn-probe-drive steps otherwise."""
         if self._can_continuous() and not self.cfg.ask_before_drive:
-            return self._follow_continuous(path, max_dist)
+            return self._follow_continuous(path, max_dist, rolling_frontier=rolling_frontier)
         cfg = self.cfg
         travelled = 0.0
         watched = self._watching()
@@ -1047,6 +1240,22 @@ class Explorer:
 
 def _dist(a, b) -> float:
     return math.hypot(a[0] - b[0], a[1] - b[1])
+
+
+def _cross(r1, r2) -> Optional[Tuple[float, float]]:
+    """Where two bearings ((x, y), heading) meet: in front of both, within PLANT_MAX_RANGE_M,
+    and crossing at least MIN_CROSS_DEG (nearly parallel bearings fix nothing). Else None."""
+    (o1, t1), (o2, t2) = r1, r2
+    d1, d2 = (math.cos(t1), math.sin(t1)), (math.cos(t2), math.sin(t2))
+    den = d1[0] * d2[1] - d1[1] * d2[0]
+    if abs(den) < math.sin(math.radians(MIN_CROSS_DEG)):
+        return None
+    wx, wy = o2[0] - o1[0], o2[1] - o1[1]
+    a = (wx * d2[1] - wy * d2[0]) / den
+    b = (wx * d1[1] - wy * d1[0]) / den
+    if not (0.3 <= a <= PLANT_MAX_RANGE_M and 0.3 <= b <= PLANT_MAX_RANGE_M):
+        return None
+    return (o1[0] + a * d1[0], o1[1] + a * d1[1])
 
 
 def _crop(img, bbox, pad: float = 0.1) -> bytes:

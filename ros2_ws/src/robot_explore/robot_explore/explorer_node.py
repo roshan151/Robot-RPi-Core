@@ -198,6 +198,7 @@ class ExplorerNode(Node):
         p("revisit_known", True)
         p("orbit_after_map", True)
         p("scan_up_during_map", False)
+        p("scan_tilt_deg", -10.0)
         p("anchor_spacing_m", 2.5)
         p("ask_before_drive", False)
         p("autostart", True)
@@ -306,6 +307,7 @@ class ExplorerNode(Node):
             orbit_views=int(v("orbit_views")), revisit_known=bool(v("revisit_known")),
             orbit_after_map=bool(v("orbit_after_map")),
             scan_up_during_map=bool(v("scan_up_during_map")),
+            scan_tilt_deg=float(v("scan_tilt_deg")),
             anchor_spacing_m=float(v("anchor_spacing_m")),
             ask_before_drive=bool(v("ask_before_drive"))), on_status=self._say)
 
