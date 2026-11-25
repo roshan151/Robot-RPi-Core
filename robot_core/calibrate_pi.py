@@ -280,7 +280,7 @@ class Rig:
         us = calibrate.centre_change(p0, float(self.ex.get("pan_us_per_deg", 2000 / 180)), bool(self.ex.get("pan_invert")))
         self.look(0.0, 0.0)
         return {"pan_zero_deg": round(p0, 2), "wall_m": round(d, 3), "samples": samples,
-                "pan_center_us": round(cur + us)}
+                "pan_center_us": float(round(cur + us))}   # float: robot.yaml declares it a double (an int stops explore, Nov 25)
 
     def cmd_tilt_sweep(self, lo: int = -42, hi: int = -14, step: int = 3) -> dict:
         samples = []
@@ -294,7 +294,7 @@ class Rig:
         us = calibrate.centre_change(-e, float(self.ex.get("tilt_us_per_deg", 2000 / 180)), bool(self.ex.get("tilt_invert")))
         self.look(0.0, 0.0)
         return {"tilt_error_deg": round(e, 2), "head_height_m": round(h, 3), "height_spread_m": round(spread, 3),
-                "samples": samples, "tilt_center_us": round(cur + us)}
+                "samples": samples, "tilt_center_us": float(round(cur + us))}
 
     def cmd_encoders_watch(self, seconds: float = 5.0) -> dict:
         self.drive()

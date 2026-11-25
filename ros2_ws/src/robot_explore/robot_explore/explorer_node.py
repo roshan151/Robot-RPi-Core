@@ -433,6 +433,13 @@ def main(args=None) -> None:
     # A child process of the voice node (voice_node._explore): without this, everything the mission
     # says (each keyframe, each drive, "exploration complete") reached only the console (Nov 21).
     robot_log.setup(None)
+    # A crash while starting up (e.g. a robot.yaml param of the wrong type) reaches logs.json, not only
+    # stderr (Nov 25). Keep rclpy's signal handlers: a stop must still park the head and save the map.
+    import signal
+    sigs = {s: signal.getsignal(s) for s in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)}
+    robot_log.install_crash_handlers()
+    for s, h in sigs.items():
+        signal.signal(s, h)
     robot_log.event("session.start", mode="explore", pid=os.getpid())
     node = ExplorerNode()
     connect(node)                        # status + warnings go to the OLED (after setup: it resets handlers)
