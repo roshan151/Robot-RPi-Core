@@ -112,7 +112,7 @@ def _run_task(task: str, name: str) -> bool:
     from robot_core import face_tasks
     from robot_core.sensors.camera import Camera
     from robot_core.sensors.gimbal import from_params
-    from robot_core.sensors.head import Head, HeadGeometry, parse_self_zones
+    from robot_core.sensors.head import Head, head_geometry_from_params
     from robot_core.vision_client import VisionClient
     # The head is the explorer's hardware: same camera, channels and trims, read
     # from robot.yaml.
@@ -143,15 +143,7 @@ def _run_task(task: str, name: str) -> bool:
                 except Exception as e:                          # noqa: BLE001
                     robot_log.event("task.error", logging.WARNING, err=f"tfluna unavailable: {e}")
             from robot_core import terrain
-            head = Head(gimbal, lidar, camera, HeadGeometry(
-                height_m=float(p.get("head_height_m", 0.25)), hfov_deg=float(p.get("hfov_deg", 66.0)),
-                pan_axis_x_m=float(p.get("pan_axis_x_m", 0.05)), drive_tilt_deg=drive_tilt,
-                tof_perpendicular=bool(p.get("tof_perpendicular", True)),
-                tilt_offset_deg=float(p.get("head_tilt_offset_deg", 0.0)),
-                tof_pan_offset_deg=float(p.get("tof_pan_offset_deg", 0.0)),
-                tof_tilt_offset_deg=float(p.get("tof_tilt_offset_deg", 0.0)),
-                pan_axis_y_m=float(p.get("tof_from_right_m", 0.125)) - float(p.get("robot_width_m", 0.25)) / 2.0,
-                self_zones=parse_self_zones(p.get("tof_self_zones"))),
+            head = Head(gimbal, lidar, camera, head_geometry_from_params(p),
                 pitch=lambda: _pitch[0], terrain_params=terrain.params_from(p))
         except Exception as e:                                  # noqa: BLE001
             robot_log.event("task.error", logging.WARNING, err=f"head unavailable: {type(e).__name__}: {e}")

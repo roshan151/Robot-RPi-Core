@@ -34,7 +34,7 @@ import time
 from typing import Optional
 
 import rclpy
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import TransformStamped, Twist
 from nav_msgs.msg import Odometry
 from rclpy.action import ActionClient
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -48,7 +48,7 @@ from robot_core.explore import ExploreConfig, Explorer
 from robot_core.odometry import Pose2D
 from robot_core.sensors.camera import Camera
 from robot_core.sensors.gimbal import from_params
-from robot_core.sensors.head import Head, HeadGeometry, parse_self_zones
+from robot_core.sensors.head import Head, head_geometry_from_params
 from robot_core import terrain
 from robot_core.sensors import tof8x8
 from robot_core.sensors.tfluna import TFLuna
@@ -71,17 +71,22 @@ def _wait(future, timeout: float):
 
 
 class RosBase:
-    """robot_core.explore.Base over the drivetrain's actions and topics."""
+    """robot_core.explore.Base + velocity motion backend over the drivetrain's actions and topics."""
 
     def __init__(self, node: "ExplorerNode") -> None:
         self.n = node
         self._odom: Optional[Pose2D] = None
+        self._odom_t: float = 0.0
+        self._twist: Optional[tuple] = None
         self._health: Optional[MotionHealth] = None
         self._stuck_at = 0.0
+        self._bump_t = 0.0
         self.m2o = Pose2D()
         cb = ReentrantCallbackGroup()
         self._drive = ActionClient(node, Drive, "drive", callback_group=cb)
         self._turn = ActionClient(node, Turn, "turn", callback_group=cb)
+        self._estop = node.create_client(Trigger, "estop", callback_group=cb)
+        self._cmd_vel = node.create_publisher(Twist, "cmd_vel", 10)
         self._reloc = node.create_client(Trigger, "odom/relocalized", callback_group=cb)
         node.create_subscription(Odometry, "odom", self._on_odom, 10, callback_group=cb)
         node.create_subscription(MotionHealth, "motion_health", self._on_health, 10, callback_group=cb)
@@ -90,12 +95,16 @@ class RosBase:
         q = m.pose.pose.orientation
         self._odom = Pose2D(m.pose.pose.position.x, m.pose.pose.position.y,
                             2.0 * math.atan2(q.z, q.w))
+        self._odom_t = time.monotonic()
+        self._twist = (float(m.twist.twist.linear.x), float(m.twist.twist.angular.z))
 
     def _on_health(self, m: MotionHealth) -> None:
         self._health = m
-        if m.state in STUCK_STATES:
-            self._stuck_at = time.monotonic()
+        if m.state in STUCK_STATES or m.state == "bumped":
+            now = time.monotonic()
+            self._stuck_at = now
             self._stuck_why = m.state
+            self._bump_t = now
 
     def wait_ready(self, timeout: float = 30.0) -> bool:
         deadline = time.monotonic() + timeout
@@ -107,6 +116,29 @@ class RosBase:
 
     def odom(self) -> Pose2D:
         return self._odom or Pose2D()
+
+    def odom_age(self) -> float:
+        return float("inf") if self._odom_t <= 0.0 else max(0.0, time.monotonic() - self._odom_t)
+
+    def twist(self) -> Optional[tuple]:
+        return self._twist
+
+    def bumped(self) -> float:
+        return self._bump_t
+
+    def can_glide(self) -> bool:
+        """True when drivetrain subscribes to /cmd_vel (firmware -vel velocity mode)."""
+        return self._cmd_vel.get_subscription_count() > 0
+
+    def velocity(self, v: float, w: float) -> None:
+        msg = Twist()
+        msg.linear.x, msg.angular.z = float(v), float(w)
+        self._cmd_vel.publish(msg)
+
+    def stop(self) -> None:
+        self.velocity(0.0, 0.0)
+        if self._estop.service_is_ready():
+            self._estop.call_async(Trigger.Request())
 
     def _run(self, client, goal, timeout: float, watch=None) -> str:
         """`watch()`: called while the move runs (it paces itself, e.g. one ToF grid);
@@ -164,6 +196,9 @@ class ExplorerNode(Node):
         p("orbit_radius_m", 0.7)
         p("orbit_views", 8)
         p("revisit_known", True)
+        p("orbit_after_map", True)
+        p("scan_up_during_map", False)
+        p("anchor_spacing_m", 2.5)
         p("ask_before_drive", False)
         p("autostart", True)
         p("tfluna_port", "/dev/serial0")
@@ -181,8 +216,13 @@ class ExplorerNode(Node):
         p("tof_flip_rows", False)
         p("tof_flip_cols", False)
         p("tof_perpendicular", True)
+        p("tof_pan_offset_deg", 0.0)
+        p("tof_tilt_offset_deg", 0.0)
+        p("tof_range_scale", 1.0)
+        p("tof_range_offset_m", 0.0)
         p("drive_tilt_deg", -30.0)
         p("head_tilt_offset_deg", 0.0)
+        p("head_backlash_deg", 0.0)
         p("h_max_m", 0.03)
         p("flat_tol_m", 0.015)
         p("min_landing_m", 0.20)
@@ -228,21 +268,20 @@ class ExplorerNode(Node):
         self.gimbal = from_params({n: v(n) for n in (
             "pwm_chip", "pan_channel", "tilt_channel", "pan_center_us", "tilt_center_us",
             "pan_us_per_deg", "tilt_us_per_deg", "pan_invert", "tilt_invert", "servo_speed_dps", "servo_fast_dps",
-            "servo_min_us", "servo_max_us", "hold_on_close", "servo_power_gpio")})
+            "servo_min_us", "servo_max_us", "hold_on_close", "servo_power_gpio", "head_backlash_deg")},
+            tilt_min=min(-35.0, float(v("drive_tilt_deg"))))
         if v("tof_fitted"):
-            self.lidar = tof8x8.from_params({n: v(n) for n in ("tof_port", "tof_bus", "tof_addr", "tof_tilt", "tof_flip_rows", "tof_flip_cols")})
+            self.lidar = tof8x8.from_params({n: v(n) for n in (
+                "tof_port", "tof_bus", "tof_addr", "tof_tilt", "tof_flip_rows", "tof_flip_cols",
+                "tof_range_scale", "tof_range_offset_m")})
         else:
             self.lidar = TFLuna(v("tfluna_port"))
         self.camera = Camera(main_size=tuple(v("camera_main_size")), inverted=bool(v("camera_inverted")),
                              backend=v("camera_backend"), index=int(v("camera_index")))
-        self.head = Head(self.gimbal, self.lidar, self.camera, HeadGeometry(
-            height_m=float(v("head_height_m")), pan_axis_x_m=float(v("pan_axis_x_m")),
-            hfov_deg=float(v("hfov_deg")), drive_tilt_deg=float(v("drive_tilt_deg")),
-            tof_perpendicular=bool(v("tof_perpendicular")), tilt_offset_deg=float(v("head_tilt_offset_deg")),
-            tof_pan_offset_deg=float(v("tof_pan_offset_deg") if self.has_parameter("tof_pan_offset_deg") else 0.0),
-            tof_tilt_offset_deg=float(v("tof_tilt_offset_deg") if self.has_parameter("tof_tilt_offset_deg") else 0.0),
-            pan_axis_y_m=float(v("tof_from_right_m")) - float(v("robot_width_m")) / 2.0,
-            self_zones=parse_self_zones(v("tof_self_zones"))),
+        self.head = Head(self.gimbal, self.lidar, self.camera, head_geometry_from_params({n: v(n) for n in (
+            "head_height_m", "pan_axis_x_m", "hfov_deg", "drive_tilt_deg", "tof_perpendicular",
+            "head_tilt_offset_deg", "tof_pan_offset_deg", "tof_tilt_offset_deg",
+            "tof_from_right_m", "robot_width_m", "tof_self_zones")}),
             pitch=lambda: self._pitch(),
             terrain_params=terrain.params_from({n: v(n) for n in ("h_max_m", "flat_tol_m", "min_landing_m", "max_drop_m", "robot_width_m",
                                                              "plan_clearance_m", "floor_auto_level", "floor_holes_are_drops",
@@ -265,6 +304,9 @@ class ExplorerNode(Node):
             max_minutes=float(v("max_minutes")), explore_radius_m=float(v("explore_radius_m")),
             no_behind=bool(v("no_behind")), orbit_radius_m=float(v("orbit_radius_m")),
             orbit_views=int(v("orbit_views")), revisit_known=bool(v("revisit_known")),
+            orbit_after_map=bool(v("orbit_after_map")),
+            scan_up_during_map=bool(v("scan_up_during_map")),
+            anchor_spacing_m=float(v("anchor_spacing_m")),
             ask_before_drive=bool(v("ask_before_drive"))), on_status=self._say)
 
         self._stop = threading.Event()

@@ -39,6 +39,7 @@ map_T_odom ⊕ odom_T_base ⊕ point.
 
 from __future__ import annotations
 
+import concurrent.futures
 import logging
 import math
 import threading
@@ -80,11 +81,15 @@ class ExploreConfig:
     explore_radius_m: float = 10.0        # only explore within this radius of the start (<= 0: no limit)
     no_behind: bool = False               # only explore ahead of the start heading
     sector_pans: Tuple[float, ...] = (-30.0, 30.0)    # camera looks per 90° sector
-    # ToF scan: head positions per half turn. 18.75° apart is two and a half zones, so
-    # neighbouring looks interleave: a bearing every 3.75° across about 200°.
-    grid_pans: Tuple[float, ...] = (-75.0, -56.25, -37.5, -18.75, 0.0, 18.75, 37.5, 56.25, 75.0)
-    camera_pans: Tuple[float, ...] = (-75.0, -37.5, 0.0, 37.5, 75.0)   # which of them also look for plants
-    camera_tilts: Tuple[float, ...] = (0.0, 30.0)     # ...level, then looking up (shelves, plant stands)
+    # ToF anchor scan: 5 overlapping 60°-wide looks per half (35° step = 25° overlap, full 200° swath).
+    grid_pans: Tuple[float, ...] = (-70.0, -35.0, 0.0, 35.0, 70.0)
+    camera_pans: Tuple[float, ...] = (-70.0, 0.0, 70.0)   # 80° HFOV: 3 looks cover 220° per half
+    camera_tilts: Tuple[float, ...] = (0.0, 30.0)     # ...level, then looking up (when scan_up_during_map=True)
+    scan_up_during_map: bool = False                  # skip upward shelf tilt during Phase A fast mapping
+    orbit_after_map: bool = True                      # Phase A: map whole space cleanly; Phase B: visit/orbit plants
+    anchor_spacing_m: float = 2.5                     # drive this far with LocalNav + continuous ToF between 360° anchors
+    scan_stream_step_m: float = 0.35                  # fold continuous ToF scan into Mac map every 0.35 m driven
+    scan_stream_turn_deg: float = 25.0                # ...or every 25° turned
     same_level_m: float = 0.15            # pots whose bases differ by more than this are on different shelves
     plant_classes: Tuple[str, ...] = (
         "potted plant", "plant", "shrub", "bush", "flower",
@@ -98,8 +103,8 @@ class ExploreConfig:
     pot_radius_m: float = 0.08            # the beam hits the pot's near side; centre is further
     ambiguous_margin: float = 0.12        # below threshold by less than this → ask the VLM
     revisit_known: bool = True            # photograph known plants again (growth tracking)
-    max_leg_m: float = 1.5                # re-scan after this much driving
-    probe_step_m: float = 0.6             # floor-probe look-ahead per drive step
+    max_leg_m: float = 1.5                # discrete-fallback re-scan distance (LocalNav uses anchor_spacing_m)
+    probe_step_m: float = 0.6             # floor-probe look-ahead per discrete drive step
     stop_short_m: float = 0.15            # gap to leave in front of an obstacle
     front_m: float = 0.12                 # MEASURE: front bumper ahead of the wheel axle
     ask_before_drive: bool = False        # VLM "is the way clear?" before each step (slow)
@@ -139,6 +144,7 @@ class Explorer:
         self.m2o = Pose2D(*cfg.start_pose)
         self.stats = Stats()
         self._handled: List[Tuple[Tuple[float, float], Optional[float]]] = []   # (map xy, pot height)
+        self._pending_plants: List[Sighting] = []             # collected during Phase A, visited in Phase B
         self._kf_clear: list = []                     # this keyframe's free-space rays and 3-D points (ToF scan)
         self._kf_cloud: list = []
         self._plant = ""                              # plant_NN on the OLED
@@ -147,12 +153,28 @@ class Explorer:
         self._drops_odom: List[Tuple[float, float]] = []     # places where the floor falls away
         self._hazards = local_plan.Hazards()                 # what blocked steps, for going round (local_plan)
         self._last_online_odom: Optional[Pose2D] = None      # last pose where vision server answered (for return-to-signal)
+        self._recon_pool = concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix="explore-recon")
         self._stop = threading.Event()
 
     # ================================================================ loop
 
     def stop(self) -> None:
         self._stop.set()
+
+    def _wait_odom_fresh(self, max_wait_s: float = 8.0) -> bool:
+        """Pause cleanly if /odom went stale (e.g. Arduino DTR reset takes ~2-4 s)
+        instead of driving blind or aborting the mission."""
+        age_fn = getattr(self.base, "odom_age", None)
+        if age_fn is None or age_fn() <= 1.5:
+            return True
+        self._say("odometry paused — waiting for drivetrain telemetry to resume")
+        deadline = time.monotonic() + max_wait_s
+        while not self._stop.is_set() and time.monotonic() < deadline:
+            if age_fn() <= 1.0:
+                self._say("odometry resumed")
+                return True
+            self._stop.wait(0.25)
+        return age_fn() <= 1.5
 
     def _return_to_signal(self, max_step_m: float = 0.8) -> None:
         """Backtrack toward the last pose where the Mac answered so an outdoor Wi-Fi dead zone
@@ -166,10 +188,10 @@ class Explorer:
             return
         step = min(dist, max_step_m)
         target_th = math.atan2(dy, dx)
-        turn = math.degrees(math.atan2(math.sin(target_th - cur.theta), math.cos(target_th - cur.theta)))
+        turn_rad = wrap(target_th - cur.theta)
         self._say(f"Wi-Fi lost: backtracking {step:.2f} m toward last online pose")
-        if abs(turn) > 10.0:
-            self.base.turn(turn)
+        if abs(turn_rad) > math.radians(10.0):
+            self.base.turn_ccw(turn_rad)
         if not self._stop.is_set():
             self.base.drive(step)
 
@@ -180,6 +202,11 @@ class Explorer:
         screen.detail(msg)
         self.status(msg)
 
+    def _can_continuous(self) -> bool:
+        """True when 8x8 ToF + velocity firmware (-vel) are available to drive with LocalNav."""
+        return bool(getattr(self.head, "has_grid", False)) and bool(
+            getattr(self.base, "can_glide", lambda: False)())
+
     def run(self) -> Stats:
         cfg = self.cfg
         deadline = time.monotonic() + cfg.max_minutes * 60
@@ -189,7 +216,11 @@ class Explorer:
             self.vision.slam_reset(cfg.map_name, cfg.start_pose, load=False, **scope)
         fails = 0
         try:
+            # --- Phase A: Map the entire reachable space cleanly ---
             while not self._stop.is_set() and time.monotonic() < deadline:
+                if not self._wait_odom_fresh():
+                    self._say("odometry did not recover — stopping explore safely")
+                    break
                 try:
                     self._say("scanning")
                     kf_odom, rays, sightings = self.scan_keyframe()
@@ -211,26 +242,43 @@ class Explorer:
                     self.base.set_map_to_odom(self.m2o)
                     if res["match"]["accepted"]:
                         self.base.relocalized()
+                    loop_note = f", LOOP closed (kf {res['loop']['with_kf']})" if res.get("loop", {}).get("closed") else ""
                     self._say(f"keyframe {res['kf_id']}: match {res['match']['score']:.2f} "
                               f"({'ok' if res['match']['accepted'] else 'odometry only'}), "
-                              f"{res.get('explored_m2', 0):.1f} m² explored")
+                              f"{res.get('explored_m2', 0):.1f} m² explored{loop_note}")
 
-                    o0 = self.base.odom()
-                    for s in self._dedupe(sightings):
-                        if self._stop.is_set():
-                            break
-                        self.handle_plant(s)
-                    o1 = self.base.odom()
-                    if math.hypot(o1.x - o0.x, o1.y - o0.y) > 0.15:
-                        continue      # the orbit moved us: re-scan rather than follow a stale path
-                    # (not handle_plant's "moved": True for a plant with no viewpoint too, so on Nov 23 the robot
-                    # re-scanned in place for 6 min and never drove a frontier)
+                    if sightings:
+                        if cfg.orbit_after_map:
+                            self._pending_plants.extend(sightings)
+                        else:
+                            o0 = self.base.odom()
+                            for s in self._dedupe(sightings):
+                                if self._stop.is_set():
+                                    break
+                                self.handle_plant(s)
+                            o1 = self.base.odom()
+                            if math.hypot(o1.x - o0.x, o1.y - o0.y) > 0.15:
+                                continue
 
                     if res.get("done"):
-                        self._say("exploration complete — nothing reachable left unexplored")
+                        self._say("mapping complete — nothing reachable left unexplored")
                         break
-                    outcome = self.follow(res["goal"]["path"], self.cfg.max_leg_m, res["goal"].get("clear_m"))
+
+                    goal = res["goal"]
+                    leg_lim = cfg.anchor_spacing_m if self._can_continuous() else cfg.max_leg_m
+                    outcome = self.follow(goal["path"], leg_lim, goal.get("clear_m"))
                     self._say(f"drive: {outcome}")
+
+                    # If we couldn't reach this frontier, blacklist it temporarily so the planner
+                    # picks the next-best frontier instead of retrying the same blocked alcove.
+                    if (outcome.startswith("blocked") or outcome in ("stuck", "drop", "timeout")) \
+                            and hasattr(self.vision, "slam_unreachable"):
+                        try:
+                            p_now = self.map_pose()
+                            self.vision.slam_unreachable(goal["xy"], pose=p_now.as_tuple())
+                            self._say(f"marked frontier ({goal['xy'][0]:.2f}, {goal['xy'][1]:.2f}) temporarily unreachable")
+                        except VisionError:
+                            pass
                     fails = 0
                 except VisionError as exc:          # the Mac or the Wi-Fi slow for a while: wait, don't give up
                     fails += 1
@@ -240,9 +288,22 @@ class Explorer:
                     if fails >= 2 and self._last_online_odom is not None:
                         self._return_to_signal()
                     self._stop.wait(VISION_RETRY_S)
+
+            # --- Phase B: Visit & orbit plants on the finished, loop-closed map ---
+            if cfg.orbit_after_map and self._pending_plants and not self._stop.is_set() and time.monotonic() < deadline:
+                unique = self._dedupe(self._pending_plants)
+                self._say(f"Phase B: inspecting {len(unique)} plant(s) on the completed map")
+                for s in unique:
+                    if self._stop.is_set() or time.monotonic() >= deadline:
+                        break
+                    try:
+                        self.handle_plant(s)
+                    except VisionError as exc:
+                        self._say(f"plant visit skipped ({exc})")
         except VisionError as exc:
             self._say(f"vision service unavailable, stopping: {exc}")
         finally:
+            self._recon_pool.shutdown(wait=False)
             try:
                 self.vision.slam_save()
             except VisionError:
@@ -300,6 +361,7 @@ class Explorer:
                 return (math.atan2(hit.y - sy, hit.x - sx), math.hypot(hit.x - sx, hit.y - sy))
 
             # Alternate direction so the head never swings back empty.
+            tilts = cfg.camera_tilts if cfg.scan_up_during_map else (0.0,)
             for pan in (cfg.grid_pans if k % 2 == 0 else cfg.grid_pans[::-1]):
                 if self._stop.is_set():
                     break
@@ -309,13 +371,13 @@ class Explorer:
                 clear += [ray(x, y) for x, y in sl.clear]
                 self._remember_obstacles(sl.low, "low")
                 self._remember_obstacles(sl.drops, "drop")
-                if pan in cfg.camera_pans:
-                    for tilt in cfg.camera_tilts:
+                if pan in cfg.camera_pans and head.camera is not None:
+                    for tilt in tilts:
                         if tilt:                      # look up: shelves, the upper pots of a plant stand
                             head.gimbal.move_to(pan, head.cmd_tilt(tilt), wait=True)
                             pts += head.cloud()
                         frame = head.camera.capture(head.gimbal)
-                        self._recon(frame, sec)       # for the Mac's 3-D mesh (vision_service/recon.py)
+                        self._recon(frame, sec)       # async upload for the Mac's 3-D mesh (vision_service/recon.py)
                         for d in self._plants_in(frame):
                             s = self._localise_grid(frame, d, sec)
                             if s is not None:
@@ -328,17 +390,16 @@ class Explorer:
         return kf_odom, rays, sightings
 
     def _recon(self, frame, sec_odom: Pose2D) -> None:
-        """Send one scan frame to the Mac's 3-D reconstruction with everything that places it: the
-        odometry pose it was taken from, the head's angles and geometry, the robot's pitch, and the
-        ToF grid seen with it (which scales the frame's depth to metres). Best effort: never stops
-        the scan."""
+        """Send one scan frame asynchronously to the Mac's 3-D reconstruction with everything
+        that places it. Non-blocking so HTTP latency never stalls the anchor scan."""
         send = getattr(self.vision, "recon_frame", None)
         if send is None:
             return
         try:
             head, g = self.head, self.head.geom
-            grid = head.lidar.grid(newer_than=frame.t_capture, timeout=0.5)
-            send(jpeg(frame.main), {
+            grid = head.lidar.grid(newer_than=frame.t_capture, timeout=0.25)
+            blob = jpeg(frame.main)
+            meta = {
                 "odom": list(sec_odom.as_tuple()), "pan_deg": frame.pan_deg,
                 "tilt_deg": head.real_tilt(frame.tilt_deg),             # real: degrees above level
                 "settled": frame.settled, "pitch_deg": head.pitch() if head.pitch else None,
@@ -346,9 +407,18 @@ class Explorer:
                 "geom": {"height_m": g.height_m, "pan_axis_x_m": g.pan_axis_x_m, "pan_axis_y_m": g.pan_axis_y_m,
                          "tilt_offset_deg": g.tilt_offset_deg, "hfov_deg": g.hfov_deg,
                          "tof_pan_offset_deg": g.tof_pan_offset_deg, "tof_tilt_offset_deg": g.tof_tilt_offset_deg,
-                         "tof_perpendicular": g.tof_perpendicular}})
+                         "tof_perpendicular": g.tof_perpendicular},
+            }
+            self._recon_pool.submit(self._send_recon, send, blob, meta)
         except Exception as exc:                                  # noqa: BLE001 — the mesh is optional
             log.info("recon frame skipped: %s", exc)
+
+    @staticmethod
+    def _send_recon(send, blob: bytes, meta: dict) -> None:
+        try:
+            send(blob, meta)
+        except Exception as exc:                                  # noqa: BLE001
+            log.info("recon frame upload skipped: %s", exc)
 
     def _localise_grid(self, frame, det, sec_odom: Pose2D) -> Optional[Sighting]:
         """Where a detected plant is, from the ToF zones on its pot (the lower part
@@ -415,6 +485,8 @@ class Explorer:
 
     def look_for_plants(self, sec_odom: Pose2D) -> List[Sighting]:
         cfg, head = self.cfg, self.head
+        if getattr(head, "camera", None) is None:
+            return []
         found: List[Sighting] = []
         pans_done: List[float] = []
         for pan in cfg.sector_pans:
@@ -692,13 +764,155 @@ class Explorer:
             return False
         return watch
 
+    def _stream_scan(self, odom_pose: Pose2D) -> None:
+        """Fold the newest in-transit ToF grid into the Mac's SLAM map without stopping."""
+        send = getattr(self.vision, "slam_scan", None)
+        if send is None or not getattr(self.head, "has_grid", False):
+            return
+        try:
+            grid = self.head.lidar.latest()
+            if grid is None or not getattr(grid, "rows", None):
+                return
+            angle_at = getattr(self.head.gimbal, "angle_at", None)
+            pan, tilt = angle_at(grid.t) if angle_at else self.head.gimbal.angles()
+            zones = self.head.project(grid.rows, pan, tilt)
+            if not zones:
+                return
+            sl = terrain.scan_slice(zones, self.head.terrain)
+            sx, sy = self.head.sensor_xy
+            rays = [(math.atan2(y - sy, x - sx), math.hypot(x - sx, y - sy)) for x, y in sl.rays]
+            clear = [(math.atan2(y - sy, x - sx), math.hypot(x - sx, y - sy)) for x, y in sl.clear]
+            if not rays and not clear:
+                return
+            send(odom_pose.as_tuple(), rays, (sx, sy), low=sl.low, drops=sl.drops, clear=clear)
+        except Exception as exc:                                  # noqa: BLE001 — best effort in transit
+            log.debug("in-transit slam_scan skipped: %s", exc)
+
+    def _follow_continuous(self, path: Sequence[Sequence[float]], max_dist: float) -> str:
+        """Drive smoothly toward the frontier goal using LocalNav (DWA + RollingCostmap +
+        50 Hz reflex + smart-arc escape), streaming continuous ToF scans to the Mac so the
+        map grows while driving instead of stopping every 0.6 m."""
+        from robot_core.nav.controller import LocalNav
+
+        cfg = self.cfg
+        pts = list(path)
+        if len(pts) < 2:
+            return "arrived"
+        goal_map = (float(pts[-1][0]), float(pts[-1][1]))
+        inv_m2o = self.m2o.inverse()
+        goal_odom_p = inv_m2o.compose(Pose2D(goal_map[0], goal_map[1], 0.0))
+        goal_odom = (goal_odom_p.x, goal_odom_p.y)
+
+        age_fn = getattr(self.base, "odom_age", None)
+
+        def pose_odom():
+            if age_fn is not None and age_fn() > 1.5:
+                return None
+            return self.base.odom().as_tuple()
+
+        def mac_planner(p_odom, g_odom, _local, target=None):
+            pm = self.m2o.compose(Pose2D(*p_odom))
+            gm = self.m2o.compose(Pose2D(g_odom[0], g_odom[1], 0.0))
+            m_path = self.vision.slam_plan((pm.x, pm.y), (gm.x, gm.y))
+            if not m_path:
+                return None
+            inv = self.m2o.inverse()
+            return [(inv.compose(Pose2D(x, y, 0.0)).x, inv.compose(Pose2D(x, y, 0.0)).y) for x, y in m_path]
+
+        nav_tilt = self.head.cmd_tilt(-5.0)
+        nav = LocalNav(
+            self.head, self.base, pose_odom,
+            twist=getattr(self.base, "twist", None),
+            bumped=getattr(self.base, "bumped", None),
+            planner=mac_planner,
+            tilt_deg=nav_tilt,
+        )
+        # Seed LocalNav with the Mac's initial waypoints right away (converted to odom)
+        seed_wps = [(inv_m2o.compose(Pose2D(x, y, 0.0)).x, inv_m2o.compose(Pose2D(x, y, 0.0)).y) for x, y in pts]
+        nav.waypoints = seed_wps
+        nav.wp_goal = goal_odom
+        nav._wp_t = nav.clock()
+
+        nav.start()
+        try:
+            start_o = self.base.odom()
+            prev_o = start_o
+            last_scan_o = start_o
+            last_scan_t = time.monotonic()
+            prog_o = start_o
+            prog_t = time.monotonic()
+            travelled = 0.0
+            max_leg_s = max(25.0, max_dist / 0.08 + 15.0)
+            leg_deadline = time.monotonic() + max_leg_s
+            outcome = "arrived"
+
+            while not self._stop.is_set():
+                now = time.monotonic()
+                if now >= leg_deadline:
+                    outcome = "timeout"
+                    break
+                if age_fn is not None and age_fn() > 1.5:
+                    nav.set_goal(None)
+                    if not self._wait_odom_fresh(max_wait_s=8.0):
+                        outcome = "timeout"
+                        break
+                    prog_t = time.monotonic()
+                    continue
+
+                cur_o = self.base.odom()
+                step_d = math.hypot(cur_o.x - prev_o.x, cur_o.y - prev_o.y)
+                travelled += step_d
+                prev_o = cur_o
+
+                # Keep renewing goal in odom frame
+                nav.set_goal(goal_odom, keep_m=0.18, face=False)
+
+                # Continuous ToF scan fold into the Mac map while moving
+                moved_since_scan = math.hypot(cur_o.x - last_scan_o.x, cur_o.y - last_scan_o.y)
+                turned_since_scan = abs(math.degrees(wrap(cur_o.theta - last_scan_o.theta)))
+                if (moved_since_scan >= cfg.scan_stream_step_m
+                        or turned_since_scan >= cfg.scan_stream_turn_deg
+                        or now - last_scan_t >= 2.0):
+                    self._stream_scan(cur_o)
+                    last_scan_o, last_scan_t = cur_o, now
+
+                # Check completion / anchor spacing / stall
+                rem = math.hypot(goal_odom[0] - cur_o.x, goal_odom[1] - cur_o.y)
+                if nav.arrived() or rem <= 0.25:
+                    outcome = "arrived"
+                    break
+                if travelled >= max_dist:
+                    outcome = "leg_limit"
+                    break
+
+                if math.hypot(cur_o.x - prog_o.x, cur_o.y - prog_o.y) >= 0.12:
+                    prog_o, prog_t = cur_o, now
+                elif now - prog_t >= 10.0:
+                    outcome = f"blocked ({nav.state})"
+                    break
+
+                self._stop.wait(0.15)
+
+            if self._stop.is_set():
+                outcome = "stopped"
+            # Final in-transit scan before stopping for anchor scan
+            if outcome in ("arrived", "leg_limit"):
+                self._stream_scan(self.base.odom())
+            return outcome
+        finally:
+            nav.stop()
+            try:
+                self.base.velocity(0.0, 0.0)
+            except Exception:
+                pass
+
     def follow(self, path: Sequence[Sequence[float]], max_dist: float,
                clear: Optional[Sequence[float]] = None) -> str:
-        """Drive a map path waypoint by waypoint: turn, probe the floor just ahead, then
-        drive the leg. With the 8x8 ToF a leg the map says is roomy (clear_m from the Mac
-        at least ROOMY_M) is driven whole, up to max_dist, the head watching the floor the
-        whole way and braking on anything new; otherwise in probe_step_m steps as before.
-        The TF-Luna drop guard (drivetrain) watches the floor under it either way."""
+        """Drive a map path toward a waypoint. Uses continuous LocalNav (DWA + reflex +
+        live ToF map streaming) when 8x8 ToF + velocity firmware are available, falling
+        back to discrete turn-probe-drive steps otherwise."""
+        if self._can_continuous() and not self.cfg.ask_before_drive:
+            return self._follow_continuous(path, max_dist)
         cfg = self.cfg
         travelled = 0.0
         watched = self._watching()

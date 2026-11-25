@@ -136,6 +136,9 @@
     orbit_radius_m: 0.7        # photo distance from the plant
     orbit_views: 8             # full 360: 8 views, 45 degrees apart (viewpoints may now be on floor not seen yet)
     revisit_known: true        # photograph known plants again (a new visit)
+    orbit_after_map: true      # Phase A: map entire space cleanly; Phase B: visit/orbit detected plants on finished map
+    scan_up_during_map: false  # skip upward shelf tilt during Phase A anchor scans (3x faster mapping)
+    anchor_spacing_m: 2.5      # drive up to this far with LocalNav + continuous ToF between 360° anchor scans
     ask_before_drive: false    # image+text model checks each step (slow, thorough)
 
     # Head. Pan is limited to +-90 and tilt to +-45 in the driver, and both

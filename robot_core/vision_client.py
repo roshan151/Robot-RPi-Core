@@ -324,6 +324,26 @@ class VisionClient:
             "low": [list(p) for p in low], "drops": [list(p) for p in drops],
             "clear": [[b, r] for b, r in clear], "cloud": [list(p) for p in cloud], "plan": plan})
 
+    def slam_scan(self, odom, rays, sensor_xy=(0.0, 0.0), obstacles=(), plan: bool = False,
+                  low=(), drops=(), clear=(), cloud=()) -> dict:
+        """Fold a lightweight continuous ToF scan into the live map while driving between
+        anchor keyframes."""
+        return self._call("POST", "/v1/slam/scan", timeout=5.0, json={
+            "odom": list(odom), "rays": [[b, r] for b, r in rays],
+            "sensor_xy": list(sensor_xy), "obstacles": [list(p) for p in obstacles],
+            "low": [list(p) for p in low], "drops": [list(p) for p in drops],
+            "clear": [[b, r] for b, r in clear], "cloud": [list(p) for p in cloud], "plan": plan})
+
+    def slam_unreachable(self, xy, pose=None, ttl_s: Optional[float] = None) -> dict:
+        """Tell the Mac's frontier planner that `xy` could not be reached right now, and get
+        the next-best frontier."""
+        body = {"xy": [float(xy[0]), float(xy[1])]}
+        if pose is not None:
+            body["pose"] = [float(v) for v in pose]
+        if ttl_s is not None:
+            body["ttl_s"] = float(ttl_s)
+        return self._call("POST", "/v1/slam/unreachable", timeout=10.0, json=body)
+
     def recon_frame(self, jpeg: bytes, meta: dict, spool_on_fail: bool = True) -> bool:
         """One explore scan frame for the Mac's 3-D mesh, with where it was taken (Explorer._recon).
         Spools locally when `spool_on_fail` is True so outdoor Wi-Fi blips do not lose scan frames."""

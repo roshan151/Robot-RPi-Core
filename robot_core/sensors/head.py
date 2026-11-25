@@ -65,6 +65,24 @@ def parse_self_zones(text) -> dict:
     return out
 
 
+def head_geometry_from_params(p: dict) -> HeadGeometry:
+    """Build HeadGeometry from `/explorer` parameters in robot.yaml — shared by
+    explorer_node.py and voice_node.py so follow and explore can never drift on
+    head/ToF calibration offsets."""
+    return HeadGeometry(
+        height_m=float(p.get("head_height_m", 0.25)),
+        hfov_deg=float(p.get("hfov_deg", 66.0)),
+        pan_axis_x_m=float(p.get("pan_axis_x_m", 0.05)),
+        drive_tilt_deg=float(p.get("drive_tilt_deg", -30.0)),
+        tof_perpendicular=bool(p.get("tof_perpendicular", True)),
+        tilt_offset_deg=float(p.get("head_tilt_offset_deg", 0.0)),
+        tof_pan_offset_deg=float(p.get("tof_pan_offset_deg", 0.0)),
+        tof_tilt_offset_deg=float(p.get("tof_tilt_offset_deg", 0.0)),
+        pan_axis_y_m=float(p.get("tof_from_right_m", 0.125)) - float(p.get("robot_width_m", 0.25)) / 2.0,
+        self_zones=parse_self_zones(p.get("tof_self_zones")),
+    )
+
+
 @dataclass(frozen=True)
 class Probe:
     status: str                    # clear | obstacle | drop | unknown | unseen (ToF: unreadable floor, not driven)

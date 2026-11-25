@@ -126,6 +126,7 @@ class ArduinoBridge:
         self.resets_seen = 0
         self.warnings_seen = 0
         self.firmware_build: Optional[str] = None
+        self._vel_confirmed = False
         # Hang forensics, read by _log_hang: recent non-heartbeat commands
         # (~3 s of a 10 Hz T stream), when bytes / valid frames last arrived.
         self._tx_log: "deque[Tuple[float, str]]" = deque(maxlen=32)
@@ -212,6 +213,17 @@ class ArduinoBridge:
                 "that the baud is 115200, and that firmware v3 "
                 "(sketches/drivetrain/drivetrain.ino) is flashed."
             ) from exc
+        if not self.supports_velocity and self.firmware_build is None:
+            # Boot frame was missed (e.g. board stayed awake across reopen): probe velocity
+            # mode with a harmless zero-PWM frame; v6+ ACKs it, older firmware NACKs it.
+            try:
+                self._transact("T", "0", "0", retries=1, ack_timeout=0.35)
+                self._vel_confirmed = True
+                logger.info("Connected on %s: velocity mode confirmed via T,0,0 probe (boot frame missed)", port)
+            except ProtocolError:
+                logger.info("Connected on %s: firmware does not support velocity mode (T NACKed)", port)
+            except Exception as exc:
+                logger.warning("Velocity probe failed on %s: %s", port, exc)
 
     # ------------------------------------------------------------------ #
     # Public commands
@@ -241,7 +253,7 @@ class ArduinoBridge:
 
     @property
     def supports_velocity(self) -> bool:
-        return "-vel" in (self.firmware_build or "")
+        return self._vel_confirmed or ("-vel" in (self.firmware_build or ""))
 
     def stop(self) -> None:
         """Send stop with a short budget — safe to call during teardown.
