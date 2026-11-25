@@ -265,6 +265,9 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
     go_since = align_since = 0.0
     blocked_since: Optional[float] = None
     unseen_since: Optional[float] = None
+    search_turn_target: Optional[float] = None            # latched world heading (rad) for Search body turns
+    search_turn_since = 0.0
+    search_checked_last = False                           # turned toward last-seen proximity once per loss
     t0, seq, last_frame = clock(), 0, 0
     watchdog = health.Watchdog(head, nav.pose)
     try:
@@ -320,6 +323,7 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                     d = None
                 last_seen = (here[2] + math.radians(b), time.monotonic())
                 lost_go, lost_done, lost_face, unseen_since = None, False, None, None
+                search_turn_target, search_checked_last = None, False
                 if res.get("distance_from") == "near":    # they fill the frame: close enough, face them
                     a = here[2] + math.radians(b)
                     spot = (here[0] + math.cos(a), here[1] + math.sin(a))
@@ -423,24 +427,50 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                         nav.set_focus(None)
                     if lost_face is None:
                         nav.set_goal(lost_xy, keep_m=LOST_KEEP_M, face=False)
-                    elif lost_dir and here and now - lost_face < LOST_FACE_S and abs(
-                            _wrap(math.atan2(lost_dir[1], lost_dir[0]) - here[2])) > math.radians(15):
-                        nav.set_goal((here[0] + lost_dir[0], here[1] + lost_dir[1]), keep_m=1.0)   # turn, stay
+                    elif here and now - lost_face < LOST_FACE_S:
+                        # Face where they were actually last seen (tracker.xy) unless we already reached it,
+                        # in which case face the direction they walked. Prevents a noisy radial range drop
+                        # from spinning the robot away from tracker.xy into a wall.
+                        face_ang = (math.atan2(lost_dir[1], lost_dir[0])
+                                    if (lost_dir and math.dist(here[:2], tracker.xy) < 0.5)
+                                    else math.atan2(tracker.xy[1] - here[1], tracker.xy[0] - here[0]))
+                        if abs(_wrap(face_ang - here[2])) > math.radians(15):
+                            nav.set_goal((here[0] + math.cos(face_ang), here[1] + math.sin(face_ang)), keep_m=1.0)
+                        else:
+                            lost_done = True
+                            nav.set_goal(None)
                     else:
                         lost_done = True
                         nav.set_goal(None)
             elif state == "searching":
-                phase, phase_why = "search", "head sweep"
+                now_s = time.monotonic()
                 look = res.get("head") or [0, 0]          # the Mac's search sweep: the robot stands, the head looks
-                turning = bool(res.get("turn_deg") and here)
+                # 1. If we just entered Search with a known last-seen spot > 60 deg off-centre, turn to face
+                #    that proximity first before sweeping.
+                if search_turn_target is None and not search_checked_last and here and tracker.xy is not None:
+                    search_checked_last = True
+                    last_ang = math.atan2(tracker.xy[1] - here[1], tracker.xy[0] - here[0])
+                    if abs(_wrap(last_ang - here[2])) > math.radians(60.0):
+                        search_turn_target, search_turn_since = last_ang, now_s
+                # 2. If the Mac asked for a body turn (e.g. 180 deg after a full gimbal sweep missed), latch it
+                #    so the robot finishes the turn instead of cancelling on the next frame.
+                if search_turn_target is None and res.get("turn_deg") and here:
+                    search_turn_target = _wrap(here[2] - math.radians(res["turn_deg"]))
+                    search_turn_since = now_s
+                if search_turn_target is not None and here:
+                    if abs(_wrap(search_turn_target - here[2])) <= math.radians(15.0) or now_s - search_turn_since > 5.0:
+                        search_turn_target = None
+                turning = bool(search_turn_target is not None and here)
+                phase = "search"
+                phase_why = "turn to last seen / 180" if turning else "head sweep"
                 if head_still_while_driving and turning:  # the body turns with the head held ahead (it may not move
                     nav.hold_head(0.0, settings.FOLLOW_TILT_DEG)   # while the body does); stopping and looking each
                 else:                                     # step had cut the turn into pieces
                     nav.release_head()
                     nav.stop_here()
-                if turning:                               # they were behind it: turn that way (+ right)
-                    a = here[2] - math.radians(res["turn_deg"])
-                    nav.set_goal((here[0] + math.cos(a), here[1] + math.sin(a)), keep_m=1.0)
+                if turning:
+                    nav.set_goal((here[0] + math.cos(search_turn_target), here[1] + math.sin(search_turn_target)),
+                                 keep_m=1.0)
                 if not (head_still_while_driving and turning):
                     nav.look(look[0], settings.FOLLOW_TILT_DEG + look[1])
             if mode == "degraded" and any(r.startswith("no ToF") for r in reasons):
