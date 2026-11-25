@@ -48,9 +48,10 @@
     imu_axes: ["-z", "-x", "y"]  # Mounted on the gimbal (+21 deg tilt): board +x = robot right (left = -x),
                                # +y = robot up, +z = into robot (forward = -z). Right-handed: (-z) x (-x) = +y.
     imu_on_gimbal: true        # IMU is mounted on the panning/tilting gimbal head (not the chassis):
-                               # drivetrain does not use head yaw/pitch for chassis odom or tilt e-stop;
-                               # head.py uses IMU pitch directly as true world-relative head tilt.
-    imu_pitch_offset_deg: 21.0 # Raw IMU pitch at neutral gimbal tilt=0 on flat floor (matches head_tilt_offset_deg: 21.0).
+                               # uses relative_tilt in MotionHealth; paired with head_still_while_driving
+                               # so the IMU serves the chassis while driving and the head while stopped.
+    head_still_while_driving: true  # One switch: head moves only while tracks are stopped; tracks start once head settled (0.15 s).
+    imu_pitch_offset_deg: 21.0 # Raw IMU pitch at neutral gimbal tilt=0 on flat floor (matches head_tilt_offset_deg: 21.0; verify via calibrate_and_apply.py imu).
     imu_auto_tare: false       # Disabled while IMU is on the gimbal (head may not be at tilt=0 on boot).
     # Turns and straight drives are closed on the gyro (velocity mode, firmware -vel): turn_held,
     # drive_heading_hold. Encoder-counted moves are left for gestures only.
@@ -115,6 +116,7 @@
     debug_mode: true          # on while debugging follow and the ToF overlay; false for normal runs
     follow_bump_g: 1.5         # follow: a jolt counts as hitting something only past this (the drivetrain
                                # reports any jolt over 0.8 g, which the tracks reach on a floor at full speed)
+    head_still_while_driving: true  # interlock: head moves only while stopped; tracks start once head settled (0.15 s)
 
 /explorer:
   ros__parameters:
@@ -199,7 +201,8 @@
     face_camera_size: [1920, 1080]   # enroll / match / follow (was [640, 480] for the V2)
     camera_inverted: true      # mounted upside down: rotated 180 deg (ISP on the ribbon camera, software on USB)
     head_tilt_offset_deg: 21.0 # the head (camera and ToF) looks this far UP at tilt 0, its straight position
-    imu_on_gimbal: true        # true: /motion_health pitch_deg comes from the gimbal-mounted IMU (true head tilt, no double-count)
+    imu_on_gimbal: true        # true: /motion_health pitch_deg comes from the gimbal-mounted IMU (true head tilt when still)
+    head_still_while_driving: true  # interlock: head moves only while stopped; tracks start once head settled (0.15 s)
     head_height_m: 0.22        # MEASURED 2026-11-18: ToF height above the floor, head level
     tof_from_right_m: 0.10     # MEASURED 2026-11-18: ToF centre from the robot's right side (centre = robot_width_m / 2)
     pan_axis_x_m: 0.0          # 2026-11-19: the gimbal pan axis is at the robot centre

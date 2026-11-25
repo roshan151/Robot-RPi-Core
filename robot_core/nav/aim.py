@@ -33,14 +33,27 @@ class GimbalAim:
         self.k_w, self.sweep, self.period = k_w, sweep_deg, sweep_period_s
         self.slack, self.max_pan, self.speed = focus_slack_deg, max_pan_deg, speed_dps
         self.manual: Optional[tuple] = None
+        self._held: Optional[tuple] = None
         self._last: Optional[tuple] = None
         self._phase = 0.0
         self._t: Optional[float] = None
         self.glance_until, self.glance_pan = 0.0, 0.0
 
+    @property
+    def held(self) -> Optional[tuple]:
+        return self._held
+
     def glance(self, t: float, pan: float, hold_s: float = 0.45) -> None:
         """Look at `pan` until t + hold_s (long enough to settle and take a grid), then resume."""
+        if self._held is not None:
+            return
         self.glance_until, self.glance_pan = t + hold_s, pan
+
+    def hold(self, pan: float, tilt: float) -> None:
+        """Freeze the head at (pan, tilt) and suppress sweeps, look-ahead, and glances until release()."""
+        self.glance_until = 0.0
+        self._held = (pan, tilt)
+        self._send(pan, tilt, wait=False)          # again on every call until the gimbal took it (_send)
 
     def look(self, pan: float, tilt: float) -> None:
         self.manual = (pan, tilt)
@@ -48,6 +61,7 @@ class GimbalAim:
 
     def release(self) -> None:
         self.manual = None
+        self._held = None
 
     def target(self, t: float, v: float, w: float, focus_pan: Optional[float] = None,
                near_ahead_m: Optional[float] = None) -> float:
@@ -70,6 +84,9 @@ class GimbalAim:
 
     def update(self, t: float, v: float, w: float, focus_pan: Optional[float] = None,
                near_ahead_m: Optional[float] = None) -> None:
+        if self._held is not None:                 # re-assert: a hold refused while the body moved goes out once it stops
+            self._send(*self._held, wait=False)
+            return
         if self.manual is not None:
             return
         if t < self.glance_until:
@@ -80,7 +97,9 @@ class GimbalAim:
     def _send(self, pan: float, tilt: float, wait: bool) -> None:
         if self._last is not None and abs(pan - self._last[0]) < 0.5 and abs(tilt - self._last[1]) < 0.5 and not wait:
             return
-        self._last = (pan, tilt)
         self.gimbal.move_to(pan, tilt, speed_dps=self.speed, wait=wait)
+        # Remember it as sent only if the gimbal took it: a move refused while the body moved (interlock) was
+        # remembered anyway, so the same hold asked again was skipped and the head stayed 35 deg off.
+        self._last = None if getattr(self.gimbal, "last_refused", False) else (pan, tilt)
         if wait:
             self.gimbal.wait_settled()

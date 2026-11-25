@@ -34,7 +34,7 @@ from typing import Callable, Optional, Tuple
 
 from robot_core import debug_upload, health, settings, status, task_cancel
 from robot_core.rules import rules
-from robot_core.nav.controller import LocalNav
+from robot_core.nav.controller import GLOBAL_FRESH_S, LocalNav
 from robot_core.nav.stream import FrameStream
 from robot_core.sensors.camera import jpeg
 from robot_core.sensors.tof8x8 import range_in_box
@@ -53,6 +53,22 @@ PERSON_CLEAR_M = 0.35           # round the person: their legs, not an obstacle
 RANGE_JUMP_M = 0.4              # a ToF range this much nearer than the tracked person is something in front of them
 TOF_PAIR_S = 0.35               # a ToF grid further than this in time from the camera frame does not range its boxes
 WALK_MAX_MPS = 1.5              # nobody moves faster: a tracked jump beyond this (+0.5 m) is rule goal_jump
+
+# Part B (head_still_while_driving): four-phase follow (Watch / Align / Go / Search)
+GO_CONE_DEG = 15.0              # Watch goes straight to Go inside this; Align outside it
+GO_EXIT_DEG = 30.0              # Go stops to look when person is further off-centre
+STRAIGHT_MPS = 0.2              # minimum speed for "walking in a steady direction"
+STRAIGHT_TURN_DEG = 25.0        # maximum direction change over STRAIGHT_S
+STRAIGHT_S = 1.5                # window for steady-walk check
+STRAIGHT_MIN_S = 0.8            # minimum track duration for steady-walk check
+TURN_EXIT_DEG = 30.0            # Go stops when person changes direction this much in TURN_EXIT_S
+TURN_EXIT_S = 1.0
+GO_MIN_S = 1.0                  # shortest Go before bearing/turn exits trigger (safety stops immediate)
+ALIGN_DONE_DEG = 10.0           # Align hands over to Go within this heading error
+LOST_UNSEEN_S = 0.5             # Go hands over to lost-ahead and then Search after this long unseen
+GO_BLOCKED_S = 3.0              # Go stops for "blocked" only once it lasts this long: until then the nav is turning
+                                # toward the way or backing off, and clearing its goal cancelled that recovery
+ALIGN_MAX_S = 4.0               # Align that has not lined up by then (the turn is blocked) goes back to Watch
 
 Pose = Tuple[float, float, float]   # x, y (m), heading (rad, CCW) in the odometry frame
 
@@ -83,6 +99,47 @@ class PersonTracker:
         dx, dy = pts[-1][1][0] - pts[0][1][0], pts[-1][1][1] - pts[0][1][1]
         dist, dt = math.hypot(dx, dy), pts[-1][0] - pts[0][0]
         return (dx / dist, dy / dist, dist / dt) if dist / dt > 0.15 else None
+
+    def straight(self, window_s: float = STRAIGHT_S,
+                 min_s: float = STRAIGHT_MIN_S) -> Optional[Tuple[float, float, float]]:
+        """(speed_mps, turn_deg, span_s) comparing first and second halves of the last `window_s` of trail.
+        None if the trail spans less than `min_s` or has fewer than 3 points."""
+        if not self.trail:
+            return None
+        t_end = self.trail[-1][0]
+        pts = [p for p in self.trail if t_end - p[0] <= window_s]
+        if len(pts) < 3:
+            return None
+        span = pts[-1][0] - pts[0][0]
+        if span < min_s:
+            return None
+        mid = len(pts) // 2
+        d1x, d1y = pts[mid][1][0] - pts[0][1][0], pts[mid][1][1] - pts[0][1][1]
+        d2x, d2y = pts[-1][1][0] - pts[mid][1][0], pts[-1][1][1] - pts[mid][1][1]
+        dx, dy = pts[-1][1][0] - pts[0][1][0], pts[-1][1][1] - pts[0][1][1]
+        speed = math.hypot(dx, dy) / max(span, 1e-3)
+        if math.hypot(d1x, d1y) < 0.05 or math.hypot(d2x, d2y) < 0.05:
+            turn_deg = 0.0
+        else:
+            turn_deg = abs(math.degrees(_wrap(math.atan2(d2y, d2x) - math.atan2(d1y, d1x))))
+        return speed, turn_deg, span
+
+    def turn_rate(self, window_s: float = TURN_EXIT_S) -> float:
+        """Direction change (deg) between the first and second halves of the last `window_s` of trail."""
+        st = self.straight(window_s=window_s, min_s=0.4)
+        return st[1] if (st is not None and st[0] >= 0.15) else 0.0
+
+    def still_s(self) -> float:
+        """Seconds the person has stayed within 0.15 m of their latest tracked position."""
+        if not self.trail or self.xy is None:
+            return 0.0
+        t_end, cur = self.trail[-1][0], self.xy
+        t0 = t_end
+        for t, xy in reversed(self.trail):
+            if math.dist(xy, cur) > 0.15:
+                break
+            t0 = t
+        return max(0.0, t_end - t0)
 
     def update(self, here: Pose, bearing_deg: float, dist_m: float, sigma_m: Optional[float],
                t: float) -> None:
@@ -143,12 +200,20 @@ def _nav_tilt(head) -> float:
     return settings.FOLLOW_NAV_TILT_DEG - getattr(head.geom, "tilt_offset_deg", 0.0)
 
 
+def _align_point(nav, person):
+    """Where Align turns to: the start of the Mac's path while it is fresh, else the person."""
+    fresh = nav.clock() - getattr(nav, "_wp_t", -1e9) < GLOBAL_FRESH_S
+    return nav.waypoints[1] if fresh and len(nav.waypoints) > 1 else person
+
+
 def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
            seconds: float = settings.FOLLOW_SECONDS,
            clock: Callable[[], float] = time.monotonic,
            pose: Optional[Callable[[], Optional[Pose]]] = None,
            bumped: Optional[Callable[[], float]] = None,
-           twist: Optional[Callable[[], Optional[Tuple[float, float]]]] = None) -> bool:
+           twist: Optional[Callable[[], Optional[Tuple[float, float]]]] = None,
+           head_still_while_driving: bool = False,
+           on_cmd: Optional[Callable[[float, float], None]] = None) -> bool:
     """Follow `name` (empty: whichever enrolled person is seen first).
 
     `pose()`: the robot's (x, y, heading) in the odometry frame, or None (unknown).
@@ -178,7 +243,9 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
         status.detail(why)
         status.result("follow failed")
         return False
-    nav = LocalNav(head, motion, pose, twist=twist, bumped=bumped, tilt_deg=_nav_tilt(head))
+    nav_tilt = _nav_tilt(head)
+    nav = LocalNav(head, motion, pose, twist=twist, bumped=bumped, tilt_deg=nav_tilt,
+                   head_still_while_driving=head_still_while_driving, on_cmd=on_cmd)
     nav.planner = _planner(vision, nav.plan_radius_m)
     stream = FrameStream(camera, head.gimbal, nav.pose, send=getattr(vision, "nav_frame", None),
                          tilt_offset_deg=head.geom.tilt_offset_deg, tof=head.lidar.grid).start()
@@ -193,6 +260,11 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
     lost_done = False                                     # went there already, this loss
     lost_xy = lost_dir = None                             # where to go when lost, and which way they walked
     lost_face: Optional[float] = None                     # when it began turning to face their way
+    phase = "search"                                      # Part B: watch | align | go | search
+    phase_why = "start"
+    go_since = align_since = 0.0
+    blocked_since: Optional[float] = None
+    unseen_since: Optional[float] = None
     t0, seq, last_frame = clock(), 0, 0
     watchdog = health.Watchdog(head, nav.pose)
     try:
@@ -247,67 +319,137 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                     # costmap (Nov 19: 39 such readings in one run). Skip it; the next box/floor range will do.
                     d = None
                 last_seen = (here[2] + math.radians(b), time.monotonic())
-                lost_go, lost_done, lost_face = None, False, None
-                nav.release_head()
+                lost_go, lost_done, lost_face, unseen_since = None, False, None, None
                 if res.get("distance_from") == "near":    # they fill the frame: close enough, face them
                     a = here[2] + math.radians(b)
                     spot = (here[0] + math.cos(a), here[1] + math.sin(a))
-                    nav.set_goal(spot, keep_m=1.0)
-                    nav.set_focus(spot, PERSON_CLEAR_M)
+                    if head_still_while_driving:
+                        phase, phase_why = "watch", "near: standing"
+                        nav.release_head()
+                        nav.stop_here()
+                        nav.set_focus(spot, PERSON_CLEAR_M)
+                    else:
+                        nav.release_head()
+                        nav.set_goal(spot, keep_m=1.0)
+                        nav.set_focus(spot, PERSON_CLEAR_M)
                 elif d:
+                    now_t = time.monotonic()
                     before, t_before = tracker.xy, tracker.t
-                    tracker.update(here, b, d, res.get("distance_sigma_m"), time.monotonic())
+                    tracker.update(here, b, d, res.get("distance_sigma_m"), now_t)
                     if before is not None:
                         jump, dt = math.dist(before, tracker.xy), max(0.0, tracker.t - t_before)
                         if jump > WALK_MAX_MPS * dt + 0.5:
                             rules.broke("goal_jump", jump_m=round(jump, 2), dt_s=round(dt, 2),
                                         source=res.get("distance_from"))
-                    # Stand and face only a person standing still beside something; one walking on (through a
-                    # door, round a corner) is followed the long way round, or they are lost behind it.
-                    nav.set_goal(tracker.xy, keep_m=settings.FOLLOW_KEEP_M,
-                                 near_m=NEAR_M if tracker.walking() is None else 0.0)
-                    nav.set_focus(tracker.xy, PERSON_CLEAR_M)
+                    dist_m = math.dist(here[:2], tracker.xy)
+                    if not head_still_while_driving:
+                        nav.release_head()
+                        nav.set_goal(tracker.xy, keep_m=settings.FOLLOW_KEEP_M,
+                                     near_m=NEAR_M if tracker.walking() is None else 0.0)
+                        nav.set_focus(tracker.xy, PERSON_CLEAR_M)
+                    else:
+                        # Four-phase follow: head tracks only while stopped (Watch / Search);
+                        # body drives with head frozen at pan 0 (Align / Go).
+                        if phase == "search":
+                            phase, phase_why = "watch", "found"
+                        if phase == "watch":
+                            st = tracker.straight()
+                            steady = st is not None and st[0] >= STRAIGHT_MPS and st[1] <= STRAIGHT_TURN_DEG
+                            stood_far = tracker.still_s() >= 1.0 and dist_m > settings.FOLLOW_KEEP_M + 0.5
+                            if abs(b) <= GO_CONE_DEG and dist_m > settings.FOLLOW_KEEP_M + 0.3:
+                                phase, phase_why, go_since = "go", f"watch->go: ahead ({b:+.0f} deg)", now_t
+                            elif abs(b) > GO_CONE_DEG and (steady or stood_far):
+                                phase, align_since = "align", now_t
+                                phase_why = f"watch->align: {'steady walk' if steady else 'still far'} ({b:+.0f} deg)"
+                        elif phase == "align":
+                            path_pt = _align_point(nav, tracker.xy)
+                            align_err = abs(math.degrees(_wrap(math.atan2(path_pt[1] - here[1], path_pt[0] - here[0]) - here[2])))
+                            if align_err <= ALIGN_DONE_DEG:
+                                phase, phase_why, go_since = "go", f"align->go: aimed ({align_err:.0f} deg)", now_t
+                            elif now_t - align_since > ALIGN_MAX_S:
+                                phase, phase_why = "watch", f"align->watch: not lined up in {ALIGN_MAX_S:.0f} s ({align_err:.0f} deg)"
+                        elif phase == "go":
+                            tr = tracker.turn_rate()
+                            blocked_since = (blocked_since or now_t) if nav.state == "blocked" else None
+                            if dist_m <= settings.FOLLOW_KEEP_M + 0.15:
+                                phase, phase_why = "watch", f"go->watch: reached ({dist_m:.2f} m)"
+                            elif nav.state == "tripped":
+                                phase, phase_why = "watch", "go->watch: nav tripped"
+                            elif blocked_since is not None and now_t - blocked_since >= GO_BLOCKED_S:
+                                phase, phase_why = "watch", f"go->watch: blocked {GO_BLOCKED_S:.0f} s"
+                            elif now_t - go_since >= GO_MIN_S and abs(b) > GO_EXIT_DEG:
+                                phase, phase_why = "watch", f"go->watch: {b:+.0f} deg off-centre"
+                            elif now_t - go_since >= GO_MIN_S and tr > TURN_EXIT_DEG:
+                                phase, phase_why = "watch", f"go->watch: turned {tr:.0f} deg"
+
+                        if phase == "watch":
+                            nav.release_head()
+                            nav.stop_here()
+                            nav.set_focus(tracker.xy, PERSON_CLEAR_M)
+                        elif phase == "align":
+                            nav.hold_head(0.0, nav_tilt)
+                            path_pt = _align_point(nav, tracker.xy)
+                            a = math.atan2(path_pt[1] - here[1], path_pt[0] - here[0])
+                            nav.set_goal((here[0] + math.cos(a), here[1] + math.sin(a)), keep_m=1.0)
+                        elif phase == "go":
+                            nav.hold_head(0.0, nav_tilt)
+                            nav.set_goal(tracker.xy, keep_m=settings.FOLLOW_KEEP_M,
+                                         near_m=NEAR_M if tracker.walking() is None else 0.0)
             elif state == "searching" and res.get("locked") and not lost_done and tracker.xy is not None \
                     and last_seen and time.monotonic() - last_seen[1] < LAST_SEEN_S:
                 # Lost them: go to where they were last seen (round a corner, through a door) first.
-                # Walking when lost (round a corner): further on, the way they were going; the head looks
-                # there. Then turn to face that way, and only then hand over to the head search (Nov 19:
-                # it stopped where they were last seen and stood, while they had walked on round the wall).
                 now = time.monotonic()
-                if lost_go is None:
-                    lost_go, lost_dir = now, tracker.walking()
-                    ahead = min(LOST_AHEAD_M[1], max(LOST_AHEAD_M[0], lost_dir[2] * 1.5)) if lost_dir else 0.0
-                    lost_xy = (tracker.xy[0] + (lost_dir[0] * ahead if lost_dir else 0.0),
-                               tracker.xy[1] + (lost_dir[1] * ahead if lost_dir else 0.0))
-                    log.info("follow %d: lost, going to where they were last seen%s", seq,
-                             f" and {ahead:.1f} m on, the way they walked" if lost_dir else "")
-                    status.detail("going where last seen")
-                    nav.release_head()
-                    nav.set_focus(lost_xy, 0.1)
-                if lost_face is None and (nav.arrived() or now - lost_go > LOST_GO_S):
-                    lost_face = now
-                    nav.set_focus(None)
-                if lost_face is None:
-                    nav.set_goal(lost_xy, keep_m=LOST_KEEP_M, face=False)
-                elif lost_dir and here and now - lost_face < LOST_FACE_S and abs(
-                        _wrap(math.atan2(lost_dir[1], lost_dir[0]) - here[2])) > math.radians(15):
-                    nav.set_goal((here[0] + lost_dir[0], here[1] + lost_dir[1]), keep_m=1.0)   # turn, stay
+                unseen_since = unseen_since or now
+                if head_still_while_driving and phase == "go" and now - unseen_since < LOST_UNSEEN_S:
+                    nav.hold_head(0.0, nav_tilt)
+                    nav.set_goal(tracker.xy, keep_m=settings.FOLLOW_KEEP_M, face=False)
                 else:
-                    lost_done = True
-                    nav.set_goal(None)
+                    if lost_go is None:
+                        lost_go, lost_dir = now, tracker.walking()
+                        ahead = min(LOST_AHEAD_M[1], max(LOST_AHEAD_M[0], lost_dir[2] * 1.5)) if lost_dir else 0.0
+                        lost_xy = (tracker.xy[0] + (lost_dir[0] * ahead if lost_dir else 0.0),
+                                   tracker.xy[1] + (lost_dir[1] * ahead if lost_dir else 0.0))
+                        log.info("follow %d: lost, going to where they were last seen%s", seq,
+                                 f" and {ahead:.1f} m on, the way they walked" if lost_dir else "")
+                        status.detail("going where last seen")
+                        if head_still_while_driving:
+                            phase, phase_why = "go", "lost-ahead (head held)"
+                            nav.hold_head(0.0, nav_tilt)
+                        else:
+                            nav.release_head()
+                            nav.set_focus(lost_xy, 0.1)
+                    if lost_face is None and (nav.arrived() or now - lost_go > LOST_GO_S):
+                        lost_face = now
+                        nav.set_focus(None)
+                    if lost_face is None:
+                        nav.set_goal(lost_xy, keep_m=LOST_KEEP_M, face=False)
+                    elif lost_dir and here and now - lost_face < LOST_FACE_S and abs(
+                            _wrap(math.atan2(lost_dir[1], lost_dir[0]) - here[2])) > math.radians(15):
+                        nav.set_goal((here[0] + lost_dir[0], here[1] + lost_dir[1]), keep_m=1.0)   # turn, stay
+                    else:
+                        lost_done = True
+                        nav.set_goal(None)
             elif state == "searching":
+                phase, phase_why = "search", "head sweep"
                 look = res.get("head") or [0, 0]          # the Mac's search sweep: the robot stands, the head looks
-                nav.set_goal(None)
-                if res.get("turn_deg") and here:          # they were behind it: turn that way (+ right)
+                turning = bool(res.get("turn_deg") and here)
+                if head_still_while_driving and turning:  # the body turns with the head held ahead (it may not move
+                    nav.hold_head(0.0, settings.FOLLOW_TILT_DEG)   # while the body does); stopping and looking each
+                else:                                     # step had cut the turn into pieces
+                    nav.release_head()
+                    nav.stop_here()
+                if turning:                               # they were behind it: turn that way (+ right)
                     a = here[2] - math.radians(res["turn_deg"])
                     nav.set_goal((here[0] + math.cos(a), here[1] + math.sin(a)), keep_m=1.0)
-                nav.look(look[0], settings.FOLLOW_TILT_DEG + look[1])
+                if not (head_still_while_driving and turning):
+                    nav.look(look[0], settings.FOLLOW_TILT_DEG + look[1])
             if mode == "degraded" and any(r.startswith("no ToF") for r in reasons):
                 nav.set_goal(None)                        # no obstacle sensing: stand rather than drive blind
                 if nav.cmd[0] > 0.02:
                     rules.broke("tof_stale", why=reasons[0])
             debug_upload.offer_event(img, {                 # debug mode: this frame, the Mac's answer, the decision
-                "task": "follow", "seq": seq, "state": state, "target": res.get("target"),
+                "task": "follow", "seq": seq, "state": state, "phase": phase, "phase_why": phase_why,
+                "target": res.get("target"),
                 "bearing_deg": res.get("bearing_deg"), "distance_m": res.get("distance_m"),
                 "distance_from": res.get("distance_from"), "range_m": rng, "pose": here, "pose_now": nav.pose(),
                 "goal": nav.goal, "nav": nav.state, "nav_detail": nav.detail, "cmd": nav.cmd,

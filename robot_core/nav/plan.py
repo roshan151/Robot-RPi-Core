@@ -31,6 +31,19 @@ def _los(free: np.ndarray, a: Tuple[int, int], b: Tuple[int, int]) -> bool:
     return bool(free[xs, ys].all())
 
 
+def _los_penalty(free: np.ndarray, penalty: Optional[np.ndarray],
+                 a: Tuple[int, int], b: Tuple[int, int]) -> Optional[float]:
+    """None if a -> b hits an obstacle; otherwise the integrated soft clearance cost along the segment."""
+    n = max(abs(b[0] - a[0]), abs(b[1] - a[1])) * 2 + 1
+    xs = np.rint(np.linspace(a[0], b[0], n)).astype(int)
+    ys = np.rint(np.linspace(a[1], b[1], n)).astype(int)
+    if not bool(free[xs, ys].all()):
+        return None
+    if penalty is None:
+        return 0.0
+    return float(penalty[xs, ys].mean()) * math.dist(a, b) * 0.10
+
+
 def theta_star(free: np.ndarray, start: Tuple[int, int], goal: Tuple[int, int],
                penalty: Optional[np.ndarray] = None) -> Optional[List[Tuple[int, int]]]:
     """Cells [start, ..., goal] or None. `free`: bool grid; `penalty`: extra cost per cell entered."""
@@ -56,13 +69,14 @@ def theta_star(free: np.ndarray, start: Tuple[int, int], goal: Tuple[int, int],
             n = (c[0] + dx, c[1] + dy)
             if not (0 <= n[0] < nx and 0 <= n[1] < ny) or not free[n] or n in closed:
                 continue
-            extra = 0.0 if penalty is None else float(penalty[n])
+            extra = 0.0 if penalty is None else float(penalty[n]) * 0.10
             p = parent[c]
-            if p != c and _los(free, p, n):               # any-angle: straight from the grandparent
-                cost = g[p] + math.dist(p, n) + extra
+            seg_pen = _los_penalty(free, penalty, p, n) if p != c else None
+            if seg_pen is not None:                       # any-angle: straight from the grandparent
+                cost = g[p] + math.dist(p, n) + seg_pen
                 via = p
             else:
-                cost = g[c] + math.dist(c, n) + extra
+                cost = g[c] + math.dist(c, n) * (1.0 + extra)
                 via = c
             if cost < g.get(n, math.inf):
                 g[n], parent[n] = cost, via

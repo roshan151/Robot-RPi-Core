@@ -149,13 +149,19 @@ class Fusion:
         # Right-hand turns about forward / left / up: roll right-side-down, nose DOWN, yaw left.
         self.roll += gx * dt
         self.pitch -= gy * dt
-        self.yaw += gz * dt
-        self.yaw_rate = gz
         if abs(norm - 1.0) < 0.15:             # only gravity on it: let it pull the angles back
             k = self.k if self._started else 1.0
             self.pitch += k * (p_acc - self.pitch)
             self.roll += k * (r_acc - self.roll)
             self._started = True
+        # True-vertical yaw rate = gyro · up, using the estimated gravity direction (correct
+        # whatever pan/tilt the gimbal is frozen at, and for a chassis IMU on a slope).
+        p_rad, r_rad = math.radians(self.pitch), math.radians(self.roll)
+        yaw_rate = (gx * math.sin(p_rad)
+                    + gy * math.sin(r_rad) * math.cos(p_rad)
+                    + gz * math.cos(r_rad) * math.cos(p_rad))
+        self.yaw += yaw_rate * dt
+        self.yaw_rate = yaw_rate
 
     def _zero(self, gyro: Sequence[float], norm: float, p_acc: float, r_acc: float) -> None:
         """A full window with the gyro steady and only gravity on the accelerometer

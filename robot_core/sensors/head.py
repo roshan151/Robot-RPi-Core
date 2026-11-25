@@ -189,11 +189,15 @@ class Head:
         own = self.geom.self_zones if min_range_m is None else {}
         pan = math.radians(pan_deg + self.geom.tof_pan_offset_deg)
         raw_pitch = pitch_deg if pitch_deg is not None else (self.pitch() if self.pitch else None)
-        if self.geom.imu_on_gimbal and raw_pitch is not None:
-            # Gimbal-mounted IMU already measures (real gimbal tilt + chassis pitch) relative to tilt=0,
-            # so use it directly instead of adding commanded tilt_deg + body pitch (avoids double-counting
-            # and removes SG90 tilt backlash/lag).
+        head_still = self.gimbal is None or self.gimbal.settled(0.2)
+        if self.geom.imu_on_gimbal and raw_pitch is not None and head_still:
+            # Gimbal-mounted IMU measures true world-relative head tilt when still (removes SG90
+            # backlash/lag without double-counting). While the head is moving, /motion_health lags
+            # by ~100 ms, so fall back to the servo-angle history below.
             tilt = math.radians(raw_pitch + self.geom.tilt_offset_deg + self.geom.tof_tilt_offset_deg)
+            body = 0.0
+        elif self.geom.imu_on_gimbal:
+            tilt = math.radians(tilt_deg + self.geom.tilt_offset_deg + self.geom.tof_tilt_offset_deg)
             body = 0.0
         else:
             tilt = math.radians(tilt_deg + self.geom.tilt_offset_deg + self.geom.tof_tilt_offset_deg)

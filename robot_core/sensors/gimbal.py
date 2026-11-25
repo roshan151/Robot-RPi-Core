@@ -295,6 +295,7 @@ class Gimbal:
         hold_on_close: bool = True,       # keep the centre pulse running after close()
         state_path: Optional[Path] = None,  # where the last held pulses are kept (None: don't)
         power_sense: Optional[Callable[[], bool]] = None,   # () -> servo supply present? None: assume yes
+        body_moving: Optional[Callable[[], bool]] = None,   # () -> tracks moving? refuses head moves while True
     ) -> None:
         self.fault = self.fault_code = ""        # set = tripped: PWM off, moves refused (see "Fail-safe")
         self._fault_path = Path(state_path).with_suffix(".fault") if state_path else None
@@ -315,6 +316,8 @@ class Gimbal:
         self._released = False
         self._state_path = Path(state_path) if state_path else None
         self._power_sense = power_sense
+        self._body_moving = body_moving
+        self._move_refused = False
         self._start_from_saved()
         for name, ax in (("pan", self.pan), ("tilt", self.tilt)):
             if ax.lo > ax.cfg.min_deg + 0.5 or ax.hi < ax.cfg.max_deg - 0.5:
@@ -419,6 +422,21 @@ class Gimbal:
         if any(v is not None and not math.isfinite(v) for v in (pan, tilt, speed_dps)) or (speed_dps or 0) < 0:
             log.warning("gimbal: refused pan=%s tilt=%s speed=%s", pan, tilt, speed_dps)    # clamp(nan) is the top limit
             return self.angles()
+        if self._body_moving is not None and self._body_moving():
+            if not wait:
+                if not self._move_refused:
+                    log.info("gimbal: head move refused while body is moving")
+                    self._move_refused = True
+                return self.angles()
+            deadline = time.monotonic() + timeout
+            while self._body_moving():
+                if time.monotonic() >= deadline:
+                    if not self._move_refused:
+                        log.info("gimbal: head move timed out waiting for body to stop")
+                        self._move_refused = True
+                    return self.angles()
+                time.sleep(0.02)
+        self._move_refused = False
         with self._lock:
             for ax, want in ((self.pan, pan), (self.tilt, tilt)):
                 if want is not None:
@@ -453,6 +471,15 @@ class Gimbal:
         the command and a frame or a range reading means what it says."""
         with self._lock:
             return not self._moving and time.monotonic() - self._last_motion >= settle_s
+
+    @property
+    def last_refused(self) -> bool:
+        """True if the last move_to was refused because the body was moving (the head did not go there)."""
+        return self._move_refused
+
+    def head_still(self, settle_s: float = 0.15) -> bool:
+        """Alias for settled(settle_s): True once the head has been still long enough for tracks/IMU."""
+        return self.settled(settle_s)
 
     def pan_limits(self) -> Tuple[float, float]:
         return self.pan.lo, self.pan.hi
@@ -593,7 +620,8 @@ def _state_file(p: dict) -> Path:
 
 
 def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float = TILT_DEFAULT.max_deg,
-                backend: str = "hardware") -> Gimbal:
+                backend: str = "hardware",
+                body_moving: Optional[Callable[[], bool]] = None) -> Gimbal:
     """A Gimbal from the `/explorer` parameters in robot.yaml (channels, centre
     trims, us-per-degree, inversion, speed). Pan is always ±90°; callers may narrow the tilt
     range — the face tasks pass tilt_min=0 so the head never looks below level."""
@@ -615,7 +643,8 @@ def from_params(p: dict, tilt_min: float = TILT_DEFAULT.min_deg, tilt_max: float
         backend=backend, chip=int(p.get("pwm_chip", 0)),
         hold_on_close=bool(p.get("hold_on_close", True)),
         state_path=_state_file(p) if backend == "hardware" else None,
-        power_sense=GpioPowerSense(pin) if pin and backend == "hardware" else None)
+        power_sense=GpioPowerSense(pin) if pin and backend == "hardware" else None,
+        body_moving=body_moving)
 
 
 ROBOT_YAML = Path(__file__).resolve().parents[2] / "ros2_ws/src/robot_bringup/config/robot.yaml"

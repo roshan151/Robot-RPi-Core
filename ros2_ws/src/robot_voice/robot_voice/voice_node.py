@@ -88,8 +88,25 @@ _pitch = [None]                              # the robot's nose-up angle from /m
 _odom = Latest("odom", frame="odom")         # (x, y, heading) from /odom, stamped: get() is None once stale
 _bump_t = [0.0]                              # time.monotonic() of the last "bumped" in /motion_health
 _twist = [None]                              # (v m/s, w rad/s) from /odom; w is the gyro's with the IMU
+_cmd_move_t = [0.0]                          # monotonic time of last non-zero speed command
+_odom_move_t = [0.0]                         # monotonic time of last /odom motion > 1 cm/s or 0.02 rad/s
 POSE_STALE_S = 1.0                           # /odom comes at 10 Hz: older than this, the pose is not known
 _explore_stop = None                         # explore/stop client, set in main()
+
+
+def _note_cmd(v: float, w: float) -> None:
+    if abs(v) > 1e-3 or abs(w) > 1e-3:
+        _cmd_move_t[0] = time.monotonic()
+
+
+def _body_is_moving() -> bool:
+    """True while a speed command was sent or /odom saw motion within 0.3 s (or a drivetrain action is running)."""
+    now = time.monotonic()
+    if now - _cmd_move_t[0] <= 0.3 or now - _odom_move_t[0] <= 0.3:
+        return True
+    if _motion is not None and getattr(_motion, "busy", lambda: False)():
+        return True
+    return False
 
 
 def run_task(task: str, name: str) -> bool:
@@ -128,8 +145,10 @@ def _run_task(task: str, name: str) -> bool:
         # check the floor. No PWM (overlay missing)? Carry on with a fixed camera.
         tof = task == "follow" and bool(p.get("tof_fitted", False))
         drive_tilt = float(p.get("drive_tilt_deg", -30.0))
+        head_still = bool(p.get("head_still_while_driving", False))
+        _body_moving = (lambda: _body_is_moving()) if head_still else None
         try:
-            gimbal = from_params(p, tilt_min=min(0.0, drive_tilt) if tof else 0.0)
+            gimbal = from_params(p, tilt_min=min(0.0, drive_tilt) if tof else 0.0, body_moving=_body_moving)
             if tof:
                 try:
                     from robot_core.sensors import tof8x8
@@ -164,7 +183,9 @@ def _run_task(task: str, name: str) -> bool:
             from robot_core import follow
             return follow.follow(camera, vision, _motion, name, head=head,
                                  pose=lambda: _odom.get(POSE_STALE_S),
-                                 bumped=lambda: _bump_t[0], twist=lambda: _twist[0])
+                                 bumped=lambda: _bump_t[0], twist=lambda: _twist[0],
+                                 head_still_while_driving=head_still,
+                                 on_cmd=lambda v, w: _note_cmd(v, w))
         return face_tasks.match(camera, vision, head=head) is not None
     finally:
         if gimbal:
@@ -203,6 +224,8 @@ def main(args=None) -> None:
             True, ex.get("vision_url") or settings.VISION_SERVICE_BASE_URL,
             geometry={"camera_hfov_deg": float(ex.get("hfov_deg", 66.0)), "tof_fov_deg": 60.0,
                       "tof_on": "gimbal", "head_tilt_offset_deg": float(ex.get("head_tilt_offset_deg", 0.0)),
+                      "imu_on_gimbal": bool(ex.get("imu_on_gimbal", False)),
+                      "head_still_while_driving": bool(ex.get("head_still_while_driving", False)),
                       "tilt": "real"},                 # frame / gimbal tilts already include the offset
             extras=lambda: {"pose": _odom.get(POSE_STALE_S), "pitch_deg": _pitch[0]})
     connect(node)                        # after setup(): status + warnings go to the OLED
@@ -298,7 +321,10 @@ def main(args=None) -> None:
     def _on_odom(m) -> None:
         q = m.pose.pose.orientation
         _odom.set((m.pose.pose.position.x, m.pose.pose.position.y, 2.0 * math.atan2(q.z, q.w)))
-        _twist[0] = (m.twist.twist.linear.x, m.twist.twist.angular.z)
+        vx, wz = m.twist.twist.linear.x, m.twist.twist.angular.z
+        _twist[0] = (vx, wz)
+        if abs(vx) > 0.01 or abs(wz) > 0.02:
+            _odom_move_t[0] = time.monotonic()
 
     node.create_subscription(Odometry, "odom", _on_odom, 10, callback_group=topics)
 

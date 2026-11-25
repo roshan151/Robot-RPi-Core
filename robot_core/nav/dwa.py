@@ -51,6 +51,11 @@ class DwaParams:
     w_speed: float = 0.2
     slow_m: float = 0.4            # within this of the target, top speed falls with distance
 
+    @property
+    def body_radius_m(self) -> float:
+        """Effective half-width of the oriented body capsule (shared by DWA, local Theta*, and Mac GlobalMap)."""
+        return self.half_w_m + self.side_pad_m
+
 
 @dataclass
 class DwaResult:
