@@ -118,19 +118,17 @@
     # Mac vision service. Empty = VISION_SERVICE_BASE_URL from /etc/robot.env.
     vision_url: "http://roshans-mac-mini.local:8080"
 
-    # Maps are saved on the Mac under this name. To re-scan later on the same
-    # map (growth tracking), set continue_map: true and start_pose to where the
-    # robot is standing ON that map: [x, y, theta_rad] — read it off
-    # http://<mac>:8080/v1/slam/map.png.
-    map_name: "home"
-    continue_map: false
-    start_pose: [0.0, 0.0, 0.0]
-    max_minutes: 60.0
+    # Maps live on the Mac (up to 4 named, named in the web app, and 10 pending).
+    # Every run starts a working map and joins whichever map it overlaps, wherever
+    # the robot starts. auto: else it becomes a new pending map. continue: it must
+    # join a named map within 3 scans, else it stops. Voice: "continue the map".
+    mode: auto
+    max_minutes: 60.0          # per session; a run that hits it carries on next time
 
-    # Guard rails. Both are measured from start_pose: explore only within this
-    # radius (metres; 0 = no limit), and with no_behind only ahead of the
+    # Guard rails. Both are measured from where the run starts: explore only within
+    # this radius (metres; 0 = no limit), and with no_behind only ahead of the
     # start heading (the half-plane in front of where the robot begins).
-    explore_radius_m: 10.0
+    explore_radius_m: 0.0
     no_behind: false
 
     orbit_radius_m: 0.7        # photo distance from the plant

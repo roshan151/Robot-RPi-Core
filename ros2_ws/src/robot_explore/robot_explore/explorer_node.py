@@ -187,11 +187,9 @@ class ExplorerNode(Node):
         super().__init__("explorer")
         p = self.declare_parameter
         p("vision_url", "")
-        p("map_name", "home")
-        p("continue_map", False)
-        p("start_pose", [0.0, 0.0, 0.0])
+        p("mode", "auto")                 # auto | continue (see ExploreConfig)
         p("max_minutes", 60.0)
-        p("explore_radius_m", 10.0)
+        p("explore_radius_m", 0.0)
         p("no_behind", False)
         p("orbit_radius_m", 0.7)
         p("orbit_views", 8)
@@ -300,8 +298,7 @@ class ExplorerNode(Node):
         self.create_service(Trigger, "explore/start", self._on_start)
 
         self.explorer = Explorer(self.base, self.head, self.vision, ExploreConfig(
-            map_name=v("map_name"), continue_map=bool(v("continue_map")),
-            start_pose=tuple(float(x) for x in v("start_pose")),
+            mode=str(v("mode")),
             max_minutes=float(v("max_minutes")), explore_radius_m=float(v("explore_radius_m")),
             no_behind=bool(v("no_behind")), orbit_radius_m=float(v("orbit_radius_m")),
             orbit_views=int(v("orbit_views")), revisit_known=bool(v("revisit_known")),

@@ -31,6 +31,7 @@ RULES = {
     "grid_unpaired": "the ToF grid was too far in time from the camera frame to range the box on it",
     "no_progress": "driving for 4 s without getting 5 cm nearer the goal (wedged): it backs off and plans again",
     "turn_blocked": "turning on the spot, the gyro saw no turn for 0.7 s (a corner held): it turns the other way",
+    "turn_hold": "held still 1.5 s because turning would clip a mark: cleared under the body and backed off",
     "same_approach": "a way failed (bump, slip, climb, held turn) where and how one had failed before",
 }
 

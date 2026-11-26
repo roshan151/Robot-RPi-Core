@@ -45,6 +45,7 @@ import math
 import threading
 import time
 from dataclasses import dataclass, field, replace
+from types import SimpleNamespace
 from typing import Callable, List, Optional, Protocol, Sequence, Tuple
 
 from robot_core import debug_upload, local_plan, status as screen, terrain
@@ -77,11 +78,12 @@ class Base(Protocol):
 
 @dataclass
 class ExploreConfig:
-    map_name: str = "home"
-    continue_map: bool = False            # keep building the saved map `map_name`
-    start_pose: Tuple[float, float, float] = (0.0, 0.0, 0.0)   # where we start ON that map
-    max_minutes: float = 60.0
-    explore_radius_m: float = 10.0        # only explore within this radius of the start (<= 0: no limit)
+    # auto: join whatever named or pending map this run overlaps (on the Mac), else become a new
+    # pending map; continue: must join a named map within 3 scans, else stop.
+    mode: str = "auto"
+    start_pose: Tuple[float, float, float] = (0.0, 0.0, 0.0)   # where we start on this run's working map
+    max_minutes: float = 60.0             # per session: a run that hits it carries on next time
+    explore_radius_m: float = 0.0         # only explore within this radius of the start (<= 0: no limit)
     no_behind: bool = False               # only explore ahead of the start heading
     sector_pans: Tuple[float, ...] = (-30.0, 30.0)    # camera looks per 90° sector
     # ToF anchor scan: 5 overlapping 60°-wide looks per half (35° step = 25° overlap, full 200° swath).
@@ -150,7 +152,9 @@ class Explorer:
         self.m2o = Pose2D(*cfg.start_pose)
         self.stats = Stats()
         self._handled: List[Tuple[Tuple[float, float], Optional[float]]] = []   # (map xy, pot height)
-        self._pending_plants: List[Sighting] = []             # collected during Phase A, visited in Phase B
+        self._pending_plants: List[Sighting] = []             # bearing-only sightings, placed in Phase B
+        self._held: List[Sighting] = []                       # seen before the Mac knows which map this is
+        self._scope = Pose2D(*cfg.start_pose)                 # start_pose on the current map (moves on a merge)
         self._kf_clear: list = []                     # this keyframe's free-space rays and 3-D points (ToF scan)
         self._kf_cloud: list = []
         self._plant = ""                              # plant_NN on the OLED
@@ -217,9 +221,14 @@ class Explorer:
         cfg = self.cfg
         deadline = time.monotonic() + cfg.max_minutes * 60
         scope = dict(explore_radius_m=cfg.explore_radius_m, no_behind=cfg.no_behind)
-        if self.vision.slam_reset(cfg.map_name, cfg.start_pose, load=cfg.continue_map, **scope) is None:
-            self._say(f"no saved map '{cfg.map_name}' — starting a new one")
-            self.vision.slam_reset(cfg.map_name, cfg.start_pose, load=False, **scope)
+        try:
+            self.vision.slam_reset(cfg.start_pose, mode=cfg.mode, **scope)
+        except VisionError as exc:
+            # HTTP 409: too many pending maps (delete some in the web app first), or the Mac is down.
+            self._say(f"cannot start explore: {exc}")
+            screen.detail("delete pending maps" if "409" in str(exc) else "vision service down")
+            self.head.home()
+            return self.stats
         fails = 0
         try:
             # --- Phase A: Map the entire reachable space cleanly ---
@@ -246,6 +255,15 @@ class Explorer:
                     self.stats.keyframes += 1
                     self.m2o = Pose2D(*res["map_to_odom"])
                     self.base.set_map_to_odom(self.m2o)
+                    if res.get("merged"):
+                        mg = res["merged"]
+                        self._scope = Pose2D(*mg["transform"]).compose(self._scope)
+                        self._say(f"on map '{mg['survivor']}' now ({mg['folded']} joined it, score {mg['score']:.2f})")
+                    if res.get("relocalize_failed"):
+                        self._say("I can't find where I am on the map: stopping (continue mode)")
+                        screen.detail("not on a known map")
+                        self._stop.set()
+                        break
                     if res["match"]["accepted"]:
                         self.base.relocalized()
                     loop_note = f", LOOP closed (kf {res['loop']['with_kf']})" if res.get("loop", {}).get("closed") else ""
@@ -255,7 +273,9 @@ class Explorer:
 
                     if sightings:
                         if cfg.orbit_after_map:
-                            self._pending_plants.extend(sightings)
+                            self._held.extend(sightings)
+                            if res.get("settled", True):
+                                self._register_held()
                         else:
                             o0 = self.base.odom()
                             for s in self._dedupe(sightings):
@@ -296,29 +316,106 @@ class Explorer:
                     self._stop.wait(VISION_RETRY_S)
 
             # --- Phase B: Visit & orbit plants on the finished, loop-closed map ---
-            if cfg.orbit_after_map and self._pending_plants and not self._stop.is_set() and time.monotonic() < deadline:
-                unique = self._dedupe(self._pending_plants)
-                self._say(f"Phase B: inspecting {len(unique)} plant(s) on the completed map")
-                for s in unique:
-                    if self._stop.is_set() or time.monotonic() >= deadline:
-                        break
-                    try:
-                        self.handle_plant(s)
-                    except VisionError as exc:
-                        self._say(f"plant visit skipped ({exc})")
+            if cfg.orbit_after_map and not self._stop.is_set() and time.monotonic() < deadline:
+                self._register_held()                 # a short run that never settled: register them now
+                self._phase_b(deadline)
         except VisionError as exc:
             self._say(f"vision service unavailable, stopping: {exc}")
         finally:
+            # Stop quickly: the Mac already saved the map after every scan; this marks the run ended.
             self._recon_pool.shutdown(wait=False)
+            self.head.home()
             try:
-                self.vision.slam_save()
+                self.vision.slam_save(timeout=3.0)
             except VisionError:
                 pass
-            self.head.home()
         self._say(f"finished: {self.stats.keyframes} keyframes, new plants {self.stats.plants_new}, "
                   f"revisited {self.stats.plants_revisited}, {self.stats.low_obstacles} low obstacle and "
                   f"{self.stats.drops} drop points mapped")
         return self.stats
+
+    def _register_held(self) -> None:
+        """Register the plants seen so far on the Mac at once (preliminary, anchored to the scan
+        they were seen from, so their place follows the map), so a stopped run loses none. Phase B
+        photographs them from the Mac's list. Plants seen only as a bearing wait for Phase B."""
+        held, self._held = self._held, []
+        for s in self._dedupe(held):
+            if self._stop.is_set():
+                self._held.append(s)
+                continue
+            if s.ray_from is not None:
+                self._pending_plants.append(s)
+                continue
+            if not self._in_scope(s.map_xy) or any(self._same(s.map_xy, s.z_m, xy, z) for xy, z in self._handled):
+                continue
+            try:
+                where = list(s.map_xy) + ([s.z_m] if s.z_m is not None else [])
+                label = self.identify(s, self.vision.plant_match(self.vision.plant_embed(s.crop), where))
+                if label is None:
+                    continue
+                meta = {"position": [round(v, 3) for v in where], "preliminary": True,
+                        "anchor": {"odom": [round(v, 4) for v in s.sector_odom.as_tuple()],
+                                   "local": [round(v, 4) for v in s.local_xy]},
+                        "detector_confidence": round(float(s.confidence), 3)}
+                if s.z_m is not None:
+                    meta.update(height_m=s.z_m, top_m=s.top_m, on_stand=s.on_stand, level=s.level)
+                if s.size_m:
+                    meta["size_m"] = list(s.size_m)
+                res = self.vision.plant_enroll([s.crop], label, meta)
+                self._handled.append((s.map_xy, s.z_m))
+                self._say(f"plant at ({s.map_xy[0]:.2f}, {s.map_xy[1]:.2f}) registered as {res['label']}"
+                          + (f"; {', '.join(res['stale'])} now stale" if res.get("stale") else ""))
+            except VisionError as exc:
+                self._say(f"plant registration skipped ({exc})")
+
+    def _phase_b(self, deadline: float) -> None:
+        """Photograph from all sides every plant on this map seen since its last all-sides visit.
+        The list comes from the Mac, so a run stopped half-way through picks up the rest next time."""
+        for s in self._dedupe(self._pending_plants):     # bearing-only sightings: placed by approaching
+            if self._stop.is_set() or time.monotonic() >= deadline:
+                return
+            try:
+                self.handle_plant(s)
+            except VisionError as exc:
+                self._say(f"plant visit skipped ({exc})")
+        try:
+            waiting = self.vision.plants_waiting()
+        except VisionError as exc:
+            self._say(f"no plant list from the Mac ({exc})")
+            return
+        if waiting:
+            self._say(f"Phase B: photographing {len(waiting)} plant(s) from all sides")
+        for w in waiting:
+            if self._stop.is_set() or time.monotonic() >= deadline:
+                return
+            pos, label = w["position"], w["label"]
+            self._plant = label
+            z = float(pos[2]) if len(pos) > 2 and pos[2] is not None else None
+            try:
+                screen.detail(f"{label} starting photos")
+                views = self.orbit((float(pos[0]), float(pos[1])),
+                                   SimpleNamespace(z_m=z, top_m=None) if z is not None else None)
+                if not views:
+                    self._say(f"could not reach any viewpoint around {label} — skipping")
+                    continue
+                meta = {"position": [round(v, 3) for v in pos], "views": [v[1] for v in views]}
+                describe = getattr(self.vision, "describe_plant", None)
+                about = describe(views[0][0]) if describe else None
+                if about:
+                    meta["about"] = about
+                if not w.get("new"):
+                    compare = getattr(self.vision, "compare_plant_health", None)
+                    prev_photo = getattr(self.vision, "plant_photo", None)
+                    prev_jpg = prev_photo(label) if (compare and prev_photo) else None
+                    diff = compare(views[0][0], prev_jpg) if prev_jpg else None
+                    if diff:
+                        meta["health_diff"] = diff
+                res = self.vision.plant_enroll([v[0] for v in views], label, meta)
+                (self.stats.plants_new if w.get("new") else self.stats.plants_revisited).append(res["label"])
+                screen.detail(f"{res['label']} saved {res['photos_saved']} photos")
+                self._say(f"saved {res['photos_saved']} photos as {res['label']} ({res['folder']})")
+            except VisionError as exc:
+                self._say(f"plant visit skipped ({exc})")
 
     # ================================================================ scan
 
@@ -657,7 +754,7 @@ class Explorer:
     def _in_scope(self, xy) -> bool:
         """Same rule the Mac applies to frontiers (slam.in_scope), for plants."""
         cfg = self.cfg
-        x, y, th = cfg.start_pose
+        x, y, th = self._scope.as_tuple()
         dx, dy = xy[0] - x, xy[1] - y
         if cfg.explore_radius_m > 0 and math.hypot(dx, dy) > cfg.explore_radius_m:
             return False
@@ -752,7 +849,7 @@ class Explorer:
         # position: x, y on the map and, when measured, the height of the pot's base above the floor.
         meta = {"position": [round(v, 3) for v in where],
                 "views": [v[1] for v in views],
-                "map": self.cfg.map_name, "detector_confidence": s.confidence}
+                "detector_confidence": s.confidence}
         if s.z_m is not None:
             meta.update(height_m=s.z_m, top_m=s.top_m, on_stand=s.on_stand, level=s.level)
         if s.size_m:
@@ -987,6 +1084,9 @@ class Explorer:
             planner=mac_planner,
             tilt_deg=nav_tilt,
         )
+        from robot_core import settings as robot_settings
+        if robot_settings.NAV_GAP_HINT:
+            nav.gap_check = getattr(self.vision, "nav_gap", None)
 
         def _seed_map_path(m_pts) -> Tuple[float, float]:
             inv = self.m2o.inverse()

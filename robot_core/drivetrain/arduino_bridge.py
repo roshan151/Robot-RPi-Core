@@ -92,7 +92,14 @@ class ArduinoBridge:
         on_encoder: Optional[Callable[[int, int], None]] = None,
         on_error: Optional[Callable[[], None]] = None,
         on_odometry: Optional[Callable[[int, int, int], None]] = None,
+        port_wait_s: float = 15.0,
+        connect_attempts: int = 3,
     ) -> None:
+        self._port = port
+        self._baud = baud
+        self._timeout = timeout
+        self._port_wait_s = max(0.0, float(port_wait_s))
+        self._connect_attempts = max(1, int(connect_attempts))
         self._on_encoder = on_encoder
         # (total_left, total_right, firmware_ms) from v5+ E frames. Older
         # firmware sends only the per-move pair and this is never called.
@@ -138,16 +145,20 @@ class ArduinoBridge:
         self.tfluna_cm: Optional[int] = None
         self.tfluna_t = 0.0
 
-        logger.info("Opening serial port %s @ %d baud", port, baud)
-        self._ser = serial.Serial(port=port, baudrate=baud, timeout=timeout)
-
+        self._ser = self._open_port(self._port_wait_s)
         self._reader_stop = threading.Event()
-        self._reader = threading.Thread(
-            target=self._read_loop, name="arduino-reader", daemon=True
-        )
-        self._reader.start()
+        self._start_reader()
 
-        self._connect()
+        try:
+            self._connect()
+        except Exception:
+            self._closed = True
+            self._stop_reader()
+            try:
+                self._ser.close()
+            except Exception:
+                pass
+            raise
         self._connecting = False
 
         self._hb_stop = threading.Event()
@@ -155,6 +166,73 @@ class ArduinoBridge:
             target=self._heartbeat_loop, name="arduino-heartbeat", daemon=True
         )
         self._heartbeat.start()
+
+    def _open_port(self, wait_s: float) -> serial.Serial:
+        """Open the serial port, waiting briefly on cold boot while USB-serial
+        enumerates and udev applies dialout permissions."""
+        logger.info("Opening serial port %s @ %d baud", self._port, self._baud)
+        deadline = time.monotonic() + max(0.0, wait_s)
+        last_exc: Optional[Exception] = None
+        while True:
+            try:
+                ser = serial.Serial(port=self._port, baudrate=self._baud, timeout=self._timeout)
+                # Leave both lines de-asserted so an ESP32 DevKit auto-reset circuit
+                # never holds EN or IO0 (flash download strap) low on cold open.
+                try:
+                    ser.dtr = False
+                    ser.rts = False
+                except Exception:
+                    pass
+                return ser
+            except (serial.SerialException, OSError) as exc:
+                last_exc = exc
+                if time.monotonic() >= deadline:
+                    raise
+                logger.info("Waiting for serial port %s (%s)...", self._port, exc)
+                time.sleep(0.5)
+        raise last_exc  # pragma: no cover
+
+    def _start_reader(self) -> None:
+        self._reader_stop.clear()
+        self._parser = FrameParser()
+        self._reader = threading.Thread(
+            target=self._read_loop, name="arduino-reader", daemon=True
+        )
+        self._reader.start()
+
+    def _stop_reader(self) -> None:
+        self._reader_stop.set()
+        if hasattr(self, "_reader") and self._reader.is_alive():
+            self._reader.join(timeout=1.0)
+
+    def _reopen_port(self) -> None:
+        """Close and reopen the USB-serial port cleanly (cold-boot driver wedge recovery)."""
+        self._stop_reader()
+        try:
+            self._ser.close()
+        except Exception:
+            pass
+        time.sleep(0.3)
+        self._ser = self._open_port(wait_s=5.0)
+        self._start_reader()
+
+    def _pulse_reset(self) -> None:
+        """Reset the ESP32 into normal firmware (never flash-download mode).
+
+        On an ESP32 DevKit auto-reset circuit:
+          dtr=False, rts=True  -> EN=LOW,  IO0=HIGH (reset held, normal boot strap)
+          dtr=False, rts=False -> EN=HIGH, IO0=HIGH (released, boots user firmware)
+        Never pass through (dtr=True, rts=False), which pulls IO0 LOW (bootloader).
+        """
+        with self._write_lock:
+            self._ser.dtr = False
+            self._ser.rts = True
+            time.sleep(0.15)
+            self._ser.rts = False
+            try:
+                self._ser.reset_input_buffer()
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------ #
     # Lifecycle
@@ -187,37 +265,55 @@ class ArduinoBridge:
             pass
 
     def _connect(self) -> None:
-        """Wait for the boot frame (port-open DTR resets the board), then
-        confirm two-way traffic with a ping."""
-        port = self._ser.port
-        if self._boot_seen.wait(timeout=BOOT_WAIT_S):
-            logger.info("Connected on %s (boot frame received)", port)
-        else:
-            # The ESP32 does not reset when the port opens (the Arduino did), so
-            # reset it once via DTR to read its build stamp (velocity mode needs it).
-            logger.info("No boot frame on %s — resetting the board via DTR", port)
-            self._ser.dtr = False
-            time.sleep(0.1)
-            self._ser.dtr = True
-            if not self._boot_seen.wait(timeout=BOOT_WAIT_S):
-                logger.info(
-                    "Still no boot frame on %s — assuming the board is "
-                    "running; pinging", port,
-                )
-        try:
-            self._transact("Q")
-        except Exception as exc:
+        """Reset/sync with the ESP32/Arduino and confirm two-way traffic with a ping.
+
+        Retries cleanly on cold boot: the ESP32 can still be powering up or
+        sitting in an uncleared boot strap right after Pi startup.
+        """
+        port = self._port
+        last_exc: Optional[Exception] = None
+        for attempt in range(1, self._connect_attempts + 1):
+            if attempt > 1:
+                logger.warning("Retrying drivetrain connect on %s (attempt %d/%d)",
+                               port, attempt, self._connect_attempts)
+                if attempt == self._connect_attempts:
+                    self._reopen_port()
+            self._boot_seen.clear()
+            # Brief listen on attempt 1 in case the board just emitted its boot frame on open.
+            if attempt == 1 and self._boot_seen.wait(timeout=0.8):
+                logger.info("Connected on %s (boot frame received)", port)
+            else:
+                logger.info("Resetting board on %s via EN (RTS pulse, IO0 high)", port)
+                self._pulse_reset()
+                if self._boot_seen.wait(timeout=BOOT_WAIT_S):
+                    logger.info("Connected on %s (boot frame received after reset)", port)
+                else:
+                    logger.info(
+                        "No boot frame on %s after reset (attempt %d/%d) — pinging anyway",
+                        port, attempt, self._connect_attempts,
+                    )
+            try:
+                self._transact("Q", allow_recover=False)
+                last_exc = None
+                break
+            except Exception as exc:
+                last_exc = exc
+                logger.warning("Ping failed on %s (attempt %d/%d): %s",
+                               port, attempt, self._connect_attempts, exc)
+                time.sleep(0.5)
+
+        if last_exc is not None:
             raise RuntimeError(
-                f"Arduino did not respond on {port!r}: {exc}. "
-                "Check the USB cable, that no other app holds the port, "
-                "that the baud is 115200, and that firmware v3 "
-                "(sketches/drivetrain/drivetrain.ino) is flashed."
-            ) from exc
+                f"Arduino/ESP32 did not respond on {port!r} after {self._connect_attempts} attempts: "
+                f"{last_exc}. Check the USB cable, that no other app holds the port, "
+                "that the baud is 115200, and that drivetrain firmware is flashed."
+            ) from last_exc
+
         if not self.supports_velocity and self.firmware_build is None:
             # Boot frame was missed (e.g. board stayed awake across reopen): probe velocity
             # mode with a harmless zero-PWM frame; v6+ ACKs it, older firmware NACKs it.
             try:
-                self._transact("T", "0", "0", retries=1, ack_timeout=0.35)
+                self._transact("T", "0", "0", retries=1, ack_timeout=0.35, allow_recover=False)
                 self._vel_confirmed = True
                 logger.info("Connected on %s: velocity mode confirmed via T,0,0 probe (boot frame missed)", port)
             except ProtocolError:
@@ -374,15 +470,18 @@ class ArduinoBridge:
 
     def _transact(self, kind: str, *args: str,
                   retries: int = CMD_RETRIES,
-                  ack_timeout: float = ACK_TIMEOUT_S) -> int:
+                  ack_timeout: float = ACK_TIMEOUT_S,
+                  allow_recover: bool = True) -> int:
         with self._cmd_lock:
             return self._transact_locked(
-                kind, *args, retries=retries, ack_timeout=ack_timeout
+                kind, *args, retries=retries, ack_timeout=ack_timeout,
+                allow_recover=allow_recover,
             )
 
     def _transact_locked(self, kind: str, *args: str,
                          retries: int = CMD_RETRIES,
-                         ack_timeout: float = ACK_TIMEOUT_S) -> int:
+                         ack_timeout: float = ACK_TIMEOUT_S,
+                         allow_recover: bool = True) -> int:
         """Send a command and wait for its A/N reply.  Retries re-send the
         SAME sequence number: the firmware deduplicates, so a command is
         executed at most once no matter how many times the ACK is lost."""
@@ -437,6 +536,10 @@ class ArduinoBridge:
                     raise RuntimeError(
                         f"Arduino reset mid-command — {msg.args[0]}"
                     )
+            if not allow_recover:
+                raise TimeoutError(
+                    f"No ACK for {kind} within {ack_timeout * (retries + 1):.1f} s"
+                )
             recovered = self._recover_locked(f"no ACK for {kind}")
             raise TimeoutError(
                 f"No ACK from Arduino within "
@@ -444,9 +547,9 @@ class ArduinoBridge:
                 f"afterwards — the board is likely HUNG (a supply dip "
                 f"with the brown-out detector disabled locks the chip up "
                 f"instead of resetting it). "
-                + ("It was reset via DTR and answers again; this command "
+                + ("It was reset and answers again; this command "
                    "was NOT run — send it again." if recovered else
-                   "A DTR reset did not bring it back: power-cycle it.")
+                   "A reset did not bring it back: power-cycle it.")
             )
         finally:
             self._awaiting_reply.clear()
@@ -478,27 +581,23 @@ class ArduinoBridge:
         return ok
 
     def _reset_board(self) -> bool:
-        """Pulse DTR — the same edge that resets the board when the port
-        opens — then wait for its boot frame and ping.  A hung chip (BOD
-        off) still obeys its RESET pin."""
+        """Reset the board via EN (safe ESP32 RTS pulse with IO0 high), then wait
+        for its boot frame and ping. A hung chip still obeys its RESET/EN pin."""
         self._recovering = True
         self._connecting = True       # boot frame expected; heartbeat pauses
         self._boot_seen.clear()
         try:
-            logger.warning("Arduino not answering — resetting it via DTR")
-            self._ser.dtr = False
-            time.sleep(0.1)
-            self._ser.dtr = True
+            logger.warning("Drivetrain board not answering — resetting via EN/RTS pulse")
+            self._pulse_reset()
             if not self._boot_seen.wait(timeout=BOOT_WAIT_S):
-                logger.error("No boot frame after a DTR reset — power-cycle "
-                             "the Arduino")
+                logger.error("No boot frame after reset — power-cycle the board")
                 return False
-            self._transact_locked("Q")
+            self._transact_locked("Q", allow_recover=False)
             self.resets_seen += 1
-            logger.warning("Arduino recovered after a DTR reset")
+            logger.warning("Drivetrain board recovered after reset")
             return True
         except Exception as exc:                            # noqa: BLE001
-            logger.error("Arduino recovery failed: %s", exc)
+            logger.error("Drivetrain recovery failed: %s", exc)
             return False
         finally:
             self._connecting = False

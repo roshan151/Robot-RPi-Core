@@ -52,6 +52,8 @@ def generate_launch_description():
             parameters=[params],
             output="screen",
             emulate_tty=True,
+            respawn=True,
+            respawn_delay=3.0,
         ),
         Node(
             package="robot_voice",

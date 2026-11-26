@@ -112,6 +112,7 @@ class LiveAgent:
         self._dropped = 0
         self._audio_out_bytes = 0
         self._out = None
+        self._dispatching = False
 
     # ------------------------------------------------------------------ #
 
@@ -366,9 +367,13 @@ class LiveAgent:
                 return
 
     async def _pump_task(self) -> None:
-        """Returns the moment run_task queues a job, which ends the session cleanly
-        (microphone closed, socket closed) so `_run_supervised` can run it."""
-        while self._tools.pending is None:
+        """Returns once a queued task is ready to run (after any preceding queued moves
+        finish and the current tool batch has sent its tool_response), ending the session
+        cleanly so `_run_supervised` can run it."""
+        poll = getattr(self._tools, "poll_queue", None)
+        while self._tools.pending is None or self._dispatching:
+            if poll is not None:
+                poll()
             await asyncio.sleep(0.1)
 
     async def _pump_results(self, session, results) -> None:
@@ -387,10 +392,12 @@ class LiveAgent:
         This is the difference between an open-loop and a closed-loop agent,
         and it is the whole reason the backend carries a results queue.
         """
+        on_result = getattr(self._tools, "on_motion_result", None)
         while True:
             event = await results.get()
+            note = on_result(event) if on_result is not None else ""
             text = (f"[robot] {event['op']} {event['value']:g}: "
-                    f"{event['status']}")
+                    f"{event['status']}" + (f" ({note})" if note else ""))
             robot_log.event("voice.feedback", text=text)
             await session.send_client_content(
                 turns={"role": "user", "parts": [{"text": text}]},
@@ -472,28 +479,32 @@ class LiveAgent:
     async def _handle_tool_calls(self, session, calls) -> None:
         from google.genai import types  # type: ignore
 
-        responses = []
-        for call in calls:
-            name = getattr(call, "name", "")
-            args = dict(getattr(call, "args", {}) or {})
-            t0 = time.monotonic()
-            result = await self._tools.dispatch(name, args)
-            logger.info("tool %s(%s) -> %s in %.2fs",
-                        name, args, result, time.monotonic() - t0)
-            responses.append(types.FunctionResponse(
-                id=getattr(call, "id", None), name=name,
-                response={"output": result},
-            ))
+        self._dispatching = True
+        try:
+            responses = []
+            for call in calls:
+                name = getattr(call, "name", "")
+                args = dict(getattr(call, "args", {}) or {})
+                t0 = time.monotonic()
+                result = await self._tools.dispatch(name, args)
+                logger.info("tool %s(%s) -> %s in %.2fs",
+                            name, args, result, time.monotonic() - t0)
+                responses.append(types.FunctionResponse(
+                    id=getattr(call, "id", None), name=name,
+                    response={"output": result},
+                ))
 
-        if hasattr(session, "send_tool_response"):
-            await session.send_tool_response(function_responses=responses)
-        else:
-            await session.send(input={"tool_response": {
-                "function_responses": [
-                    {"id": r.id, "name": r.name, "response": r.response}
-                    for r in responses
-                ]
-            }})
+            if hasattr(session, "send_tool_response"):
+                await session.send_tool_response(function_responses=responses)
+            else:
+                await session.send(input={"tool_response": {
+                    "function_responses": [
+                        {"id": r.id, "name": r.name, "response": r.response}
+                        for r in responses
+                    ]
+                }})
+        finally:
+            self._dispatching = False
 
     # ------------------------------------------------------------------ #
 
@@ -531,6 +542,9 @@ class LiveAgent:
                 speech.connected()
 
             self._open_microphone()
+            advance = getattr(self._tools, "advance", None)
+            if advance is not None:
+                advance()                    # kick any moves queued after a previous task, now that the mic is open
             try:
                 # Deliberately not asyncio.TaskGroup: the Pi runs Python 3.10
                 # and TaskGroup / except* are 3.11+. asyncio.wait gives the
@@ -586,10 +600,12 @@ async def _run_supervised(tools: RobotTools) -> None:
             await agent.run()
             handle = agent.resume_handle
             if tools.pending is not None:
-                await _run_task(tools)       # the session is closed; reconnect after it
+                while tools.pending is not None:
+                    await _run_task(tools)   # the session is closed; reconnect after queued task(s)
                 backoff = settings.LIVE_RECONNECT_BACKOFF_S
                 continue
             if agent.rerouted:               # buds came or went: brake, reconnect on the other mic
+                tools.clear_queue("audio rerouted", reset_active=True)
                 tools.motion.stop()
                 handle = None                # the other mic has another prompt: start a fresh session
                 backoff = settings.LIVE_RECONNECT_BACKOFF_S
@@ -687,6 +703,11 @@ async def _run_task(tools: RobotTools) -> None:
     while results is not None and not results.empty():
         results.get_nowait()
 
+    if cancelled or not ok:
+        tools.clear_queue("task cancelled" if cancelled else "task failed")
+    else:
+        tools.pop_next_task()                # if another task is queued immediately next, run it now
+
 
 def _drop_diagnostics() -> Dict[str, Any]:
     """Why might the link have died? Wi-Fi signal and power save, load, the Pi's
@@ -747,6 +768,7 @@ def _spoken_cause(exc: BaseException) -> str:
 def _on_failure(tools: RobotTools, agent: LiveAgent, exc: BaseException) -> None:
     """Order matters: brake, tear down, THEN speak."""
     try:
+        tools.clear_queue("voice session dropped", reset_active=True)
         tools.motion.stop()
     except Exception:
         pass

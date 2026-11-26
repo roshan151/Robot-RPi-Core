@@ -204,6 +204,12 @@ class VisionClient:
         return self._call("POST", "/v1/nav/frame", timeout=2.0, data=data,
                           files={"image": ("f.jpg", jpeg, "image/jpeg")})
 
+    def nav_gap(self, bearing_deg: float, dist_m: float, need_m: float = 0.30) -> dict:
+        """Is there an opening at least need_m wide, dist_m ahead at bearing_deg (robot frame, + left)? The Mac
+        answers from the latest stream frame's camera depth scaled by its ToF grid: a reason to try a gap only."""
+        return self._call("POST", "/v1/nav/gap", timeout=1.5,
+                          json={"bearing_deg": round(bearing_deg, 1), "dist_m": round(dist_m, 2), "need_m": need_m})
+
     def nav_plan(self, pose, goal, radius_m: float, local: Optional[dict] = None, target=None) -> Optional[list]:
         """Waypoints [(x, y), ...] from `pose` to `goal` in the odometry frame (the Mac plans with
         Theta* on its global map, corrected by visual SLAM), or None when it finds no way. `local`:
@@ -306,10 +312,12 @@ class VisionClient:
 
     # ---------------------------------------------------------------- SLAM
 
-    def slam_reset(self, name: str = "default", initial_pose=(0.0, 0.0, 0.0), load: bool = False,
+    def slam_reset(self, initial_pose=(0.0, 0.0, 0.0), mode: str = "auto",
                    explore_radius_m: Optional[float] = None, no_behind: bool = False) -> dict:
-        return self._call("POST", "/v1/slam/reset", ok_404=load,
-                          json={"name": name, "initial_pose": list(initial_pose), "load": load,
+        """A new run on a fresh working map; the Mac joins it to the map it overlaps. mode auto |
+        continue. HTTP 409 (VisionError): too many pending maps."""
+        return self._call("POST", "/v1/slam/reset",
+                          json={"mode": mode, "initial_pose": list(initial_pose),
                                 "explore_radius_m": explore_radius_m, "no_behind": no_behind})
 
     def slam_keyframe(self, odom, rays, sensor_xy=(0.0, 0.0), obstacles=(), plan: bool = True,
@@ -370,5 +378,10 @@ class VisionClient:
         return self._call("POST", "/v1/slam/viewpoints", timeout=30.0, json={
             "start": list(start[:2]), "target": list(target[:2]), "radius": radius, "n": n})["viewpoints"]
 
-    def slam_save(self) -> dict:
-        return self._call("POST", "/v1/slam/save")
+    def slam_save(self, timeout: Optional[float] = None) -> dict:
+        """The run ended (the Mac also saves after every scan)."""
+        return self._call("POST", "/v1/slam/save", timeout=timeout)
+
+    def plants_waiting(self) -> list:
+        """This map's plants seen since their last all-sides photo visit: [{label, position, new}]."""
+        return self._call("GET", "/v1/plants/waiting")["plants"]

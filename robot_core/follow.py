@@ -180,6 +180,8 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
         return False
     nav = LocalNav(head, motion, pose, twist=twist, bumped=bumped, tilt_deg=_nav_tilt(head))
     nav.planner = _planner(vision, nav.plan_radius_m)
+    if settings.NAV_GAP_HINT:
+        nav.gap_check = getattr(vision, "nav_gap", None)
     stream = FrameStream(camera, head.gimbal, nav.pose, send=getattr(vision, "nav_frame", None),
                          tilt_offset_deg=head.geom.tilt_offset_deg, tof=head.lidar.grid).start()
     nav.start()
@@ -308,6 +310,7 @@ def follow(camera, vision: VisionClient, motion, name: str = "", head=None,
                     rules.broke("tof_stale", why=reasons[0])
             debug_upload.offer_event(img, {                 # debug mode: this frame, the Mac's answer, the decision
                 "task": "follow", "seq": seq, "state": state, "target": res.get("target"),
+                "bbox": res.get("bbox"), "polygon": res.get("polygon"),     # the followed person, in `img` pixels
                 "bearing_deg": res.get("bearing_deg"), "distance_m": res.get("distance_m"),
                 "distance_from": res.get("distance_from"), "range_m": rng, "pose": here, "pose_now": nav.pose(),
                 "goal": nav.goal, "nav": nav.state, "nav_detail": nav.detail, "cmd": nav.cmd,

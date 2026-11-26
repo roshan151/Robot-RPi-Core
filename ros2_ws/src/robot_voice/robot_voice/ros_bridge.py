@@ -63,7 +63,8 @@ class RosMotion:
         # it is why gesture bursts get dropped rather than queued: the second
         # "yes" arrives while the first still has steps outstanding.
         self._outstanding = 0
-        self._pending: deque = deque()       # (deadline, op, value) per move sent, oldest first
+        self._next_id = 0
+        self._pending: deque = deque()       # (deadline, move_id, op, value) per move sent, oldest first
         self._lock = threading.Lock()
         self.odom_age = None                 # () -> s since the last /odom; set by voice_node
 
@@ -95,14 +96,20 @@ class RosMotion:
         """A move is out and its result has not come back. A move far past how long it can
         take (expected time + grace) counts as finished, with a warning: a lost result must
         not hold up follow or the voice session forever."""
+        expired = []
         with self._lock:
             now = time.monotonic()
             while self._pending and self._pending[0][0] < now:
-                _, op, value = self._pending.popleft()
+                _, move_id, op, value = self._pending.popleft()
                 self._outstanding = max(0, self._outstanding - 1)
-                logging.getLogger(__name__).warning(
-                    "motion: no result for %s %.1f from the drivetrain: counted as finished", op, value)
-            return self._outstanding > 0
+                expired.append((move_id, op, value))
+            still_busy = self._outstanding > 0
+        for move_id, op, value in expired:
+            logging.getLogger(__name__).warning(
+                "motion: no result for %s %.1f (#%d) from the drivetrain: counted as timed out",
+                op, value, move_id)
+            self._push({"id": move_id, "op": op, "value": value, "status": "timeout"})
+        return still_busy
 
     def drive(self, meters: float, *, gesture: bool = False) -> Dict[str, Any]:
         goal = Drive.Goal(meters=float(meters), gesture=gesture)
@@ -150,42 +157,50 @@ class RosMotion:
                                           "It resets itself: tell the user and try again in about 10 s."}
         expect = 1.0 + abs(value) / 40.0 if op == "turn" else 2.0 + abs(value) / 0.08   # 40 deg/s, 0.08 m/s
         with self._lock:
+            self._next_id += 1
+            move_id = self._next_id
             self._outstanding += 1
-            self._pending.append((time.monotonic() + expect + 5.0, op, value))
+            self._pending.append((time.monotonic() + expect + 5.0, move_id, op, value))
         future = client.send_goal_async(goal)
-        future.add_done_callback(lambda f: self._on_response(f, op, value))
-        return {"ok": True, "queued": True, "op": op, "value": value}
+        future.add_done_callback(lambda f: self._on_response(f, move_id, op, value))
+        return {"ok": True, "queued": move_id, "op": op, "value": value}
 
-    def _on_response(self, future, op: str, value: float) -> None:
+    def _on_response(self, future, move_id: int, op: str, value: float) -> None:
         try:
             handle = future.result()
         except Exception as e:                                # noqa: BLE001
-            self._finish(op, value, f"send failed: {type(e).__name__}: {e}")
+            self._finish(move_id, op, value, f"send failed: {type(e).__name__}: {e}")
             return
 
         if not handle.accepted:
             # The drivetrain node refused it — over the distance limit, or a
             # gesture arriving while the robot was already busy. Either way the
             # model should hear about it rather than assume it is moving.
-            self._finish(op, value, "rejected")
+            self._finish(move_id, op, value, "rejected")
             return
 
         handle.get_result_async().add_done_callback(
-            lambda f: self._on_result(f, op, value))
+            lambda f: self._on_result(f, move_id, op, value))
 
-    def _on_result(self, future, op: str, value: float) -> None:
+    def _on_result(self, future, move_id: int, op: str, value: float) -> None:
         try:
             status = future.result().result.status or "finished"
         except Exception as e:                                # noqa: BLE001
             status = f"error: {type(e).__name__}: {e}"
-        self._finish(op, value, status)
+        self._finish(move_id, op, value, status)
 
-    def _finish(self, op: str, value: float, status: str) -> None:
+    def _finish(self, move_id: int, op: str, value: float, status: str) -> None:
+        found = False
         with self._lock:
-            if self._pending:                # oldest first: results come back in order
-                self._pending.popleft()
-                self._outstanding = max(0, self._outstanding - 1)
-        self._push({"op": op, "value": value, "status": status})
+            for item in self._pending:
+                if item[1] == move_id:
+                    self._pending.remove(item)
+                    self._outstanding = max(0, self._outstanding - 1)
+                    found = True
+                    break
+        if not found:
+            return                           # already timed out and reported by busy()
+        self._push({"id": move_id, "op": op, "value": value, "status": status})
 
     def _push(self, event: Dict[str, Any]) -> None:
         """rclpy thread -> asyncio loop. The ONLY crossing point in the file."""

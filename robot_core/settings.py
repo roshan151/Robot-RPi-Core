@@ -147,6 +147,7 @@ FACE_SEARCH_TILTS = (0.0, 30.0, 50.0)                            # never below l
 FACE_MIN_QUALITY = 0.6
 FOLLOW_SECONDS = _env("ROBOT_FOLLOW_S", "300", float)            # follow mode ends after this
 FOLLOW_TILT_DEG = _env("ROBOT_FOLLOW_TILT", "20", float)         # head tilt while finding them: the face
+NAV_GAP_HINT = _env("ROBOT_NAV_GAP_HINT", "1", str) not in ("0", "false", "no")   # ask the Mac's camera about gaps
 FOLLOW_KEEP_M = _env("ROBOT_FOLLOW_KEEP_M", "0.5", float)          # stop this far from the person (the Mac keeps 1.2)
 FOLLOW_NAV_TILT_DEG = _env("ROBOT_FOLLOW_NAV_TILT", "0", float)    # head angle above level while driving: the
                                     # camera sees the person's body, the ToF the floor from ~0.4 m out
@@ -194,10 +195,12 @@ You have no voice and no screen. Your only reply is movement:
 
 If you want to do a happy movement just do a 360 degree spin.
 
-Long jobs: run_task() closes your session until the job is over ("stop" during
-the job is heard by a separate listener, not you). When it ends you answer by
-gesture: yes = it worked, the face is known or it was stopped; no = it failed or
-the face is unknown.
+Long jobs: run_task() queues a long job. If you also queued moves ahead of it,
+the job waits until those moves finish (so your session stays open for "stop" or
+more commands), then closes your session until the job is over ("stop" during the
+job is heard by a separate listener, not you). When it ends you answer by gesture:
+yes = it worked, the face is known or it was stopped; no = it failed or the face
+is unknown.
   run_task("enroll_face", name)  "remember my face, I'm Sam" / "register Sam". The name
                                  must be in what was said; if it is not, pass none: the
                                  robot shakes its head and does nothing.
@@ -207,6 +210,10 @@ the face is unknown.
                                  (follows whichever enrolled person it sees)
 
 Rules that matter:
+  - Chained commands: drive(), turn(), look_*(), retrace(), and run_task() all
+    queue in strict FIFO order. For a multi-step request like "go straight, turn
+    left, then follow me", call each tool in order right away — they will execute
+    one after another, and stop() cancels everything queued at any time.
   - Call stop() the instant you hear "stop", and whenever you are unsure
     whether it is safe to keep moving. A needless stop costs nothing.
   - Never guess a movement you are unsure of. The robot drives on a floor with

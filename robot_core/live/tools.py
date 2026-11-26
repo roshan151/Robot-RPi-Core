@@ -29,9 +29,11 @@ action clients. That is the entire point of the seam.
 from __future__ import annotations
 
 import logging
+import queue
 import re
 import subprocess
 import threading
+from collections import deque
 from typing import Any, Callable, Dict, Optional, Tuple
 
 from robot_core import robot_log, settings, status
@@ -43,6 +45,7 @@ logger = logging.getLogger(__name__)
 
 TASKS = ("enroll_face", "match_face", "explore", "follow")
 SHUTDOWN_DELAY_S = 4.0
+MAX_COMMAND_QUEUE = 20
 
 
 def _system_poweroff() -> None:
@@ -190,12 +193,15 @@ def declarations() -> list:
         types.FunctionDeclaration(
             name="run_task",
             description=(
-                "Start a long job. Your session closes now, so you cannot hear "
-                "'stop' until it ends; it reopens afterwards and you answer by "
-                "gesture (yes = worked / face known, no = failed / face unknown). "
-                "'enroll_face' learns the face in front of the camera under "
-                "`name` (required). 'match_face' checks whether that face is "
-                "known. 'explore' maps the house and photographs every plant. "
+                "Queue a long job. If drives/turns are already queued or running, "
+                "the job waits in order until they finish (your session stays open "
+                "until then so 'stop' or more commands still work). Once the job "
+                "starts, your session closes until it ends; it reopens afterwards "
+                "and you answer by gesture (yes = worked / face known, no = failed / "
+                "face unknown). 'enroll_face' learns the face in front of the camera "
+                "under `name` (required). 'match_face' checks whether that face is "
+                "known. 'explore' maps the house and photographs every plant "
+                "(`mode` 'continue' when told to continue or finish the map). "
                 "'follow' follows an enrolled person: `name` if one was said, "
                 "empty for 'follow me'."
             ),
@@ -207,6 +213,10 @@ def declarations() -> list:
                                      "-> 'Roshan', or to follow, e.g. 'follow Roshan' -> 'Roshan'. "
                                      "Required for enroll_face. Never guess or make "
                                      "one up: if none was said, leave it empty."},
+                mode={"type": "STRING",
+                      "description": "explore only: 'continue' when the operator says to continue or "
+                                     "finish the map (stop if the robot is not on a known map); "
+                                     "otherwise leave it empty."},
             ),
         ),
     ]
@@ -230,6 +240,13 @@ class RobotTools:
         self._head = head                    # look_up / look_down; None = no head
         self._gestures = Gesturer(motion, head)
         self._history: list = []             # (kind, signed amount) of what was commanded: drive/turn/tilt/pan
+        # Single FIFO command queue so chained voice commands ("go straight, turn left,
+        # then follow me") execute strictly in order — moves, head looks, retraces, and
+        # long tasks alike — while every tool call still returns immediately.
+        self._lock = threading.RLock()
+        self._cmd_q: deque = deque()
+        self._active_move: Optional[Tuple[str, float]] = None
+        self._active_id: Optional[Any] = None
         # (task, name) -> success; blocking, run by the agent with the session
         # closed. `pending` is how run_task hands a job to the agent.
         self.task_runner = task_runner
@@ -238,6 +255,127 @@ class RobotTools:
     @property
     def motion(self) -> MotionBackend:
         return self._motion
+
+    def has_queued(self) -> bool:
+        """True while a queued move, task, or pending follow-up command is active."""
+        with self._lock:
+            return bool(self._active_move is not None or self.pending is not None or self._cmd_q)
+
+    def clear_queue(self, reason: str = "", *, reset_active: bool = False) -> int:
+        """Drop every unstarted command from the FIFO queue (e.g. after stop or failure)."""
+        with self._lock:
+            dropped = len(self._cmd_q)
+            self._cmd_q.clear()
+            if reset_active:
+                self._active_move = None
+                self._active_id = None
+            if dropped:
+                robot_log.event("voice.queue_clear", dropped=dropped, reason=reason or "cleared")
+            return dropped
+
+    def pop_next_task(self) -> bool:
+        """If the very next queued command is a long task, promote it straight to `pending`
+        so back-to-back tasks run without a pointless Live reconnect in between."""
+        with self._lock:
+            if self._active_move is None and self.pending is None and self._cmd_q and self._cmd_q[0][0] == "task":
+                _, task, name = self._cmd_q.popleft()
+                self.pending = (task, name)
+                self._history.clear()
+                return True
+            return False
+
+    def advance(self) -> None:
+        """Start queued commands in FIFO order until a blocking move or task takes the floor."""
+        with self._lock:
+            while self._active_move is None and self.pending is None and self._cmd_q:
+                item = self._cmd_q.popleft()
+                kind = item[0]
+                if kind == "drive":
+                    _, meters, record = item
+                    r = self._motion.drive(meters)
+                    if not r.get("ok"):
+                        self.clear_queue(f"drive {meters:g} refused: {r.get('error', 'error')}")
+                        return
+                    if record:
+                        self._record("drive", meters)
+                    self._active_move = ("drive", meters)
+                    q_id = r.get("queued")
+                    self._active_id = q_id if not isinstance(q_id, bool) else None
+                    return
+                if kind == "turn":
+                    _, degrees, record = item
+                    r = self._motion.turn(degrees)
+                    if not r.get("ok"):
+                        self.clear_queue(f"turn {degrees:g} refused: {r.get('error', 'error')}")
+                        return
+                    if record:
+                        self._record("turn", degrees)
+                    self._active_move = ("turn", degrees)
+                    q_id = r.get("queued")
+                    self._active_id = q_id if not isinstance(q_id, bool) else None
+                    return
+                if kind == "look":
+                    _, degrees, axis, record = item
+                    r = self._exec_look(degrees, axis, record=record)
+                    if not r.get("ok"):
+                        self.clear_queue(f"look {axis} failed: {r.get('error', 'error')}")
+                        return
+                    continue
+                if kind == "look_straight":
+                    r = self._exec_look_straight()
+                    if not r.get("ok"):
+                        self.clear_queue(f"look_straight failed: {r.get('error', 'error')}")
+                        return
+                    continue
+                if kind == "retrace":
+                    _, steps = item
+                    self._expand_retrace_front(steps)
+                    continue
+                if kind == "task":
+                    _, task, name = item
+                    self.pending = (task, name)
+                    self._history.clear()
+                    return
+
+    def on_motion_result(self, event: Dict[str, Any]) -> str:
+        """Handle a completed motion event from the backend and advance or clear the queue."""
+        with self._lock:
+            if self._active_move is None:
+                return ""
+            ev_id = event.get("id")
+            if self._active_id is not None and ev_id is not None and ev_id != self._active_id:
+                return ""
+            self._active_move = None
+            self._active_id = None
+            st = str(event.get("status", "")).lower()
+            if st in ("done", "finished", "ok"):
+                self.advance()
+                return ""
+            dropped = self.clear_queue(f"move {st or 'failed'}")
+            return f"cancelled {dropped} queued command(s)" if dropped else ""
+
+    def poll_queue(self) -> None:
+        """Keep the queue moving for backends without an async `results` queue (LocalMotion / mocks)
+        and trigger RosMotion's lost-result timeout watchdog."""
+        if getattr(self._motion, "results", None) is not None:
+            # RosMotion: busy() pushes a 'timeout' event onto results if a goal ever went silent;
+            # on_motion_result() from _pump_results is the single race-free advancement path.
+            self._motion.busy()
+            return
+        executor = getattr(self._motion, "executor", None)
+        if executor is not None:
+            while True:
+                try:
+                    ev = executor.events.get_nowait()
+                except queue.Empty:
+                    break
+                self.on_motion_result({"id": ev.job_id, "op": ev.op, "value": ev.value, "status": ev.status})
+            return
+        with self._lock:
+            if self._active_move is not None and not self._motion.busy():
+                self._active_move = None
+                self._active_id = None
+                self.advance()
 
     # ------------------------------------------------------------------ #
 
@@ -294,31 +432,64 @@ class RobotTools:
                              f"{settings.MAX_DRIVE_METERS} m limit"}
         if abs(m) < 1e-3:
             return {"ok": True, "note": "zero distance, nothing to do"}
-        r = self._motion.drive(m)
-        if r.get("ok"):
-            self._record("drive", m)
-        return r
+        with self._lock:
+            if not self.has_queued():
+                r = self._motion.drive(m)
+                if r.get("ok"):
+                    self._record("drive", m)
+                    self._active_move = ("drive", m)
+                    q_id = r.get("queued")
+                    self._active_id = q_id if not isinstance(q_id, bool) else None
+                return r
+            if len(self._cmd_q) >= MAX_COMMAND_QUEUE:
+                return {"ok": False, "error": f"command queue full ({MAX_COMMAND_QUEUE} pending)"}
+            self._cmd_q.append(("drive", m, True))
+            return {"ok": True, "queued": True, "op": "drive", "value": m,
+                    "queue_depth": len(self._cmd_q)}
 
     def _turn(self, degrees: float) -> Dict[str, Any]:
         d = float(degrees)
         if abs(d) < 0.5:
             return {"ok": True, "note": "zero angle, nothing to do"}
-        r = self._motion.turn(d)
-        if r.get("ok"):
-            self._record("turn", d)
+        with self._lock:
+            if not self.has_queued():
+                r = self._motion.turn(d)
+                if r.get("ok"):
+                    self._record("turn", d)
+                    self._active_move = ("turn", d)
+                    q_id = r.get("queued")
+                    self._active_id = q_id if not isinstance(q_id, bool) else None
+                return r
+            if len(self._cmd_q) >= MAX_COMMAND_QUEUE:
+                return {"ok": False, "error": f"command queue full ({MAX_COMMAND_QUEUE} pending)"}
+            self._cmd_q.append(("turn", d, True))
+            return {"ok": True, "queued": True, "op": "turn", "value": d,
+                    "queue_depth": len(self._cmd_q)}
+
+    def _exec_look(self, degrees: float, axis: str = "tilt", *, record: bool = True) -> Dict[str, Any]:
+        if self._head is None:
+            return {"ok": False, "error": "no head fitted"}
+        d = float(degrees)
+        sign = 1.0 if d >= 0 else -1.0
+        r = self._head.look(sign * min(abs(d), 90.0), axis)    # limits are enforced by the gimbal
+        if r.get("ok") and record:
+            self._record(axis, r["delta"])
         return r
 
     def _look(self, degrees: float, axis: str = "tilt") -> Dict[str, Any]:
         if self._head is None:
             return {"ok": False, "error": "no head fitted"}
         d = float(degrees)
-        sign = 1.0 if d >= 0 else -1.0
-        r = self._head.look(sign * min(abs(d), 90.0), axis)    # limits are enforced by the gimbal
-        if r.get("ok"):
-            self._record(axis, r["delta"])
-        return r
+        with self._lock:
+            if not self.has_queued():
+                return self._exec_look(d, axis, record=True)
+            if len(self._cmd_q) >= MAX_COMMAND_QUEUE:
+                return {"ok": False, "error": f"command queue full ({MAX_COMMAND_QUEUE} pending)"}
+            self._cmd_q.append(("look", d, axis, True))
+            return {"ok": True, "queued": True, "op": f"look_{axis}", "degrees": d,
+                    "queue_depth": len(self._cmd_q)}
 
-    def _look_straight(self) -> Dict[str, Any]:
+    def _exec_look_straight(self) -> Dict[str, Any]:
         if self._head is None:
             return {"ok": False, "error": "no head fitted"}
         r = self._head.center()
@@ -327,36 +498,65 @@ class RobotTools:
                 self._record(axis, delta)
         return r
 
+    def _look_straight(self) -> Dict[str, Any]:
+        if self._head is None:
+            return {"ok": False, "error": "no head fitted"}
+        with self._lock:
+            if not self.has_queued():
+                return self._exec_look_straight()
+            if len(self._cmd_q) >= MAX_COMMAND_QUEUE:
+                return {"ok": False, "error": f"command queue full ({MAX_COMMAND_QUEUE} pending)"}
+            self._cmd_q.append(("look_straight",))
+            return {"ok": True, "queued": True, "op": "look_straight",
+                    "queue_depth": len(self._cmd_q)}
+
     def _record(self, kind: str, amount: float) -> None:
         if abs(amount) > 1e-3:
             self._history.append((kind, amount))
             del self._history[:-50]                         # keep the last 50
 
-    def _retrace(self, steps: int = 1) -> Dict[str, Any]:
-        """Undo the newest `steps` commands, newest first, by commanding the opposite.
-        Open loop, like the original moves. Goes straight to the backend, so the undo
-        is not itself recorded: asking again goes one step further back."""
+    def _expand_retrace_front(self, steps: int) -> int:
         n = min(max(int(steps), 1), len(self._history))
         if not n:
-            return {"ok": True, "retraced": 0, "note": "nothing to retrace"}
+            return 0
+        rev = []
         for _ in range(n):
             kind, amount = self._history.pop()
             if kind == "drive":
-                self._motion.drive(-amount)
+                rev.append(("drive", -amount, False))
             elif kind == "turn":
-                self._motion.turn(-amount)
+                rev.append(("turn", -amount, False))
             elif self._head is not None:
-                self._head.look(-amount, kind)
-        return {"ok": True, "retraced": n, "remaining": len(self._history)}
+                rev.append(("look", -amount, kind, False))
+        for item in reversed(rev):
+            self._cmd_q.appendleft(item)
+        return len(rev)
+
+    def _retrace(self, steps: int = 1) -> Dict[str, Any]:
+        """Undo the newest `steps` commands, newest first, by commanding the opposite.
+        Open loop, like the original moves. If commands are already queued ahead of it,
+        retrace waits its turn so chained commands ('go straight, turn left, retrace 2')
+        work in order."""
+        s = max(int(steps), 1)
+        with self._lock:
+            if self.has_queued():
+                if len(self._cmd_q) >= MAX_COMMAND_QUEUE:
+                    return {"ok": False, "error": f"command queue full ({MAX_COMMAND_QUEUE} pending)"}
+                self._cmd_q.append(("retrace", s))
+                return {"ok": True, "queued": True, "op": "retrace", "steps": s,
+                        "queue_depth": len(self._cmd_q)}
+            n = self._expand_retrace_front(s)
+            if not n:
+                return {"ok": True, "retraced": 0, "note": "nothing to retrace"}
+            self.advance()
+            return {"ok": True, "retraced": n, "remaining": len(self._history)}
 
     def _stop(self) -> Dict[str, Any]:
         """Empty the queue and interrupt the move already running.
 
-        Inline and out of band, all the way down: the backend clears every
-        pending job and writes the brake straight to the serial port, bypassing
-        the command lock the running move is holding. Anything that waited its
-        turn here would arrive after the move it was meant to cancel had
-        already finished.
+        Inline and out of band, all the way down: clears every queued command
+        (moves, looks, and tasks) and writes the brake straight to the serial
+        port, bypassing the command lock the running move is holding.
         """
         if self._shutdown_timer is not None:                # "stop" also cancels a pending power-off
             self._shutdown_timer.cancel()
@@ -364,15 +564,16 @@ class RobotTools:
             status.task("voice")
             robot_log.event("power.shutdown", logging.WARNING, state="cancelled")
         self._gestures.cancel()                              # a dance sends its steps one by one: no more
+        with self._lock:
+            dropped = len(self._cmd_q) + (1 if self.pending is not None else 0)
+            self._cmd_q.clear()
+            self._active_move = None
+            self._active_id = None
+            self.pending = None
         r = self._motion.stop()
-        # Cancelled moves never ran, so they are not part of the path taken (approximate
-        # for the one in flight).
-        todo = len(r.get("cancelled") or [])
-        for i in range(len(self._history) - 1, -1, -1):
-            if todo and self._history[i][0] in ("drive", "turn"):
-                del self._history[i]
-                todo -= 1
-        return r
+        if dropped:
+            robot_log.event("voice.queue_clear", dropped=dropped, reason="stop")
+        return {**r, "dropped_queued": dropped}
 
     def _shutdown(self) -> Dict[str, Any]:
         """Brake, park the head, then power the Pi off after a short delay so
@@ -380,7 +581,7 @@ class RobotTools:
         SD card is closed properly instead of being cut off."""
         if self._shutdown_timer is not None:
             return {"ok": True, "note": "already shutting down"}
-        self._motion.stop()
+        self._stop()
         if self._head is not None:
             self._head.release(hold=False)       # park, then stop the servo pulses: the Pi is about to drop the pins
         status.task("shutting down")
@@ -390,16 +591,15 @@ class RobotTools:
         self._shutdown_timer.start()
         return {"ok": True, "note": f"powering off in {SHUTDOWN_DELAY_S:.0f} seconds; stop cancels"}
 
-    def _run_task(self, task: str, name: str = "") -> Dict[str, Any]:
-        """Queue a job for the agent. Does not run it: the agent closes the Live
-        session first, so the job never holds the receive loop or the microphone."""
+    def _run_task(self, task: str, name: str = "", mode: str = "") -> Dict[str, Any]:
+        """Queue a job for the agent. If moves are running or queued ahead of it,
+        the task waits in FIFO order until they finish (the Live session stays open
+        so 'stop' or more commands still work). Otherwise it starts immediately."""
         task = str(task).lower().strip()
         if task not in TASKS:
             return {"ok": False, "error": f"unknown task {task!r}; expected one of {', '.join(TASKS)}"}
         if self.task_runner is None:
             return {"ok": False, "error": "tasks are not available in this build"}
-        if self.pending is not None:
-            return {"ok": False, "error": "a task is already starting"}
         # The name becomes a folder and a gallery label on the Mac: first word, letters only.
         name = re.sub(r"[^A-Za-z0-9_-]", "", (str(name).split() or [""])[0])[:32]
         if task == "enroll_face" and not name:
@@ -407,9 +607,19 @@ class RobotTools:
             jobs = self._gestures.play("no")
             return {"ok": False, "gestured": jobs is not None,
                     "error": "enroll_face needs the person's name and none was given; task not started"}
-        self.pending = (task, name)
-        self._history.clear()                # the task moves the robot: the old path no longer leads back
-        return {"ok": True, "starting": task, "note": "session closing; it reopens when the task ends"}
+        if task == "explore":                # the explorer's mode rides in the name slot
+            name = "continue" if str(mode).lower().strip() == "continue" else "auto"
+        with self._lock:
+            if not self.has_queued():
+                self.pending = (task, name)
+                self._history.clear()        # the task moves the robot: the old path no longer leads back
+                return {"ok": True, "starting": task, "note": "session closing; it reopens when the task ends"}
+            if len(self._cmd_q) >= MAX_COMMAND_QUEUE:
+                return {"ok": False, "error": f"command queue full ({MAX_COMMAND_QUEUE} pending)"}
+            ahead = len(self._cmd_q) + (1 if self._active_move is not None else 0) + (1 if self.pending is not None else 0)
+            self._cmd_q.append(("task", task, name))
+            return {"ok": True, "queued": True, "task": task, "queue_depth": len(self._cmd_q),
+                    "note": f"queued after {ahead} pending command(s); session stays open until moves finish"}
 
     def _answer(self, value: str) -> Dict[str, Any]:
         v = str(value).lower().strip()
@@ -421,6 +631,8 @@ class RobotTools:
             return {"ok": False,
                     "error": f"unknown answer {value!r}; expected one of "
                              f"{', '.join(sorted(VOCABULARY))}"}
+        if self.has_queued() and not settings.GESTURE_TEXT_ONLY:
+            return {"ok": True, "gestured": False, "note": "busy with queued commands"}
         # Gesturer drops the gesture if the robot is already moving: motion is
         # both the actuator and the display, and the actuator wins.
         jobs = self._gestures.play(v)

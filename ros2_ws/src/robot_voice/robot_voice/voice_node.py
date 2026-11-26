@@ -42,7 +42,7 @@ from robot_display.link import connect
 from robot_voice.ros_bridge import RosMotion
 
 
-def _explore() -> bool:
+def _explore(mode: str = "auto") -> bool:
     """Run explore mode as a child process and wait for it. The drivetrain is
     already up (command mode), so this is just the explorer node; it exits by
     itself when the mission ends, and non-zero if it could not run. A cancelled
@@ -58,7 +58,8 @@ def _explore() -> bool:
             status.result("explore needs ToF")
             return False
     proc = subprocess.Popen(["ros2", "run", "robot_explore", "explorer_node",
-                             "--ros-args", "--params-file", params])
+                             "--ros-args", "--params-file", params,
+                             "-p", f"mode:={'continue' if mode == 'continue' else 'auto'}"])
     try:
         asked = False
         while proc.poll() is None:
@@ -107,7 +108,7 @@ def _run_task(task: str, name: str) -> bool:
     (which owns it during a mission) never finds it taken."""
     head_look.release()                      # the task opens the head itself
     if task == "explore":
-        return _explore()
+        return _explore(name)                # name = auto | continue (live/tools.py)
     import yaml
     from robot_core import face_tasks
     from robot_core.sensors.camera import Camera

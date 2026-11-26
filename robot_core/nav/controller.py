@@ -26,6 +26,7 @@ come in through the reflex as a trip.
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 import math
 import statistics
@@ -49,6 +50,12 @@ log = logging.getLogger(__name__)
 Pose = Tuple[float, float, float]
 
 GLOBAL_FRESH_S = 3.0            # the Mac's waypoints are used this long after they came
+# Gap hint (Mac /v1/nav/gap): blocked toward the target, the camera's ToF-scaled depth may show the gap the
+# ToF's 7.5 deg zones narrowed. Only a reason to TRY it: tighter margins, slowly, the reflex armed.
+GAP_CONE_DEG = 25.0             # asked only for a target this near straight ahead
+GAP_NEED_M = 0.30               # the opening must be this wide (the body is 0.25 m)
+GAP_FRESH_S, GAP_RETRY_S = 2.0, 1.0   # a verdict counts this long; ask again no sooner than this
+SQUEEZE_MPS = 0.10              # through a confirmed gap
 LOCAL_EVERY_S = 0.5             # the Pi's own Theta* on the costmap, when they are not
 STUCK_WINDOW_S = 0.8            # over this long the encoders went STUCK_MIN_ODO_M or more...
 STUCK_MIN_ODO_M = 0.06
@@ -73,6 +80,7 @@ PIVOT_FOCUS_W = 0.55            # turn rate pivoting while the camera is on some
 PIVOT_FREE_W = 1.0              # ...and with nobody to keep in frame (0.8 took 3.5 s to turn round; 1.2 broke trap and sudden)
                                 # and the person was missed 9 frames in 16 at a doorway (Nov 19)
 NO_PROGRESS_S, NO_PROGRESS_M = 4.0, 0.05   # "driving" this long without moving this far: wedged
+TURN_HOLD_S = 1.5               # held still this long because turning would clip a mark: clear under the body, back off
 PLAN_EXTRA_M = 0.025            # extra room asked beyond DWA radius + margin (the planner adds its own 0.05, else 0.03)
 SILL_RISE_DEG = 2.5             # a drivetrain trip with the nose this far above the floor's level in the last 1 s,
 SILL_SLOW_MPS, SILL_SLOW_S = 0.10, 3.0   # and nothing seen just ahead: a door sill. Go again this slowly, this long
@@ -195,6 +203,12 @@ class LocalNav:
         self.local_wps: List[Tuple[float, float]] = []     # the Pi's own (local Theta*)
         self._local_t = -1e9
         self._local_busy = False
+        self.gap_check = None        # (bearing_deg + left, dist_m, need_m) -> {"ok", "width_m", ...}: VisionClient.nav_gap
+        self._gap: Optional[dict] = None
+        self._gap_busy = False
+        self._hold_since: Optional[float] = None   # since when the turn check holds it still (see TURN_HOLD_S)
+        self._squeeze_params = dataclasses.replace(self.params, margin_m=0.0, side_pad_m=0.01, nose_clear_m=0.12,
+                                                   max_v=SQUEEZE_MPS)
         self.state, self.detail, self.source = "idle", "", "none"
         self._plan_t, self._planning = 0.0, False
         self._stuck = StuckWatch()
@@ -434,6 +448,11 @@ class LocalNav:
                 target, stop_at = self._via[0], 0.0
         res = dwa.plan((here[0], here[1], here[2], v_meas, w_meas), target, self.costmap.clearance,
                        self.params, stop_at_m=stop_at)
+        squeeze = None
+        if res.blocked and self.gap_check is not None:
+            squeeze = self._try_gap(now, here, target, (here[0], here[1], here[2], v_meas, w_meas), stop_at)
+            if squeeze is not None:
+                res = squeeze
         v, w = res.v, res.w
         tb = dwa.wrap(math.atan2(target[1] - here[1], target[0] - here[0]) - here[2])   # the way, from here
         if abs(tb) > math.radians(28.0) and not res.blocked:
@@ -459,6 +478,10 @@ class LocalNav:
                     if ew is not None:
                         self._start_back(here, now, TURN_BACK_M, ew, mode="arc")
             self.state, self.detail = "blocked", "no safe arc: turning toward the way" if w else "no safe arc: backing off"
+        elif squeeze is not None:
+            v = min(v, SQUEEZE_MPS)
+            self.state, self.detail = "squeezing", f"camera sees a {self._gap['width_m']:.2f} m gap: trying it"
+            self._watch_progress(now, here, dist, tb)
         else:
             self.state, self.detail = "driving", f"{dist:.2f} m to go"
             self._watch_progress(now, here, dist, tb)
@@ -482,8 +505,13 @@ class LocalNav:
                 if now < self._slow_until:
                     v = min(v, SILL_SLOW_MPS)
             else:
-                # In a doorway or pass, do not trigger repeated back-off oscillations if heading towards the path
-                if abs(tb) > math.radians(45.0):
+                # In a doorway or pass, do not trigger repeated back-off oscillations if heading towards the path;
+                # but never hold still for long (Nov 25 follow: frozen 6 s and 16 s, "driving" at 0, 0)
+                held = self._hold_since is not None and now - self._hold_since >= TURN_HOLD_S
+                self._hold_since = self._hold_since or now
+                if held:
+                    self._unfreeze(here)
+                if abs(tb) > math.radians(45.0) or held:
                     if self._room_behind(here, 0.1):
                         self._start_back(here, now, TURN_BACK_M)
                     else:
@@ -491,6 +519,8 @@ class LocalNav:
                         if ew is not None:
                             self._start_back(here, now, TURN_BACK_M, ew, mode="arc")
                 v = w = 0.0
+        if v > 0.02 or abs(w) > 0.02:
+            self._hold_since = None
         self._watch_rules(now, here, v, w)
         if self._watch_turn(now, here, v, w):
             v = w = 0.0
@@ -573,6 +603,59 @@ class LocalNav:
             return True
         return float(cl.min()) >= self.params.radius_m / math.sqrt(2.0) + 0.02 and \
             self.costmap.seen_free((here[0], here[1], here[2] + math.pi), 0.2 + m)
+
+    def _try_gap(self, now: float, here: Pose, target, state, stop_at: float):
+        """Blocked: the costmap's 7.5 deg ToF zones may have narrowed a doorway. With a fresh camera verdict
+        (Mac, /v1/nav/gap) that an opening at least GAP_NEED_M wide is there, plan again with the body's margins
+        tightened: that plan, or None. Without one, ask in the background (never holds this tick up). Nothing is
+        cleared off the costmap: a real obstacle still blocks the tightened plan, and the reflex still brakes."""
+        bearing = math.atan2(target[1] - here[1], target[0] - here[0])          # odometry frame
+        tb = dwa.wrap(bearing - here[2])
+        if abs(tb) > math.radians(GAP_CONE_DEG):
+            return None
+        g = self._gap
+        if g is not None and now - g["t"] < GAP_FRESH_S and math.dist(g["at"], here[:2]) < 0.4 \
+                and abs(dwa.wrap(g["bearing"] - bearing)) < math.radians(10.0):
+            if not g.get("ok"):
+                return None
+            res = dwa.plan(state, target, self.costmap.clearance, self._squeeze_params, stop_at_m=stop_at)
+            return None if res.blocked else res
+        if not self._gap_busy and (g is None or now - g["t"] > GAP_RETRY_S):
+            self._gap_busy = True
+            threading.Thread(target=self._ask_gap, args=(now, tuple(here), bearing, tb), name="nav-gap",
+                             daemon=True).start()
+        return None
+
+    def _ask_gap(self, now: float, here: Pose, bearing: float, tb: float) -> None:
+        dist = 0.8                                        # how far ahead the tight part is: the first spot on the
+        for k in range(8, 31):                            # line to the target too tight for the body and its margin
+            d = 0.05 * k
+            if float(self.costmap.clearance([here[0] + d * math.cos(bearing)], [here[1] + d * math.sin(bearing)])[0]) \
+                    < self.params.body_radius_m + self.params.margin_m:
+                dist = d
+                break
+        try:
+            res = self.gap_check(math.degrees(tb), dist, GAP_NEED_M) or {}
+        except Exception as exc:                          # noqa: BLE001 — no Mac, no hint: stay cautious
+            res = {"ok": False, "why": f"{type(exc).__name__}: {exc}"}
+        self._gap = {**res, "t": now, "at": here[:2], "bearing": bearing, "dist": dist}
+        if res.get("ok"):
+            log.info("nav: camera sees a %.2f m gap %.1f m ahead at %.0f deg: trying it", res.get("width_m", 0.0),
+                     dist, math.degrees(tb))
+        self._gap_busy = False
+
+    def _unfreeze(self, here: Pose) -> None:
+        """Held still TURN_HOLD_S by the turn check. A felt trip marks a 0.5 m line 0.2 m ahead of where the robot
+        felt it; after a slip, a turn or odometry drift that mark can end up at or under the body (Nov 25 follow:
+        5-16 cm from its centre), and no forward arc and no turn are then allowed until it fades. Clear the circle
+        its corners sweep turning on the spot: anything real that close was in the ToF's view or the reflex's (it
+        brakes at 0.25 m) and is marked again by the next grid; the felt trip itself stays on record in
+        `failures` (a second bump there joins it into a line). Then the caller backs off as for a target far
+        off-heading."""
+        self._hold_since = None
+        self.costmap.clear_near(tuple(here[:2]), self.params.radius_m + self.costmap.res * 0.4 + 0.015)
+        self._plan_t, self._local_t = 0.0, -1e9
+        rules.broke("turn_hold", at=[round(here[0], 2), round(here[1], 2)])
 
     def _turn_hits(self, here, w: float, dt: float = 0.4) -> bool:
         """Would turning on the spot at w for dt sweep the square footprint into an occupied cell?"""
