@@ -49,6 +49,12 @@ class RollingCostmap:
     FAR = 9.0                       # "no obstacle anywhere near"
     LOW = 0.065                     # tan(half a zone): how far a zone's lower edge is below its centre, per metre
     SHARP_M = 0.6                   # hits nearer than this count in full; further, by SHARP_M / d (zone width)
+    DROP_FRAMES = 5                 # a bottom-row zone with no return this many grids in a row: a drop, no-go
+    DROP_MAX_D = 1.0                # ...counted only where that ray meets the floor this close (further out the
+    #                                 floor is hit at a glancing angle and glossy wood returns nothing either)
+    DROP_BELOW_M = 0.25             # a bottom-row reading this far below the floor counts as a miss too (stairs
+    #                                 down: the lower step is in range). Deep, as the ToF is not that accurate and
+    #                                 uneven floor must not read as drops
 
     def __init__(self, size_m: float = 4.0, res_m: float = 0.05, tau_s: float = 60.0,
                  recentre_m: float = 0.5, flat_tol_m: float = 0.03, body_m: float = 0.24) -> None:
@@ -60,6 +66,8 @@ class RollingCostmap:
         self._t: Optional[float] = None
         self._field: Optional[np.ndarray] = None
         self._lock = threading.RLock()
+        self._miss = [0] * 8                                  # per bottom-row column: grids in a row with no return
+        self.drops: set = set()                               # world cells (ix, iy at res_m) that are drops: no-go
 
     # ------------------------------------------------------------------ frame
 
@@ -161,8 +169,46 @@ class RollingCostmap:
                 v = self.lo.reshape(-1)
                 idx = np.fromiter(hit_w, int)
                 v[idx] = np.minimum(self.TOP, v[idx] + self.HIT * np.fromiter(hit_w.values(), float))
+            self._mark_drops(pose, zones, world, sensor_xy)
             self._field = None
         return len(hx)
+
+    def _mark_drops(self, pose, zones, world, sensor_xy) -> None:
+        """Drop guard: a bottom-row zone (row 7) whose ray should meet the floor within DROP_MAX_D and
+        returns nothing (or reads DROP_BELOW_M below the floor), DROP_FRAMES grids in a row, marks that floor
+        spot a drop: occupied, not cleared
+        by rays passing over it (they prove nothing about the floor below), only by floor seen in it."""
+        key = lambda wx, wy: (int(math.floor(wx / self.res)), int(math.floor(wy / self.res)))   # noqa: E731
+        bottom = {c: (x, y, h, d) for r, c, x, y, h, d in zones if r == 7}
+        for col in range(len(self._miss)):
+            z = bottom.get(col)
+            x = y = None
+            if z and z[2] is None and z[3] <= self.DROP_MAX_D:
+                x, y = z[0], z[1]                                       # where the ray should have met the floor
+            elif z and z[2] is not None and z[2] < -self.DROP_BELOW_M:  # met something far below the floor: mark
+                sx, sy = sensor_xy                                      # where the ray passed floor height (the edge
+                fall = math.sqrt(max(z[3] ** 2 - math.hypot(z[0] - sx, z[1] - sy) ** 2, 1e-6))   # side, not beyond)
+                f = min(1.0, max(0.0, (z[2] + fall) / fall))            # sensor height over its fall to the hit
+                if math.hypot(z[0] - sx, z[1] - sy) * f <= self.DROP_MAX_D:
+                    x, y = sx + (z[0] - sx) * f, sy + (z[1] - sy) * f
+            self._miss[col] = self._miss[col] + 1 if x is not None else 0
+            if self._miss[col] >= self.DROP_FRAMES:
+                wx, wy = world([x], [y])
+                self.drops.add(key(float(wx[0]), float(wy[0])))
+        if not self.drops:
+            return
+        for _, _, x, y, h, _ in zones:                                  # floor seen there after all
+            if h is not None and abs(h) <= self.flat_tol:
+                wx, wy = world([x], [y])
+                self.drops.discard(key(float(wx[0]), float(wy[0])))
+        for k in list(self.drops):
+            cx, cy = (k[0] + 0.5) * self.res, (k[1] + 0.5) * self.res
+            if math.hypot(cx - pose[0], cy - pose[1]) > self.size:      # out of the window: forgotten
+                self.drops.discard(k)
+                continue
+            ix, iy = self._cells(cx, cy)
+            if self._inside(ix, iy):
+                self.lo[ix, iy] = self.TOP
 
     def add_obstacle(self, pose: Sequence[float], pts_base: Iterable[XY], strength: float = TOP) -> None:
         """Something found without seeing it (a bump, being stuck): occupied at once."""
