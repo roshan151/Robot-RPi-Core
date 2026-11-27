@@ -574,8 +574,16 @@ class LiveAgent:
                 if results is not None:
                     tasks.append(asyncio.create_task(
                         self._pump_results(session, results), name="results"))
-                done, pending = await asyncio.wait(
-                    tasks, return_when=asyncio.FIRST_COMPLETED)
+                try:
+                    done, pending = await asyncio.wait(
+                        tasks, return_when=asyncio.FIRST_COMPLETED)
+                except asyncio.CancelledError:
+                    # Cancelled from outside (the cancel listener when a task ends): take the
+                    # pumps down with us, or they die on the closed socket unretrieved.
+                    for task in tasks:
+                        task.cancel()
+                    await asyncio.gather(*tasks, return_exceptions=True)
+                    raise
                 for task in pending:
                     task.cancel()
                 if pending:
@@ -795,8 +803,14 @@ def run_live_agent(motion, task_runner=None, head=None) -> None:
     """
     global _tools
     tools = _tools = RobotTools(motion, task_runner, head)
+    # RosMotion pushes move results onto the loop it was built with (call_soon_threadsafe):
+    # run the session on that same loop, or the results never arrive and the queue stalls.
+    loop = getattr(motion, "_loop", None)
     try:
-        asyncio.run(_run_supervised(tools))
+        if loop is not None:
+            loop.run_until_complete(_run_supervised(tools))
+        else:
+            asyncio.run(_run_supervised(tools))
     except KeyboardInterrupt:
         robot_log.event("session.stop", reason="keyboard interrupt")
     finally:
