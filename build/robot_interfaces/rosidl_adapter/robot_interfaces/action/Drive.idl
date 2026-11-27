@@ -1,0 +1,43 @@
+// generated from rosidl_adapter/resource/action.idl.em
+// with input from robot_interfaces/action/Drive.action
+// generated code does not contain a copyright notice
+
+
+module robot_interfaces {
+  module action {
+    @verbatim (language="comment", text=
+      "Drive in a straight line, encoder-counted. The firmware stops the move when" "\n"
+      "the tick target is reached, so distance holds across battery level and floor.")
+    struct Drive_Goal {
+      @verbatim (language="comment", text=
+        "negative reverses")
+      double meters;
+
+      @verbatim (language="comment", text=
+        "gesture goals are REJECTED when busy, never queued")
+      @default (value=FALSE)
+      boolean gesture;
+
+      @verbatim (language="comment", text=
+        "0 = use the node's configured default")
+      @default (value=0.0)
+      double speed_pct;
+    };
+    struct Drive_Result {
+      @verbatim (language="comment", text=
+        "done | cancelled | failed | timeout")
+      string status;
+
+      int32 ticks_left;
+
+      int32 ticks_right;
+
+      double duration_s;
+    };
+    struct Drive_Feedback {
+      int32 ticks_left;
+
+      int32 ticks_right;
+    };
+  };
+};

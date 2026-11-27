@@ -1,0 +1,1 @@
+/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_typesupport_introspection_cpp/robot_interfaces/msg/detail/visual_motion__rosidl_typesupport_introspection_cpp.hpp

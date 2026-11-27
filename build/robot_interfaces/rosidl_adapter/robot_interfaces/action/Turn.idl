@@ -1,0 +1,42 @@
+// generated from rosidl_adapter/resource/action.idl.em
+// with input from robot_interfaces/action/Turn.action
+// generated code does not contain a copyright notice
+
+
+module robot_interfaces {
+  module action {
+    @verbatim (language="comment", text=
+      "Tank-turn on the spot, encoder-counted.")
+    struct Turn_Goal {
+      @verbatim (language="comment", text=
+        "positive turns RIGHT, negative LEFT")
+      double degrees;
+
+      @verbatim (language="comment", text=
+        "gesture goals are REJECTED when busy, never queued")
+      @default (value=FALSE)
+      boolean gesture;
+
+      @verbatim (language="comment", text=
+        "0 = use the node's configured default")
+      @default (value=0.0)
+      double speed_pct;
+    };
+    struct Turn_Result {
+      @verbatim (language="comment", text=
+        "done | cancelled | failed | timeout")
+      string status;
+
+      int32 ticks_left;
+
+      int32 ticks_right;
+
+      double duration_s;
+    };
+    struct Turn_Feedback {
+      int32 ticks_left;
+
+      int32 ticks_right;
+    };
+  };
+};

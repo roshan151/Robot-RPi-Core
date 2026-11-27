@@ -1,0 +1,20 @@
+running develop
+running egg_info
+creating robot_explore.egg-info
+writing robot_explore.egg-info/PKG-INFO
+writing dependency_links to robot_explore.egg-info/dependency_links.txt
+writing entry points to robot_explore.egg-info/entry_points.txt
+writing requirements to robot_explore.egg-info/requires.txt
+writing top-level names to robot_explore.egg-info/top_level.txt
+writing manifest file 'robot_explore.egg-info/SOURCES.txt'
+reading manifest file 'robot_explore.egg-info/SOURCES.txt'
+writing manifest file 'robot_explore.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/roshan/Robot-RPi-Core/install/robot_explore/lib/python3.13/site-packages/robot-explore.egg-link (link to .)
+Installing explorer_node script to /home/roshan/Robot-RPi-Core/install/robot_explore/lib/robot_explore
+
+Installed /home/roshan/Robot-RPi-Core/build/robot_explore
+running symlink_data
+creating /home/roshan/Robot-RPi-Core/install/robot_explore/share/ament_index/resource_index/packages
+symbolically linking /home/roshan/Robot-RPi-Core/build/robot_explore/resource/robot_explore -> /home/roshan/Robot-RPi-Core/install/robot_explore/share/ament_index/resource_index/packages
+symbolically linking /home/roshan/Robot-RPi-Core/build/robot_explore/package.xml -> /home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore

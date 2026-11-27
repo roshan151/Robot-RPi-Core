@@ -1,0 +1,326 @@
+[0.050s] Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_interfaces': CMAKE_PREFIX_PATH=/opt/ros/jazzy PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] /usr/bin/cmake /home/roshan/Robot-RPi-Core/ros2_ws/src/robot_interfaces -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/roshan/Robot-RPi-Core/install/robot_interfaces
+[0.261s] [0mCMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+[0.261s]   Compatibility with CMake < 3.10 will be removed from a future version of
+[0.261s]   CMake.
+[0.262s] 
+[0.262s]   Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+[0.262s]   to tell CMake that the project requires at least <min> but has been updated
+[0.262s]   to work with policies introduced by <max> or earlier.
+[0.263s] 
+[0.263s] [0m
+[1.071s] -- The C compiler identification is GNU 14.2.0
+[1.789s] -- The CXX compiler identification is GNU 14.2.0
+[1.828s] -- Detecting C compiler ABI info
+[2.182s] -- Detecting C compiler ABI info - done
+[2.237s] -- Check for working C compiler: /usr/bin/cc - skipped
+[2.238s] -- Detecting C compile features
+[2.240s] -- Detecting C compile features - done
+[2.278s] -- Detecting CXX compiler ABI info
+[2.606s] -- Detecting CXX compiler ABI info - done
+[2.661s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[2.662s] -- Detecting CXX compile features
+[2.664s] -- Detecting CXX compile features - done
+[2.693s] -- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[3.373s] -- Found Python3: /home/roshan/Robot-RPi-Core/.venv/bin/python3 (found version "3.13.5") found components: Interpreter
+[3.715s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[3.818s] -- Found rosidl_default_generators: 1.6.0 (/opt/ros/jazzy/share/rosidl_default_generators/cmake)
+[3.836s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[4.013s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[4.167s] -- Found rosidl_adapter: 4.6.7 (/opt/ros/jazzy/share/rosidl_adapter/cmake)
+[7.272s] -- Found ament_cmake_ros: 0.12.0 (/opt/ros/jazzy/share/ament_cmake_ros/cmake)
+[9.358s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[11.887s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[11.893s] -- Found python_cmake_module: 0.11.1 (/opt/ros/jazzy/share/python_cmake_module/cmake)
+[12.501s] -- Found PythonExtra: /home/roshan/Robot-RPi-Core/.venv/bin/python3
+[14.142s] -- Found Python3: /home/roshan/Robot-RPi-Core/.venv/bin/python3 (found version "3.13.5") found components: Interpreter Development NumPy Development.Module Development.Embed
+[14.330s] -- Configuring done (14.1s)
+[14.479s] -- Generating done (0.1s)
+[14.515s] -- Build files have been written to: /home/roshan/Robot-RPi-Core/build/robot_interfaces
+[14.551s] Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_interfaces' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] /usr/bin/cmake /home/roshan/Robot-RPi-Core/ros2_ws/src/robot_interfaces -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/roshan/Robot-RPi-Core/install/robot_interfaces
+[14.554s] Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_interfaces': CMAKE_PREFIX_PATH=/opt/ros/jazzy PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] /usr/bin/cmake --build /home/roshan/Robot-RPi-Core/build/robot_interfaces -- -j4 -l4
+[14.716s] [  1%] [34m[1mGenerating type hashes for ROS interfaces[0m
+[14.748s] [  1%] Built target ament_cmake_python_symlink_robot_interfaces
+[15.687s] running egg_info
+[15.776s] creating robot_interfaces.egg-info
+[15.776s] writing robot_interfaces.egg-info/PKG-INFO
+[15.777s] writing dependency_links to robot_interfaces.egg-info/dependency_links.txt
+[15.779s] writing top-level names to robot_interfaces.egg-info/top_level.txt
+[15.779s] writing manifest file 'robot_interfaces.egg-info/SOURCES.txt'
+[16.047s] reading manifest file 'robot_interfaces.egg-info/SOURCES.txt'
+[16.049s] writing manifest file 'robot_interfaces.egg-info/SOURCES.txt'
+[16.192s] [  1%] Built target ament_cmake_python_build_robot_interfaces_egg
+[17.053s] [  1%] Built target robot_interfaces__rosidl_generator_type_description
+[17.087s] [  2%] [34m[1mGenerating C code for ROS interfaces[0m
+[17.124s] [  4%] [34m[1mGenerating C++ code for ROS interfaces[0m
+[21.287s] [  4%] Built target robot_interfaces__cpp
+[21.709s] [  8%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/action/detail/drive__description.c.o[0m
+[21.710s] [  8%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/action/detail/drive__type_support.c.o[0m
+[21.710s] [  8%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/action/detail/drive__functions.c.o[0m
+[21.752s] [  9%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/action/detail/turn__description.c.o[0m
+[21.937s] [ 10%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/action/detail/turn__functions.c.o[0m
+[22.405s] [ 13%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/encoders__description.c.o[0m
+[22.406s] [ 13%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/action/detail/turn__type_support.c.o[0m
+[22.406s] [ 14%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/encoders__functions.c.o[0m
+[22.577s] [ 17%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/motion_health__description.c.o[0m
+[22.581s] [ 17%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/encoders__type_support.c.o[0m
+[22.605s] [ 18%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/motion_health__functions.c.o[0m
+[22.620s] [ 20%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/motion_health__type_support.c.o[0m
+[22.708s] [ 21%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/visual_motion__description.c.o[0m
+[22.734s] [ 22%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/visual_motion__functions.c.o[0m
+[22.817s] [ 24%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/visual_motion__type_support.c.o[0m
+[22.919s] [ 25%] [32m[1mLinking C shared library librobot_interfaces__rosidl_generator_c.so[0m
+[23.069s] [ 25%] Built target robot_interfaces__rosidl_generator_c
+[23.112s] [ 29%] [34m[1mGenerating C++ type support dispatch for ROS interfaces[0m
+[23.113s] [ 29%] [34m[1mGenerating C++ introspection for ROS interfaces[0m
+[23.114s] [ 29%] [34m[1mGenerating C++ type support for eProsima Fast-RTPS[0m
+[23.114s] [ 31%] [34m[1mGenerating C type support for eProsima Fast-RTPS[0m
+[26.352s] [ 32%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/robot_interfaces/action/drive__type_support.cpp.o[0m
+[26.997s] [ 33%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/robot_interfaces/action/detail/drive__type_support.cpp.o[0m
+[28.463s] [ 35%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/action/detail/dds_fastrtps/drive__type_support.cpp.o[0m
+[29.152s] [ 36%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/robot_interfaces/action/detail/drive__type_support_c.cpp.o[0m
+[30.900s] [ 37%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/robot_interfaces/action/turn__type_support.cpp.o[0m
+[31.745s] [ 39%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/robot_interfaces/action/detail/turn__type_support.cpp.o[0m
+[32.691s] [ 40%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/robot_interfaces/action/detail/turn__type_support_c.cpp.o[0m
+[35.059s] [ 41%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/action/detail/dds_fastrtps/turn__type_support.cpp.o[0m
+[35.235s] [ 43%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/robot_interfaces/msg/encoders__type_support.cpp.o[0m
+[36.189s] [ 44%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/robot_interfaces/msg/detail/encoders__type_support_c.cpp.o[0m
+[36.391s] [ 45%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/robot_interfaces/msg/detail/encoders__type_support.cpp.o[0m
+[37.039s] [ 47%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/robot_interfaces/msg/motion_health__type_support.cpp.o[0m
+[38.282s] [ 48%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/robot_interfaces/msg/detail/motion_health__type_support.cpp.o[0m
+[38.852s] [ 50%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/robot_interfaces/msg/detail/motion_health__type_support_c.cpp.o[0m
+[38.923s] [ 51%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/robot_interfaces/msg/visual_motion__type_support.cpp.o[0m
+[40.117s] [ 52%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/robot_interfaces/msg/detail/visual_motion__type_support.cpp.o[0m
+[40.766s] [ 54%] [32m[1mLinking CXX shared library librobot_interfaces__rosidl_typesupport_cpp.so[0m
+[41.210s] [ 54%] Built target robot_interfaces__rosidl_typesupport_cpp
+[41.253s] [ 55%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/robot_interfaces/msg/detail/visual_motion__type_support_c.cpp.o[0m
+[41.370s] [ 56%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/encoders__type_support.cpp.o[0m
+[41.944s] [ 58%] [32m[1mLinking CXX shared library librobot_interfaces__rosidl_typesupport_introspection_cpp.so[0m
+[42.349s] [ 59%] [34m[1mGenerating C introspection for ROS interfaces[0m
+[42.350s] [ 59%] Built target robot_interfaces__rosidl_typesupport_introspection_cpp
+[43.387s] [ 60%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/motion_health__type_support.cpp.o[0m
+[43.601s] [ 62%] [32m[1mLinking CXX shared library librobot_interfaces__rosidl_typesupport_fastrtps_c.so[0m
+[43.984s] [ 62%] Built target robot_interfaces__rosidl_typesupport_fastrtps_c
+[44.023s] [ 63%] [34m[1mGenerating C type support dispatch for ROS interfaces[0m
+[45.814s] [ 64%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/visual_motion__type_support.cpp.o[0m
+[46.489s] [ 67%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/action/detail/drive__type_support.c.o[0m
+[46.490s] [ 67%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/action/detail/turn__type_support.c.o[0m
+[46.791s] [ 70%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/encoders__type_support.c.o[0m
+[46.796s] [ 70%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/motion_health__type_support.c.o[0m
+[46.938s] [ 71%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/visual_motion__type_support.c.o[0m
+[47.082s] [ 72%] [32m[1mLinking C shared library librobot_interfaces__rosidl_typesupport_introspection_c.so[0m
+[47.257s] [ 72%] Built target robot_interfaces__rosidl_typesupport_introspection_c
+[47.331s] [ 75%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/robot_interfaces/action/drive__type_support.cpp.o[0m
+[47.333s] [ 77%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/robot_interfaces/msg/encoders__type_support.cpp.o[0m
+[47.338s] [ 75%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/robot_interfaces/action/turn__type_support.cpp.o[0m
+[47.570s] [ 79%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/robot_interfaces/msg/motion_health__type_support.cpp.o[0m
+[47.570s] [ 79%] [32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/robot_interfaces/msg/visual_motion__type_support.cpp.o[0m
+[47.722s] [ 81%] [32m[1mLinking CXX shared library librobot_interfaces__rosidl_typesupport_c.so[0m
+[47.876s] [ 81%] Built target robot_interfaces__rosidl_typesupport_c
+[48.259s] [ 82%] [32m[1mLinking CXX shared library librobot_interfaces__rosidl_typesupport_fastrtps_cpp.so[0m
+[48.583s] [ 82%] Built target robot_interfaces__rosidl_typesupport_fastrtps_cpp
+[48.645s] [ 82%] Built target robot_interfaces
+[48.708s] [ 83%] [34m[1mGenerating Python code for ROS interfaces[0m
+[55.695s] [ 83%] Built target robot_interfaces__py
+[55.766s] [ 85%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_py.dir/rosidl_generator_py/robot_interfaces/msg/_encoders_s.c.o[0m
+[55.766s] [ 87%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_py.dir/rosidl_generator_py/robot_interfaces/action/_turn_s.c.o[0m
+[55.767s] [ 87%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_py.dir/rosidl_generator_py/robot_interfaces/action/_drive_s.c.o[0m
+[55.805s] [ 89%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_py.dir/rosidl_generator_py/robot_interfaces/msg/_motion_health_s.c.o[0m
+[56.447s] [ 90%] [32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_py.dir/rosidl_generator_py/robot_interfaces/msg/_visual_motion_s.c.o[0m
+[56.920s] [ 91%] [32m[1mLinking C shared library librobot_interfaces__rosidl_generator_py.so[0m
+[57.088s] [ 91%] Built target robot_interfaces__rosidl_generator_py
+[57.166s] [ 94%] [32mBuilding C object CMakeFiles/robot_interfaces_s__rosidl_typesupport_fastrtps_c.dir/rosidl_generator_py/robot_interfaces/_robot_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c.o[0m
+[57.166s] [ 94%] [32mBuilding C object CMakeFiles/robot_interfaces_s__rosidl_typesupport_c.dir/rosidl_generator_py/robot_interfaces/_robot_interfaces_s.ep.rosidl_typesupport_c.c.o[0m
+[57.167s] [ 95%] [32mBuilding C object CMakeFiles/robot_interfaces_s__rosidl_typesupport_introspection_c.dir/rosidl_generator_py/robot_interfaces/_robot_interfaces_s.ep.rosidl_typesupport_introspection_c.c.o[0m
+[57.833s] [ 98%] [32m[1mLinking C shared module rosidl_generator_py/robot_interfaces/robot_interfaces_s__rosidl_typesupport_c.so[0m
+[57.833s] [ 98%] [32m[1mLinking C shared module rosidl_generator_py/robot_interfaces/robot_interfaces_s__rosidl_typesupport_introspection_c.so[0m
+[57.852s] [100%] [32m[1mLinking C shared module rosidl_generator_py/robot_interfaces/robot_interfaces_s__rosidl_typesupport_fastrtps_c.so[0m
+[57.964s] [100%] Built target robot_interfaces_s__rosidl_typesupport_c
+[57.966s] [100%] Built target robot_interfaces_s__rosidl_typesupport_introspection_c
+[57.987s] [100%] Built target robot_interfaces_s__rosidl_typesupport_fastrtps_c
+[58.025s] Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_interfaces' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] /usr/bin/cmake --build /home/roshan/Robot-RPi-Core/build/robot_interfaces -- -j4 -l4
+[58.057s] Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_interfaces': CMAKE_PREFIX_PATH=/opt/ros/jazzy PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] /usr/bin/cmake --install /home/roshan/Robot-RPi-Core/build/robot_interfaces
+[58.084s] -- Install configuration: ""
+[58.085s] -- Execute custom install script
+[58.086s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/ament_index/resource_index/rosidl_interfaces/robot_interfaces
+[58.117s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/action/Drive.json
+[58.146s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/action/Turn.json
+[58.176s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/Encoders.json
+[58.205s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/MotionHealth.json
+[58.235s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/VisualMotion.json
+[58.266s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__functions.h
+[58.296s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__struct.h
+[58.325s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__type_support.h
+[58.354s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__functions.h
+[58.383s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__struct.h
+[58.412s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__type_support.h
+[58.441s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/drive.h
+[58.470s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/turn.h
+[58.500s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__functions.h
+[58.528s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__struct.h
+[58.557s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__type_support.h
+[58.587s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__functions.h
+[58.616s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__struct.h
+[58.644s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__type_support.h
+[58.674s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__functions.h
+[58.703s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__struct.h
+[58.732s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__type_support.h
+[58.761s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/encoders.h
+[58.790s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/motion_health.h
+[58.820s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/rosidl_generator_c__visibility_control.h
+[58.849s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/visual_motion.h
+[58.878s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/library_path.sh
+[58.908s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/library_path.dsv
+[58.938s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__rosidl_typesupport_fastrtps_c.h
+[58.967s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__rosidl_typesupport_fastrtps_c.h
+[58.997s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__rosidl_typesupport_fastrtps_c.h
+[59.026s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__rosidl_typesupport_fastrtps_c.h
+[59.055s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__rosidl_typesupport_fastrtps_c.h
+[59.084s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/rosidl_typesupport_fastrtps_c__visibility_control.h
+[59.114s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__rosidl_typesupport_introspection_c.h
+[59.143s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__rosidl_typesupport_introspection_c.h
+[59.185s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__rosidl_typesupport_introspection_c.h
+[59.215s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__rosidl_typesupport_introspection_c.h
+[59.244s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__rosidl_typesupport_introspection_c.h
+[59.274s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/rosidl_typesupport_introspection_c__visibility_control.h
+[59.304s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__builder.hpp
+[59.334s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__struct.hpp
+[59.363s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__traits.hpp
+[59.392s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__type_support.hpp
+[59.421s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__builder.hpp
+[59.450s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__struct.hpp
+[59.479s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__traits.hpp
+[59.509s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__type_support.hpp
+[59.538s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/drive.hpp
+[59.567s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/turn.hpp
+[59.597s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__builder.hpp
+[59.626s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__struct.hpp
+[59.655s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__traits.hpp
+[59.684s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__type_support.hpp
+[59.713s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__builder.hpp
+[59.742s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__struct.hpp
+[59.771s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__traits.hpp
+[59.800s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__type_support.hpp
+[59.830s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__builder.hpp
+[59.859s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__struct.hpp
+[59.889s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__traits.hpp
+[59.918s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__type_support.hpp
+[59.947s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/encoders.hpp
+[59.977s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/motion_health.hpp
+[60.006s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/rosidl_generator_cpp__visibility_control.hpp
+[60.035s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/visual_motion.hpp
+[60.065s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__rosidl_typesupport_fastrtps_cpp.hpp
+[60.095s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__rosidl_typesupport_fastrtps_cpp.hpp
+[60.124s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__rosidl_typesupport_fastrtps_cpp.hpp
+[60.153s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__rosidl_typesupport_fastrtps_cpp.hpp
+[60.183s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__rosidl_typesupport_fastrtps_cpp.hpp
+[60.212s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h
+[60.242s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__rosidl_typesupport_introspection_cpp.hpp
+[60.271s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__rosidl_typesupport_introspection_cpp.hpp
+[60.301s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__rosidl_typesupport_introspection_cpp.hpp
+[60.330s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__rosidl_typesupport_introspection_cpp.hpp
+[60.360s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__rosidl_typesupport_introspection_cpp.hpp
+[60.390s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/pythonpath.sh
+[60.419s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/pythonpath.dsv
+[60.450s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces-0.1.0-py3.13.egg-info/PKG-INFO
+[60.478s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces-0.1.0-py3.13.egg-info/SOURCES.txt
+[60.508s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces-0.1.0-py3.13.egg-info/dependency_links.txt
+[60.537s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces-0.1.0-py3.13.egg-info/top_level.txt
+[60.568s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/__init__.py
+[60.598s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/_robot_interfaces_s.ep.rosidl_typesupport_c.c
+[60.627s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/_robot_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
+[60.656s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/_robot_interfaces_s.ep.rosidl_typesupport_introspection_c.c
+[60.685s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/__init__.py
+[60.714s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/_drive.py
+[60.743s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/_drive_s.c
+[60.772s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/_turn.py
+[60.803s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/_turn_s.c
+[60.833s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/__init__.py
+[60.862s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_encoders.py
+[60.891s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_encoders_s.c
+[60.920s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_motion_health.py
+[60.949s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_motion_health_s.c
+[60.978s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_visual_motion.py
+[61.007s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_visual_motion_s.c
+[61.037s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/robot_interfaces_s__rosidl_typesupport_c.so
+[61.066s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/robot_interfaces_s__rosidl_typesupport_fastrtps_c.so
+[61.096s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/robot_interfaces_s__rosidl_typesupport_introspection_c.so
+[61.126s] -- Up-to-date symlink: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/robot_interfaces_s__rosidl_typesupport_fastrtps_c.so
+[61.127s] -- Up-to-date symlink: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/robot_interfaces_s__rosidl_typesupport_introspection_c.so
+[61.127s] -- Up-to-date symlink: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/robot_interfaces_s__rosidl_typesupport_c.so
+[61.128s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/action/Drive.idl
+[61.157s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/action/Turn.idl
+[61.186s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/Encoders.idl
+[61.216s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/MotionHealth.idl
+[61.245s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/VisualMotion.idl
+[61.274s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/action/Drive.action
+[61.304s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/action/Turn.action
+[61.334s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/Encoders.msg
+[61.363s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/MotionHealth.msg
+[61.393s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/VisualMotion.msg
+[61.423s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/ament_index/resource_index/package_run_dependencies/robot_interfaces
+[61.452s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/ament_index/resource_index/parent_prefix_path/robot_interfaces
+[61.482s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/ament_prefix_path.sh
+[61.511s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/ament_prefix_path.dsv
+[61.541s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/path.sh
+[61.571s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/path.dsv
+[61.600s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/local_setup.bash
+[61.629s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/local_setup.sh
+[61.659s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/local_setup.zsh
+[61.688s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/local_setup.dsv
+[61.718s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.dsv
+[61.747s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/ament_index/resource_index/packages/robot_interfaces
+[61.776s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/rosidl_cmake-extras.cmake
+[61.806s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/ament_cmake_export_dependencies-extras.cmake
+[61.835s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/ament_cmake_export_include_directories-extras.cmake
+[61.864s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/ament_cmake_export_libraries-extras.cmake
+[61.894s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/ament_cmake_export_targets-extras.cmake
+[61.923s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake
+[61.952s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake
+[61.981s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfacesConfig.cmake
+[62.011s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfacesConfig-version.cmake
+[62.041s] -- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.xml
+[62.070s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_generator_c.so
+[62.072s] -- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_generator_c.so" to ""
+[62.072s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_fastrtps_c.so
+[62.074s] -- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_fastrtps_c.so" to ""
+[62.074s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_introspection_c.so
+[62.075s] -- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_introspection_c.so" to ""
+[62.075s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_c.so
+[62.077s] -- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_c.so" to ""
+[62.077s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_fastrtps_cpp.so
+[62.079s] -- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_fastrtps_cpp.so" to ""
+[62.079s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_introspection_cpp.so
+[62.081s] -- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_introspection_cpp.so" to ""
+[62.082s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_cpp.so
+[62.083s] -- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_cpp.so" to ""
+[62.282s] Listing '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces'...
+[62.283s] Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/__init__.py'...
+[62.284s] Listing '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action'...
+[62.284s] Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/__init__.py'...
+[62.285s] Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/_drive.py'...
+[62.286s] Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/_turn.py'...
+[62.286s] Listing '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg'...
+[62.287s] Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/__init__.py'...
+[62.287s] Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_encoders.py'...
+[62.288s] Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_motion_health.py'...
+[62.289s] Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_visual_motion.py'...
+[62.309s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_generator_py.so
+[62.310s] -- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_generator_py.so" to ""
+[62.310s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_generator_cExport.cmake
+[62.311s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_generator_cExport-noconfig.cmake
+[62.311s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_typesupport_fastrtps_cExport.cmake
+[62.311s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_typesupport_fastrtps_cExport-noconfig.cmake
+[62.312s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_introspection_cExport.cmake
+[62.312s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_introspection_cExport-noconfig.cmake
+[62.313s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_cExport.cmake
+[62.313s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_cExport-noconfig.cmake
+[62.314s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_generator_cppExport.cmake
+[62.314s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_typesupport_fastrtps_cppExport.cmake
+[62.315s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake
+[62.315s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_introspection_cppExport.cmake
+[62.315s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_introspection_cppExport-noconfig.cmake
+[62.316s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_cppExport.cmake
+[62.316s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_cppExport-noconfig.cmake
+[62.317s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_generator_pyExport.cmake
+[62.317s] -- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_generator_pyExport-noconfig.cmake
+[62.324s] Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_interfaces' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] /usr/bin/cmake --install /home/roshan/Robot-RPi-Core/build/robot_interfaces

@@ -1,0 +1,30 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/link.d"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/action/detail/drive__type_support.c.o"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/action/detail/drive__type_support.c.o.d"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/action/detail/turn__type_support.c.o"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/action/detail/turn__type_support.c.o.d"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/encoders__type_support.c.o"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/encoders__type_support.c.o.d"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/motion_health__type_support.c.o"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/motion_health__type_support.c.o.d"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/visual_motion__type_support.c.o"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/visual_motion__type_support.c.o.d"
+  "librobot_interfaces__rosidl_typesupport_introspection_c.pdb"
+  "librobot_interfaces__rosidl_typesupport_introspection_c.so"
+  "rosidl_typesupport_introspection_c/robot_interfaces/action/detail/drive__rosidl_typesupport_introspection_c.h"
+  "rosidl_typesupport_introspection_c/robot_interfaces/action/detail/drive__type_support.c"
+  "rosidl_typesupport_introspection_c/robot_interfaces/action/detail/turn__rosidl_typesupport_introspection_c.h"
+  "rosidl_typesupport_introspection_c/robot_interfaces/action/detail/turn__type_support.c"
+  "rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/encoders__rosidl_typesupport_introspection_c.h"
+  "rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/encoders__type_support.c"
+  "rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/motion_health__rosidl_typesupport_introspection_c.h"
+  "rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/motion_health__type_support.c"
+  "rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/visual_motion__rosidl_typesupport_introspection_c.h"
+  "rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/visual_motion__type_support.c"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang C)
+  include(CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

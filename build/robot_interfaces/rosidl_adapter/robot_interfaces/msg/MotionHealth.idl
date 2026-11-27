@@ -1,0 +1,65 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from robot_interfaces/msg/MotionHealth.msg
+// generated code does not contain a copyright notice
+
+
+module robot_interfaces {
+  module msg {
+    @verbatim (language="comment", text=
+      "Is the robot actually doing what it was told? Published by drivetrain_node at" "\n"
+      "the encoder rate. See robot_core/odometry.py:MotionHealth for the logic.")
+    struct MotionHealth {
+      @verbatim (language="comment", text=
+        "idle | moving | stalled | slipping | pushed | wrong_direction | tilted | bumped")
+      string state;
+
+      @verbatim (language="comment", text=
+        "human-readable, empty when all is well")
+      string reason;
+
+      @verbatim (language="comment", text=
+        "m/s from the encoders")
+      double v;
+
+      @verbatim (language="comment", text=
+        "rad/s from the encoders, CCW positive")
+      double w;
+
+      @verbatim (language="comment", text=
+        "1-sigma position drift budget since the last SLAM fix, m")
+      double sigma_xy;
+
+      @verbatim (language="comment", text=
+        "1-sigma heading drift budget, rad")
+      double sigma_theta;
+
+      @verbatim (language="comment", text=
+        "heading change per metre on straight moves (EWMA)")
+      double drift_deg_per_m;
+
+      @verbatim (language="comment", text=
+        "a fresh /visual_motion sample was available")
+      boolean visual_known;
+
+      @verbatim (language="comment", text=
+        "...and what it said")
+      boolean visual_moving;
+
+      @verbatim (language="comment", text=
+        "how long `state` has held")
+      double since_s;
+
+      @verbatim (language="comment", text=
+        "an IMU is fitted and answering; the two angles below mean something")
+      boolean imu_known;
+
+      @verbatim (language="comment", text=
+        "nose up positive")
+      double pitch_deg;
+
+      @verbatim (language="comment", text=
+        "right side down positive")
+      double roll_deg;
+    };
+  };
+};

@@ -1,0 +1,20 @@
+running develop
+running egg_info
+creating robot_voice.egg-info
+writing robot_voice.egg-info/PKG-INFO
+writing dependency_links to robot_voice.egg-info/dependency_links.txt
+writing entry points to robot_voice.egg-info/entry_points.txt
+writing requirements to robot_voice.egg-info/requires.txt
+writing top-level names to robot_voice.egg-info/top_level.txt
+writing manifest file 'robot_voice.egg-info/SOURCES.txt'
+reading manifest file 'robot_voice.egg-info/SOURCES.txt'
+writing manifest file 'robot_voice.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/roshan/Robot-RPi-Core/install/robot_voice/lib/python3.13/site-packages/robot-voice.egg-link (link to .)
+Installing voice_node script to /home/roshan/Robot-RPi-Core/install/robot_voice/lib/robot_voice
+
+Installed /home/roshan/Robot-RPi-Core/build/robot_voice
+running symlink_data
+creating /home/roshan/Robot-RPi-Core/install/robot_voice/share/ament_index/resource_index/packages
+symbolically linking /home/roshan/Robot-RPi-Core/build/robot_voice/resource/robot_voice -> /home/roshan/Robot-RPi-Core/install/robot_voice/share/ament_index/resource_index/packages
+symbolically linking /home/roshan/Robot-RPi-Core/build/robot_voice/package.xml -> /home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice

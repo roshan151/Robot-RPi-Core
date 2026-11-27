@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "robot_interfaces__py",
+		"source" : "/home/roshan/Robot-RPi-Core/build/robot_interfaces/robot_interfaces__py"
+	}
+}

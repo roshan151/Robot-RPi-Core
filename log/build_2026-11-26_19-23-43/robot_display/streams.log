@@ -1,0 +1,22 @@
+[5.293s] Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_display': PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_display/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_display/build --no-deps symlink_data
+[6.864s] running develop
+[7.913s] running egg_info
+[8.026s] creating robot_display.egg-info
+[8.027s] writing robot_display.egg-info/PKG-INFO
+[8.029s] writing dependency_links to robot_display.egg-info/dependency_links.txt
+[8.029s] writing entry points to robot_display.egg-info/entry_points.txt
+[8.030s] writing requirements to robot_display.egg-info/requires.txt
+[8.031s] writing top-level names to robot_display.egg-info/top_level.txt
+[8.031s] writing manifest file 'robot_display.egg-info/SOURCES.txt'
+[8.275s] reading manifest file 'robot_display.egg-info/SOURCES.txt'
+[8.277s] writing manifest file 'robot_display.egg-info/SOURCES.txt'
+[8.401s] running build_ext
+[8.403s] Creating /home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages/robot-display.egg-link (link to .)
+[8.406s] Installing display_node script to /home/roshan/Robot-RPi-Core/install/robot_display/lib/robot_display
+[8.407s] 
+[8.408s] Installed /home/roshan/Robot-RPi-Core/build/robot_display
+[8.408s] running symlink_data
+[8.408s] creating /home/roshan/Robot-RPi-Core/install/robot_display/share/ament_index/resource_index/packages
+[8.409s] symbolically linking /home/roshan/Robot-RPi-Core/build/robot_display/resource/robot_display -> /home/roshan/Robot-RPi-Core/install/robot_display/share/ament_index/resource_index/packages
+[8.411s] symbolically linking /home/roshan/Robot-RPi-Core/build/robot_display/package.xml -> /home/roshan/Robot-RPi-Core/install/robot_display/share/robot_display
+[8.585s] Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_display' returned '0': PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_display/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_display/build --no-deps symlink_data

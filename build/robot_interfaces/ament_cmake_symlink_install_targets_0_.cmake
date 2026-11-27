@@ -1,0 +1,1 @@
+ament_cmake_symlink_install_targets("TARGET_FILES" "/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_generator_py/robot_interfaces/robot_interfaces_s__rosidl_typesupport_fastrtps_c.so" "TARGETS" "robot_interfaces_s__rosidl_typesupport_fastrtps_c" "DESTINATION" "lib/python3.13/site-packages/robot_interfaces")

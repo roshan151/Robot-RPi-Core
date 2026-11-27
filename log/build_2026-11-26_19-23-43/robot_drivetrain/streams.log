@@ -1,0 +1,22 @@
+[7.100s] Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_drivetrain': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_drivetrain/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_drivetrain/build --no-deps symlink_data
+[8.755s] running develop
+[9.719s] running egg_info
+[9.833s] creating robot_drivetrain.egg-info
+[9.834s] writing robot_drivetrain.egg-info/PKG-INFO
+[9.835s] writing dependency_links to robot_drivetrain.egg-info/dependency_links.txt
+[9.836s] writing entry points to robot_drivetrain.egg-info/entry_points.txt
+[9.837s] writing requirements to robot_drivetrain.egg-info/requires.txt
+[9.838s] writing top-level names to robot_drivetrain.egg-info/top_level.txt
+[9.838s] writing manifest file 'robot_drivetrain.egg-info/SOURCES.txt'
+[10.063s] reading manifest file 'robot_drivetrain.egg-info/SOURCES.txt'
+[10.066s] writing manifest file 'robot_drivetrain.egg-info/SOURCES.txt'
+[10.180s] running build_ext
+[10.180s] Creating /home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/python3.13/site-packages/robot-drivetrain.egg-link (link to .)
+[10.183s] Installing drivetrain_node script to /home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/robot_drivetrain
+[10.184s] 
+[10.185s] Installed /home/roshan/Robot-RPi-Core/build/robot_drivetrain
+[10.185s] running symlink_data
+[10.190s] creating /home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/ament_index/resource_index/packages
+[10.191s] symbolically linking /home/roshan/Robot-RPi-Core/build/robot_drivetrain/resource/robot_drivetrain -> /home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/ament_index/resource_index/packages
+[10.192s] symbolically linking /home/roshan/Robot-RPi-Core/build/robot_drivetrain/package.xml -> /home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/robot_drivetrain
+[10.439s] Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_drivetrain' returned '0': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_drivetrain/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_drivetrain/build --no-deps symlink_data

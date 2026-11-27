@@ -1,0 +1,5 @@
+/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_adapter/robot_interfaces:action/Drive.idl
+/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_adapter/robot_interfaces:action/Turn.idl
+/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_adapter/robot_interfaces:msg/Encoders.idl
+/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_adapter/robot_interfaces:msg/MotionHealth.idl
+/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_adapter/robot_interfaces:msg/VisualMotion.idl

@@ -1,0 +1,10 @@
+{
+  "package_name": "robot_interfaces",
+  "non_idl_tuples": [
+    "/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_interfaces:action/Drive.action",
+    "/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_interfaces:action/Turn.action",
+    "/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_interfaces:msg/Encoders.msg",
+    "/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_interfaces:msg/MotionHealth.msg",
+    "/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_interfaces:msg/VisualMotion.msg"
+  ]
+}

@@ -1,0 +1,14 @@
+# Drive in a straight line, encoder-counted. The firmware stops the move when
+# the tick target is reached, so distance holds across battery level and floor.
+
+float64 meters              # negative reverses
+bool    gesture false       # gesture goals are REJECTED when busy, never queued
+float64 speed_pct 0.0       # 0 = use the node's configured default
+---
+string  status              # done | cancelled | failed | timeout
+int32   ticks_left
+int32   ticks_right
+float64 duration_s
+---
+int32   ticks_left
+int32   ticks_right

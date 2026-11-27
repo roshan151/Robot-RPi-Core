@@ -1,0 +1,17 @@
+{
+  "package_name": "robot_interfaces",
+  "output_dir": "/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_generator_type_description/robot_interfaces",
+  "idl_tuples": [
+    "/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_adapter/robot_interfaces:action/Drive.idl",
+    "/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_adapter/robot_interfaces:action/Turn.idl",
+    "/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_adapter/robot_interfaces:msg/Encoders.idl",
+    "/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_adapter/robot_interfaces:msg/MotionHealth.idl",
+    "/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_adapter/robot_interfaces:msg/VisualMotion.idl"
+  ],
+  "include_paths": [
+    "service_msgs:/opt/ros/jazzy/share/service_msgs",
+    "builtin_interfaces:/opt/ros/jazzy/share/builtin_interfaces",
+    "action_msgs:/opt/ros/jazzy/share/action_msgs",
+    "unique_identifier_msgs:/opt/ros/jazzy/share/unique_identifier_msgs"
+  ]
+}

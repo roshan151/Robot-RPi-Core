@@ -1,0 +1,22 @@
+[7.109s] Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_explore': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces:/home/roshan/Robot-RPi-Core/install/robot_display:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_explore/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_explore/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_display:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_explore/build --no-deps symlink_data
+[8.758s] running develop
+[9.721s] running egg_info
+[9.837s] creating robot_explore.egg-info
+[9.837s] writing robot_explore.egg-info/PKG-INFO
+[9.842s] writing dependency_links to robot_explore.egg-info/dependency_links.txt
+[9.843s] writing entry points to robot_explore.egg-info/entry_points.txt
+[9.843s] writing requirements to robot_explore.egg-info/requires.txt
+[9.844s] writing top-level names to robot_explore.egg-info/top_level.txt
+[9.844s] writing manifest file 'robot_explore.egg-info/SOURCES.txt'
+[10.067s] reading manifest file 'robot_explore.egg-info/SOURCES.txt'
+[10.070s] writing manifest file 'robot_explore.egg-info/SOURCES.txt'
+[10.191s] running build_ext
+[10.192s] Creating /home/roshan/Robot-RPi-Core/install/robot_explore/lib/python3.13/site-packages/robot-explore.egg-link (link to .)
+[10.194s] Installing explorer_node script to /home/roshan/Robot-RPi-Core/install/robot_explore/lib/robot_explore
+[10.197s] 
+[10.198s] Installed /home/roshan/Robot-RPi-Core/build/robot_explore
+[10.199s] running symlink_data
+[10.200s] creating /home/roshan/Robot-RPi-Core/install/robot_explore/share/ament_index/resource_index/packages
+[10.202s] symbolically linking /home/roshan/Robot-RPi-Core/build/robot_explore/resource/robot_explore -> /home/roshan/Robot-RPi-Core/install/robot_explore/share/ament_index/resource_index/packages
+[10.204s] symbolically linking /home/roshan/Robot-RPi-Core/build/robot_explore/package.xml -> /home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore
+[10.460s] Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_explore' returned '0': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces:/home/roshan/Robot-RPi-Core/install/robot_display:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_explore/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_explore/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_display:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_explore/build --no-deps symlink_data

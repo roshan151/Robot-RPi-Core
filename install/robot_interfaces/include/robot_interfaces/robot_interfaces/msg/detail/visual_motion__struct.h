@@ -1,0 +1,1 @@
+/home/roshan/Robot-RPi-Core/build/robot_interfaces/rosidl_generator_c/robot_interfaces/msg/detail/visual_motion__struct.h

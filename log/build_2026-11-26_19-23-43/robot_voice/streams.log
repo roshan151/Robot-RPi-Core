@@ -1,0 +1,22 @@
+[7.294s] Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_voice': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces:/home/roshan/Robot-RPi-Core/install/robot_display:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_voice/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_voice/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_display:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_voice/build --no-deps symlink_data
+[8.879s] running develop
+[9.864s] running egg_info
+[9.973s] creating robot_voice.egg-info
+[9.976s] writing robot_voice.egg-info/PKG-INFO
+[9.977s] writing dependency_links to robot_voice.egg-info/dependency_links.txt
+[9.977s] writing entry points to robot_voice.egg-info/entry_points.txt
+[9.978s] writing requirements to robot_voice.egg-info/requires.txt
+[9.979s] writing top-level names to robot_voice.egg-info/top_level.txt
+[9.979s] writing manifest file 'robot_voice.egg-info/SOURCES.txt'
+[10.327s] reading manifest file 'robot_voice.egg-info/SOURCES.txt'
+[10.334s] writing manifest file 'robot_voice.egg-info/SOURCES.txt'
+[10.496s] running build_ext
+[10.496s] Creating /home/roshan/Robot-RPi-Core/install/robot_voice/lib/python3.13/site-packages/robot-voice.egg-link (link to .)
+[10.498s] Installing voice_node script to /home/roshan/Robot-RPi-Core/install/robot_voice/lib/robot_voice
+[10.499s] 
+[10.500s] Installed /home/roshan/Robot-RPi-Core/build/robot_voice
+[10.500s] running symlink_data
+[10.500s] creating /home/roshan/Robot-RPi-Core/install/robot_voice/share/ament_index/resource_index/packages
+[10.501s] symbolically linking /home/roshan/Robot-RPi-Core/build/robot_voice/resource/robot_voice -> /home/roshan/Robot-RPi-Core/install/robot_voice/share/ament_index/resource_index/packages
+[10.502s] symbolically linking /home/roshan/Robot-RPi-Core/build/robot_voice/package.xml -> /home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice
+[10.649s] Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_voice' returned '0': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces:/home/roshan/Robot-RPi-Core/install/robot_display:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_voice/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_voice/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_display:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_voice/build --no-deps symlink_data

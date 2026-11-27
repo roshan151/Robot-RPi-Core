@@ -1,0 +1,28 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from robot_interfaces/msg/VisualMotion.msg
+// generated code does not contain a copyright notice
+
+
+module robot_interfaces {
+  module msg {
+    @verbatim (language="comment", text=
+      "Camera-based \"are we moving\" — the third opinion MotionHealth uses to tell a" "\n"
+      "stall from a wheel spin. Only published while the head is settled, because a" "\n"
+      "slewing head moves the image without the robot moving.")
+    struct VisualMotion {
+      @verbatim (language="comment", text=
+        "CLOCK_MONOTONIC seconds at capture (same host)")
+      double t_monotonic;
+
+      boolean moving;
+
+      @verbatim (language="comment", text=
+        "global image translation between frames (lores px)")
+      float shift_px;
+
+      @verbatim (language="comment", text=
+        "share of image cells that changed (0..1)")
+      float changed_fraction;
+    };
+  };
+};

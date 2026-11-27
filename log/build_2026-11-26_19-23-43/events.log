@@ -1,0 +1,1254 @@
+[0.000000] (-) TimerEvent: {}
+[0.000757] (robot_display) JobQueued: {'identifier': 'robot_display', 'dependencies': OrderedDict()}
+[0.000866] (robot_interfaces) JobQueued: {'identifier': 'robot_interfaces', 'dependencies': OrderedDict()}
+[0.001025] (robot_drivetrain) JobQueued: {'identifier': 'robot_drivetrain', 'dependencies': OrderedDict({'robot_interfaces': '/home/roshan/Robot-RPi-Core/install/robot_interfaces'})}
+[0.001096] (robot_explore) JobQueued: {'identifier': 'robot_explore', 'dependencies': OrderedDict({'robot_display': '/home/roshan/Robot-RPi-Core/install/robot_display', 'robot_interfaces': '/home/roshan/Robot-RPi-Core/install/robot_interfaces'})}
+[0.001717] (robot_voice) JobQueued: {'identifier': 'robot_voice', 'dependencies': OrderedDict({'robot_display': '/home/roshan/Robot-RPi-Core/install/robot_display', 'robot_interfaces': '/home/roshan/Robot-RPi-Core/install/robot_interfaces'})}
+[0.001803] (robot_bringup) JobQueued: {'identifier': 'robot_bringup', 'dependencies': OrderedDict({'robot_display': '/home/roshan/Robot-RPi-Core/install/robot_display', 'robot_interfaces': '/home/roshan/Robot-RPi-Core/install/robot_interfaces', 'robot_drivetrain': '/home/roshan/Robot-RPi-Core/install/robot_drivetrain', 'robot_explore': '/home/roshan/Robot-RPi-Core/install/robot_explore', 'robot_voice': '/home/roshan/Robot-RPi-Core/install/robot_voice'})}
+[0.001893] (robot_interfaces) JobStarted: {'identifier': 'robot_interfaces'}
+[0.028223] (robot_display) JobStarted: {'identifier': 'robot_display'}
+[0.046355] (robot_interfaces) JobProgress: {'identifier': 'robot_interfaces', 'progress': 'cmake'}
+[0.047611] (robot_interfaces) Command: {'cmd': ['/usr/bin/cmake', '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_interfaces', '-DAMENT_CMAKE_SYMLINK_INSTALL=1', '-DCMAKE_INSTALL_PREFIX=/home/roshan/Robot-RPi-Core/install/robot_interfaces'], 'cwd': '/home/roshan/Robot-RPi-Core/build/robot_interfaces', 'env': OrderedDict({'LANGUAGE': 'en_US.UTF-8', 'USER': 'roshan', 'SSH_CLIENT': '10.0.0.195 50569 22', 'TEXTDOMAIN': 'pam_chksshpwd', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/roshan', 'OLDPWD': '/home/roshan', 'SSH_TTY': '/dev/pts/6', 'PS1': '(.venv) \\[\\e]0;\\u@\\h: \\w\\a\\]${debian_chroot:+($debian_chroot)}\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w \\$\\[\\033[00m\\]', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'LC_TERMINAL_VERSION': '3.6.11', 'LOGNAME': 'roshan', '_': '/home/roshan/Robot-RPi-Core/.venv/bin/colcon', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '4', 'PATH': '/home/roshan/Robot-RPi-Core/.venv/bin:/opt/ros/jazzy/bin:/home/roshan/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'en_US.UTF-8', 'VIRTUAL_ENV_PROMPT': '.venv', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.7z=01;31:*.ace=01;31:*.alz=01;31:*.apk=01;31:*.arc=01;31:*.arj=01;31:*.bz=01;31:*.bz2=01;31:*.cab=01;31:*.cpio=01;31:*.crate=01;31:*.deb=01;31:*.drpm=01;31:*.dwm=01;31:*.dz=01;31:*.ear=01;31:*.egg=01;31:*.esd=01;31:*.gz=01;31:*.jar=01;31:*.lha=01;31:*.lrz=01;31:*.lz=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.lzo=01;31:*.pyz=01;31:*.rar=01;31:*.rpm=01;31:*.rz=01;31:*.sar=01;31:*.swm=01;31:*.t7z=01;31:*.tar=01;31:*.taz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tgz=01;31:*.tlz=01;31:*.txz=01;31:*.tz=01;31:*.tzo=01;31:*.tzst=01;31:*.udeb=01;31:*.war=01;31:*.whl=01;31:*.wim=01;31:*.xz=01;31:*.z=01;31:*.zip=01;31:*.zoo=01;31:*.zst=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.jxl=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'SHELL': '/bin/bash', 'NO_AT_BRIDGE': '1', 'LC_TERMINAL': 'iTerm2', 'VIRTUAL_ENV': '/home/roshan/Robot-RPi-Core/.venv', 'PWD': '/home/roshan/Robot-RPi-Core/build/robot_interfaces', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '10.0.0.195 50569 10.0.0.183 22', 'PYTHONPATH': '/opt/ros/jazzy/lib/python3.13/site-packages', 'COLCON': '1', 'CMAKE_PREFIX_PATH': '/opt/ros/jazzy'}), 'shell': False}
+[0.099363] (-) TimerEvent: {}
+[0.199942] (-) TimerEvent: {}
+[0.261958] (robot_interfaces) StderrLine: {'line': b'\x1b[0mCMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):\n'}
+[0.262558] (robot_interfaces) StderrLine: {'line': b'  Compatibility with CMake < 3.10 will be removed from a future version of\n'}
+[0.262905] (robot_interfaces) StderrLine: {'line': b'  CMake.\n'}
+[0.263197] (robot_interfaces) StderrLine: {'line': b'\n'}
+[0.263508] (robot_interfaces) StderrLine: {'line': b'  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax\n'}
+[0.263803] (robot_interfaces) StderrLine: {'line': b'  to tell CMake that the project requires at least <min> but has been updated\n'}
+[0.264117] (robot_interfaces) StderrLine: {'line': b'  to work with policies introduced by <max> or earlier.\n'}
+[0.264377] (robot_interfaces) StderrLine: {'line': b'\n'}
+[0.264626] (robot_interfaces) StderrLine: {'line': b'\x1b[0m\n'}
+[0.300090] (-) TimerEvent: {}
+[0.400614] (-) TimerEvent: {}
+[0.501111] (-) TimerEvent: {}
+[0.601578] (-) TimerEvent: {}
+[0.702088] (-) TimerEvent: {}
+[0.802561] (-) TimerEvent: {}
+[0.903099] (-) TimerEvent: {}
+[1.003737] (-) TimerEvent: {}
+[1.072071] (robot_interfaces) StdoutLine: {'line': b'-- The C compiler identification is GNU 14.2.0\n'}
+[1.103879] (-) TimerEvent: {}
+[1.204432] (-) TimerEvent: {}
+[1.304939] (-) TimerEvent: {}
+[1.405547] (-) TimerEvent: {}
+[1.506411] (-) TimerEvent: {}
+[1.606879] (-) TimerEvent: {}
+[1.707451] (-) TimerEvent: {}
+[1.790922] (robot_interfaces) StdoutLine: {'line': b'-- The CXX compiler identification is GNU 14.2.0\n'}
+[1.807564] (-) TimerEvent: {}
+[1.829309] (robot_interfaces) StdoutLine: {'line': b'-- Detecting C compiler ABI info\n'}
+[1.907761] (-) TimerEvent: {}
+[2.008282] (-) TimerEvent: {}
+[2.108889] (-) TimerEvent: {}
+[2.183346] (robot_interfaces) StdoutLine: {'line': b'-- Detecting C compiler ABI info - done\n'}
+[2.209003] (-) TimerEvent: {}
+[2.238029] (robot_interfaces) StdoutLine: {'line': b'-- Check for working C compiler: /usr/bin/cc - skipped\n'}
+[2.239663] (robot_interfaces) StdoutLine: {'line': b'-- Detecting C compile features\n'}
+[2.241408] (robot_interfaces) StdoutLine: {'line': b'-- Detecting C compile features - done\n'}
+[2.279784] (robot_interfaces) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info\n'}
+[2.309168] (-) TimerEvent: {}
+[2.409653] (-) TimerEvent: {}
+[2.510236] (-) TimerEvent: {}
+[2.607178] (robot_interfaces) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info - done\n'}
+[2.610349] (-) TimerEvent: {}
+[2.662358] (robot_interfaces) StdoutLine: {'line': b'-- Check for working CXX compiler: /usr/bin/c++ - skipped\n'}
+[2.663354] (robot_interfaces) StdoutLine: {'line': b'-- Detecting CXX compile features\n'}
+[2.665473] (robot_interfaces) StdoutLine: {'line': b'-- Detecting CXX compile features - done\n'}
+[2.694296] (robot_interfaces) StdoutLine: {'line': b'-- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)\n'}
+[2.710463] (-) TimerEvent: {}
+[2.810978] (-) TimerEvent: {}
+[2.911698] (-) TimerEvent: {}
+[3.012301] (-) TimerEvent: {}
+[3.113005] (-) TimerEvent: {}
+[3.213556] (-) TimerEvent: {}
+[3.314116] (-) TimerEvent: {}
+[3.374040] (robot_interfaces) StdoutLine: {'line': b'-- Found Python3: /home/roshan/Robot-RPi-Core/.venv/bin/python3 (found version "3.13.5") found components: Interpreter\n'}
+[3.414263] (-) TimerEvent: {}
+[3.514802] (-) TimerEvent: {}
+[3.615403] (-) TimerEvent: {}
+[3.715547] (robot_interfaces) StdoutLine: {'line': b'-- Override CMake install command with custom implementation using symlinks instead of copying resources\n'}
+[3.716672] (-) TimerEvent: {}
+[3.817392] (-) TimerEvent: {}
+[3.819725] (robot_interfaces) StdoutLine: {'line': b'-- Found rosidl_default_generators: 1.6.0 (/opt/ros/jazzy/share/rosidl_default_generators/cmake)\n'}
+[3.837732] (robot_interfaces) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c\n'}
+[3.917537] (-) TimerEvent: {}
+[4.014274] (robot_interfaces) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp\n'}
+[4.017687] (-) TimerEvent: {}
+[4.118268] (-) TimerEvent: {}
+[4.168774] (robot_interfaces) StdoutLine: {'line': b'-- Found rosidl_adapter: 4.6.7 (/opt/ros/jazzy/share/rosidl_adapter/cmake)\n'}
+[4.218423] (-) TimerEvent: {}
+[4.318966] (-) TimerEvent: {}
+[4.419594] (-) TimerEvent: {}
+[4.520210] (-) TimerEvent: {}
+[4.620865] (-) TimerEvent: {}
+[4.721625] (-) TimerEvent: {}
+[4.822192] (-) TimerEvent: {}
+[4.922692] (-) TimerEvent: {}
+[5.023242] (-) TimerEvent: {}
+[5.123856] (-) TimerEvent: {}
+[5.224399] (-) TimerEvent: {}
+[5.316940] (robot_display) Command: {'cmd': ['/home/roshan/Robot-RPi-Core/.venv/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/roshan/Robot-RPi-Core/build/robot_display/build', '--no-deps', 'symlink_data'], 'cwd': '/home/roshan/Robot-RPi-Core/build/robot_display', 'env': OrderedDict({'LANGUAGE': 'en_US.UTF-8', 'USER': 'roshan', 'SSH_CLIENT': '10.0.0.195 50569 22', 'TEXTDOMAIN': 'pam_chksshpwd', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/roshan', 'OLDPWD': '/home/roshan', 'SSH_TTY': '/dev/pts/6', 'PS1': '(.venv) \\[\\e]0;\\u@\\h: \\w\\a\\]${debian_chroot:+($debian_chroot)}\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w \\$\\[\\033[00m\\]', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'LC_TERMINAL_VERSION': '3.6.11', 'LOGNAME': 'roshan', '_': '/home/roshan/Robot-RPi-Core/.venv/bin/colcon', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '4', 'PATH': '/home/roshan/Robot-RPi-Core/.venv/bin:/opt/ros/jazzy/bin:/home/roshan/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'en_US.UTF-8', 'VIRTUAL_ENV_PROMPT': '.venv', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.7z=01;31:*.ace=01;31:*.alz=01;31:*.apk=01;31:*.arc=01;31:*.arj=01;31:*.bz=01;31:*.bz2=01;31:*.cab=01;31:*.cpio=01;31:*.crate=01;31:*.deb=01;31:*.drpm=01;31:*.dwm=01;31:*.dz=01;31:*.ear=01;31:*.egg=01;31:*.esd=01;31:*.gz=01;31:*.jar=01;31:*.lha=01;31:*.lrz=01;31:*.lz=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.lzo=01;31:*.pyz=01;31:*.rar=01;31:*.rpm=01;31:*.rz=01;31:*.sar=01;31:*.swm=01;31:*.t7z=01;31:*.tar=01;31:*.taz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tgz=01;31:*.tlz=01;31:*.txz=01;31:*.tz=01;31:*.tzo=01;31:*.tzst=01;31:*.udeb=01;31:*.war=01;31:*.whl=01;31:*.wim=01;31:*.xz=01;31:*.z=01;31:*.zip=01;31:*.zoo=01;31:*.zst=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.jxl=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'SHELL': '/bin/bash', 'NO_AT_BRIDGE': '1', 'LC_TERMINAL': 'iTerm2', 'VIRTUAL_ENV': '/home/roshan/Robot-RPi-Core/.venv', 'PWD': '/home/roshan/Robot-RPi-Core/build/robot_display', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '10.0.0.195 50569 10.0.0.183 22', 'PYTHONPATH': '/home/roshan/Robot-RPi-Core/build/robot_display/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:/opt/ros/jazzy/lib/python3.13/site-packages', 'COLCON': '1'}), 'shell': False}
+[5.324601] (-) TimerEvent: {}
+[5.425315] (-) TimerEvent: {}
+[5.526200] (-) TimerEvent: {}
+[5.626939] (-) TimerEvent: {}
+[5.727585] (-) TimerEvent: {}
+[5.828450] (-) TimerEvent: {}
+[5.929184] (-) TimerEvent: {}
+[6.029702] (-) TimerEvent: {}
+[6.130290] (-) TimerEvent: {}
+[6.230838] (-) TimerEvent: {}
+[6.331397] (-) TimerEvent: {}
+[6.432044] (-) TimerEvent: {}
+[6.532841] (-) TimerEvent: {}
+[6.633589] (-) TimerEvent: {}
+[6.734216] (-) TimerEvent: {}
+[6.834801] (-) TimerEvent: {}
+[6.892383] (robot_display) StdoutLine: {'line': b'running develop\n'}
+[6.934962] (-) TimerEvent: {}
+[7.035498] (-) TimerEvent: {}
+[7.136087] (-) TimerEvent: {}
+[7.236751] (-) TimerEvent: {}
+[7.273943] (robot_interfaces) StdoutLine: {'line': b'-- Found ament_cmake_ros: 0.12.0 (/opt/ros/jazzy/share/ament_cmake_ros/cmake)\n'}
+[7.336909] (-) TimerEvent: {}
+[7.437516] (-) TimerEvent: {}
+[7.538252] (-) TimerEvent: {}
+[7.639130] (-) TimerEvent: {}
+[7.739908] (-) TimerEvent: {}
+[7.840442] (-) TimerEvent: {}
+[7.940990] (-) TimerEvent: {}
+[7.941526] (robot_display) StdoutLine: {'line': b'running egg_info\n'}
+[8.041136] (-) TimerEvent: {}
+[8.054703] (robot_display) StdoutLine: {'line': b'creating robot_display.egg-info\n'}
+[8.055440] (robot_display) StdoutLine: {'line': b'writing robot_display.egg-info/PKG-INFO\n'}
+[8.057016] (robot_display) StdoutLine: {'line': b'writing dependency_links to robot_display.egg-info/dependency_links.txt\n'}
+[8.057743] (robot_display) StdoutLine: {'line': b'writing entry points to robot_display.egg-info/entry_points.txt\n'}
+[8.058513] (robot_display) StdoutLine: {'line': b'writing requirements to robot_display.egg-info/requires.txt\n'}
+[8.059019] (robot_display) StdoutLine: {'line': b'writing top-level names to robot_display.egg-info/top_level.txt\n'}
+[8.059474] (robot_display) StdoutLine: {'line': b"writing manifest file 'robot_display.egg-info/SOURCES.txt'\n"}
+[8.141321] (-) TimerEvent: {}
+[8.242035] (-) TimerEvent: {}
+[8.302815] (robot_display) StdoutLine: {'line': b"reading manifest file 'robot_display.egg-info/SOURCES.txt'\n"}
+[8.305455] (robot_display) StdoutLine: {'line': b"writing manifest file 'robot_display.egg-info/SOURCES.txt'\n"}
+[8.342249] (-) TimerEvent: {}
+[8.429027] (robot_display) StdoutLine: {'line': b'running build_ext\n'}
+[8.431534] (robot_display) StdoutLine: {'line': b'Creating /home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages/robot-display.egg-link (link to .)\n'}
+[8.434166] (robot_display) StdoutLine: {'line': b'Installing display_node script to /home/roshan/Robot-RPi-Core/install/robot_display/lib/robot_display\n'}
+[8.435391] (robot_display) StdoutLine: {'line': b'\n'}
+[8.435956] (robot_display) StdoutLine: {'line': b'Installed /home/roshan/Robot-RPi-Core/build/robot_display\n'}
+[8.436303] (robot_display) StdoutLine: {'line': b'running symlink_data\n'}
+[8.436751] (robot_display) StdoutLine: {'line': b'creating /home/roshan/Robot-RPi-Core/install/robot_display/share/ament_index/resource_index/packages\n'}
+[8.437474] (robot_display) StdoutLine: {'line': b'symbolically linking /home/roshan/Robot-RPi-Core/build/robot_display/resource/robot_display -> /home/roshan/Robot-RPi-Core/install/robot_display/share/ament_index/resource_index/packages\n'}
+[8.438428] (robot_display) StdoutLine: {'line': b'symbolically linking /home/roshan/Robot-RPi-Core/build/robot_display/package.xml -> /home/roshan/Robot-RPi-Core/install/robot_display/share/robot_display\n'}
+[8.442598] (-) TimerEvent: {}
+[8.543759] (-) TimerEvent: {}
+[8.611177] (robot_display) CommandEnded: {'returncode': 0}
+[8.643986] (-) TimerEvent: {}
+[8.675768] (robot_display) JobEnded: {'identifier': 'robot_display', 'rc': 0}
+[8.744153] (-) TimerEvent: {}
+[8.844637] (-) TimerEvent: {}
+[8.945176] (-) TimerEvent: {}
+[9.045921] (-) TimerEvent: {}
+[9.146560] (-) TimerEvent: {}
+[9.247358] (-) TimerEvent: {}
+[9.348121] (-) TimerEvent: {}
+[9.359094] (robot_interfaces) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c\n'}
+[9.448265] (-) TimerEvent: {}
+[9.548765] (-) TimerEvent: {}
+[9.649289] (-) TimerEvent: {}
+[9.749871] (-) TimerEvent: {}
+[9.850343] (-) TimerEvent: {}
+[9.950803] (-) TimerEvent: {}
+[10.051284] (-) TimerEvent: {}
+[10.151800] (-) TimerEvent: {}
+[10.252282] (-) TimerEvent: {}
+[10.352774] (-) TimerEvent: {}
+[10.453299] (-) TimerEvent: {}
+[10.553885] (-) TimerEvent: {}
+[10.654459] (-) TimerEvent: {}
+[10.755036] (-) TimerEvent: {}
+[10.855606] (-) TimerEvent: {}
+[10.956214] (-) TimerEvent: {}
+[11.056837] (-) TimerEvent: {}
+[11.157335] (-) TimerEvent: {}
+[11.257888] (-) TimerEvent: {}
+[11.358433] (-) TimerEvent: {}
+[11.459098] (-) TimerEvent: {}
+[11.559839] (-) TimerEvent: {}
+[11.660324] (-) TimerEvent: {}
+[11.760840] (-) TimerEvent: {}
+[11.861348] (-) TimerEvent: {}
+[11.888146] (robot_interfaces) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp\n'}
+[11.894844] (robot_interfaces) StdoutLine: {'line': b'-- Found python_cmake_module: 0.11.1 (/opt/ros/jazzy/share/python_cmake_module/cmake)\n'}
+[11.961496] (-) TimerEvent: {}
+[12.062046] (-) TimerEvent: {}
+[12.162533] (-) TimerEvent: {}
+[12.263023] (-) TimerEvent: {}
+[12.363491] (-) TimerEvent: {}
+[12.463992] (-) TimerEvent: {}
+[12.502737] (robot_interfaces) StdoutLine: {'line': b'-- Found PythonExtra: /home/roshan/Robot-RPi-Core/.venv/bin/python3\n'}
+[12.564146] (-) TimerEvent: {}
+[12.664650] (-) TimerEvent: {}
+[12.765169] (-) TimerEvent: {}
+[12.865699] (-) TimerEvent: {}
+[12.966271] (-) TimerEvent: {}
+[13.066827] (-) TimerEvent: {}
+[13.167364] (-) TimerEvent: {}
+[13.267856] (-) TimerEvent: {}
+[13.368425] (-) TimerEvent: {}
+[13.468916] (-) TimerEvent: {}
+[13.569407] (-) TimerEvent: {}
+[13.669897] (-) TimerEvent: {}
+[13.770390] (-) TimerEvent: {}
+[13.870902] (-) TimerEvent: {}
+[13.971388] (-) TimerEvent: {}
+[14.071878] (-) TimerEvent: {}
+[14.143758] (robot_interfaces) StdoutLine: {'line': b'-- Found Python3: /home/roshan/Robot-RPi-Core/.venv/bin/python3 (found version "3.13.5") found components: Interpreter Development NumPy Development.Module Development.Embed\n'}
+[14.172070] (-) TimerEvent: {}
+[14.272694] (-) TimerEvent: {}
+[14.331892] (robot_interfaces) StdoutLine: {'line': b'-- Configuring done (14.1s)\n'}
+[14.372858] (-) TimerEvent: {}
+[14.473375] (-) TimerEvent: {}
+[14.480978] (robot_interfaces) StdoutLine: {'line': b'-- Generating done (0.1s)\n'}
+[14.516733] (robot_interfaces) StdoutLine: {'line': b'-- Build files have been written to: /home/roshan/Robot-RPi-Core/build/robot_interfaces\n'}
+[14.552288] (robot_interfaces) CommandEnded: {'returncode': 0}
+[14.553564] (robot_interfaces) JobProgress: {'identifier': 'robot_interfaces', 'progress': 'build'}
+[14.555129] (robot_interfaces) Command: {'cmd': ['/usr/bin/cmake', '--build', '/home/roshan/Robot-RPi-Core/build/robot_interfaces', '--', '-j4', '-l4'], 'cwd': '/home/roshan/Robot-RPi-Core/build/robot_interfaces', 'env': OrderedDict({'LANGUAGE': 'en_US.UTF-8', 'USER': 'roshan', 'SSH_CLIENT': '10.0.0.195 50569 22', 'TEXTDOMAIN': 'pam_chksshpwd', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/roshan', 'OLDPWD': '/home/roshan', 'SSH_TTY': '/dev/pts/6', 'PS1': '(.venv) \\[\\e]0;\\u@\\h: \\w\\a\\]${debian_chroot:+($debian_chroot)}\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w \\$\\[\\033[00m\\]', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'LC_TERMINAL_VERSION': '3.6.11', 'LOGNAME': 'roshan', '_': '/home/roshan/Robot-RPi-Core/.venv/bin/colcon', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '4', 'PATH': '/home/roshan/Robot-RPi-Core/.venv/bin:/opt/ros/jazzy/bin:/home/roshan/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'en_US.UTF-8', 'VIRTUAL_ENV_PROMPT': '.venv', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.7z=01;31:*.ace=01;31:*.alz=01;31:*.apk=01;31:*.arc=01;31:*.arj=01;31:*.bz=01;31:*.bz2=01;31:*.cab=01;31:*.cpio=01;31:*.crate=01;31:*.deb=01;31:*.drpm=01;31:*.dwm=01;31:*.dz=01;31:*.ear=01;31:*.egg=01;31:*.esd=01;31:*.gz=01;31:*.jar=01;31:*.lha=01;31:*.lrz=01;31:*.lz=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.lzo=01;31:*.pyz=01;31:*.rar=01;31:*.rpm=01;31:*.rz=01;31:*.sar=01;31:*.swm=01;31:*.t7z=01;31:*.tar=01;31:*.taz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tgz=01;31:*.tlz=01;31:*.txz=01;31:*.tz=01;31:*.tzo=01;31:*.tzst=01;31:*.udeb=01;31:*.war=01;31:*.whl=01;31:*.wim=01;31:*.xz=01;31:*.z=01;31:*.zip=01;31:*.zoo=01;31:*.zst=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.jxl=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'SHELL': '/bin/bash', 'NO_AT_BRIDGE': '1', 'LC_TERMINAL': 'iTerm2', 'VIRTUAL_ENV': '/home/roshan/Robot-RPi-Core/.venv', 'PWD': '/home/roshan/Robot-RPi-Core/build/robot_interfaces', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '10.0.0.195 50569 10.0.0.183 22', 'PYTHONPATH': '/opt/ros/jazzy/lib/python3.13/site-packages', 'COLCON': '1', 'CMAKE_PREFIX_PATH': '/opt/ros/jazzy'}), 'shell': False}
+[14.573538] (-) TimerEvent: {}
+[14.674118] (-) TimerEvent: {}
+[14.717709] (robot_interfaces) StdoutLine: {'line': b'[  1%] \x1b[34m\x1b[1mGenerating type hashes for ROS interfaces\x1b[0m\n'}
+[14.749345] (robot_interfaces) StdoutLine: {'line': b'[  1%] Built target ament_cmake_python_symlink_robot_interfaces\n'}
+[14.774285] (-) TimerEvent: {}
+[14.874890] (-) TimerEvent: {}
+[14.975433] (-) TimerEvent: {}
+[15.075999] (-) TimerEvent: {}
+[15.176516] (-) TimerEvent: {}
+[15.277083] (-) TimerEvent: {}
+[15.377640] (-) TimerEvent: {}
+[15.478426] (-) TimerEvent: {}
+[15.578898] (-) TimerEvent: {}
+[15.679401] (-) TimerEvent: {}
+[15.688222] (robot_interfaces) StdoutLine: {'line': b'running egg_info\n'}
+[15.777080] (robot_interfaces) StdoutLine: {'line': b'creating robot_interfaces.egg-info\n'}
+[15.777641] (robot_interfaces) StdoutLine: {'line': b'writing robot_interfaces.egg-info/PKG-INFO\n'}
+[15.778883] (robot_interfaces) StdoutLine: {'line': b'writing dependency_links to robot_interfaces.egg-info/dependency_links.txt\n'}
+[15.779502] (-) TimerEvent: {}
+[15.780056] (robot_interfaces) StdoutLine: {'line': b'writing top-level names to robot_interfaces.egg-info/top_level.txt\n'}
+[15.780615] (robot_interfaces) StdoutLine: {'line': b"writing manifest file 'robot_interfaces.egg-info/SOURCES.txt'\n"}
+[15.879654] (-) TimerEvent: {}
+[15.980173] (-) TimerEvent: {}
+[16.048170] (robot_interfaces) StdoutLine: {'line': b"reading manifest file 'robot_interfaces.egg-info/SOURCES.txt'\n"}
+[16.050566] (robot_interfaces) StdoutLine: {'line': b"writing manifest file 'robot_interfaces.egg-info/SOURCES.txt'\n"}
+[16.080391] (-) TimerEvent: {}
+[16.181265] (-) TimerEvent: {}
+[16.193059] (robot_interfaces) StdoutLine: {'line': b'[  1%] Built target ament_cmake_python_build_robot_interfaces_egg\n'}
+[16.281403] (-) TimerEvent: {}
+[16.381929] (-) TimerEvent: {}
+[16.482434] (-) TimerEvent: {}
+[16.582956] (-) TimerEvent: {}
+[16.683553] (-) TimerEvent: {}
+[16.784072] (-) TimerEvent: {}
+[16.884559] (-) TimerEvent: {}
+[16.985069] (-) TimerEvent: {}
+[17.054621] (robot_interfaces) StdoutLine: {'line': b'[  1%] Built target robot_interfaces__rosidl_generator_type_description\n'}
+[17.085272] (-) TimerEvent: {}
+[17.088542] (robot_interfaces) StdoutLine: {'line': b'[  2%] \x1b[34m\x1b[1mGenerating C code for ROS interfaces\x1b[0m\n'}
+[17.124965] (robot_interfaces) StdoutLine: {'line': b'[  4%] \x1b[34m\x1b[1mGenerating C++ code for ROS interfaces\x1b[0m\n'}
+[17.185409] (-) TimerEvent: {}
+[17.285963] (-) TimerEvent: {}
+[17.386491] (-) TimerEvent: {}
+[17.487025] (-) TimerEvent: {}
+[17.587537] (-) TimerEvent: {}
+[17.688046] (-) TimerEvent: {}
+[17.788575] (-) TimerEvent: {}
+[17.889124] (-) TimerEvent: {}
+[17.989671] (-) TimerEvent: {}
+[18.090223] (-) TimerEvent: {}
+[18.190753] (-) TimerEvent: {}
+[18.291248] (-) TimerEvent: {}
+[18.391760] (-) TimerEvent: {}
+[18.492399] (-) TimerEvent: {}
+[18.592935] (-) TimerEvent: {}
+[18.693415] (-) TimerEvent: {}
+[18.793880] (-) TimerEvent: {}
+[18.894391] (-) TimerEvent: {}
+[18.994944] (-) TimerEvent: {}
+[19.095545] (-) TimerEvent: {}
+[19.196040] (-) TimerEvent: {}
+[19.296573] (-) TimerEvent: {}
+[19.397189] (-) TimerEvent: {}
+[19.497682] (-) TimerEvent: {}
+[19.598228] (-) TimerEvent: {}
+[19.698738] (-) TimerEvent: {}
+[19.799225] (-) TimerEvent: {}
+[19.899732] (-) TimerEvent: {}
+[20.000262] (-) TimerEvent: {}
+[20.100772] (-) TimerEvent: {}
+[20.201289] (-) TimerEvent: {}
+[20.301833] (-) TimerEvent: {}
+[20.402346] (-) TimerEvent: {}
+[20.502856] (-) TimerEvent: {}
+[20.603341] (-) TimerEvent: {}
+[20.703873] (-) TimerEvent: {}
+[20.804504] (-) TimerEvent: {}
+[20.905082] (-) TimerEvent: {}
+[21.010014] (-) TimerEvent: {}
+[21.110869] (-) TimerEvent: {}
+[21.212230] (-) TimerEvent: {}
+[21.287622] (robot_interfaces) StdoutLine: {'line': b'[  4%] Built target robot_interfaces__cpp\n'}
+[21.312630] (-) TimerEvent: {}
+[21.413933] (-) TimerEvent: {}
+[21.515314] (-) TimerEvent: {}
+[21.618188] (-) TimerEvent: {}
+[21.710182] (robot_interfaces) StdoutLine: {'line': b'[  8%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/action/detail/drive__description.c.o\x1b[0m\n'}
+[21.711079] (robot_interfaces) StdoutLine: {'line': b'[  8%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/action/detail/drive__type_support.c.o\x1b[0m\n'}
+[21.711685] (robot_interfaces) StdoutLine: {'line': b'[  8%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/action/detail/drive__functions.c.o\x1b[0m\n'}
+[21.719779] (-) TimerEvent: {}
+[21.753289] (robot_interfaces) StdoutLine: {'line': b'[  9%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/action/detail/turn__description.c.o\x1b[0m\n'}
+[21.821933] (-) TimerEvent: {}
+[21.922666] (-) TimerEvent: {}
+[21.938093] (robot_interfaces) StdoutLine: {'line': b'[ 10%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/action/detail/turn__functions.c.o\x1b[0m\n'}
+[22.022890] (-) TimerEvent: {}
+[22.126250] (-) TimerEvent: {}
+[22.226878] (-) TimerEvent: {}
+[22.327513] (-) TimerEvent: {}
+[22.406272] (robot_interfaces) StdoutLine: {'line': b'[ 13%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/encoders__description.c.o\x1b[0m\n'}
+[22.407471] (robot_interfaces) StdoutLine: {'line': b'[ 13%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/action/detail/turn__type_support.c.o\x1b[0m\n'}
+[22.408030] (robot_interfaces) StdoutLine: {'line': b'[ 14%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/encoders__functions.c.o\x1b[0m\n'}
+[22.430039] (-) TimerEvent: {}
+[22.530902] (-) TimerEvent: {}
+[22.578477] (robot_interfaces) StdoutLine: {'line': b'[ 17%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/motion_health__description.c.o\x1b[0m\n'}
+[22.581965] (robot_interfaces) StdoutLine: {'line': b'[ 17%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/encoders__type_support.c.o\x1b[0m\n'}
+[22.606749] (robot_interfaces) StdoutLine: {'line': b'[ 18%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/motion_health__functions.c.o\x1b[0m\n'}
+[22.621265] (robot_interfaces) StdoutLine: {'line': b'[ 20%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/motion_health__type_support.c.o\x1b[0m\n'}
+[22.634011] (-) TimerEvent: {}
+[22.708474] (robot_interfaces) StdoutLine: {'line': b'[ 21%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/visual_motion__description.c.o\x1b[0m\n'}
+[22.734235] (-) TimerEvent: {}
+[22.735346] (robot_interfaces) StdoutLine: {'line': b'[ 22%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/visual_motion__functions.c.o\x1b[0m\n'}
+[22.818251] (robot_interfaces) StdoutLine: {'line': b'[ 24%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_c.dir/rosidl_generator_c/robot_interfaces/msg/detail/visual_motion__type_support.c.o\x1b[0m\n'}
+[22.834473] (-) TimerEvent: {}
+[22.920362] (robot_interfaces) StdoutLine: {'line': b'[ 25%] \x1b[32m\x1b[1mLinking C shared library librobot_interfaces__rosidl_generator_c.so\x1b[0m\n'}
+[22.934609] (-) TimerEvent: {}
+[23.035202] (-) TimerEvent: {}
+[23.070544] (robot_interfaces) StdoutLine: {'line': b'[ 25%] Built target robot_interfaces__rosidl_generator_c\n'}
+[23.113728] (robot_interfaces) StdoutLine: {'line': b'[ 29%] \x1b[34m\x1b[1mGenerating C++ type support dispatch for ROS interfaces\x1b[0m\n'}
+[23.114603] (robot_interfaces) StdoutLine: {'line': b'[ 29%] \x1b[34m\x1b[1mGenerating C++ introspection for ROS interfaces\x1b[0m\n'}
+[23.115228] (robot_interfaces) StdoutLine: {'line': b'[ 29%] \x1b[34m\x1b[1mGenerating C++ type support for eProsima Fast-RTPS\x1b[0m\n'}
+[23.115834] (robot_interfaces) StdoutLine: {'line': b'[ 31%] \x1b[34m\x1b[1mGenerating C type support for eProsima Fast-RTPS\x1b[0m\n'}
+[23.138106] (-) TimerEvent: {}
+[23.238883] (-) TimerEvent: {}
+[23.339666] (-) TimerEvent: {}
+[23.440497] (-) TimerEvent: {}
+[23.544586] (-) TimerEvent: {}
+[23.650165] (-) TimerEvent: {}
+[23.750834] (-) TimerEvent: {}
+[23.851842] (-) TimerEvent: {}
+[23.953000] (-) TimerEvent: {}
+[24.053873] (-) TimerEvent: {}
+[24.154714] (-) TimerEvent: {}
+[24.258081] (-) TimerEvent: {}
+[24.358717] (-) TimerEvent: {}
+[24.459699] (-) TimerEvent: {}
+[24.562084] (-) TimerEvent: {}
+[24.662658] (-) TimerEvent: {}
+[24.766175] (-) TimerEvent: {}
+[24.866747] (-) TimerEvent: {}
+[24.967345] (-) TimerEvent: {}
+[25.068276] (-) TimerEvent: {}
+[25.174091] (-) TimerEvent: {}
+[25.274705] (-) TimerEvent: {}
+[25.375402] (-) TimerEvent: {}
+[25.476279] (-) TimerEvent: {}
+[25.577114] (-) TimerEvent: {}
+[25.677975] (-) TimerEvent: {}
+[25.782081] (-) TimerEvent: {}
+[25.882784] (-) TimerEvent: {}
+[25.983743] (-) TimerEvent: {}
+[26.084873] (-) TimerEvent: {}
+[26.190139] (-) TimerEvent: {}
+[26.290778] (-) TimerEvent: {}
+[26.353869] (robot_interfaces) StdoutLine: {'line': b'[ 32%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/robot_interfaces/action/drive__type_support.cpp.o\x1b[0m\n'}
+[26.391018] (-) TimerEvent: {}
+[26.492161] (-) TimerEvent: {}
+[26.593138] (-) TimerEvent: {}
+[26.697290] (-) TimerEvent: {}
+[26.798020] (-) TimerEvent: {}
+[26.898660] (-) TimerEvent: {}
+[26.998080] (robot_interfaces) StdoutLine: {'line': b'[ 33%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/robot_interfaces/action/detail/drive__type_support.cpp.o\x1b[0m\n'}
+[26.998785] (-) TimerEvent: {}
+[27.102249] (-) TimerEvent: {}
+[27.202940] (-) TimerEvent: {}
+[27.303613] (-) TimerEvent: {}
+[27.406210] (-) TimerEvent: {}
+[27.506929] (-) TimerEvent: {}
+[27.609925] (-) TimerEvent: {}
+[27.710785] (-) TimerEvent: {}
+[27.811652] (-) TimerEvent: {}
+[27.912707] (-) TimerEvent: {}
+[28.018177] (-) TimerEvent: {}
+[28.119033] (-) TimerEvent: {}
+[28.220080] (-) TimerEvent: {}
+[28.320816] (-) TimerEvent: {}
+[28.421941] (-) TimerEvent: {}
+[28.464506] (robot_interfaces) StdoutLine: {'line': b'[ 35%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/action/detail/dds_fastrtps/drive__type_support.cpp.o\x1b[0m\n'}
+[28.525992] (-) TimerEvent: {}
+[28.627085] (-) TimerEvent: {}
+[28.728591] (-) TimerEvent: {}
+[28.829920] (-) TimerEvent: {}
+[28.934303] (-) TimerEvent: {}
+[29.035217] (-) TimerEvent: {}
+[29.136580] (-) TimerEvent: {}
+[29.152975] (robot_interfaces) StdoutLine: {'line': b'[ 36%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/robot_interfaces/action/detail/drive__type_support_c.cpp.o\x1b[0m\n'}
+[29.236880] (-) TimerEvent: {}
+[29.337855] (-) TimerEvent: {}
+[29.441959] (-) TimerEvent: {}
+[29.542801] (-) TimerEvent: {}
+[29.643748] (-) TimerEvent: {}
+[29.744644] (-) TimerEvent: {}
+[29.845578] (-) TimerEvent: {}
+[29.949960] (-) TimerEvent: {}
+[30.050702] (-) TimerEvent: {}
+[30.151502] (-) TimerEvent: {}
+[30.252268] (-) TimerEvent: {}
+[30.353037] (-) TimerEvent: {}
+[30.453814] (-) TimerEvent: {}
+[30.558177] (-) TimerEvent: {}
+[30.659273] (-) TimerEvent: {}
+[30.762253] (-) TimerEvent: {}
+[30.863386] (-) TimerEvent: {}
+[30.901568] (robot_interfaces) StdoutLine: {'line': b'[ 37%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/robot_interfaces/action/turn__type_support.cpp.o\x1b[0m\n'}
+[30.965946] (-) TimerEvent: {}
+[31.066846] (-) TimerEvent: {}
+[31.169989] (-) TimerEvent: {}
+[31.270831] (-) TimerEvent: {}
+[31.374288] (-) TimerEvent: {}
+[31.475234] (-) TimerEvent: {}
+[31.578214] (-) TimerEvent: {}
+[31.682017] (-) TimerEvent: {}
+[31.746205] (robot_interfaces) StdoutLine: {'line': b'[ 39%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/robot_interfaces/action/detail/turn__type_support.cpp.o\x1b[0m\n'}
+[31.782258] (-) TimerEvent: {}
+[31.886218] (-) TimerEvent: {}
+[31.987086] (-) TimerEvent: {}
+[32.088033] (-) TimerEvent: {}
+[32.190234] (-) TimerEvent: {}
+[32.294195] (-) TimerEvent: {}
+[32.395377] (-) TimerEvent: {}
+[32.496660] (-) TimerEvent: {}
+[32.602221] (-) TimerEvent: {}
+[32.692601] (robot_interfaces) StdoutLine: {'line': b'[ 40%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/robot_interfaces/action/detail/turn__type_support_c.cpp.o\x1b[0m\n'}
+[32.702432] (-) TimerEvent: {}
+[32.806227] (-) TimerEvent: {}
+[32.907124] (-) TimerEvent: {}
+[33.010172] (-) TimerEvent: {}
+[33.110994] (-) TimerEvent: {}
+[33.213986] (-) TimerEvent: {}
+[33.314824] (-) TimerEvent: {}
+[33.415755] (-) TimerEvent: {}
+[33.518228] (-) TimerEvent: {}
+[33.622341] (-) TimerEvent: {}
+[33.723151] (-) TimerEvent: {}
+[33.824337] (-) TimerEvent: {}
+[33.930214] (-) TimerEvent: {}
+[34.031268] (-) TimerEvent: {}
+[34.132120] (-) TimerEvent: {}
+[34.233265] (-) TimerEvent: {}
+[34.334572] (-) TimerEvent: {}
+[34.437984] (-) TimerEvent: {}
+[34.539101] (-) TimerEvent: {}
+[34.639984] (-) TimerEvent: {}
+[34.740676] (-) TimerEvent: {}
+[34.841497] (-) TimerEvent: {}
+[34.945947] (-) TimerEvent: {}
+[35.046839] (-) TimerEvent: {}
+[35.060507] (robot_interfaces) StdoutLine: {'line': b'[ 41%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/action/detail/dds_fastrtps/turn__type_support.cpp.o\x1b[0m\n'}
+[35.147047] (-) TimerEvent: {}
+[35.236051] (robot_interfaces) StdoutLine: {'line': b'[ 43%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/robot_interfaces/msg/encoders__type_support.cpp.o\x1b[0m\n'}
+[35.249966] (-) TimerEvent: {}
+[35.350709] (-) TimerEvent: {}
+[35.451845] (-) TimerEvent: {}
+[35.554229] (-) TimerEvent: {}
+[35.658188] (-) TimerEvent: {}
+[35.758987] (-) TimerEvent: {}
+[35.861960] (-) TimerEvent: {}
+[35.962819] (-) TimerEvent: {}
+[36.065956] (-) TimerEvent: {}
+[36.166870] (-) TimerEvent: {}
+[36.190168] (robot_interfaces) StdoutLine: {'line': b'[ 44%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/robot_interfaces/msg/detail/encoders__type_support_c.cpp.o\x1b[0m\n'}
+[36.269946] (-) TimerEvent: {}
+[36.370735] (-) TimerEvent: {}
+[36.391980] (robot_interfaces) StdoutLine: {'line': b'[ 45%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/robot_interfaces/msg/detail/encoders__type_support.cpp.o\x1b[0m\n'}
+[36.470973] (-) TimerEvent: {}
+[36.571864] (-) TimerEvent: {}
+[36.674169] (-) TimerEvent: {}
+[36.777991] (-) TimerEvent: {}
+[36.878733] (-) TimerEvent: {}
+[36.979577] (-) TimerEvent: {}
+[37.040655] (robot_interfaces) StdoutLine: {'line': b'[ 47%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/robot_interfaces/msg/motion_health__type_support.cpp.o\x1b[0m\n'}
+[37.081985] (-) TimerEvent: {}
+[37.182854] (-) TimerEvent: {}
+[37.284102] (-) TimerEvent: {}
+[37.386240] (-) TimerEvent: {}
+[37.489957] (-) TimerEvent: {}
+[37.590815] (-) TimerEvent: {}
+[37.691779] (-) TimerEvent: {}
+[37.794279] (-) TimerEvent: {}
+[37.895491] (-) TimerEvent: {}
+[37.998236] (-) TimerEvent: {}
+[38.102208] (-) TimerEvent: {}
+[38.203144] (-) TimerEvent: {}
+[38.283630] (robot_interfaces) StdoutLine: {'line': b'[ 48%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/robot_interfaces/msg/detail/motion_health__type_support.cpp.o\x1b[0m\n'}
+[38.305990] (-) TimerEvent: {}
+[38.406780] (-) TimerEvent: {}
+[38.507626] (-) TimerEvent: {}
+[38.610243] (-) TimerEvent: {}
+[38.705963] (<colcon_parallel_executor.executor.parallel.ParallelExecutorExtension object at 0x7fbd576270>) ParallelStatus: {'processing': ('robot_interfaces',)}
+[38.710453] (-) TimerEvent: {}
+[38.811240] (-) TimerEvent: {}
+[38.850008] (robot_interfaces) StdoutLine: {'line': b'[ 50%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/robot_interfaces/msg/detail/motion_health__type_support_c.cpp.o\x1b[0m\n'}
+[38.911470] (-) TimerEvent: {}
+[38.924057] (robot_interfaces) StdoutLine: {'line': b'[ 51%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/robot_interfaces/msg/visual_motion__type_support.cpp.o\x1b[0m\n'}
+[39.011702] (-) TimerEvent: {}
+[39.112395] (-) TimerEvent: {}
+[39.213108] (-) TimerEvent: {}
+[39.313894] (-) TimerEvent: {}
+[39.417997] (-) TimerEvent: {}
+[39.519019] (-) TimerEvent: {}
+[39.619852] (-) TimerEvent: {}
+[39.720730] (-) TimerEvent: {}
+[39.821994] (-) TimerEvent: {}
+[39.923388] (-) TimerEvent: {}
+[40.026381] (-) TimerEvent: {}
+[40.118387] (robot_interfaces) StdoutLine: {'line': b'[ 52%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/robot_interfaces/msg/detail/visual_motion__type_support.cpp.o\x1b[0m\n'}
+[40.126586] (-) TimerEvent: {}
+[40.230262] (-) TimerEvent: {}
+[40.331300] (-) TimerEvent: {}
+[40.432372] (-) TimerEvent: {}
+[40.533539] (-) TimerEvent: {}
+[40.638222] (-) TimerEvent: {}
+[40.739312] (-) TimerEvent: {}
+[40.767066] (robot_interfaces) StdoutLine: {'line': b'[ 54%] \x1b[32m\x1b[1mLinking CXX shared library librobot_interfaces__rosidl_typesupport_cpp.so\x1b[0m\n'}
+[40.839647] (-) TimerEvent: {}
+[40.941914] (-) TimerEvent: {}
+[41.046209] (-) TimerEvent: {}
+[41.147019] (-) TimerEvent: {}
+[41.211478] (robot_interfaces) StdoutLine: {'line': b'[ 54%] Built target robot_interfaces__rosidl_typesupport_cpp\n'}
+[41.250078] (-) TimerEvent: {}
+[41.254609] (robot_interfaces) StdoutLine: {'line': b'[ 55%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/robot_interfaces/msg/detail/visual_motion__type_support_c.cpp.o\x1b[0m\n'}
+[41.353954] (-) TimerEvent: {}
+[41.371482] (robot_interfaces) StdoutLine: {'line': b'[ 56%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/encoders__type_support.cpp.o\x1b[0m\n'}
+[41.454146] (-) TimerEvent: {}
+[41.555138] (-) TimerEvent: {}
+[41.658185] (-) TimerEvent: {}
+[41.759203] (-) TimerEvent: {}
+[41.860162] (-) TimerEvent: {}
+[41.945017] (robot_interfaces) StdoutLine: {'line': b'[ 58%] \x1b[32m\x1b[1mLinking CXX shared library librobot_interfaces__rosidl_typesupport_introspection_cpp.so\x1b[0m\n'}
+[41.960373] (-) TimerEvent: {}
+[42.061414] (-) TimerEvent: {}
+[42.165941] (-) TimerEvent: {}
+[42.266639] (-) TimerEvent: {}
+[42.350204] (robot_interfaces) StdoutLine: {'line': b'[ 59%] \x1b[34m\x1b[1mGenerating C introspection for ROS interfaces\x1b[0m\n'}
+[42.351085] (robot_interfaces) StdoutLine: {'line': b'[ 59%] Built target robot_interfaces__rosidl_typesupport_introspection_cpp\n'}
+[42.366851] (-) TimerEvent: {}
+[42.467466] (-) TimerEvent: {}
+[42.568057] (-) TimerEvent: {}
+[42.668702] (-) TimerEvent: {}
+[42.769320] (-) TimerEvent: {}
+[42.869913] (-) TimerEvent: {}
+[42.973930] (-) TimerEvent: {}
+[43.074509] (-) TimerEvent: {}
+[43.175107] (-) TimerEvent: {}
+[43.275754] (-) TimerEvent: {}
+[43.376438] (-) TimerEvent: {}
+[43.387926] (robot_interfaces) StdoutLine: {'line': b'[ 60%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/motion_health__type_support.cpp.o\x1b[0m\n'}
+[43.476648] (-) TimerEvent: {}
+[43.578235] (-) TimerEvent: {}
+[43.602627] (robot_interfaces) StdoutLine: {'line': b'[ 62%] \x1b[32m\x1b[1mLinking CXX shared library librobot_interfaces__rosidl_typesupport_fastrtps_c.so\x1b[0m\n'}
+[43.678479] (-) TimerEvent: {}
+[43.779872] (-) TimerEvent: {}
+[43.885013] (-) TimerEvent: {}
+[43.985249] (robot_interfaces) StdoutLine: {'line': b'[ 62%] Built target robot_interfaces__rosidl_typesupport_fastrtps_c\n'}
+[43.986004] (-) TimerEvent: {}
+[44.024401] (robot_interfaces) StdoutLine: {'line': b'[ 63%] \x1b[34m\x1b[1mGenerating C type support dispatch for ROS interfaces\x1b[0m\n'}
+[44.086198] (-) TimerEvent: {}
+[44.186830] (-) TimerEvent: {}
+[44.287594] (-) TimerEvent: {}
+[44.388765] (-) TimerEvent: {}
+[44.489409] (-) TimerEvent: {}
+[44.590059] (-) TimerEvent: {}
+[44.690761] (-) TimerEvent: {}
+[44.791469] (-) TimerEvent: {}
+[44.892101] (-) TimerEvent: {}
+[44.992660] (-) TimerEvent: {}
+[45.093342] (-) TimerEvent: {}
+[45.194033] (-) TimerEvent: {}
+[45.294761] (-) TimerEvent: {}
+[45.395453] (-) TimerEvent: {}
+[45.496072] (-) TimerEvent: {}
+[45.596694] (-) TimerEvent: {}
+[45.697354] (-) TimerEvent: {}
+[45.797909] (-) TimerEvent: {}
+[45.815346] (robot_interfaces) StdoutLine: {'line': b'[ 64%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/visual_motion__type_support.cpp.o\x1b[0m\n'}
+[45.898080] (-) TimerEvent: {}
+[45.998644] (-) TimerEvent: {}
+[46.099388] (-) TimerEvent: {}
+[46.200032] (-) TimerEvent: {}
+[46.301974] (-) TimerEvent: {}
+[46.402731] (-) TimerEvent: {}
+[46.490209] (robot_interfaces) StdoutLine: {'line': b'[ 67%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/action/detail/drive__type_support.c.o\x1b[0m\n'}
+[46.491052] (robot_interfaces) StdoutLine: {'line': b'[ 67%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/action/detail/turn__type_support.c.o\x1b[0m\n'}
+[46.502983] (-) TimerEvent: {}
+[46.605971] (-) TimerEvent: {}
+[46.706994] (-) TimerEvent: {}
+[46.792736] (robot_interfaces) StdoutLine: {'line': b'[ 70%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/encoders__type_support.c.o\x1b[0m\n'}
+[46.796900] (robot_interfaces) StdoutLine: {'line': b'[ 70%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/motion_health__type_support.c.o\x1b[0m\n'}
+[46.807254] (-) TimerEvent: {}
+[46.908075] (-) TimerEvent: {}
+[46.939219] (robot_interfaces) StdoutLine: {'line': b'[ 71%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/robot_interfaces/msg/detail/visual_motion__type_support.c.o\x1b[0m\n'}
+[47.008477] (-) TimerEvent: {}
+[47.082628] (robot_interfaces) StdoutLine: {'line': b'[ 72%] \x1b[32m\x1b[1mLinking C shared library librobot_interfaces__rosidl_typesupport_introspection_c.so\x1b[0m\n'}
+[47.108668] (-) TimerEvent: {}
+[47.214360] (-) TimerEvent: {}
+[47.258123] (robot_interfaces) StdoutLine: {'line': b'[ 72%] Built target robot_interfaces__rosidl_typesupport_introspection_c\n'}
+[47.314558] (-) TimerEvent: {}
+[47.332574] (robot_interfaces) StdoutLine: {'line': b'[ 75%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/robot_interfaces/action/drive__type_support.cpp.o\x1b[0m\n'}
+[47.333815] (robot_interfaces) StdoutLine: {'line': b'[ 77%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/robot_interfaces/msg/encoders__type_support.cpp.o\x1b[0m\n'}
+[47.338085] (robot_interfaces) StdoutLine: {'line': b'[ 75%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/robot_interfaces/action/turn__type_support.cpp.o\x1b[0m\n'}
+[47.417970] (-) TimerEvent: {}
+[47.518685] (-) TimerEvent: {}
+[47.570647] (robot_interfaces) StdoutLine: {'line': b'[ 79%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/robot_interfaces/msg/motion_health__type_support.cpp.o\x1b[0m\n'}
+[47.571676] (robot_interfaces) StdoutLine: {'line': b'[ 79%] \x1b[32mBuilding CXX object CMakeFiles/robot_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/robot_interfaces/msg/visual_motion__type_support.cpp.o\x1b[0m\n'}
+[47.621935] (-) TimerEvent: {}
+[47.722877] (-) TimerEvent: {}
+[47.723810] (robot_interfaces) StdoutLine: {'line': b'[ 81%] \x1b[32m\x1b[1mLinking CXX shared library librobot_interfaces__rosidl_typesupport_c.so\x1b[0m\n'}
+[47.823076] (-) TimerEvent: {}
+[47.877834] (robot_interfaces) StdoutLine: {'line': b'[ 81%] Built target robot_interfaces__rosidl_typesupport_c\n'}
+[47.923229] (-) TimerEvent: {}
+[48.023782] (-) TimerEvent: {}
+[48.124335] (-) TimerEvent: {}
+[48.224880] (-) TimerEvent: {}
+[48.260134] (robot_interfaces) StdoutLine: {'line': b'[ 82%] \x1b[32m\x1b[1mLinking CXX shared library librobot_interfaces__rosidl_typesupport_fastrtps_cpp.so\x1b[0m\n'}
+[48.325098] (-) TimerEvent: {}
+[48.425821] (-) TimerEvent: {}
+[48.526424] (-) TimerEvent: {}
+[48.584876] (robot_interfaces) StdoutLine: {'line': b'[ 82%] Built target robot_interfaces__rosidl_typesupport_fastrtps_cpp\n'}
+[48.626598] (-) TimerEvent: {}
+[48.646277] (robot_interfaces) StdoutLine: {'line': b'[ 82%] Built target robot_interfaces\n'}
+[48.709455] (robot_interfaces) StdoutLine: {'line': b'[ 83%] \x1b[34m\x1b[1mGenerating Python code for ROS interfaces\x1b[0m\n'}
+[48.726733] (-) TimerEvent: {}
+[48.827264] (-) TimerEvent: {}
+[48.927884] (-) TimerEvent: {}
+[49.028643] (-) TimerEvent: {}
+[49.129148] (-) TimerEvent: {}
+[49.229651] (-) TimerEvent: {}
+[49.330182] (-) TimerEvent: {}
+[49.430682] (-) TimerEvent: {}
+[49.531156] (-) TimerEvent: {}
+[49.631620] (-) TimerEvent: {}
+[49.732097] (-) TimerEvent: {}
+[49.832579] (-) TimerEvent: {}
+[49.933027] (-) TimerEvent: {}
+[50.033484] (-) TimerEvent: {}
+[50.133994] (-) TimerEvent: {}
+[50.234457] (-) TimerEvent: {}
+[50.334930] (-) TimerEvent: {}
+[50.435406] (-) TimerEvent: {}
+[50.535877] (-) TimerEvent: {}
+[50.636361] (-) TimerEvent: {}
+[50.736851] (-) TimerEvent: {}
+[50.837354] (-) TimerEvent: {}
+[50.937864] (-) TimerEvent: {}
+[51.038347] (-) TimerEvent: {}
+[51.138809] (-) TimerEvent: {}
+[51.239266] (-) TimerEvent: {}
+[51.339740] (-) TimerEvent: {}
+[51.440221] (-) TimerEvent: {}
+[51.540697] (-) TimerEvent: {}
+[51.641175] (-) TimerEvent: {}
+[51.741681] (-) TimerEvent: {}
+[51.842191] (-) TimerEvent: {}
+[51.942719] (-) TimerEvent: {}
+[52.043304] (-) TimerEvent: {}
+[52.143807] (-) TimerEvent: {}
+[52.244305] (-) TimerEvent: {}
+[52.344820] (-) TimerEvent: {}
+[52.445306] (-) TimerEvent: {}
+[52.545837] (-) TimerEvent: {}
+[52.646329] (-) TimerEvent: {}
+[52.746808] (-) TimerEvent: {}
+[52.847263] (-) TimerEvent: {}
+[52.947743] (-) TimerEvent: {}
+[53.048246] (-) TimerEvent: {}
+[53.148736] (-) TimerEvent: {}
+[53.249215] (-) TimerEvent: {}
+[53.349703] (-) TimerEvent: {}
+[53.450235] (-) TimerEvent: {}
+[53.550719] (-) TimerEvent: {}
+[53.651195] (-) TimerEvent: {}
+[53.751670] (-) TimerEvent: {}
+[53.852160] (-) TimerEvent: {}
+[53.952671] (-) TimerEvent: {}
+[54.053199] (-) TimerEvent: {}
+[54.153875] (-) TimerEvent: {}
+[54.254379] (-) TimerEvent: {}
+[54.354863] (-) TimerEvent: {}
+[54.455334] (-) TimerEvent: {}
+[54.555811] (-) TimerEvent: {}
+[54.656280] (-) TimerEvent: {}
+[54.756696] (-) TimerEvent: {}
+[54.857190] (-) TimerEvent: {}
+[54.957650] (-) TimerEvent: {}
+[55.058151] (-) TimerEvent: {}
+[55.158623] (-) TimerEvent: {}
+[55.259095] (-) TimerEvent: {}
+[55.359573] (-) TimerEvent: {}
+[55.460118] (-) TimerEvent: {}
+[55.560863] (-) TimerEvent: {}
+[55.663578] (-) TimerEvent: {}
+[55.696541] (robot_interfaces) StdoutLine: {'line': b'[ 83%] Built target robot_interfaces__py\n'}
+[55.763764] (-) TimerEvent: {}
+[55.767138] (robot_interfaces) StdoutLine: {'line': b'[ 85%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_py.dir/rosidl_generator_py/robot_interfaces/msg/_encoders_s.c.o\x1b[0m\n'}
+[55.767946] (robot_interfaces) StdoutLine: {'line': b'[ 87%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_py.dir/rosidl_generator_py/robot_interfaces/action/_turn_s.c.o\x1b[0m\n'}
+[55.768477] (robot_interfaces) StdoutLine: {'line': b'[ 87%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_py.dir/rosidl_generator_py/robot_interfaces/action/_drive_s.c.o\x1b[0m\n'}
+[55.806072] (robot_interfaces) StdoutLine: {'line': b'[ 89%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_py.dir/rosidl_generator_py/robot_interfaces/msg/_motion_health_s.c.o\x1b[0m\n'}
+[55.864000] (-) TimerEvent: {}
+[55.964726] (-) TimerEvent: {}
+[56.065425] (-) TimerEvent: {}
+[56.169960] (-) TimerEvent: {}
+[56.270893] (-) TimerEvent: {}
+[56.372358] (-) TimerEvent: {}
+[56.448601] (robot_interfaces) StdoutLine: {'line': b'[ 90%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces__rosidl_generator_py.dir/rosidl_generator_py/robot_interfaces/msg/_visual_motion_s.c.o\x1b[0m\n'}
+[56.472618] (-) TimerEvent: {}
+[56.573445] (-) TimerEvent: {}
+[56.674336] (-) TimerEvent: {}
+[56.775390] (-) TimerEvent: {}
+[56.875986] (-) TimerEvent: {}
+[56.921037] (robot_interfaces) StdoutLine: {'line': b'[ 91%] \x1b[32m\x1b[1mLinking C shared library librobot_interfaces__rosidl_generator_py.so\x1b[0m\n'}
+[56.976178] (-) TimerEvent: {}
+[57.076793] (-) TimerEvent: {}
+[57.089542] (robot_interfaces) StdoutLine: {'line': b'[ 91%] Built target robot_interfaces__rosidl_generator_py\n'}
+[57.166339] (robot_interfaces) StdoutLine: {'line': b'[ 94%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces_s__rosidl_typesupport_fastrtps_c.dir/rosidl_generator_py/robot_interfaces/_robot_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c.o\x1b[0m\n'}
+[57.167882] (robot_interfaces) StdoutLine: {'line': b'[ 94%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces_s__rosidl_typesupport_c.dir/rosidl_generator_py/robot_interfaces/_robot_interfaces_s.ep.rosidl_typesupport_c.c.o\x1b[0m\n'}
+[57.168279] (robot_interfaces) StdoutLine: {'line': b'[ 95%] \x1b[32mBuilding C object CMakeFiles/robot_interfaces_s__rosidl_typesupport_introspection_c.dir/rosidl_generator_py/robot_interfaces/_robot_interfaces_s.ep.rosidl_typesupport_introspection_c.c.o\x1b[0m\n'}
+[57.178085] (-) TimerEvent: {}
+[57.278802] (-) TimerEvent: {}
+[57.381946] (-) TimerEvent: {}
+[57.482593] (-) TimerEvent: {}
+[57.583228] (-) TimerEvent: {}
+[57.683932] (-) TimerEvent: {}
+[57.784581] (-) TimerEvent: {}
+[57.834057] (robot_interfaces) StdoutLine: {'line': b'[ 98%] \x1b[32m\x1b[1mLinking C shared module rosidl_generator_py/robot_interfaces/robot_interfaces_s__rosidl_typesupport_c.so\x1b[0m\n'}
+[57.834895] (robot_interfaces) StdoutLine: {'line': b'[ 98%] \x1b[32m\x1b[1mLinking C shared module rosidl_generator_py/robot_interfaces/robot_interfaces_s__rosidl_typesupport_introspection_c.so\x1b[0m\n'}
+[57.853458] (robot_interfaces) StdoutLine: {'line': b'[100%] \x1b[32m\x1b[1mLinking C shared module rosidl_generator_py/robot_interfaces/robot_interfaces_s__rosidl_typesupport_fastrtps_c.so\x1b[0m\n'}
+[57.884879] (-) TimerEvent: {}
+[57.965418] (robot_interfaces) StdoutLine: {'line': b'[100%] Built target robot_interfaces_s__rosidl_typesupport_c\n'}
+[57.967465] (robot_interfaces) StdoutLine: {'line': b'[100%] Built target robot_interfaces_s__rosidl_typesupport_introspection_c\n'}
+[57.985066] (-) TimerEvent: {}
+[57.988852] (robot_interfaces) StdoutLine: {'line': b'[100%] Built target robot_interfaces_s__rosidl_typesupport_fastrtps_c\n'}
+[58.026855] (robot_interfaces) CommandEnded: {'returncode': 0}
+[58.028340] (robot_interfaces) JobProgress: {'identifier': 'robot_interfaces', 'progress': 'install'}
+[58.057322] (robot_interfaces) Command: {'cmd': ['/usr/bin/cmake', '--install', '/home/roshan/Robot-RPi-Core/build/robot_interfaces'], 'cwd': '/home/roshan/Robot-RPi-Core/build/robot_interfaces', 'env': OrderedDict({'LANGUAGE': 'en_US.UTF-8', 'USER': 'roshan', 'SSH_CLIENT': '10.0.0.195 50569 22', 'TEXTDOMAIN': 'pam_chksshpwd', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/roshan', 'OLDPWD': '/home/roshan', 'SSH_TTY': '/dev/pts/6', 'PS1': '(.venv) \\[\\e]0;\\u@\\h: \\w\\a\\]${debian_chroot:+($debian_chroot)}\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w \\$\\[\\033[00m\\]', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'LC_TERMINAL_VERSION': '3.6.11', 'LOGNAME': 'roshan', '_': '/home/roshan/Robot-RPi-Core/.venv/bin/colcon', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '4', 'PATH': '/home/roshan/Robot-RPi-Core/.venv/bin:/opt/ros/jazzy/bin:/home/roshan/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'en_US.UTF-8', 'VIRTUAL_ENV_PROMPT': '.venv', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.7z=01;31:*.ace=01;31:*.alz=01;31:*.apk=01;31:*.arc=01;31:*.arj=01;31:*.bz=01;31:*.bz2=01;31:*.cab=01;31:*.cpio=01;31:*.crate=01;31:*.deb=01;31:*.drpm=01;31:*.dwm=01;31:*.dz=01;31:*.ear=01;31:*.egg=01;31:*.esd=01;31:*.gz=01;31:*.jar=01;31:*.lha=01;31:*.lrz=01;31:*.lz=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.lzo=01;31:*.pyz=01;31:*.rar=01;31:*.rpm=01;31:*.rz=01;31:*.sar=01;31:*.swm=01;31:*.t7z=01;31:*.tar=01;31:*.taz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tgz=01;31:*.tlz=01;31:*.txz=01;31:*.tz=01;31:*.tzo=01;31:*.tzst=01;31:*.udeb=01;31:*.war=01;31:*.whl=01;31:*.wim=01;31:*.xz=01;31:*.z=01;31:*.zip=01;31:*.zoo=01;31:*.zst=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.jxl=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'SHELL': '/bin/bash', 'NO_AT_BRIDGE': '1', 'LC_TERMINAL': 'iTerm2', 'VIRTUAL_ENV': '/home/roshan/Robot-RPi-Core/.venv', 'PWD': '/home/roshan/Robot-RPi-Core/build/robot_interfaces', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '10.0.0.195 50569 10.0.0.183 22', 'PYTHONPATH': '/opt/ros/jazzy/lib/python3.13/site-packages', 'COLCON': '1', 'CMAKE_PREFIX_PATH': '/opt/ros/jazzy'}), 'shell': False}
+[58.085246] (-) TimerEvent: {}
+[58.085688] (robot_interfaces) StdoutLine: {'line': b'-- Install configuration: ""\n'}
+[58.087098] (robot_interfaces) StdoutLine: {'line': b'-- Execute custom install script\n'}
+[58.088066] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/ament_index/resource_index/rosidl_interfaces/robot_interfaces\n'}
+[58.118409] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/action/Drive.json\n'}
+[58.147397] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/action/Turn.json\n'}
+[58.177192] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/Encoders.json\n'}
+[58.185496] (-) TimerEvent: {}
+[58.206993] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/MotionHealth.json\n'}
+[58.236671] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/VisualMotion.json\n'}
+[58.267997] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__functions.h\n'}
+[58.285644] (-) TimerEvent: {}
+[58.297352] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__struct.h\n'}
+[58.326099] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__type_support.h\n'}
+[58.355438] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__functions.h\n'}
+[58.384587] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__struct.h\n'}
+[58.385762] (-) TimerEvent: {}
+[58.413672] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__type_support.h\n'}
+[58.442988] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/drive.h\n'}
+[58.471752] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/turn.h\n'}
+[58.485916] (-) TimerEvent: {}
+[58.501321] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__functions.h\n'}
+[58.529704] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__struct.h\n'}
+[58.558585] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__type_support.h\n'}
+[58.586078] (-) TimerEvent: {}
+[58.588507] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__functions.h\n'}
+[58.617248] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__struct.h\n'}
+[58.645852] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__type_support.h\n'}
+[58.675340] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__functions.h\n'}
+[58.686218] (-) TimerEvent: {}
+[58.704237] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__struct.h\n'}
+[58.733678] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__type_support.h\n'}
+[58.762237] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/encoders.h\n'}
+[58.786386] (-) TimerEvent: {}
+[58.791698] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/motion_health.h\n'}
+[58.821337] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/rosidl_generator_c__visibility_control.h\n'}
+[58.850203] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/visual_motion.h\n'}
+[58.879946] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/library_path.sh\n'}
+[58.886535] (-) TimerEvent: {}
+[58.909559] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/library_path.dsv\n'}
+[58.939056] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__rosidl_typesupport_fastrtps_c.h\n'}
+[58.968532] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__rosidl_typesupport_fastrtps_c.h\n'}
+[58.986688] (-) TimerEvent: {}
+[58.998372] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__rosidl_typesupport_fastrtps_c.h\n'}
+[59.027236] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__rosidl_typesupport_fastrtps_c.h\n'}
+[59.056247] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__rosidl_typesupport_fastrtps_c.h\n'}
+[59.085441] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/rosidl_typesupport_fastrtps_c__visibility_control.h\n'}
+[59.086819] (-) TimerEvent: {}
+[59.115552] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__rosidl_typesupport_introspection_c.h\n'}
+[59.145025] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__rosidl_typesupport_introspection_c.h\n'}
+[59.186723] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__rosidl_typesupport_introspection_c.h\n'}
+[59.187235] (-) TimerEvent: {}
+[59.216681] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__rosidl_typesupport_introspection_c.h\n'}
+[59.245856] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__rosidl_typesupport_introspection_c.h\n'}
+[59.275316] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/rosidl_typesupport_introspection_c__visibility_control.h\n'}
+[59.287410] (-) TimerEvent: {}
+[59.305394] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__builder.hpp\n'}
+[59.335102] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__struct.hpp\n'}
+[59.364997] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__traits.hpp\n'}
+[59.387569] (-) TimerEvent: {}
+[59.393538] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__type_support.hpp\n'}
+[59.422158] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__builder.hpp\n'}
+[59.451312] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__struct.hpp\n'}
+[59.480950] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__traits.hpp\n'}
+[59.487737] (-) TimerEvent: {}
+[59.510685] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__type_support.hpp\n'}
+[59.539792] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/drive.hpp\n'}
+[59.568989] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/turn.hpp\n'}
+[59.587892] (-) TimerEvent: {}
+[59.598689] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__builder.hpp\n'}
+[59.627635] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__struct.hpp\n'}
+[59.656423] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__traits.hpp\n'}
+[59.685284] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__type_support.hpp\n'}
+[59.688043] (-) TimerEvent: {}
+[59.714563] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__builder.hpp\n'}
+[59.743135] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__struct.hpp\n'}
+[59.772638] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__traits.hpp\n'}
+[59.788192] (-) TimerEvent: {}
+[59.801864] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__type_support.hpp\n'}
+[59.831095] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__builder.hpp\n'}
+[59.860606] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__struct.hpp\n'}
+[59.888384] (-) TimerEvent: {}
+[59.890143] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__traits.hpp\n'}
+[59.919703] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__type_support.hpp\n'}
+[59.948720] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/encoders.hpp\n'}
+[59.978160] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/motion_health.hpp\n'}
+[59.988534] (-) TimerEvent: {}
+[60.007654] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/rosidl_generator_cpp__visibility_control.hpp\n'}
+[60.036669] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/visual_motion.hpp\n'}
+[60.066779] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[60.088696] (-) TimerEvent: {}
+[60.096237] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[60.125196] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[60.154908] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[60.184480] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__rosidl_typesupport_fastrtps_cpp.hpp\n'}
+[60.188858] (-) TimerEvent: {}
+[60.213991] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h\n'}
+[60.243950] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/drive__rosidl_typesupport_introspection_cpp.hpp\n'}
+[60.272789] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/action/detail/turn__rosidl_typesupport_introspection_cpp.hpp\n'}
+[60.289012] (-) TimerEvent: {}
+[60.302610] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/encoders__rosidl_typesupport_introspection_cpp.hpp\n'}
+[60.331503] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/motion_health__rosidl_typesupport_introspection_cpp.hpp\n'}
+[60.361408] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/include/robot_interfaces/robot_interfaces/msg/detail/visual_motion__rosidl_typesupport_introspection_cpp.hpp\n'}
+[60.389197] (-) TimerEvent: {}
+[60.391167] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/pythonpath.sh\n'}
+[60.420587] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/pythonpath.dsv\n'}
+[60.451145] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces-0.1.0-py3.13.egg-info/PKG-INFO\n'}
+[60.480015] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces-0.1.0-py3.13.egg-info/SOURCES.txt\n'}
+[60.489347] (-) TimerEvent: {}
+[60.509842] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces-0.1.0-py3.13.egg-info/dependency_links.txt\n'}
+[60.539003] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces-0.1.0-py3.13.egg-info/top_level.txt\n'}
+[60.570022] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/__init__.py\n'}
+[60.589512] (-) TimerEvent: {}
+[60.599643] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/_robot_interfaces_s.ep.rosidl_typesupport_c.c\n'}
+[60.628415] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/_robot_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c\n'}
+[60.657175] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/_robot_interfaces_s.ep.rosidl_typesupport_introspection_c.c\n'}
+[60.686123] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/__init__.py\n'}
+[60.689669] (-) TimerEvent: {}
+[60.715580] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/_drive.py\n'}
+[60.744424] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/_drive_s.c\n'}
+[60.773874] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/_turn.py\n'}
+[60.789838] (-) TimerEvent: {}
+[60.804277] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/_turn_s.c\n'}
+[60.834104] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/__init__.py\n'}
+[60.863447] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_encoders.py\n'}
+[60.890003] (-) TimerEvent: {}
+[60.892424] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_encoders_s.c\n'}
+[60.921061] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_motion_health.py\n'}
+[60.950417] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_motion_health_s.c\n'}
+[60.979993] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_visual_motion.py\n'}
+[60.990140] (-) TimerEvent: {}
+[61.009038] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_visual_motion_s.c\n'}
+[61.038428] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/robot_interfaces_s__rosidl_typesupport_c.so\n'}
+[61.067842] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/robot_interfaces_s__rosidl_typesupport_fastrtps_c.so\n'}
+[61.090288] (-) TimerEvent: {}
+[61.097640] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/robot_interfaces_s__rosidl_typesupport_introspection_c.so\n'}
+[61.127627] (robot_interfaces) StdoutLine: {'line': b'-- Up-to-date symlink: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/robot_interfaces_s__rosidl_typesupport_fastrtps_c.so\n'}
+[61.128295] (robot_interfaces) StdoutLine: {'line': b'-- Up-to-date symlink: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/robot_interfaces_s__rosidl_typesupport_introspection_c.so\n'}
+[61.129105] (robot_interfaces) StdoutLine: {'line': b'-- Up-to-date symlink: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/robot_interfaces_s__rosidl_typesupport_c.so\n'}
+[61.129544] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/action/Drive.idl\n'}
+[61.158562] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/action/Turn.idl\n'}
+[61.187556] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/Encoders.idl\n'}
+[61.190431] (-) TimerEvent: {}
+[61.217176] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/MotionHealth.idl\n'}
+[61.246631] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/VisualMotion.idl\n'}
+[61.275824] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/action/Drive.action\n'}
+[61.290564] (-) TimerEvent: {}
+[61.305743] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/action/Turn.action\n'}
+[61.335553] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/Encoders.msg\n'}
+[61.364975] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/MotionHealth.msg\n'}
+[61.390720] (-) TimerEvent: {}
+[61.394333] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/msg/VisualMotion.msg\n'}
+[61.424490] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/ament_index/resource_index/package_run_dependencies/robot_interfaces\n'}
+[61.453726] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/ament_index/resource_index/parent_prefix_path/robot_interfaces\n'}
+[61.483663] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/ament_prefix_path.sh\n'}
+[61.490873] (-) TimerEvent: {}
+[61.512513] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/ament_prefix_path.dsv\n'}
+[61.542124] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/path.sh\n'}
+[61.572063] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/environment/path.dsv\n'}
+[61.591019] (-) TimerEvent: {}
+[61.601916] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/local_setup.bash\n'}
+[61.630666] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/local_setup.sh\n'}
+[61.660171] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/local_setup.zsh\n'}
+[61.689538] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/local_setup.dsv\n'}
+[61.691156] (-) TimerEvent: {}
+[61.719255] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.dsv\n'}
+[61.748490] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/ament_index/resource_index/packages/robot_interfaces\n'}
+[61.777791] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/rosidl_cmake-extras.cmake\n'}
+[61.791310] (-) TimerEvent: {}
+[61.807125] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/ament_cmake_export_dependencies-extras.cmake\n'}
+[61.836694] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/ament_cmake_export_include_directories-extras.cmake\n'}
+[61.865468] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/ament_cmake_export_libraries-extras.cmake\n'}
+[61.891467] (-) TimerEvent: {}
+[61.895447] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/ament_cmake_export_targets-extras.cmake\n'}
+[61.924177] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake\n'}
+[61.953646] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake\n'}
+[61.982882] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfacesConfig.cmake\n'}
+[61.991643] (-) TimerEvent: {}
+[62.012318] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfacesConfig-version.cmake\n'}
+[62.042117] (robot_interfaces) StdoutLine: {'line': b'-- Symlinking: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.xml\n'}
+[62.071298] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_generator_c.so\n'}
+[62.073147] (robot_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_generator_c.so" to ""\n'}
+[62.073726] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_fastrtps_c.so\n'}
+[62.075056] (robot_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_fastrtps_c.so" to ""\n'}
+[62.075543] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_introspection_c.so\n'}
+[62.076701] (robot_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_introspection_c.so" to ""\n'}
+[62.077160] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_c.so\n'}
+[62.078081] (robot_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_c.so" to ""\n'}
+[62.078532] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_fastrtps_cpp.so\n'}
+[62.080601] (robot_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_fastrtps_cpp.so" to ""\n'}
+[62.081117] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_introspection_cpp.so\n'}
+[62.082889] (robot_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_introspection_cpp.so" to ""\n'}
+[62.083404] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_cpp.so\n'}
+[62.084839] (robot_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_typesupport_cpp.so" to ""\n'}
+[62.091814] (-) TimerEvent: {}
+[62.192359] (-) TimerEvent: {}
+[62.283479] (robot_interfaces) StdoutLine: {'line': b"Listing '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces'...\n"}
+[62.284482] (robot_interfaces) StdoutLine: {'line': b"Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/__init__.py'...\n"}
+[62.285075] (robot_interfaces) StdoutLine: {'line': b"Listing '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action'...\n"}
+[62.285662] (robot_interfaces) StdoutLine: {'line': b"Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/__init__.py'...\n"}
+[62.286548] (robot_interfaces) StdoutLine: {'line': b"Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/_drive.py'...\n"}
+[62.287115] (robot_interfaces) StdoutLine: {'line': b"Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/action/_turn.py'...\n"}
+[62.287595] (robot_interfaces) StdoutLine: {'line': b"Listing '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg'...\n"}
+[62.288212] (robot_interfaces) StdoutLine: {'line': b"Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/__init__.py'...\n"}
+[62.288836] (robot_interfaces) StdoutLine: {'line': b"Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_encoders.py'...\n"}
+[62.289477] (robot_interfaces) StdoutLine: {'line': b"Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_motion_health.py'...\n"}
+[62.290193] (robot_interfaces) StdoutLine: {'line': b"Compiling '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages/robot_interfaces/msg/_visual_motion.py'...\n"}
+[62.292581] (-) TimerEvent: {}
+[62.310160] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_generator_py.so\n'}
+[62.311510] (robot_interfaces) StdoutLine: {'line': b'-- Set non-toolchain portion of runtime path of "/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/librobot_interfaces__rosidl_generator_py.so" to ""\n'}
+[62.311987] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_generator_cExport.cmake\n'}
+[62.312371] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_generator_cExport-noconfig.cmake\n'}
+[62.312733] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_typesupport_fastrtps_cExport.cmake\n'}
+[62.313143] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_typesupport_fastrtps_cExport-noconfig.cmake\n'}
+[62.313604] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_introspection_cExport.cmake\n'}
+[62.314095] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_introspection_cExport-noconfig.cmake\n'}
+[62.314559] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_cExport.cmake\n'}
+[62.314989] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_cExport-noconfig.cmake\n'}
+[62.315431] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_generator_cppExport.cmake\n'}
+[62.315896] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_typesupport_fastrtps_cppExport.cmake\n'}
+[62.316296] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake\n'}
+[62.316737] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_introspection_cppExport.cmake\n'}
+[62.317154] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_introspection_cppExport-noconfig.cmake\n'}
+[62.317598] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_cppExport.cmake\n'}
+[62.318069] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/robot_interfaces__rosidl_typesupport_cppExport-noconfig.cmake\n'}
+[62.318523] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_generator_pyExport.cmake\n'}
+[62.318982] (robot_interfaces) StdoutLine: {'line': b'-- Installing: /home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/cmake/export_robot_interfaces__rosidl_generator_pyExport-noconfig.cmake\n'}
+[62.324498] (robot_interfaces) CommandEnded: {'returncode': 0}
+[62.393245] (robot_interfaces) JobEnded: {'identifier': 'robot_interfaces', 'rc': 0}
+[62.396140] (-) TimerEvent: {}
+[62.396399] (robot_drivetrain) JobStarted: {'identifier': 'robot_drivetrain'}
+[62.407024] (robot_explore) JobStarted: {'identifier': 'robot_explore'}
+[62.421823] (robot_voice) JobStarted: {'identifier': 'robot_voice'}
+[62.496317] (-) TimerEvent: {}
+[62.596846] (-) TimerEvent: {}
+[62.697386] (-) TimerEvent: {}
+[62.797972] (-) TimerEvent: {}
+[62.898480] (-) TimerEvent: {}
+[62.998974] (-) TimerEvent: {}
+[63.099467] (-) TimerEvent: {}
+[63.200068] (-) TimerEvent: {}
+[63.300813] (-) TimerEvent: {}
+[63.401344] (-) TimerEvent: {}
+[63.501875] (-) TimerEvent: {}
+[63.602423] (-) TimerEvent: {}
+[63.702934] (-) TimerEvent: {}
+[63.803558] (-) TimerEvent: {}
+[63.904312] (-) TimerEvent: {}
+[64.004793] (-) TimerEvent: {}
+[64.105390] (-) TimerEvent: {}
+[64.206273] (-) TimerEvent: {}
+[64.307173] (-) TimerEvent: {}
+[64.407725] (-) TimerEvent: {}
+[64.508266] (-) TimerEvent: {}
+[64.608764] (-) TimerEvent: {}
+[64.709237] (-) TimerEvent: {}
+[64.809709] (-) TimerEvent: {}
+[64.910339] (-) TimerEvent: {}
+[65.011160] (-) TimerEvent: {}
+[65.112179] (-) TimerEvent: {}
+[65.212946] (-) TimerEvent: {}
+[65.314042] (-) TimerEvent: {}
+[65.414920] (-) TimerEvent: {}
+[65.515595] (-) TimerEvent: {}
+[65.616229] (-) TimerEvent: {}
+[65.716921] (-) TimerEvent: {}
+[65.817831] (-) TimerEvent: {}
+[65.918462] (-) TimerEvent: {}
+[66.019100] (-) TimerEvent: {}
+[66.119738] (-) TimerEvent: {}
+[66.220414] (-) TimerEvent: {}
+[66.321033] (-) TimerEvent: {}
+[66.421617] (-) TimerEvent: {}
+[66.522341] (-) TimerEvent: {}
+[66.622962] (-) TimerEvent: {}
+[66.723728] (-) TimerEvent: {}
+[66.824345] (-) TimerEvent: {}
+[66.924998] (-) TimerEvent: {}
+[67.025564] (-) TimerEvent: {}
+[67.126224] (-) TimerEvent: {}
+[67.226841] (-) TimerEvent: {}
+[67.327465] (-) TimerEvent: {}
+[67.428263] (-) TimerEvent: {}
+[67.529664] (-) TimerEvent: {}
+[67.631368] (-) TimerEvent: {}
+[67.732882] (-) TimerEvent: {}
+[67.834040] (-) TimerEvent: {}
+[67.935005] (-) TimerEvent: {}
+[68.035937] (-) TimerEvent: {}
+[68.137106] (-) TimerEvent: {}
+[68.238190] (-) TimerEvent: {}
+[68.338853] (-) TimerEvent: {}
+[68.439518] (-) TimerEvent: {}
+[68.540161] (-) TimerEvent: {}
+[68.641091] (-) TimerEvent: {}
+[68.741719] (-) TimerEvent: {}
+[68.842405] (-) TimerEvent: {}
+[68.943054] (-) TimerEvent: {}
+[69.043764] (-) TimerEvent: {}
+[69.144621] (-) TimerEvent: {}
+[69.245220] (-) TimerEvent: {}
+[69.346194] (-) TimerEvent: {}
+[69.447543] (-) TimerEvent: {}
+[69.490803] (robot_drivetrain) Command: {'cmd': ['/home/roshan/Robot-RPi-Core/.venv/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/roshan/Robot-RPi-Core/build/robot_drivetrain/build', '--no-deps', 'symlink_data'], 'cwd': '/home/roshan/Robot-RPi-Core/build/robot_drivetrain', 'env': OrderedDict({'LANGUAGE': 'en_US.UTF-8', 'USER': 'roshan', 'SSH_CLIENT': '10.0.0.195 50569 22', 'TEXTDOMAIN': 'pam_chksshpwd', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:/opt/ros/jazzy/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/roshan', 'OLDPWD': '/home/roshan', 'SSH_TTY': '/dev/pts/6', 'PS1': '(.venv) \\[\\e]0;\\u@\\h: \\w\\a\\]${debian_chroot:+($debian_chroot)}\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w \\$\\[\\033[00m\\]', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'LC_TERMINAL_VERSION': '3.6.11', 'LOGNAME': 'roshan', '_': '/home/roshan/Robot-RPi-Core/.venv/bin/colcon', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '4', 'PATH': '/home/roshan/Robot-RPi-Core/.venv/bin:/opt/ros/jazzy/bin:/home/roshan/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'en_US.UTF-8', 'VIRTUAL_ENV_PROMPT': '.venv', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.7z=01;31:*.ace=01;31:*.alz=01;31:*.apk=01;31:*.arc=01;31:*.arj=01;31:*.bz=01;31:*.bz2=01;31:*.cab=01;31:*.cpio=01;31:*.crate=01;31:*.deb=01;31:*.drpm=01;31:*.dwm=01;31:*.dz=01;31:*.ear=01;31:*.egg=01;31:*.esd=01;31:*.gz=01;31:*.jar=01;31:*.lha=01;31:*.lrz=01;31:*.lz=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.lzo=01;31:*.pyz=01;31:*.rar=01;31:*.rpm=01;31:*.rz=01;31:*.sar=01;31:*.swm=01;31:*.t7z=01;31:*.tar=01;31:*.taz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tgz=01;31:*.tlz=01;31:*.txz=01;31:*.tz=01;31:*.tzo=01;31:*.tzst=01;31:*.udeb=01;31:*.war=01;31:*.whl=01;31:*.wim=01;31:*.xz=01;31:*.z=01;31:*.zip=01;31:*.zoo=01;31:*.zst=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.jxl=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'AMENT_PREFIX_PATH': '/home/roshan/Robot-RPi-Core/install/robot_interfaces:/opt/ros/jazzy', 'SHELL': '/bin/bash', 'NO_AT_BRIDGE': '1', 'LC_TERMINAL': 'iTerm2', 'VIRTUAL_ENV': '/home/roshan/Robot-RPi-Core/.venv', 'PWD': '/home/roshan/Robot-RPi-Core/build/robot_drivetrain', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '10.0.0.195 50569 10.0.0.183 22', 'PYTHONPATH': '/home/roshan/Robot-RPi-Core/build/robot_drivetrain/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/opt/ros/jazzy/lib/python3.13/site-packages', 'COLCON': '1', 'CMAKE_PREFIX_PATH': '/home/roshan/Robot-RPi-Core/install/robot_interfaces'}), 'shell': False}
+[69.512560] (robot_explore) Command: {'cmd': ['/home/roshan/Robot-RPi-Core/.venv/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/roshan/Robot-RPi-Core/build/robot_explore/build', '--no-deps', 'symlink_data'], 'cwd': '/home/roshan/Robot-RPi-Core/build/robot_explore', 'env': OrderedDict({'LANGUAGE': 'en_US.UTF-8', 'USER': 'roshan', 'SSH_CLIENT': '10.0.0.195 50569 22', 'TEXTDOMAIN': 'pam_chksshpwd', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:/opt/ros/jazzy/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/roshan', 'OLDPWD': '/home/roshan', 'SSH_TTY': '/dev/pts/6', 'PS1': '(.venv) \\[\\e]0;\\u@\\h: \\w\\a\\]${debian_chroot:+($debian_chroot)}\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w \\$\\[\\033[00m\\]', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'LC_TERMINAL_VERSION': '3.6.11', 'LOGNAME': 'roshan', '_': '/home/roshan/Robot-RPi-Core/.venv/bin/colcon', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '4', 'PATH': '/home/roshan/Robot-RPi-Core/.venv/bin:/opt/ros/jazzy/bin:/home/roshan/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'en_US.UTF-8', 'VIRTUAL_ENV_PROMPT': '.venv', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.7z=01;31:*.ace=01;31:*.alz=01;31:*.apk=01;31:*.arc=01;31:*.arj=01;31:*.bz=01;31:*.bz2=01;31:*.cab=01;31:*.cpio=01;31:*.crate=01;31:*.deb=01;31:*.drpm=01;31:*.dwm=01;31:*.dz=01;31:*.ear=01;31:*.egg=01;31:*.esd=01;31:*.gz=01;31:*.jar=01;31:*.lha=01;31:*.lrz=01;31:*.lz=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.lzo=01;31:*.pyz=01;31:*.rar=01;31:*.rpm=01;31:*.rz=01;31:*.sar=01;31:*.swm=01;31:*.t7z=01;31:*.tar=01;31:*.taz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tgz=01;31:*.tlz=01;31:*.txz=01;31:*.tz=01;31:*.tzo=01;31:*.tzst=01;31:*.udeb=01;31:*.war=01;31:*.whl=01;31:*.wim=01;31:*.xz=01;31:*.z=01;31:*.zip=01;31:*.zoo=01;31:*.zst=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.jxl=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'AMENT_PREFIX_PATH': '/home/roshan/Robot-RPi-Core/install/robot_interfaces:/home/roshan/Robot-RPi-Core/install/robot_display:/opt/ros/jazzy', 'SHELL': '/bin/bash', 'NO_AT_BRIDGE': '1', 'LC_TERMINAL': 'iTerm2', 'VIRTUAL_ENV': '/home/roshan/Robot-RPi-Core/.venv', 'PWD': '/home/roshan/Robot-RPi-Core/build/robot_explore', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '10.0.0.195 50569 10.0.0.183 22', 'PYTHONPATH': '/home/roshan/Robot-RPi-Core/build/robot_explore/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_explore/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_display:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:/opt/ros/jazzy/lib/python3.13/site-packages', 'COLCON': '1', 'CMAKE_PREFIX_PATH': '/home/roshan/Robot-RPi-Core/install/robot_interfaces'}), 'shell': False}
+[69.547735] (-) TimerEvent: {}
+[69.649217] (-) TimerEvent: {}
+[69.712108] (robot_voice) Command: {'cmd': ['/home/roshan/Robot-RPi-Core/.venv/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/roshan/Robot-RPi-Core/build/robot_voice/build', '--no-deps', 'symlink_data'], 'cwd': '/home/roshan/Robot-RPi-Core/build/robot_voice', 'env': OrderedDict({'LANGUAGE': 'en_US.UTF-8', 'USER': 'roshan', 'SSH_CLIENT': '10.0.0.195 50569 22', 'TEXTDOMAIN': 'pam_chksshpwd', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:/opt/ros/jazzy/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/roshan', 'OLDPWD': '/home/roshan', 'SSH_TTY': '/dev/pts/6', 'PS1': '(.venv) \\[\\e]0;\\u@\\h: \\w\\a\\]${debian_chroot:+($debian_chroot)}\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w \\$\\[\\033[00m\\]', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'LC_TERMINAL_VERSION': '3.6.11', 'LOGNAME': 'roshan', '_': '/home/roshan/Robot-RPi-Core/.venv/bin/colcon', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '4', 'PATH': '/home/roshan/Robot-RPi-Core/.venv/bin:/opt/ros/jazzy/bin:/home/roshan/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'en_US.UTF-8', 'VIRTUAL_ENV_PROMPT': '.venv', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.7z=01;31:*.ace=01;31:*.alz=01;31:*.apk=01;31:*.arc=01;31:*.arj=01;31:*.bz=01;31:*.bz2=01;31:*.cab=01;31:*.cpio=01;31:*.crate=01;31:*.deb=01;31:*.drpm=01;31:*.dwm=01;31:*.dz=01;31:*.ear=01;31:*.egg=01;31:*.esd=01;31:*.gz=01;31:*.jar=01;31:*.lha=01;31:*.lrz=01;31:*.lz=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.lzo=01;31:*.pyz=01;31:*.rar=01;31:*.rpm=01;31:*.rz=01;31:*.sar=01;31:*.swm=01;31:*.t7z=01;31:*.tar=01;31:*.taz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tgz=01;31:*.tlz=01;31:*.txz=01;31:*.tz=01;31:*.tzo=01;31:*.tzst=01;31:*.udeb=01;31:*.war=01;31:*.whl=01;31:*.wim=01;31:*.xz=01;31:*.z=01;31:*.zip=01;31:*.zoo=01;31:*.zst=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.jxl=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'AMENT_PREFIX_PATH': '/home/roshan/Robot-RPi-Core/install/robot_interfaces:/home/roshan/Robot-RPi-Core/install/robot_display:/opt/ros/jazzy', 'SHELL': '/bin/bash', 'NO_AT_BRIDGE': '1', 'LC_TERMINAL': 'iTerm2', 'VIRTUAL_ENV': '/home/roshan/Robot-RPi-Core/.venv', 'PWD': '/home/roshan/Robot-RPi-Core/build/robot_voice', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '10.0.0.195 50569 10.0.0.183 22', 'PYTHONPATH': '/home/roshan/Robot-RPi-Core/build/robot_voice/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_voice/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_display:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:/opt/ros/jazzy/lib/python3.13/site-packages', 'COLCON': '1', 'CMAKE_PREFIX_PATH': '/home/roshan/Robot-RPi-Core/install/robot_interfaces'}), 'shell': False}
+[69.749444] (-) TimerEvent: {}
+[69.851128] (-) TimerEvent: {}
+[69.952669] (-) TimerEvent: {}
+[70.053875] (-) TimerEvent: {}
+[70.154748] (-) TimerEvent: {}
+[70.255731] (-) TimerEvent: {}
+[70.356317] (-) TimerEvent: {}
+[70.456945] (-) TimerEvent: {}
+[70.557518] (-) TimerEvent: {}
+[70.658156] (-) TimerEvent: {}
+[70.758774] (-) TimerEvent: {}
+[70.859390] (-) TimerEvent: {}
+[70.960023] (-) TimerEvent: {}
+[71.060720] (-) TimerEvent: {}
+[71.150492] (robot_drivetrain) StdoutLine: {'line': b'running develop\n'}
+[71.160852] (-) TimerEvent: {}
+[71.165158] (robot_explore) StdoutLine: {'line': b'running develop\n'}
+[71.261011] (-) TimerEvent: {}
+[71.300332] (robot_voice) StdoutLine: {'line': b'running develop\n'}
+[71.361174] (-) TimerEvent: {}
+[71.461841] (-) TimerEvent: {}
+[71.562471] (-) TimerEvent: {}
+[71.663096] (-) TimerEvent: {}
+[71.763718] (-) TimerEvent: {}
+[71.864356] (-) TimerEvent: {}
+[71.964964] (-) TimerEvent: {}
+[72.065602] (-) TimerEvent: {}
+[72.114852] (robot_drivetrain) StdoutLine: {'line': b'running egg_info\n'}
+[72.129010] (robot_explore) StdoutLine: {'line': b'running egg_info\n'}
+[72.165744] (-) TimerEvent: {}
+[72.228917] (robot_drivetrain) StdoutLine: {'line': b'creating robot_drivetrain.egg-info\n'}
+[72.229676] (robot_drivetrain) StdoutLine: {'line': b'writing robot_drivetrain.egg-info/PKG-INFO\n'}
+[72.231176] (robot_drivetrain) StdoutLine: {'line': b'writing dependency_links to robot_drivetrain.egg-info/dependency_links.txt\n'}
+[72.231988] (robot_drivetrain) StdoutLine: {'line': b'writing entry points to robot_drivetrain.egg-info/entry_points.txt\n'}
+[72.232768] (robot_drivetrain) StdoutLine: {'line': b'writing requirements to robot_drivetrain.egg-info/requires.txt\n'}
+[72.233498] (robot_drivetrain) StdoutLine: {'line': b'writing top-level names to robot_drivetrain.egg-info/top_level.txt\n'}
+[72.234296] (robot_drivetrain) StdoutLine: {'line': b"writing manifest file 'robot_drivetrain.egg-info/SOURCES.txt'\n"}
+[72.244568] (robot_explore) StdoutLine: {'line': b'creating robot_explore.egg-info\n'}
+[72.245271] (robot_explore) StdoutLine: {'line': b'writing robot_explore.egg-info/PKG-INFO\n'}
+[72.250132] (robot_explore) StdoutLine: {'line': b'writing dependency_links to robot_explore.egg-info/dependency_links.txt\n'}
+[72.250667] (robot_explore) StdoutLine: {'line': b'writing entry points to robot_explore.egg-info/entry_points.txt\n'}
+[72.251062] (robot_explore) StdoutLine: {'line': b'writing requirements to robot_explore.egg-info/requires.txt\n'}
+[72.251431] (robot_explore) StdoutLine: {'line': b'writing top-level names to robot_explore.egg-info/top_level.txt\n'}
+[72.251808] (robot_explore) StdoutLine: {'line': b"writing manifest file 'robot_explore.egg-info/SOURCES.txt'\n"}
+[72.265891] (-) TimerEvent: {}
+[72.286227] (robot_voice) StdoutLine: {'line': b'running egg_info\n'}
+[72.366050] (-) TimerEvent: {}
+[72.395184] (robot_voice) StdoutLine: {'line': b'creating robot_voice.egg-info\n'}
+[72.398109] (robot_voice) StdoutLine: {'line': b'writing robot_voice.egg-info/PKG-INFO\n'}
+[72.398623] (robot_voice) StdoutLine: {'line': b'writing dependency_links to robot_voice.egg-info/dependency_links.txt\n'}
+[72.399132] (robot_voice) StdoutLine: {'line': b'writing entry points to robot_voice.egg-info/entry_points.txt\n'}
+[72.399836] (robot_voice) StdoutLine: {'line': b'writing requirements to robot_voice.egg-info/requires.txt\n'}
+[72.400502] (robot_voice) StdoutLine: {'line': b'writing top-level names to robot_voice.egg-info/top_level.txt\n'}
+[72.400889] (robot_voice) StdoutLine: {'line': b"writing manifest file 'robot_voice.egg-info/SOURCES.txt'\n"}
+[72.458883] (robot_drivetrain) StdoutLine: {'line': b"reading manifest file 'robot_drivetrain.egg-info/SOURCES.txt'\n"}
+[72.461834] (robot_drivetrain) StdoutLine: {'line': b"writing manifest file 'robot_drivetrain.egg-info/SOURCES.txt'\n"}
+[72.466194] (-) TimerEvent: {}
+[72.474196] (robot_explore) StdoutLine: {'line': b"reading manifest file 'robot_explore.egg-info/SOURCES.txt'\n"}
+[72.477298] (robot_explore) StdoutLine: {'line': b"writing manifest file 'robot_explore.egg-info/SOURCES.txt'\n"}
+[72.566386] (-) TimerEvent: {}
+[72.575720] (robot_drivetrain) StdoutLine: {'line': b'running build_ext\n'}
+[72.576461] (robot_drivetrain) StdoutLine: {'line': b'Creating /home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/python3.13/site-packages/robot-drivetrain.egg-link (link to .)\n'}
+[72.579042] (robot_drivetrain) StdoutLine: {'line': b'Installing drivetrain_node script to /home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/robot_drivetrain\n'}
+[72.580294] (robot_drivetrain) StdoutLine: {'line': b'\n'}
+[72.581026] (robot_drivetrain) StdoutLine: {'line': b'Installed /home/roshan/Robot-RPi-Core/build/robot_drivetrain\n'}
+[72.581410] (robot_drivetrain) StdoutLine: {'line': b'running symlink_data\n'}
+[72.586221] (robot_drivetrain) StdoutLine: {'line': b'creating /home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/ament_index/resource_index/packages\n'}
+[72.587092] (robot_drivetrain) StdoutLine: {'line': b'symbolically linking /home/roshan/Robot-RPi-Core/build/robot_drivetrain/resource/robot_drivetrain -> /home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/ament_index/resource_index/packages\n'}
+[72.588041] (robot_drivetrain) StdoutLine: {'line': b'symbolically linking /home/roshan/Robot-RPi-Core/build/robot_drivetrain/package.xml -> /home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/robot_drivetrain\n'}
+[72.598178] (robot_explore) StdoutLine: {'line': b'running build_ext\n'}
+[72.599183] (robot_explore) StdoutLine: {'line': b'Creating /home/roshan/Robot-RPi-Core/install/robot_explore/lib/python3.13/site-packages/robot-explore.egg-link (link to .)\n'}
+[72.601662] (robot_explore) StdoutLine: {'line': b'Installing explorer_node script to /home/roshan/Robot-RPi-Core/install/robot_explore/lib/robot_explore\n'}
+[72.604123] (robot_explore) StdoutLine: {'line': b'\n'}
+[72.605134] (robot_explore) StdoutLine: {'line': b'Installed /home/roshan/Robot-RPi-Core/build/robot_explore\n'}
+[72.606091] (robot_explore) StdoutLine: {'line': b'running symlink_data\n'}
+[72.607231] (robot_explore) StdoutLine: {'line': b'creating /home/roshan/Robot-RPi-Core/install/robot_explore/share/ament_index/resource_index/packages\n'}
+[72.609129] (robot_explore) StdoutLine: {'line': b'symbolically linking /home/roshan/Robot-RPi-Core/build/robot_explore/resource/robot_explore -> /home/roshan/Robot-RPi-Core/install/robot_explore/share/ament_index/resource_index/packages\n'}
+[72.610934] (robot_explore) StdoutLine: {'line': b'symbolically linking /home/roshan/Robot-RPi-Core/build/robot_explore/package.xml -> /home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore\n'}
+[72.666704] (-) TimerEvent: {}
+[72.748154] (robot_voice) StdoutLine: {'line': b"reading manifest file 'robot_voice.egg-info/SOURCES.txt'\n"}
+[72.755437] (robot_voice) StdoutLine: {'line': b"writing manifest file 'robot_voice.egg-info/SOURCES.txt'\n"}
+[72.766930] (-) TimerEvent: {}
+[72.834190] (robot_drivetrain) CommandEnded: {'returncode': 0}
+[72.864036] (robot_drivetrain) JobEnded: {'identifier': 'robot_drivetrain', 'rc': 0}
+[72.866620] (robot_explore) CommandEnded: {'returncode': 0}
+[72.869030] (-) TimerEvent: {}
+[72.894239] (robot_explore) JobEnded: {'identifier': 'robot_explore', 'rc': 0}
+[72.917730] (robot_voice) StdoutLine: {'line': b'running build_ext\n'}
+[72.918293] (robot_voice) StdoutLine: {'line': b'Creating /home/roshan/Robot-RPi-Core/install/robot_voice/lib/python3.13/site-packages/robot-voice.egg-link (link to .)\n'}
+[72.920292] (robot_voice) StdoutLine: {'line': b'Installing voice_node script to /home/roshan/Robot-RPi-Core/install/robot_voice/lib/robot_voice\n'}
+[72.921329] (robot_voice) StdoutLine: {'line': b'\n'}
+[72.921830] (robot_voice) StdoutLine: {'line': b'Installed /home/roshan/Robot-RPi-Core/build/robot_voice\n'}
+[72.922162] (robot_voice) StdoutLine: {'line': b'running symlink_data\n'}
+[72.922511] (robot_voice) StdoutLine: {'line': b'creating /home/roshan/Robot-RPi-Core/install/robot_voice/share/ament_index/resource_index/packages\n'}
+[72.923169] (robot_voice) StdoutLine: {'line': b'symbolically linking /home/roshan/Robot-RPi-Core/build/robot_voice/resource/robot_voice -> /home/roshan/Robot-RPi-Core/install/robot_voice/share/ament_index/resource_index/packages\n'}
+[72.923859] (robot_voice) StdoutLine: {'line': b'symbolically linking /home/roshan/Robot-RPi-Core/build/robot_voice/package.xml -> /home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice\n'}
+[72.969281] (-) TimerEvent: {}
+[73.069804] (robot_voice) CommandEnded: {'returncode': 0}
+[73.071365] (-) TimerEvent: {}
+[73.094505] (robot_voice) JobEnded: {'identifier': 'robot_voice', 'rc': 0}
+[73.097238] (robot_bringup) JobStarted: {'identifier': 'robot_bringup'}
+[73.171544] (-) TimerEvent: {}
+[73.272099] (-) TimerEvent: {}
+[73.372667] (-) TimerEvent: {}
+[73.473166] (-) TimerEvent: {}
+[73.573680] (-) TimerEvent: {}
+[73.674191] (-) TimerEvent: {}
+[73.774644] (-) TimerEvent: {}
+[73.875115] (-) TimerEvent: {}
+[73.975799] (-) TimerEvent: {}
+[74.076570] (-) TimerEvent: {}
+[74.177071] (-) TimerEvent: {}
+[74.277668] (-) TimerEvent: {}
+[74.378197] (-) TimerEvent: {}
+[74.478668] (-) TimerEvent: {}
+[74.579274] (-) TimerEvent: {}
+[74.679747] (-) TimerEvent: {}
+[74.780215] (-) TimerEvent: {}
+[74.880690] (-) TimerEvent: {}
+[74.981174] (-) TimerEvent: {}
+[75.081685] (-) TimerEvent: {}
+[75.182204] (-) TimerEvent: {}
+[75.282677] (-) TimerEvent: {}
+[75.383146] (-) TimerEvent: {}
+[75.483595] (-) TimerEvent: {}
+[75.584055] (-) TimerEvent: {}
+[75.684508] (-) TimerEvent: {}
+[75.784979] (-) TimerEvent: {}
+[75.885511] (-) TimerEvent: {}
+[75.986274] (-) TimerEvent: {}
+[76.086870] (-) TimerEvent: {}
+[76.187359] (-) TimerEvent: {}
+[76.287883] (-) TimerEvent: {}
+[76.388403] (-) TimerEvent: {}
+[76.488872] (-) TimerEvent: {}
+[76.589326] (-) TimerEvent: {}
+[76.689816] (-) TimerEvent: {}
+[76.790270] (-) TimerEvent: {}
+[76.890724] (-) TimerEvent: {}
+[76.991175] (-) TimerEvent: {}
+[77.091644] (-) TimerEvent: {}
+[77.192195] (-) TimerEvent: {}
+[77.245708] (robot_bringup) Command: {'cmd': ['/home/roshan/Robot-RPi-Core/.venv/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/roshan/Robot-RPi-Core/build/robot_bringup/build', '--no-deps', 'symlink_data'], 'cwd': '/home/roshan/Robot-RPi-Core/build/robot_bringup', 'env': OrderedDict({'LANGUAGE': 'en_US.UTF-8', 'USER': 'roshan', 'SSH_CLIENT': '10.0.0.195 50569 22', 'TEXTDOMAIN': 'pam_chksshpwd', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:/opt/ros/jazzy/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/roshan', 'OLDPWD': '/home/roshan', 'SSH_TTY': '/dev/pts/6', 'PS1': '(.venv) \\[\\e]0;\\u@\\h: \\w\\a\\]${debian_chroot:+($debian_chroot)}\\[\\033[01;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w \\$\\[\\033[00m\\]', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'LC_TERMINAL_VERSION': '3.6.11', 'LOGNAME': 'roshan', '_': '/home/roshan/Robot-RPi-Core/.venv/bin/colcon', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '4', 'PATH': '/home/roshan/Robot-RPi-Core/.venv/bin:/opt/ros/jazzy/bin:/home/roshan/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games', 'XDG_RUNTIME_DIR': '/run/user/1000', 'LANG': 'en_US.UTF-8', 'VIRTUAL_ENV_PROMPT': '.venv', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.7z=01;31:*.ace=01;31:*.alz=01;31:*.apk=01;31:*.arc=01;31:*.arj=01;31:*.bz=01;31:*.bz2=01;31:*.cab=01;31:*.cpio=01;31:*.crate=01;31:*.deb=01;31:*.drpm=01;31:*.dwm=01;31:*.dz=01;31:*.ear=01;31:*.egg=01;31:*.esd=01;31:*.gz=01;31:*.jar=01;31:*.lha=01;31:*.lrz=01;31:*.lz=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.lzo=01;31:*.pyz=01;31:*.rar=01;31:*.rpm=01;31:*.rz=01;31:*.sar=01;31:*.swm=01;31:*.t7z=01;31:*.tar=01;31:*.taz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tgz=01;31:*.tlz=01;31:*.txz=01;31:*.tz=01;31:*.tzo=01;31:*.tzst=01;31:*.udeb=01;31:*.war=01;31:*.whl=01;31:*.wim=01;31:*.xz=01;31:*.z=01;31:*.zip=01;31:*.zoo=01;31:*.zst=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.jxl=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'AMENT_PREFIX_PATH': '/home/roshan/Robot-RPi-Core/install/robot_voice:/home/roshan/Robot-RPi-Core/install/robot_explore:/home/roshan/Robot-RPi-Core/install/robot_drivetrain:/home/roshan/Robot-RPi-Core/install/robot_interfaces:/home/roshan/Robot-RPi-Core/install/robot_display:/opt/ros/jazzy', 'SHELL': '/bin/bash', 'NO_AT_BRIDGE': '1', 'LC_TERMINAL': 'iTerm2', 'VIRTUAL_ENV': '/home/roshan/Robot-RPi-Core/.venv', 'PWD': '/home/roshan/Robot-RPi-Core/build/robot_bringup', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '10.0.0.195 50569 10.0.0.183 22', 'PYTHONPATH': '/home/roshan/Robot-RPi-Core/build/robot_bringup/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_bringup/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_voice:/home/roshan/Robot-RPi-Core/install/robot_voice/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_explore:/home/roshan/Robot-RPi-Core/install/robot_explore/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_drivetrain:/home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_display:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:/opt/ros/jazzy/lib/python3.13/site-packages', 'COLCON': '1', 'CMAKE_PREFIX_PATH': '/home/roshan/Robot-RPi-Core/install/robot_interfaces'}), 'shell': False}
+[77.292327] (-) TimerEvent: {}
+[77.392853] (-) TimerEvent: {}
+[77.493340] (-) TimerEvent: {}
+[77.593856] (-) TimerEvent: {}
+[77.694333] (-) TimerEvent: {}
+[77.794788] (-) TimerEvent: {}
+[77.895247] (-) TimerEvent: {}
+[77.995698] (-) TimerEvent: {}
+[78.096168] (-) TimerEvent: {}
+[78.196642] (-) TimerEvent: {}
+[78.297088] (-) TimerEvent: {}
+[78.397544] (-) TimerEvent: {}
+[78.425967] (robot_bringup) StdoutLine: {'line': b'running develop\n'}
+[78.497664] (-) TimerEvent: {}
+[78.598161] (-) TimerEvent: {}
+[78.698654] (-) TimerEvent: {}
+[78.799108] (-) TimerEvent: {}
+[78.899563] (-) TimerEvent: {}
+[79.000020] (-) TimerEvent: {}
+[79.100482] (-) TimerEvent: {}
+[79.134715] (robot_bringup) StdoutLine: {'line': b'running egg_info\n'}
+[79.200601] (-) TimerEvent: {}
+[79.213738] (robot_bringup) StdoutLine: {'line': b'creating robot_bringup.egg-info\n'}
+[79.214287] (robot_bringup) StdoutLine: {'line': b'writing robot_bringup.egg-info/PKG-INFO\n'}
+[79.215543] (robot_bringup) StdoutLine: {'line': b'writing dependency_links to robot_bringup.egg-info/dependency_links.txt\n'}
+[79.216068] (robot_bringup) StdoutLine: {'line': b'writing entry points to robot_bringup.egg-info/entry_points.txt\n'}
+[79.216637] (robot_bringup) StdoutLine: {'line': b'writing requirements to robot_bringup.egg-info/requires.txt\n'}
+[79.217051] (robot_bringup) StdoutLine: {'line': b'writing top-level names to robot_bringup.egg-info/top_level.txt\n'}
+[79.217454] (robot_bringup) StdoutLine: {'line': b"writing manifest file 'robot_bringup.egg-info/SOURCES.txt'\n"}
+[79.300741] (-) TimerEvent: {}
+[79.377186] (robot_bringup) StdoutLine: {'line': b"reading manifest file 'robot_bringup.egg-info/SOURCES.txt'\n"}
+[79.379688] (robot_bringup) StdoutLine: {'line': b"writing manifest file 'robot_bringup.egg-info/SOURCES.txt'\n"}
+[79.400862] (-) TimerEvent: {}
+[79.461388] (robot_bringup) StdoutLine: {'line': b'running build_ext\n'}
+[79.461942] (robot_bringup) StdoutLine: {'line': b'Creating /home/roshan/Robot-RPi-Core/install/robot_bringup/lib/python3.13/site-packages/robot-bringup.egg-link (link to .)\n'}
+[79.463904] (robot_bringup) StdoutLine: {'line': b'Installing bringup script to /home/roshan/Robot-RPi-Core/install/robot_bringup/lib/robot_bringup\n'}
+[79.464881] (robot_bringup) StdoutLine: {'line': b'\n'}
+[79.465295] (robot_bringup) StdoutLine: {'line': b'Installed /home/roshan/Robot-RPi-Core/build/robot_bringup\n'}
+[79.465556] (robot_bringup) StdoutLine: {'line': b'running symlink_data\n'}
+[79.465920] (robot_bringup) StdoutLine: {'line': b'creating /home/roshan/Robot-RPi-Core/install/robot_bringup/share/ament_index/resource_index/packages\n'}
+[79.466609] (robot_bringup) StdoutLine: {'line': b'symbolically linking /home/roshan/Robot-RPi-Core/build/robot_bringup/resource/robot_bringup -> /home/roshan/Robot-RPi-Core/install/robot_bringup/share/ament_index/resource_index/packages\n'}
+[79.467289] (robot_bringup) StdoutLine: {'line': b'symbolically linking /home/roshan/Robot-RPi-Core/build/robot_bringup/package.xml -> /home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup\n'}
+[79.467689] (robot_bringup) StdoutLine: {'line': b'creating /home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/launch\n'}
+[79.468137] (robot_bringup) StdoutLine: {'line': b'symbolically linking /home/roshan/Robot-RPi-Core/build/robot_bringup/launch/command.launch.py -> /home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/launch\n'}
+[79.468536] (robot_bringup) StdoutLine: {'line': b'symbolically linking /home/roshan/Robot-RPi-Core/build/robot_bringup/launch/explore.launch.py -> /home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/launch\n'}
+[79.469001] (robot_bringup) StdoutLine: {'line': b'creating /home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/config\n'}
+[79.469411] (robot_bringup) StdoutLine: {'line': b'symbolically linking /home/roshan/Robot-RPi-Core/build/robot_bringup/config/robot.yaml -> /home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/config\n'}
+[79.501109] (-) TimerEvent: {}
+[79.601955] (-) TimerEvent: {}
+[79.615156] (robot_bringup) CommandEnded: {'returncode': 0}
+[79.639143] (robot_bringup) JobEnded: {'identifier': 'robot_bringup', 'rc': 0}
+[79.641606] (-) EventReactorShutdown: {}

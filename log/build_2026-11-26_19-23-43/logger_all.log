@@ -1,0 +1,692 @@
+[-1795742621435645184.000s] DEBUG:colcon:Command line arguments: ['/home/roshan/Robot-RPi-Core/.venv/bin/colcon', 'build', '--symlink-install']
+[-1795742621435645184.000s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='build', build_base='build', install_base='install', merge_install=False, symlink_install=True, test_result_base=None, continue_on_error=False, executor='parallel', parallel_workers=4, event_handlers=None, ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['.'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, cmake_args=None, cmake_target=None, cmake_target_skip_unavailable=False, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, ament_cmake_args=None, catkin_cmake_args=None, catkin_skip_building_tests=False, verb_parser=<colcon_defaults.argument_parser.defaults.DefaultArgumentsDecorator object at 0x7fbd4b7ed0>, verb_extension=<colcon_core.verb.build.BuildVerb object at 0x7fbd715550>, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0x7fbd715550>>)
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[-1795742621435645184.000s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/roshan/Robot-RPi-Core'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(docs/images) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(firmware/drivetrain) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/__pycache__) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/drivetrain/__pycache__) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/explore/__pycache__) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/live/__pycache__) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/nav/__pycache__) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core/sensors/__pycache__) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(robot_core.egg-info) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/build) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/build) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/build) ignored
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/install) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/install) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/install) ignored
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/log) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/log) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/log) ignored
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'ros'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extensions ['cmake', 'python']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'cmake'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extensions ['python_setup_py']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'python_setup_py'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_bringup) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_bringup) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_bringup) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_bringup) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_bringup) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_bringup) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_bringup) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_bringup) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_bringup) by extension 'ros'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/robot_bringup' with type 'ros.ament_python' and name 'robot_bringup'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_display) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_display) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_display) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_display) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_display) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_display) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_display) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_display) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_display) by extension 'ros'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/robot_display' with type 'ros.ament_python' and name 'robot_display'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_drivetrain) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_drivetrain) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_drivetrain) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_drivetrain) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_drivetrain) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_drivetrain) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_drivetrain) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_drivetrain) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_drivetrain) by extension 'ros'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/robot_drivetrain' with type 'ros.ament_python' and name 'robot_drivetrain'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_explore) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_explore) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_explore) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_explore) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_explore) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_explore) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_explore) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_explore) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_explore) by extension 'ros'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/robot_explore' with type 'ros.ament_python' and name 'robot_explore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_interfaces) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_interfaces) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_interfaces) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_interfaces) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_interfaces) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_interfaces) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_interfaces) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_interfaces) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_interfaces) by extension 'ros'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/robot_interfaces' with type 'ros.ament_cmake' and name 'robot_interfaces'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_voice) by extensions ['ignore', 'ignore_ament_install']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_voice) by extension 'ignore'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_voice) by extension 'ignore_ament_install'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_voice) by extensions ['colcon_pkg']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_voice) by extension 'colcon_pkg'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_voice) by extensions ['colcon_meta']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_voice) by extension 'colcon_meta'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_voice) by extensions ['ros']
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/robot_voice) by extension 'ros'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/robot_voice' with type 'ros.ament_python' and name 'robot_voice'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_display' build argument 'cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_display' build argument 'cmake_target' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_display' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_display' build argument 'cmake_clean_cache' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_display' build argument 'cmake_clean_first' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_display' build argument 'cmake_force_configure' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_display' build argument 'ament_cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_display' build argument 'catkin_cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_display' build argument 'catkin_skip_building_tests' from command line to 'False'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.verb:Building package 'robot_display' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/roshan/Robot-RPi-Core/build/robot_display', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/roshan/Robot-RPi-Core/install/robot_display', 'merge_install': False, 'path': '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_display', 'symlink_install': True, 'test_result_base': None}
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_interfaces' build argument 'cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_interfaces' build argument 'cmake_target' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_interfaces' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_interfaces' build argument 'cmake_clean_cache' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_interfaces' build argument 'cmake_clean_first' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_interfaces' build argument 'cmake_force_configure' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_interfaces' build argument 'ament_cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_interfaces' build argument 'catkin_cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_interfaces' build argument 'catkin_skip_building_tests' from command line to 'False'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.verb:Building package 'robot_interfaces' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/roshan/Robot-RPi-Core/build/robot_interfaces', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/roshan/Robot-RPi-Core/install/robot_interfaces', 'merge_install': False, 'path': '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_interfaces', 'symlink_install': True, 'test_result_base': None}
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_drivetrain' build argument 'cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_drivetrain' build argument 'cmake_target' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_drivetrain' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_drivetrain' build argument 'cmake_clean_cache' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_drivetrain' build argument 'cmake_clean_first' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_drivetrain' build argument 'cmake_force_configure' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_drivetrain' build argument 'ament_cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_drivetrain' build argument 'catkin_cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_drivetrain' build argument 'catkin_skip_building_tests' from command line to 'False'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.verb:Building package 'robot_drivetrain' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/roshan/Robot-RPi-Core/build/robot_drivetrain', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/roshan/Robot-RPi-Core/install/robot_drivetrain', 'merge_install': False, 'path': '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_drivetrain', 'symlink_install': True, 'test_result_base': None}
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_explore' build argument 'cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_explore' build argument 'cmake_target' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_explore' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_explore' build argument 'cmake_clean_cache' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_explore' build argument 'cmake_clean_first' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_explore' build argument 'cmake_force_configure' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_explore' build argument 'ament_cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_explore' build argument 'catkin_cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_explore' build argument 'catkin_skip_building_tests' from command line to 'False'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.verb:Building package 'robot_explore' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/roshan/Robot-RPi-Core/build/robot_explore', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/roshan/Robot-RPi-Core/install/robot_explore', 'merge_install': False, 'path': '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_explore', 'symlink_install': True, 'test_result_base': None}
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_voice' build argument 'cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_voice' build argument 'cmake_target' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_voice' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_voice' build argument 'cmake_clean_cache' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_voice' build argument 'cmake_clean_first' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_voice' build argument 'cmake_force_configure' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_voice' build argument 'ament_cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_voice' build argument 'catkin_cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_voice' build argument 'catkin_skip_building_tests' from command line to 'False'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.verb:Building package 'robot_voice' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/roshan/Robot-RPi-Core/build/robot_voice', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/roshan/Robot-RPi-Core/install/robot_voice', 'merge_install': False, 'path': '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_voice', 'symlink_install': True, 'test_result_base': None}
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_bringup' build argument 'cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_bringup' build argument 'cmake_target' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_bringup' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_bringup' build argument 'cmake_clean_cache' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_bringup' build argument 'cmake_clean_first' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_bringup' build argument 'cmake_force_configure' from command line to 'False'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_bringup' build argument 'ament_cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_bringup' build argument 'catkin_cmake_args' from command line to 'None'
+[-1795742621435645184.000s] Level 5:colcon.colcon_core.verb:set package 'robot_bringup' build argument 'catkin_skip_building_tests' from command line to 'False'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.verb:Building package 'robot_bringup' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/roshan/Robot-RPi-Core/build/robot_bringup', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/roshan/Robot-RPi-Core/install/robot_bringup', 'merge_install': False, 'path': '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_bringup', 'symlink_install': True, 'test_result_base': None}
+[-1795742621435645184.000s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[-1795742621435645184.000s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[-1795742621435645184.000s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_interfaces' with build type 'ament_cmake'
+[-1795742621435645184.000s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_interfaces'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[-1795742621435645184.000s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_display' with build type 'ament_python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_display', 'ament_prefix_path')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_display/share/robot_display/hook/ament_prefix_path.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_display/share/robot_display/hook/ament_prefix_path.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_display/share/robot_display/hook/ament_prefix_path.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_interfaces': CMAKE_PREFIX_PATH=/opt/ros/jazzy PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] /usr/bin/cmake /home/roshan/Robot-RPi-Core/ros2_ws/src/robot_interfaces -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/roshan/Robot-RPi-Core/install/robot_interfaces
+[-1795742621435645184.000s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_display'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools commands: install_headers, install_scripts, init_catalog, install_data, egg_info, install_lib, build, build_py, setopt, bdist_rpm, bdist_egg, rotate, isort, sdist, bdist, check, editable_wheel, alias, build_ext, compile_catalog, install, update_catalog, install_egg_info, bdist_wheel, bdist_dumb, build_clib, saveopts, develop, easy_install, extract_messages, symlink_data, clean, build_scripts, dist_info
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools 'develop' options: --dry-run, --egg-path, --no-user-cfg, --no-find-links, --help, --local-snapshots-ok, --script-dir, --always-unzip, --site-dirs, --record, --install-layout, --find-links, --zip-ok, --optimize, --force-installation-into-system-dir, --uninstall, --quiet, --version, --index-url, --upgrade, --verbose, --exclude-scripts, --user, --allow-hosts, --install-dir, --always-copy, --multi-version, --prefix, --no-deps, --build-directory, --editable
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_display': PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_display/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_display/build --no-deps symlink_data
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_display', 'pythonpath_develop')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/build/robot_display/share/robot_display/hook/pythonpath_develop.ps1'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_display' returned '0': PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_display/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_display/build --no-deps symlink_data
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/build/robot_display/share/robot_display/hook/pythonpath_develop.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/build/robot_display/share/robot_display/hook/pythonpath_develop.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_display' for CMake module files
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_display' for CMake config files
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_display/lib'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_display/bin'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_display/lib/pkgconfig/robot_display.pc'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_display', 'pythonpath')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_display/share/robot_display/hook/pythonpath.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_display/share/robot_display/hook/pythonpath.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_display/share/robot_display/hook/pythonpath.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_display/bin'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(robot_display)
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_display/share/robot_display/package.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/roshan/Robot-RPi-Core/install/robot_display/share/robot_display/package.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_display/share/robot_display/package.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_display/share/robot_display/package.bash'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_display/share/robot_display/package.zsh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/roshan/Robot-RPi-Core/install/robot_display/share/colcon-core/packages/robot_display)
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_interfaces' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] /usr/bin/cmake /home/roshan/Robot-RPi-Core/ros2_ws/src/robot_interfaces -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/roshan/Robot-RPi-Core/install/robot_interfaces
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_interfaces': CMAKE_PREFIX_PATH=/opt/ros/jazzy PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] /usr/bin/cmake --build /home/roshan/Robot-RPi-Core/build/robot_interfaces -- -j4 -l4
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_interfaces' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] /usr/bin/cmake --build /home/roshan/Robot-RPi-Core/build/robot_interfaces -- -j4 -l4
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_interfaces': CMAKE_PREFIX_PATH=/opt/ros/jazzy PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] /usr/bin/cmake --install /home/roshan/Robot-RPi-Core/build/robot_interfaces
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(robot_interfaces)
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces' for CMake module files
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_interfaces' returned '0': CMAKE_PREFIX_PATH=/opt/ros/jazzy PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] /usr/bin/cmake --install /home/roshan/Robot-RPi-Core/build/robot_interfaces
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces' for CMake config files
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_interfaces', 'cmake_prefix_path')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/cmake_prefix_path.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/cmake_prefix_path.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/cmake_prefix_path.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_interfaces', 'ld_library_path_lib')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/ld_library_path_lib.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/ld_library_path_lib.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/ld_library_path_lib.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces/bin'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/pkgconfig/robot_interfaces.pc'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_interfaces', 'pythonpath')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/pythonpath.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/pythonpath.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/pythonpath.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces/bin'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.bash'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.zsh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/colcon-core/packages/robot_interfaces)
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(robot_interfaces)
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces' for CMake module files
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces' for CMake config files
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_interfaces', 'cmake_prefix_path')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/cmake_prefix_path.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/cmake_prefix_path.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/cmake_prefix_path.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_interfaces', 'ld_library_path_lib')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/ld_library_path_lib.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/ld_library_path_lib.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/ld_library_path_lib.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces/bin'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/pkgconfig/robot_interfaces.pc'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_interfaces', 'pythonpath')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/pythonpath.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/pythonpath.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/hook/pythonpath.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_interfaces/bin'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.bash'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/robot_interfaces/package.zsh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/roshan/Robot-RPi-Core/install/robot_interfaces/share/colcon-core/packages/robot_interfaces)
+[-1795742621435645184.000s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_drivetrain' with build type 'ament_python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_drivetrain', 'ament_prefix_path')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/robot_drivetrain/hook/ament_prefix_path.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/robot_drivetrain/hook/ament_prefix_path.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/robot_drivetrain/hook/ament_prefix_path.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[-1795742621435645184.000s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_explore' with build type 'ament_python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_explore', 'ament_prefix_path')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore/hook/ament_prefix_path.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore/hook/ament_prefix_path.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore/hook/ament_prefix_path.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[-1795742621435645184.000s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_voice' with build type 'ament_python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_voice', 'ament_prefix_path')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice/hook/ament_prefix_path.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice/hook/ament_prefix_path.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice/hook/ament_prefix_path.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[-1795742621435645184.000s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_drivetrain'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[-1795742621435645184.000s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_explore'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[-1795742621435645184.000s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_voice'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools commands: install_headers, install_scripts, init_catalog, install_data, egg_info, install_lib, build, build_py, setopt, bdist_rpm, bdist_egg, rotate, isort, sdist, bdist, check, editable_wheel, alias, build_ext, compile_catalog, install, update_catalog, install_egg_info, bdist_wheel, bdist_dumb, build_clib, saveopts, develop, easy_install, extract_messages, symlink_data, clean, build_scripts, dist_info
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools commands: install_headers, install_scripts, init_catalog, install_data, egg_info, install_lib, build, build_py, setopt, bdist_rpm, bdist_egg, rotate, isort, sdist, bdist, check, editable_wheel, alias, build_ext, compile_catalog, install, update_catalog, install_egg_info, bdist_wheel, bdist_dumb, build_clib, saveopts, develop, easy_install, extract_messages, symlink_data, clean, build_scripts, dist_info
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools commands: install_headers, install_scripts, init_catalog, install_data, egg_info, install_lib, build, build_py, setopt, bdist_rpm, bdist_egg, rotate, isort, sdist, bdist, check, editable_wheel, alias, build_ext, compile_catalog, install, update_catalog, install_egg_info, bdist_wheel, bdist_dumb, build_clib, saveopts, develop, easy_install, extract_messages, symlink_data, clean, build_scripts, dist_info
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools 'develop' options: --dry-run, --egg-path, --no-user-cfg, --no-find-links, --help, --local-snapshots-ok, --script-dir, --always-unzip, --site-dirs, --record, --install-layout, --find-links, --zip-ok, --optimize, --force-installation-into-system-dir, --uninstall, --quiet, --version, --index-url, --upgrade, --verbose, --exclude-scripts, --user, --allow-hosts, --install-dir, --always-copy, --multi-version, --prefix, --no-deps, --build-directory, --editable
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_drivetrain': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_drivetrain/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_drivetrain/build --no-deps symlink_data
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools 'develop' options: --dry-run, --egg-path, --no-user-cfg, --no-find-links, --help, --local-snapshots-ok, --script-dir, --always-unzip, --site-dirs, --record, --install-layout, --find-links, --zip-ok, --optimize, --force-installation-into-system-dir, --uninstall, --quiet, --version, --index-url, --upgrade, --verbose, --exclude-scripts, --user, --allow-hosts, --install-dir, --always-copy, --multi-version, --prefix, --no-deps, --build-directory, --editable
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_explore': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces:/home/roshan/Robot-RPi-Core/install/robot_display:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_explore/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_explore/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_display:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_explore/build --no-deps symlink_data
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools 'develop' options: --dry-run, --egg-path, --no-user-cfg, --no-find-links, --help, --local-snapshots-ok, --script-dir, --always-unzip, --site-dirs, --record, --install-layout, --find-links, --zip-ok, --optimize, --force-installation-into-system-dir, --uninstall, --quiet, --version, --index-url, --upgrade, --verbose, --exclude-scripts, --user, --allow-hosts, --install-dir, --always-copy, --multi-version, --prefix, --no-deps, --build-directory, --editable
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_voice': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces:/home/roshan/Robot-RPi-Core/install/robot_display:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_voice/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_voice/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_display:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_voice/build --no-deps symlink_data
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_drivetrain', 'pythonpath_develop')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/build/robot_drivetrain/share/robot_drivetrain/hook/pythonpath_develop.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/build/robot_drivetrain/share/robot_drivetrain/hook/pythonpath_develop.dsv'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_drivetrain' returned '0': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_drivetrain/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_drivetrain/build --no-deps symlink_data
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/build/robot_drivetrain/share/robot_drivetrain/hook/pythonpath_develop.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_drivetrain' for CMake module files
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_drivetrain' for CMake config files
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/bin'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/pkgconfig/robot_drivetrain.pc'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/python3.13/site-packages'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_drivetrain', 'pythonpath')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/robot_drivetrain/hook/pythonpath.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/robot_drivetrain/hook/pythonpath.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/robot_drivetrain/hook/pythonpath.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/bin'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(robot_drivetrain)
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/robot_drivetrain/package.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/robot_drivetrain/package.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/robot_drivetrain/package.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/robot_drivetrain/package.bash'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/robot_drivetrain/package.zsh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/roshan/Robot-RPi-Core/install/robot_drivetrain/share/colcon-core/packages/robot_drivetrain)
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_explore', 'pythonpath_develop')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/build/robot_explore/share/robot_explore/hook/pythonpath_develop.ps1'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_explore' returned '0': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces:/home/roshan/Robot-RPi-Core/install/robot_display:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_explore/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_explore/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_display:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_explore/build --no-deps symlink_data
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/build/robot_explore/share/robot_explore/hook/pythonpath_develop.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/build/robot_explore/share/robot_explore/hook/pythonpath_develop.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_explore' for CMake module files
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_explore' for CMake config files
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_explore/lib'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_explore/bin'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_explore/lib/pkgconfig/robot_explore.pc'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_explore/lib/python3.13/site-packages'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_explore', 'pythonpath')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore/hook/pythonpath.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore/hook/pythonpath.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore/hook/pythonpath.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_explore/bin'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(robot_explore)
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore/package.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore/package.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore/package.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore/package.bash'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_explore/share/robot_explore/package.zsh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/roshan/Robot-RPi-Core/install/robot_explore/share/colcon-core/packages/robot_explore)
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_voice', 'pythonpath_develop')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/build/robot_voice/share/robot_voice/hook/pythonpath_develop.ps1'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_voice' returned '0': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces:/home/roshan/Robot-RPi-Core/install/robot_display:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_voice/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_voice/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_display:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_voice/build --no-deps symlink_data
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/build/robot_voice/share/robot_voice/hook/pythonpath_develop.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/build/robot_voice/share/robot_voice/hook/pythonpath_develop.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_voice' for CMake module files
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_voice' for CMake config files
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_voice/lib'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_voice/bin'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_voice/lib/pkgconfig/robot_voice.pc'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_voice/lib/python3.13/site-packages'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_voice', 'pythonpath')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice/hook/pythonpath.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice/hook/pythonpath.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice/hook/pythonpath.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_voice/bin'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(robot_voice)
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice/package.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice/package.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice/package.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice/package.bash'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_voice/share/robot_voice/package.zsh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/roshan/Robot-RPi-Core/install/robot_voice/share/colcon-core/packages/robot_voice)
+[-1795742621435645184.000s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_bringup' with build type 'ament_python'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_bringup', 'ament_prefix_path')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/hook/ament_prefix_path.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/hook/ament_prefix_path.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/hook/ament_prefix_path.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[-1795742621435645184.000s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/roshan/Robot-RPi-Core/ros2_ws/src/robot_bringup'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools commands: install_headers, install_scripts, init_catalog, install_data, egg_info, install_lib, build, build_py, setopt, bdist_rpm, bdist_egg, rotate, isort, sdist, bdist, check, editable_wheel, alias, build_ext, compile_catalog, install, update_catalog, install_egg_info, bdist_wheel, bdist_dumb, build_clib, saveopts, develop, easy_install, extract_messages, symlink_data, clean, build_scripts, dist_info
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools 'develop' options: --dry-run, --egg-path, --no-user-cfg, --no-find-links, --help, --local-snapshots-ok, --script-dir, --always-unzip, --site-dirs, --record, --install-layout, --find-links, --zip-ok, --optimize, --force-installation-into-system-dir, --uninstall, --quiet, --version, --index-url, --upgrade, --verbose, --exclude-scripts, --user, --allow-hosts, --install-dir, --always-copy, --multi-version, --prefix, --no-deps, --build-directory, --editable
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/roshan/Robot-RPi-Core/build/robot_bringup': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_voice:/home/roshan/Robot-RPi-Core/install/robot_explore:/home/roshan/Robot-RPi-Core/install/robot_drivetrain:/home/roshan/Robot-RPi-Core/install/robot_interfaces:/home/roshan/Robot-RPi-Core/install/robot_display:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_bringup/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_bringup/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_voice:/home/roshan/Robot-RPi-Core/install/robot_voice/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_explore:/home/roshan/Robot-RPi-Core/install/robot_explore/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_drivetrain:/home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_display:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_bringup/build --no-deps symlink_data
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_bringup', 'pythonpath_develop')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/build/robot_bringup/share/robot_bringup/hook/pythonpath_develop.ps1'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/roshan/Robot-RPi-Core/build/robot_bringup' returned '0': AMENT_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_voice:/home/roshan/Robot-RPi-Core/install/robot_explore:/home/roshan/Robot-RPi-Core/install/robot_drivetrain:/home/roshan/Robot-RPi-Core/install/robot_interfaces:/home/roshan/Robot-RPi-Core/install/robot_display:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces LD_LIBRARY_PATH=/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib:${LD_LIBRARY_PATH} PS1=(.venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w \$\[\033[00m\] PYTHONPATH=/home/roshan/Robot-RPi-Core/build/robot_bringup/prefix_override:/home/roshan/Robot-RPi-Core/.venv/lib/python3.13/site-packages/colcon_core/task/python/colcon_distutils_commands:/home/roshan/Robot-RPi-Core/install/robot_bringup/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_voice:/home/roshan/Robot-RPi-Core/install/robot_voice/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_explore:/home/roshan/Robot-RPi-Core/install/robot_explore/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_drivetrain:/home/roshan/Robot-RPi-Core/install/robot_drivetrain/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/install/robot_interfaces/lib/python3.13/site-packages:/home/roshan/Robot-RPi-Core/build/robot_display:/home/roshan/Robot-RPi-Core/install/robot_display/lib/python3.13/site-packages:${PYTHONPATH} /home/roshan/Robot-RPi-Core/.venv/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/roshan/Robot-RPi-Core/build/robot_bringup/build --no-deps symlink_data
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/build/robot_bringup/share/robot_bringup/hook/pythonpath_develop.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/build/robot_bringup/share/robot_bringup/hook/pythonpath_develop.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_bringup' for CMake module files
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_bringup' for CMake config files
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_bringup/lib'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_bringup/bin'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_bringup/lib/pkgconfig/robot_bringup.pc'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_bringup/lib/python3.13/site-packages'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.shell:create_environment_hook('robot_bringup', 'pythonpath')
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/hook/pythonpath.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/hook/pythonpath.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/hook/pythonpath.sh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:checking '/home/roshan/Robot-RPi-Core/install/robot_bringup/bin'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(robot_bringup)
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/package.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/package.dsv'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/package.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/package.bash'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating package script '/home/roshan/Robot-RPi-Core/install/robot_bringup/share/robot_bringup/package.zsh'
+[-1795742621435645184.000s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/roshan/Robot-RPi-Core/install/robot_bringup/share/colcon-core/packages/robot_bringup)
+[-1795742621435645184.000s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[-1795742621435645184.000s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[-1795742621435645184.000s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[-1795742621435645184.000s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/roshan/Robot-RPi-Core/install/local_setup.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/roshan/Robot-RPi-Core/install/_local_setup_util_ps1.py'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/roshan/Robot-RPi-Core/install/setup.ps1'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/roshan/Robot-RPi-Core/install/local_setup.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/roshan/Robot-RPi-Core/install/_local_setup_util_sh.py'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/roshan/Robot-RPi-Core/install/setup.sh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/roshan/Robot-RPi-Core/install/local_setup.bash'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/roshan/Robot-RPi-Core/install/setup.bash'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/roshan/Robot-RPi-Core/install/local_setup.zsh'
+[-1795742621435645184.000s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/roshan/Robot-RPi-Core/install/setup.zsh'

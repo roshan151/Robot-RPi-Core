@@ -1,0 +1,30 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/link.d"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/action/detail/dds_fastrtps/drive__type_support.cpp.o"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/action/detail/dds_fastrtps/drive__type_support.cpp.o.d"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/action/detail/dds_fastrtps/turn__type_support.cpp.o"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/action/detail/dds_fastrtps/turn__type_support.cpp.o.d"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/encoders__type_support.cpp.o"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/encoders__type_support.cpp.o.d"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/motion_health__type_support.cpp.o"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/motion_health__type_support.cpp.o.d"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/visual_motion__type_support.cpp.o"
+  "CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/visual_motion__type_support.cpp.o.d"
+  "librobot_interfaces__rosidl_typesupport_fastrtps_cpp.pdb"
+  "librobot_interfaces__rosidl_typesupport_fastrtps_cpp.so"
+  "rosidl_typesupport_fastrtps_cpp/robot_interfaces/action/detail/dds_fastrtps/drive__type_support.cpp"
+  "rosidl_typesupport_fastrtps_cpp/robot_interfaces/action/detail/dds_fastrtps/turn__type_support.cpp"
+  "rosidl_typesupport_fastrtps_cpp/robot_interfaces/action/detail/drive__rosidl_typesupport_fastrtps_cpp.hpp"
+  "rosidl_typesupport_fastrtps_cpp/robot_interfaces/action/detail/turn__rosidl_typesupport_fastrtps_cpp.hpp"
+  "rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/encoders__type_support.cpp"
+  "rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/motion_health__type_support.cpp"
+  "rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/dds_fastrtps/visual_motion__type_support.cpp"
+  "rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/encoders__rosidl_typesupport_fastrtps_cpp.hpp"
+  "rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/motion_health__rosidl_typesupport_fastrtps_cpp.hpp"
+  "rosidl_typesupport_fastrtps_cpp/robot_interfaces/msg/detail/visual_motion__rosidl_typesupport_fastrtps_cpp.hpp"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/robot_interfaces__rosidl_typesupport_fastrtps_cpp.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

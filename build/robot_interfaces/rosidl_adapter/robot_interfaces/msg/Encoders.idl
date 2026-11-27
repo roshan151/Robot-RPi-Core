@@ -1,0 +1,24 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from robot_interfaces/msg/Encoders.msg
+// generated code does not contain a copyright notice
+
+
+module robot_interfaces {
+  module msg {
+    @verbatim (language="comment", text=
+      "Live quadrature counts. Signed and hardware-decoded: a wheel rolled backwards" "\n"
+      "down a slope counts DOWN. Direction is measured, not inferred from the" "\n"
+      "commanded move.")
+    struct Encoders {
+      int32 left;
+
+      int32 right;
+
+      @verbatim (language="comment", text=
+        "left - right; a value pinned to one side across" "\n"
+        "every move means the motor<->encoder pairing is" "\n"
+        "crossed, not that the gain needs tuning.")
+      int32 sync_error;
+    };
+  };
+};
