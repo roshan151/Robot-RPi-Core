@@ -7238,3 +7238,95 @@
 {"ts":"2026-11-26T22:51:17.268Z","lvl":"info","evt":"voice.heard","text":"\u0906\u092f\u093e 1 \u0938\u0947\u0915\u0902\u0921\u0964"}
 {"ts":"2026-11-26T22:51:17.332Z","lvl":"info","evt":"voice.say","text":"<no","spoken":false}
 {"ts":"2026-11-26T22:51:17.428Z","lvl":"info","evt":"voice.say","text":"speech>{pause}","spoken":false}
+{"ts":"2026-11-26T22:52:03.076Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":44.66,"repeats":1}
+{"ts":"2026-11-26T22:52:04.968Z","lvl":"info","evt":"voice.heard","text":"Yeah, coming."}
+{"ts":"2026-11-26T22:52:04.971Z","lvl":"info","evt":"voice.say","text":"<no","spoken":false}
+{"ts":"2026-11-26T22:52:04.983Z","lvl":"info","evt":"voice.say","text":"speech>{pause}","spoken":false}
+{"ts":"2026-11-26T22:52:18.464Z","lvl":"info","evt":"voice.heard","text":"Robin Robert shutdown"}
+{"ts":"2026-11-26T22:52:18.468Z","lvl":"info","evt":"voice.queue_clear","dropped":8,"reason":"stop","_unregistered":true}
+{"ts":"2026-11-26T22:52:18.478Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 244)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-26T22:52:18.479Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-26T22:52:18.548Z","lvl":"warn","evt":"log","msg":"gimbal: pan limited to -90..+80 deg (wanted -90..+90) by the 500-2500 us pulse window around its 1608 us centre; re-fit the horn nearer the middle of its travel, or widen servo_min_us / servo_max_us if the servo really goes further","src":"robot_core.sensors.gimbal"}
+{"ts":"2026-11-26T22:52:18.898Z","lvl":"warn","evt":"power.shutdown","state":"requested"}
+{"ts":"2026-11-26T22:52:18.900Z","lvl":"info","evt":"voice.tool","name":"shutdown","args":{},"ok":true,"note":"powering off in 4 seconds; stop cancels"}
+{"ts":"2026-11-26T22:52:18.900Z","lvl":"info","evt":"log","msg":"tool shutdown({}) -> {'ok': True, 'note': 'powering off in 4 seconds; stop cancels'} in 0.43s","src":"robot_core.live.agent"}
+{"ts":"2026-11-26T22:52:23.037Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 245)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-26T22:52:23.039Z","lvl":"warn","evt":"estop","reason":"shutdown","dropped":[],"interrupted":null}
+{"ts":"2026-11-26T22:52:23.045Z","lvl":"info","evt":"log","msg":"motion executor stopped","src":"robot_core.motion_executor"}
+{"ts":"2026-11-26T22:52:00.300Z","lvl":"info","evt":"session.start","mode":"display"}
+{"ts":"2026-11-26T22:52:02.060Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-26T22:52:02.873Z","lvl":"info","evt":"log","msg":"Resetting board on /dev/ttyUSB0 via EN (RTS pulse, IO0 high)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-26T22:52:05.924Z","lvl":"info","evt":"session.start","mode":"ros","pid":1662,"log":"logs.json","debug":true}
+{"ts":"2026-11-26T22:52:05.975Z","lvl":"info","evt":"log","msg":"debug mode: uploading sensor data to http://roshans-mac-mini.local:8080/v1/debug/frame, session 20261126-165205","src":"robot_core.debug_upload"}
+{"ts":"2026-11-27T01:19:57.053Z","lvl":"info","evt":"log","msg":"No boot frame on /dev/ttyUSB0 after reset (attempt 1/3) \u2014 pinging anyway","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:20:01.465Z","lvl":"warn","evt":"log","msg":"Ping failed on /dev/ttyUSB0 (attempt 1/3): No ACK for Q within 1.4 s","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:20:01.965Z","lvl":"warn","evt":"log","msg":"Retrying drivetrain connect on /dev/ttyUSB0 (attempt 2/3)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:20:01.966Z","lvl":"info","evt":"log","msg":"Resetting board on /dev/ttyUSB0 via EN (RTS pulse, IO0 high)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:20:06.119Z","lvl":"info","evt":"log","msg":"No boot frame on /dev/ttyUSB0 after reset (attempt 2/3) \u2014 pinging anyway","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:20:06.183Z","lvl":"warn","evt":"voice.diag","err":"no /odom for 10 s: follow has no pose (drivetrain telemetry?)"}
+{"ts":"2026-11-27T01:20:10.531Z","lvl":"warn","evt":"log","msg":"Ping failed on /dev/ttyUSB0 (attempt 2/3): No ACK for Q within 1.4 s","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:20:11.031Z","lvl":"warn","evt":"log","msg":"Retrying drivetrain connect on /dev/ttyUSB0 (attempt 3/3)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:20:11.369Z","lvl":"info","evt":"log","msg":"Opening serial port /dev/ttyUSB0 @ 115200 baud","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:20:11.377Z","lvl":"info","evt":"log","msg":"Resetting board on /dev/ttyUSB0 via EN (RTS pulse, IO0 high)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:20:11.905Z","lvl":"warn","evt":"log","msg":"Arduino firmware: drv8871-v10-esp32-vel-noluna built Nov 25 2026 13:24:16","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:20:11.906Z","lvl":"info","evt":"log","msg":"Connected on /dev/ttyUSB0 (boot frame received after reset)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:20:11.957Z","lvl":"info","evt":"log","msg":"motion executor started","src":"robot_core.motion_executor"}
+{"ts":"2026-11-27T01:20:16.781Z","lvl":"info","evt":"log","msg":"imu: auto-tared level at pitch=3.85 deg, roll=0.65 deg","src":"robot_core.sensors.imu"}
+{"ts":"2026-11-27T01:20:16.875Z","lvl":"info","evt":"log","msg":"drivetrain ready on /dev/ttyUSB0 (limit 5.0 m, velocity on)","src":"robot_drivetrain"}
+{"ts":"2026-11-27T01:20:17.078Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 240)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:20:17.080Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-27T01:20:17.120Z","lvl":"info","evt":"audio.route","mode":"room","source":"alsa_input.usb-Innomaker_Innomaker-U20CAM-1080p-WDR_SN0001-02.analog-stereo"}
+{"ts":"2026-11-27T01:20:19.635Z","lvl":"info","evt":"voice.connect","backend":"gemini-live","model":"gemini-3.8-live","role":"main","modality":"AUDIO","resumed":false}
+{"ts":"2026-11-27T01:20:19.636Z","lvl":"info","evt":"voice.connected","text":"Robot online. Voice session connected."}
+{"ts":"2026-11-27T01:20:20.873Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":0.86}
+{"ts":"2026-11-27T01:20:23.404Z","lvl":"info","evt":"voice.heard","text":"Raben Dornle"}
+{"ts":"2026-11-27T01:20:23.424Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-90},"ok":true,"queued":1,"op":"turn","value":-90.0}
+{"ts":"2026-11-27T01:20:23.426Z","lvl":"info","evt":"log","msg":"tool turn({'degrees': -90}) -> {'ok': True, 'queued': 1, 'op': 'turn', 'value': -90.0} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-27T01:20:29.662Z","lvl":"info","evt":"move.done","op":"held","val":89.8,"dur":6.227,"heading_err":0.6,"detail":null}
+{"ts":"2026-11-27T01:20:44.394Z","lvl":"info","evt":"voice.heard","text":"Raben, go in reverse for half a meter."}
+{"ts":"2026-11-27T01:20:44.398Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":-0.5},"ok":true,"queued":true,"op":"drive","value":-0.5,"queue_depth":1}
+{"ts":"2026-11-27T01:20:44.399Z","lvl":"info","evt":"log","msg":"tool drive({'meters': -0.5}) -> {'ok': True, 'queued': True, 'op': 'drive', 'value': -0.5, 'queue_depth': 1} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-27T01:20:53.065Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":8.31,"repeats":3}
+{"ts":"2026-11-27T01:20:54.586Z","lvl":"info","evt":"voice.heard","text":"Robin Stop"}
+{"ts":"2026-11-27T01:20:54.591Z","lvl":"info","evt":"voice.queue_clear","dropped":1,"reason":"stop","_unregistered":true}
+{"ts":"2026-11-27T01:20:54.592Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true,"dropped_queued":1}
+{"ts":"2026-11-27T01:20:54.594Z","lvl":"info","evt":"log","msg":"tool stop({}) -> {'ok': True, 'stopped': True, 'dropped_queued': 1} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-27T01:20:54.599Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 241)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:20:54.601Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-27T01:21:00.047Z","lvl":"info","evt":"voice.heard","text":"Raben, go in reverse for half a meter."}
+{"ts":"2026-11-27T01:21:00.054Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":-0.5},"ok":true,"queued":2,"op":"drive","value":-0.5}
+{"ts":"2026-11-27T01:21:00.055Z","lvl":"info","evt":"log","msg":"tool drive({'meters': -0.5}) -> {'ok': True, 'queued': 2, 'op': 'drive', 'value': -0.5} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-27T01:21:03.898Z","lvl":"info","evt":"move.done","op":"held","val":-0.5,"dur":3.833,"heading_err":-1.5,"detail":null}
+{"ts":"2026-11-27T01:21:10.116Z","lvl":"info","evt":"voice.heard","text":"Robin"}
+{"ts":"2026-11-27T01:21:10.134Z","lvl":"info","evt":"voice.say","text":"<no","spoken":false}
+{"ts":"2026-11-27T01:21:10.215Z","lvl":"info","evt":"voice.say","text":"speech>{pause}","spoken":false}
+{"ts":"2026-11-27T01:21:13.493Z","lvl":"info","evt":"voice.heard","text":"Go straight for half a meter."}
+{"ts":"2026-11-27T01:21:13.497Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":0.5},"ok":true,"queued":true,"op":"drive","value":0.5,"queue_depth":1}
+{"ts":"2026-11-27T01:21:13.499Z","lvl":"info","evt":"log","msg":"tool drive({'meters': 0.5}) -> {'ok': True, 'queued': True, 'op': 'drive', 'value': 0.5, 'queue_depth': 1} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-27T01:21:18.434Z","lvl":"info","evt":"voice.heard","text":"Robin Stop"}
+{"ts":"2026-11-27T01:21:18.438Z","lvl":"info","evt":"voice.queue_clear","dropped":1,"reason":"stop","_unregistered":true}
+{"ts":"2026-11-27T01:21:18.439Z","lvl":"info","evt":"voice.tool","name":"stop","args":{},"ok":true,"stopped":true,"dropped_queued":1}
+{"ts":"2026-11-27T01:21:18.440Z","lvl":"info","evt":"log","msg":"tool stop({}) -> {'ok': True, 'stopped': True, 'dropped_queued': 1} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-27T01:21:18.446Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 242)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:21:18.448Z","lvl":"warn","evt":"estop","reason":"estop service","dropped":[],"interrupted":null}
+{"ts":"2026-11-27T01:21:23.100Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":4.28,"repeats":8}
+{"ts":"2026-11-27T01:21:26.168Z","lvl":"info","evt":"voice.heard","text":"Robin, go straight for 1/2 m."}
+{"ts":"2026-11-27T01:21:26.174Z","lvl":"info","evt":"voice.tool","name":"drive","args":{"meters":0.5},"ok":true,"queued":3,"op":"drive","value":0.5}
+{"ts":"2026-11-27T01:21:26.175Z","lvl":"info","evt":"log","msg":"tool drive({'meters': 0.5}) -> {'ok': True, 'queued': 3, 'op': 'drive', 'value': 0.5} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-27T01:21:29.823Z","lvl":"info","evt":"move.done","op":"held","val":0.5,"dur":3.639,"heading_err":1.1,"detail":null}
+{"ts":"2026-11-27T01:21:33.249Z","lvl":"info","evt":"voice.heard","text":"Robin, turn left."}
+{"ts":"2026-11-27T01:21:33.253Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-90},"ok":true,"queued":true,"op":"turn","value":-90.0,"queue_depth":1}
+{"ts":"2026-11-27T01:21:33.254Z","lvl":"info","evt":"log","msg":"tool turn({'degrees': -90}) -> {'ok': True, 'queued': True, 'op': 'turn', 'value': -90.0, 'queue_depth': 1} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-27T01:21:37.357Z","lvl":"info","evt":"voice.heard","text":"Robbinton left."}
+{"ts":"2026-11-27T01:21:37.361Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-90},"ok":true,"queued":true,"op":"turn","value":-90.0,"queue_depth":2}
+{"ts":"2026-11-27T01:21:37.362Z","lvl":"info","evt":"log","msg":"tool turn({'degrees': -90}) -> {'ok': True, 'queued': True, 'op': 'turn', 'value': -90.0, 'queue_depth': 2} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-27T01:21:46.998Z","lvl":"info","evt":"voice.heard","text":"Robben Ton left."}
+{"ts":"2026-11-27T01:21:47.002Z","lvl":"info","evt":"voice.tool","name":"turn","args":{"degrees":-90},"ok":true,"queued":true,"op":"turn","value":-90.0,"queue_depth":3}
+{"ts":"2026-11-27T01:21:47.003Z","lvl":"info","evt":"log","msg":"tool turn({'degrees': -90}) -> {'ok': True, 'queued': True, 'op': 'turn', 'value': -90.0, 'queue_depth': 3} in 0.00s","src":"robot_core.live.agent"}
+{"ts":"2026-11-27T01:22:41.696Z","lvl":"warn","evt":"log","msg":"emergency_stop: out-of-band S sent (seq 243)","src":"robot_core.drivetrain.arduino_bridge"}
+{"ts":"2026-11-27T01:22:41.705Z","lvl":"warn","evt":"estop","reason":"shutdown","dropped":[],"interrupted":null}
+{"ts":"2026-11-27T01:22:41.706Z","lvl":"info","evt":"log","msg":"motion executor stopped","src":"robot_core.motion_executor"}
+{"ts":"2026-11-27T01:22:46.395Z","lvl":"warn","evt":"audio.error","stage":"receive-loop","err":"event loop did not read the socket","stalled_s":59.03,"repeats":7}
+{"ts":"2026-11-27T01:22:47.633Z","lvl":"info","evt":"voice.heard","text":"Robin"}
+{"ts":"2026-11-27T01:22:47.638Z","lvl":"info","evt":"voice.say","text":"<no","spoken":false}
+{"ts":"2026-11-27T01:22:47.662Z","lvl":"info","evt":"voice.say","text":"speech>{pause}","spoken":false}
